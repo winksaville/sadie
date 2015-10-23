@@ -6,6 +6,12 @@ Currently it only runs on qemu-system-arm with -M versatilepb.
 And it only outputs 'Hi' to the UART and then shuts down, so
 its not even asynchronous yet.
 
+License
+---
+All files unless otherwise indicated are licensed under the
+[Apache 2.0 license](http://www.apache.org/licenses/).
+That and any other licenses are available under the LICENSES directory.
+
 Prerequesites
 ---
 * [Meson](https://mesonbuild.com) for building, Tested with 0.27
