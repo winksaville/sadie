@@ -32,8 +32,6 @@ incDirs = []
 Platform = get_option('Platform')
 Arch = get_option('Arch')
 
-subdir('arch')
-
 if Platform == 'VersatilePB'
   compilerArgs += ['-D@0@'.format(Platform), '-D@0@'.format(Arch), '-mcpu=arm926ej-s']
   linkfile = 'meson.link.ld'
@@ -42,8 +40,16 @@ if Platform == 'VersatilePB'
   srcFiles += ['test.c', 'poweroff.c', 'startup.S']
 endif
 
-# Create the executable
-testit = executable( 'testit', srcFiles, include_directories : incDirs, c_args : compilerArgs, link_args : linkArgs, link_depends : linkDeps)
+subdir('arch')
+subdir('libs')
+
+# Create testit executable
+testit = executable( 'testit', srcFiles,
+  include_directories : incDirs,
+  c_args : compilerArgs,
+  link_args : linkArgs,
+  link_depends : linkDeps,
+  dependencies : libputchar_dbg_dep)
 
 # Create test.bin suitable for executing with qemu
 testbin = custom_target( 'testbin',

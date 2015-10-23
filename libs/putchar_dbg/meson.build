@@ -12,5 +12,12 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-archIncDirs = include_directories('../generic_32/incs', 'incs')
-incDirs += [archIncDirs]
+incs = include_directories('incs')
+
+libputchar_dbg = static_library('putchar_dbg', 'srcs/putchar_dbg.c',
+  c_args : compilerArgs,
+  include_directories : [incs, archIncDirs])
+
+libputchar_dbg_dep = declare_dependency(
+  include_directories : [incs],
+  link_with : libputchar_dbg)

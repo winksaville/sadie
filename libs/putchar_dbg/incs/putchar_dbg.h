@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-#include "putchar_dbg.h"
+#ifndef XX1_KERNEL_LIBS_PUTCHAR_DBG_H
+#define XX1_KERNEL_LIBS_PUTCHAR_DBG_H
 
-int main(void) {
-  putchar_dbg('H');
-  putchar_dbg('i');
-  putchar_dbg('\n');
+#include "inttypes.h"
 
-  return 0;
-}
+void putchar_dbg(uint8_t ch);
+
+#endif

@@ -12,5 +12,4 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-archIncDirs = include_directories('../generic_32/incs', 'incs')
-incDirs += [archIncDirs]
+subdir('putchar_dbg')
