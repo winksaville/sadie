@@ -26,10 +26,13 @@ compilerArgs = ['-std=c11', '-O2']
 linkArgs = []
 linkDeps = []
 srcFiles = []
+incDirs = []
 
 # Get options
 Platform = get_option('Platform')
 Arch = get_option('Arch')
+
+subdir('arch')
 
 if Platform == 'VersatilePB'
   compilerArgs += ['-D@0@'.format(Platform), '-D@0@'.format(Arch), '-mcpu=arm926ej-s']
@@ -40,7 +43,7 @@ if Platform == 'VersatilePB'
 endif
 
 # Create the executable
-testit = executable( 'testit', srcFiles, c_args : compilerArgs, link_args : linkArgs, link_depends : linkDeps)
+testit = executable( 'testit', srcFiles, include_directories : incDirs, c_args : compilerArgs, link_args : linkArgs, link_depends : linkDeps)
 
 # Create test.bin suitable for executing with qemu
 testbin = custom_target( 'testbin',
