@@ -16,24 +16,19 @@
 
 #include "putchar_dbg.h"
 
-#warning "compiling putchar_dbg.c"
 #ifdef VersatilePB
-#warning "compiling putchar_dbg.c -- VersatilePB"
 volatile uint32_t* const pUart = (uint32_t*)0x101f1000;
 #endif
 
 #ifdef Posix
-#warning "compiling putchar_dbg.c -- Posix"
 #include <stdio.h>
 #endif
 
 void putchar_dbg(uint8_t ch) {
 #ifdef VersatilePB
-   #warning "compiling putchar_dbg.c -- VersatilePB write pUart"
   *pUart = (uint32_t)ch;
 #endif
 #ifdef Posix
-   #warning "compiling putchar_dbg.c -- Posix call putchar"
   putchar(ch);
 #endif
 }
