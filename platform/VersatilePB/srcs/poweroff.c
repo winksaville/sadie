@@ -14,6 +14,7 @@
  * limitations under the license.
  */
 
+#include "poweroff.h"
 #include "inttypes.h"
 
 void poweroff(void) {

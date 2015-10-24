@@ -21,7 +21,6 @@ pkgconfig_gen(
   description : 'Experimental Kernel')
 
 # Initialize some globals
-compiler_args = []
 compilerArgs = ['-std=c11', '-O2']
 linkArgs = []
 linkDeps = []
@@ -36,10 +35,9 @@ if Platform == 'VersatilePB'
 endif
 
 # Platform set various flags and must be processed first
-subdir('arch')
 subdir('libs')
 
-srcFiles += ['test.c', 'poweroff.c', 'startup.S']
+srcFiles += ['test.c', 'startup.S']
 linkfile = 'meson.link.ld'
 linkArgs += ['-Wl,-T,@0@/@1@'.format(meson.current_source_dir(), linkfile)]
 linkDeps += [linkfile]
@@ -50,7 +48,8 @@ testit = executable( 'testit', srcFiles,
   c_args : compilerArgs,
   link_args : linkArgs,
   link_depends : linkDeps,
-  dependencies : libputchar_dbg_dep)
+  dependencies : [libpoweroff_dep, libputchar_dbg_dep],
+)
 
 # Create test.bin suitable for executing with qemu
 testbin = custom_target( 'testbin',
