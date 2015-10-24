@@ -31,5 +31,5 @@ Run
 ---
 ```
 cd build-versatilepb
-ninja run
+ninja run-test-putchar_dbg
 ```
