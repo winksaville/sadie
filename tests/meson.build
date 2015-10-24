@@ -12,30 +12,4 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-project('xx1-kernel', ['c'])
-
-pkgconfig_gen(
-  version : '0.0.1',
-  name : 'xx1-kernel',
-  filebase : 'xx1-kernel',
-  description : 'Experimental Kernel')
-
-# Initialize some globals
-compilerArgs = ['-std=c11', '-O2']
-linkArgs = []
-linkDeps = []
-srcFiles = []
-incDirs = []
-
-# Get options
-Platform = get_option('Platform')
-
-if Platform == 'VersatilePB'
-  subdir('platform/VersatilePB')
-endif
-
-# Platform set various flags and must be processed first
-subdir('libs')
-
-# tests
-subdir('tests')
+subdir('test-putchar_dbg')
