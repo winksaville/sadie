@@ -37,7 +37,7 @@ endif
 # Platform set various flags and must be processed first
 subdir('libs')
 
-srcFiles += ['test.c', 'startup.S']
+srcFiles += ['test.c']
 linkfile = 'meson.link.ld'
 linkArgs += ['-Wl,-T,@0@/@1@'.format(meson.current_source_dir(), linkfile)]
 linkDeps += [linkfile]

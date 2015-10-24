@@ -39,7 +39,7 @@ subdir('@0@/arch/@1@'.format(meson.source_root(), Arch))
 
 incs = include_directories('incs')
 
-libpoweroff = static_library('poweroff', 'srcs/poweroff.c',
+libpoweroff = static_library('poweroff', 'srcs/poweroff.c', 'srcs/startup.S',
   c_args : compilerArgs,
   include_directories : [incs, archIncDirs])
 
