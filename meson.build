@@ -30,18 +30,19 @@ incDirs = []
 
 # Get options
 Platform = get_option('Platform')
-Arch = get_option('Arch')
 
 if Platform == 'VersatilePB'
-  compilerArgs += ['-D@0@'.format(Platform), '-D@0@'.format(Arch), '-mcpu=arm926ej-s']
-  linkfile = 'meson.link.ld'
-  linkArgs += ['-Wl,-T,@0@/@1@'.format(meson.current_source_dir(), linkfile)]
-  linkDeps += [linkfile]
-  srcFiles += ['test.c', 'poweroff.c', 'startup.S']
+  subdir('platform/VersatilePB')
 endif
 
+# Platform set various flags and must be processed first
 subdir('arch')
 subdir('libs')
+
+srcFiles += ['test.c', 'poweroff.c', 'startup.S']
+linkfile = 'meson.link.ld'
+linkArgs += ['-Wl,-T,@0@/@1@'.format(meson.current_source_dir(), linkfile)]
+linkDeps += [linkfile]
 
 # Create testit executable
 testit = executable( 'testit', srcFiles,

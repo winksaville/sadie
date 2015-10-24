@@ -13,4 +13,3 @@
 # limitations under the license.
 
 option('Platform', description : 'Target Platform', type : 'combo', value : 'VersatilePB', choices : ['VersatilePB'] )
-option('Arch', description : 'Target Architecture', type : 'combo', value : 'arm_32', choices : ['arm_32'])
