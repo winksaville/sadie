@@ -14,9 +14,25 @@
  * limitations under the License.
  */
 
-  .section .startup, "awx"
+  // This will be placed in the .starup section which
+  // must be the first section. The _Reset label is currently
+  // not used and instead this code must be loactaed at
+  // 0x10000 so that it is the first code executed.
+
+  // Not only must this be the first section, but it must have
+  // the 'a' flag. If 'a' is not present the objcopy will not copy
+  // the section to the .bin file. The 'x' flag is not required
+  // but seems reasonable as it marks the section execute only.
+  //
+  // In the future, if there is any data stored the 'w' flag should
+  // be added to make the section writable.
+  .section .startup, "ax"
+
+  // Not needed now but would allow this section to be place
+  // else where and executed by "Calling" _Reset
   .global _Reset
 _Reset:
+
   // Initialize the statck which is defined in link.xxx.d script
   ldr sp, =stack_top
 
