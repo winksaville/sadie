@@ -21,7 +21,7 @@ pkgconfig_gen(
   description : 'Experimental Kernel')
 
 # Initialize some globals
-compilerArgs = ['-std=c11', '-O0', '-g']
+compilerArgs = ['-std=c11', '-O2', '-g']
 linkArgs = []
 linkDeps = []
 srcFiles = []
