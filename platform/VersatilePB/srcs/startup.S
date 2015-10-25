@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+  .section .startup, "awx"
   .global _Reset
 _Reset:
   // Initialize the statck which is defined in link.xxx.d script
