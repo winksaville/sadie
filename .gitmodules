@@ -1,0 +1,3 @@
+[submodule "licenses"]
+	path = licenses
+	url = https://github.com/winksaville/licenses.git
