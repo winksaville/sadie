@@ -1,0 +1,70 @@
+# Copyright 2015 wink saville
+#
+# licensed under the apache license, version 2.0 (the "license");
+# you may not use this file except in compliance with the license.
+# you may obtain a copy of the license at
+#
+#     http://www.apache.org/licenses/license-2.0
+#
+# unless required by applicable law or agreed to in writing, software
+# distributed under the license is distributed on an "as is" basis,
+# without warranties or conditions of any kind, either express or implied.
+# see the license for the specific language governing permissions and
+# limitations under the license.
+
+language: python
+sudo: false
+
+python:
+  - "3.5"
+
+env:
+  global:
+    - INSTALL_DIR=$HOME/opt
+    - BIN_DIR=${INSTALL_DIR}/bin
+    - CROSS_BIN_DIR=${INSTALL_DIR}/cross/bin
+    - CACHE_DIR=$HOME/cached
+    - SRC_DIR=$HOME/tmp
+  matrix:
+    - Platform=Posix
+
+cache:
+  directories:
+    - ${INSTALL_DIR}
+    - ${CACHED_DIR}
+
+addons:
+  apt:
+    packages:
+      - texinfo # needed by binutils-gdb
+      - libgmp-dev # needed by gcc
+      - libmpfr-dev # needed by gcc
+      - libmpc-dev # needed by gcc
+      - re2c # Needed by ninja
+        #- qemu-system-arm  # Doesn't install!!
+
+before_install:
+  - mkdir -p ${BIN_DIR}
+  - mkdir -p ${CROSS_BIN_DIR}
+  - export PATH=${BIN_DIR}:$PATH
+  - export PATH=${CROSS_BIN_DIR}:$PATH
+  - python --version
+  - python2 --version
+  - python3 --version
+  - virtualenv --version
+
+install:
+  - vendor-install-tools/all-install.py --srcPrefixDir=${SRC_DIR} --installPrefixDir=${INSTALL_DIR}
+
+before_script:
+  - which ninja
+  - ninja --version
+  - which arm-eabi-ld
+  - arm-eabi-ld --version
+  - which arm-eabi-gcc
+  - arm-eabi-gcc --version
+  - which qemu-system-arm
+  - qemu-system-arm --version
+
+script:
+  - echo hi
