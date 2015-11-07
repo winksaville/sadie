@@ -1,5 +1,4 @@
 # xx1-kernel [![Build Status](https://travis-ci.org/winksaville/xx1-kernel.svg?branch=master)](https://travis-ci.org/winksaville/xx1-kernel)
----
 
 An experimental kernel based on asychronicity.
 
