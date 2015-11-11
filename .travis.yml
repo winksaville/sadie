@@ -20,11 +20,18 @@ python:
 
 env:
   global:
+    # These need to be set as appropriate the vendor-install-tools
+    # are installed here
     - INSTALL_DIR=$HOME/opt
+
+    # Bin directories for executables
     - BIN_DIR=${INSTALL_DIR}/bin
     - CROSS_BIN_DIR=${INSTALL_DIR}/cross/bin
+
+    # A directory where other things will be cached,
+    # currently not used.
     - CACHE_DIR=$HOME/cached
-    - SRC_DIR=$HOME/tmp
+
   matrix:
     - Platform=Posix
 
@@ -54,17 +61,11 @@ before_install:
   - virtualenv --version
 
 install:
-  - vendor-install-tools/all-install.py --srcPrefixDir=${SRC_DIR} --installPrefixDir=${INSTALL_DIR}
-
-before_script:
-  - which ninja
-  - ninja --version
-  - which arm-eabi-ld
-  - arm-eabi-ld --version
-  - which arm-eabi-gcc
-  - arm-eabi-gcc --version
-  - which qemu-system-arm
-  - qemu-system-arm --version
+  - vendor-install-tools/install.py all --installPrefixDir=${INSTALL_DIR}
 
 script:
+  # Verify the tools are installed correctly
+  - vendor-install-tools/test.sh quick
+
+  # TODO: Add tests
   - echo hi
