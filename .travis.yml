@@ -61,14 +61,14 @@ before_install:
   - virtualenv --version
 
 install:
-  - vendor-install-tools/install.py all --installPrefixDir=${INSTALL_PREFIX_DIR}
+  - vendor-install-tools/install.py all
 
 script:
   # Verify the tools are installed correctly
-  - vendor-install-tools/test.sh quick ${INSTALL_PREFIX_DIR}
+  #- vendor-install-tools/test.sh quick
 
   # Build and run
   - mkdir build
   - cd build
   - meson --cross-file ../meson.cross.file.txt --buildtype plain ..
-  - meson run-test-putchar_dbg
+  - ninja run-test-putchar_dbg
