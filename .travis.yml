@@ -69,6 +69,6 @@ script:
 
   # Build and run
   - mkdir build
-  - chdir build
+  - cd build
   - meson --cross-file ../meson.cross.file.txt --buildtype plain ..
   - meson run-test-putchar_dbg
