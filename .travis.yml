@@ -22,11 +22,11 @@ env:
   global:
     # These need to be set as appropriate the vendor-install-tools
     # are installed here
-    - INSTALL_DIR=$HOME/opt
+    - INSTALL_PREFIX_DIR=$HOME/opt
 
     # Bin directories for executables
-    - BIN_DIR=${INSTALL_DIR}/bin
-    - CROSS_BIN_DIR=${INSTALL_DIR}/cross/bin
+    - BIN_DIR=${INSTALL_PREFIX_DIR}/bin
+    - CROSS_BIN_DIR=${INSTALL_PREFIX_DIR}/cross/bin
 
     # A directory where other things will be cached,
     # currently not used.
@@ -37,7 +37,7 @@ env:
 
 cache:
   directories:
-    - ${INSTALL_DIR}
+    - ${INSTALL_PREFIX_DIR}
     - ${CACHED_DIR}
 
 addons:
@@ -48,7 +48,7 @@ addons:
       - libmpfr-dev # needed by gcc
       - libmpc-dev # needed by gcc
       - re2c # Needed by ninja
-        #- qemu-system-arm  # Doesn't install!!
+      - realpath # Needed by my test.sh script
 
 before_install:
   - mkdir -p ${BIN_DIR}
@@ -61,11 +61,11 @@ before_install:
   - virtualenv --version
 
 install:
-  - vendor-install-tools/install.py all --installPrefixDir=${INSTALL_DIR}
+  - vendor-install-tools/install.py all --installPrefixDir=${INSTALL_PREFIX_DIR}
 
 script:
   # Verify the tools are installed correctly
-  - vendor-install-tools/test.sh quick
+  - vendor-install-tools/test.sh quick ${INSTALL_PREFIX_DIR}
 
   # TODO: Add tests
   - echo hi
