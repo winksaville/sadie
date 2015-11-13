@@ -66,8 +66,7 @@ install:
 script:
   # Verify the tools are installed correctly
   #- vendor-install-tools/test.sh quick
-  - ls -al ~/opt/bin
-  - ls -al ~/opt/cross/bin
+
   # Build and run
   - mkdir build
   - cd build
