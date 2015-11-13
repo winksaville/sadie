@@ -13,7 +13,7 @@
 # limitations under the license.
 
 runtimeIncDirs += include_directories(
-  'incs', '@0@/libs/incs'.format(meson.source_root())
+  '@0@/libs/incs'.format(meson.source_root())
 )
 
 runtimeSrcs += [
