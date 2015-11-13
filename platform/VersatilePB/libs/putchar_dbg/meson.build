@@ -12,7 +12,10 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
+runtimeIncDirs += include_directories(
+  'incs', '@0@/libs/incs'.format(meson.source_root())
+)
 
-
-libsIncDirs = include_directories('incs')
-incDirs += [libsIncDirs]
+runtimeSrcs += [
+  '@0@/srcs/putchar_dbg.c'.format(meson.current_source_dir())
+]

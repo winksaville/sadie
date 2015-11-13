@@ -12,7 +12,20 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
+# ARM Versatile Platform Board
 
 
-libsIncDirs = include_directories('incs')
-incDirs += [libsIncDirs]
+runtimeIncDirs = []
+runtimeSrcs = []
+
+subdir('init')
+subdir('putchar_dbg')
+
+runtimeIncDirs += archIncDirs
+
+libruntime = static_library('runtime', runtimeSrcs,
+  c_args : compilerArgs,
+  include_directories : runtimeIncDirs)
+
+libruntime_dep = declare_dependency(
+  link_with : libruntime)

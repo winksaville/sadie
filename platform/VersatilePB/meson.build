@@ -36,13 +36,4 @@ compilerArgs += [
 ]
 
 subdir('@0@/arch/@1@'.format(meson.source_root(), Arch))
-
-incs = include_directories('incs')
-
-libruntime = static_library('runtime', 'srcs/poweroff.c', 'srcs/startup.S',
-  c_args : compilerArgs,
-  include_directories : [incs, archIncDirs])
-
-libruntime_dep = declare_dependency(
-  include_directories : [incs],
-  link_with : libruntime)
+subdir('libs')

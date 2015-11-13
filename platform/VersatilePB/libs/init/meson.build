@@ -12,12 +12,9 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-incs = include_directories('incs')
+runtimeIncDirs += include_directories('incs')
 
-libputchar_dbg = static_library('putchar_dbg', 'srcs/putchar_dbg.c',
-  c_args : compilerArgs,
-  include_directories : [incs, archIncDirs])
-
-libputchar_dbg_dep = declare_dependency(
-  include_directories : [incs],
-  link_with : libputchar_dbg)
+runtimeSrcs += [
+  '@0@/srcs/poweroff.c'.format(meson.current_source_dir()),
+  '@0@/srcs/startup.S'.format(meson.current_source_dir())
+]

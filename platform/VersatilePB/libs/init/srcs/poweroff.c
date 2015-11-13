@@ -20,7 +20,7 @@
 void poweroff(void) {
   volatile u32* pUnlockResetReg = (u32*)0x10000020;
   volatile u32* pResetReg = (u32*)0x10000040;
-  
+
   // If qemu is executed with -no-reboot option then
   // resetting the board will cause qemu to exit
   // and it won't be necessary to ctrl-a, x to exit.

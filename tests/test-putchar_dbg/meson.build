@@ -23,7 +23,7 @@ testit = executable( 'testit', srcFiles,
   c_args : compilerArgs,
   link_args : linkArgs,
   link_depends : linkDeps,
-  dependencies : [libruntime_dep, libputchar_dbg_dep],
+  dependencies : [libruntime_dep],
 )
 
 # Create test.bin suitable for executing with qemu
