@@ -14,17 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef XX1_KERNEL_GENERIC_32_INTTYPES_H
-#define XX1_KERNEL_GENERIC_32_INTTYPES_H
+#ifndef XX1_KERNEL_X86_64_INTTYPES_H
+#define XX1_KERNEL_X86_64_INTTYPES_H
 
-typedef signed char int8_t;
-typedef signed int int32_t;
-typedef signed long int64_t;
-
-typedef unsigned char uint8_t;
-typedef unsigned int uint32_t;
-typedef unsigned long uint64_t;
-
-typedef uint32_t uintptr_t;
+#include <generic/incs/inttypes_ll64.h>
+#include <generic/incs/uPtr64.h>
 
 #endif

@@ -14,4 +14,10 @@
  * limitations under the License.
  */
 
-#include "generic_32/incs/inttypes.h"
+#ifndef XX1_KERNEL_ARM_32_INTTYPES_H
+#define XX1_KERNEL_ARM_32_INTTYPES_H
+
+#include <generic/incs/inttypes_ll64.h>
+#include <generic/incs/uPtr32.h>
+
+#endif

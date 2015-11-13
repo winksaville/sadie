@@ -18,8 +18,8 @@
 #include "inttypes.h"
 
 void poweroff(void) {
-  volatile uint32_t* pUnlockResetReg = (uint32_t*)0x10000020;
-  volatile uint32_t* pResetReg = (uint32_t*)0x10000040;
+  volatile u32* pUnlockResetReg = (u32*)0x10000020;
+  volatile u32* pResetReg = (u32*)0x10000040;
   
   // If qemu is executed with -no-reboot option then
   // resetting the board will cause qemu to exit

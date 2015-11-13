@@ -14,11 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef XX1_KERNEL_LIBS_PUTCHAR_DBG_H
-#define XX1_KERNEL_LIBS_PUTCHAR_DBG_H
+/**
+ * Defines s8 ... u64 assuming sizeof long is 64 bits
+ */
+#ifndef XX1_KERNEL_GENERIC_INTTYPES_l64_H
+#define XX1_KERNEL_GENERIC_INTTYPES_l64_H
 
-#include <inttypes.h>
+typedef signed char s8;
+typedef signed short s16;
+typedef signed int s32;
+typedef signed long s64;
 
-void putchar_dbg(u8 ch);
+typedef unsigned char u8;
+typedef unsigned short u16;
+typedef unsigned int u32;
+typedef unsigned long u64;
 
 #endif

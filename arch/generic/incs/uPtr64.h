@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef XX1_KERNEL_LIBS_PUTCHAR_DBG_H
-#define XX1_KERNEL_LIBS_PUTCHAR_DBG_H
+/**
+ * Defines uPtr for 64 bit address machines
+ */
+#ifndef XX1_KERNEL_GENERIC_UPTR64_H
+#define XX1_KERNEL_GENERIC_UPTR64_H
 
-#include <inttypes.h>
-
-void putchar_dbg(u8 ch);
+typedef u64 uPtr;
 
 #endif
