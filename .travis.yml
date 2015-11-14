@@ -71,6 +71,6 @@ script:
   # Build and run
   - mkdir build
   - cd build
-  - [[ "${Platform}" == "VersatilePB" ]] && - meson -D Platform=VersatilePB --cross-file ../meson.cross.file.txt --buildtype plain ..
-  - [[ "${Platform}" == 'Posix' ]] && - meson -D Platform=Posix ..
+  - if [[ "${Platform}" == "VersatilePB" ]]; then meson -D Platform=VersatilePB --cross-file ../meson.cross.file.txt --buildtype plain .. fi
+  - if [[ "${Platform}" == 'Posix' ]]; then meson -D Platform=Posix .. fi
   - ninja run-test-putchar_dbg
