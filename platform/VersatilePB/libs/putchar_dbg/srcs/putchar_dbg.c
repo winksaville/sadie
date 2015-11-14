@@ -16,19 +16,8 @@
 
 #include "putchar_dbg.h"
 
-#ifdef VersatilePB
 volatile u32* const pUart = (u32*)0x101f1000;
-#endif
-
-#ifdef Posix
-#include <stdio.h>
-#endif
 
 void putchar_dbg(u8 ch) {
-#ifdef VersatilePB
   *pUart = (u32)ch;
-#endif
-#ifdef Posix
-  putchar(ch);
-#endif
 }
