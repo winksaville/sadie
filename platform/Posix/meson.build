@@ -12,34 +12,16 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-project('xx1-kernel', ['c'])
+# ARM Versatile Platform Board
 
-pkgconfig_gen(
-  version : '0.0.1',
-  name : 'xx1-kernel',
-  filebase : 'xx1-kernel',
-  description : 'Experimental Kernel')
+# The name of the subdirectory directly under arch/
+Arch = 'x86_64' # Need to look this up Posix could be on many other Arch
 
-# Initialize some globals
-compilerArgs = ['-std=c11', '-O2', '-g']
-linkArgs = []
-linkDeps = []
-srcFiles = []
-incDirs = []
+# The compiler arguments
+compilerArgs += [
+  '-D@0@'.format(Platform),
+  '-D@0@'.format(Arch),
+]
 
-# Get options
-Platform = get_option('Platform')
-
-if Platform == 'VersatilePB'
-  subdir('platform/VersatilePB')
-endif
-
-if Platform == 'Posix'
-  subdir('platform/Posix')
-endif
-
-# Platform set various flags and must be processed first
+subdir('@0@/arch/@1@'.format(meson.source_root(), Arch))
 subdir('libs')
-
-# tests
-subdir('tests')

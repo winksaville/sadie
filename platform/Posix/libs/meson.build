@@ -12,34 +12,19 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-project('xx1-kernel', ['c'])
+# ARM Versatile Platform Board
 
-pkgconfig_gen(
-  version : '0.0.1',
-  name : 'xx1-kernel',
-  filebase : 'xx1-kernel',
-  description : 'Experimental Kernel')
 
-# Initialize some globals
-compilerArgs = ['-std=c11', '-O2', '-g']
-linkArgs = []
-linkDeps = []
-srcFiles = []
-incDirs = []
+runtimeIncDirs = []
+runtimeSrcs = []
 
-# Get options
-Platform = get_option('Platform')
+subdir('putchar_dbg')
 
-if Platform == 'VersatilePB'
-  subdir('platform/VersatilePB')
-endif
+runtimeIncDirs += archIncDirs
 
-if Platform == 'Posix'
-  subdir('platform/Posix')
-endif
+libruntime = static_library('runtime', runtimeSrcs,
+  c_args : compilerArgs,
+  include_directories : runtimeIncDirs)
 
-# Platform set various flags and must be processed first
-subdir('libs')
-
-# tests
-subdir('tests')
+libruntime_dep = declare_dependency(
+  link_with : libruntime)

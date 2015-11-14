@@ -12,26 +12,44 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-srcFiles += ['srcs/test.c']
-linkfile = 'meson.link.ld'
-linkArgs += ['-Wl,-T,@0@/@1@'.format(meson.current_source_dir(), linkfile)]
-linkDeps += [linkfile]
+if Platform == 'VersatilePB'
+  srcFiles += ['srcs/test.c']
+  linkfile = 'meson.link.ld'
+  linkArgs += ['-Wl,-T,@0@/@1@'.format(meson.current_source_dir(), linkfile)]
+  linkDeps += [linkfile]
 
-# Create testit executable
-testit = executable( 'testit', srcFiles,
-  include_directories : incDirs,
-  c_args : compilerArgs,
-  link_args : linkArgs,
-  link_depends : linkDeps,
-  dependencies : [libruntime_dep],
-)
+  # Create testit executable
+  testit = executable( 'testit', srcFiles,
+    include_directories : incDirs,
+    c_args : compilerArgs,
+    link_args : linkArgs,
+    link_depends : linkDeps,
+    dependencies : [libruntime_dep],
+  )
 
-# Create test.bin suitable for executing with qemu
-testbin = custom_target( 'testbin',
-  output : ['test.bin'],
-  command : ['arm-eabi-objcopy', '-O', 'binary',
-    '@0@/testit'.format(meson.current_build_dir()),
-    '@0@/test.bin'.format(meson.current_build_dir())],
-  depends : [testit])
+  # Create test.bin suitable for executing with qemu
+  testbin = custom_target( 'testbin',
+    output : ['test.bin'],
+    command : ['arm-eabi-objcopy', '-O', 'binary',
+      '@0@/testit'.format(meson.current_build_dir()),
+      '@0@/test.bin'.format(meson.current_build_dir())],
+    depends : [testit])
 
-run_target('run-test-putchar_dbg', 'qemu-system-arm', '-M', 'versatilepb', '-m', '128M', '-nographic', '-no-reboot', '-kernel', testbin)
+  run_target('run-test-putchar_dbg',
+    'qemu-system-arm', '-M', 'versatilepb',
+    '-m', '128M', '-nographic', '-no-reboot', '-kernel', testbin)
+endif
+
+
+if Platform == 'Posix'
+  srcFiles += ['srcs/test.c']
+
+  # Create testit executable
+  testit = executable( 'testit', srcFiles,
+    include_directories : incDirs,
+    c_args : compilerArgs,
+    dependencies : [libruntime_dep],
+  )
+
+  run_target('run-test-putchar_dbg', testit)
+endif
