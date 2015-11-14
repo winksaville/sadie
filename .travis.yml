@@ -34,6 +34,7 @@ env:
 
   matrix:
     - Platform=Posix
+    - Platform=VersatilePB
 
 cache:
   directories:
@@ -70,5 +71,6 @@ script:
   # Build and run
   - mkdir build
   - cd build
-  - meson --cross-file ../meson.cross.file.txt --buildtype plain ..
+  - [[ "${Platform}" == "VersatilePB" ]] && - meson -D Platform=VersatilePB --cross-file ../meson.cross.file.txt --buildtype plain ..
+  - [[ "${Platform}" == 'Posix' ]] && - meson -D Platform=Posix ..
   - ninja run-test-putchar_dbg
