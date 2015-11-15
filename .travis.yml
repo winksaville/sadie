@@ -73,5 +73,5 @@ script:
   - mkdir build
   - cd build
   - if [[ "${Platform}" == "VersatilePB" ]]; then meson -D Platform=VersatilePB --cross-file ../meson.cross.file.arm-eabi.txt --buildtype plain ..; fi
-  - if [[ "${Platform}" == 'Posix' ]]; then meson -D Platform=Posix --cross-file ../meson.cross.file.x86_64.txt ..; fi
+    #- if [[ "${Platform}" == 'Posix' ]]; then meson -D Platform=Posix --cross-file ../meson.cross.file.x86_64.txt ..; fi
   - ninja run-test-putchar_dbg
