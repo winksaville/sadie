@@ -1,0 +1,35 @@
+# Copyright 2015 wink saville
+#
+# licensed under the apache license, version 2.0 (the "license");
+# you may not use this file except in compliance with the license.
+# you may obtain a copy of the license at
+#
+#     http://www.apache.org/licenses/license-2.0
+#
+# unless required by applicable law or agreed to in writing, software
+# distributed under the license is distributed on an "as is" basis,
+# without warranties or conditions of any kind, either express or implied.
+# see the license for the specific language governing permissions and
+# limitations under the license.
+
+[binaries]
+c = 'x86_64-pc-linux-gcc'
+cpp = 'x86_64-pc-linux-g++'
+ar = 'x86_64-pc-linux-ar'
+ld = 'x86_64-pc-linux-ld'
+strip = 'x86_64-pc-linux-gcc-strip'
+
+[properties]
+has_function_printf = true
+
+[host_machine]
+system = 'linux'
+cpu_family = 'x86_64'
+cpu = 'x86'
+endian = 'little'
+
+[target_machine]
+system = 'linux'
+cpu_family = 'x86_64'
+cpu = 'x86'
+endian = 'little'
