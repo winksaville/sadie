@@ -50,7 +50,7 @@ addons:
       - libmpc-dev # needed by gcc
       - re2c # Needed by ninja
       - realpath # Needed by my test.sh script
-      - gcc5 # Needed for Posix Platform
+        #- gcc5 # Needed for Posix Platform (Disallowed :( )
 
 before_install:
   - mkdir -p ${BIN_DIR}
