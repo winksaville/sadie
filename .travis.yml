@@ -33,8 +33,8 @@ env:
     - CACHE_DIR=$HOME/cached
 
   matrix:
-    - Platform=Posix
     - Platform=VersatilePB
+    #- Platform=Posix
 
 cache:
   directories:
