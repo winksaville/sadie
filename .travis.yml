@@ -77,5 +77,5 @@ script:
   - if [[ "${Platform}" == "VersatilePB" ]]; then meson -D Platform=VersatilePB --cross-file ../meson.cross.file.arm-eabi.txt --buildtype plain ..; fi
     # Use the x86_64 cross compiler (THIS DOES NOT YET WORK)
     #- if [[ "${Platform}" == 'Posix' ]]; then meson -D Platform=Posix --cross-file ../meson.cross.file.x86_64.txt ..; fi
-  - if [[ "${Platform}" == 'Posix' ]]; then meson -D Platform=Posix --cross-file ../meson.cross.file.x86_64.txt ..; fi
+  - if [[ "${Platform}" == 'Posix' ]]; then meson -D Platform=Posix ..; fi
   - ninja run-test-putchar_dbg
