@@ -34,7 +34,7 @@ env:
 
   matrix:
     - Platform=VersatilePB
-    #- Platform=Posix
+    - Platform=Posix
 
 cache:
   directories:
@@ -43,14 +43,16 @@ cache:
 
 addons:
   apt:
+    sources:
+      - ubuntu-toolchain-r-test
     packages:
+      - gcc-5 # Needed for Posix Platform
       - texinfo # needed by binutils-gdb
       - libgmp-dev # needed by gcc
       - libmpfr-dev # needed by gcc
       - libmpc-dev # needed by gcc
       - re2c # Needed by ninja
       - realpath # Needed by my test.sh script
-        #- gcc5 # Needed for Posix Platform (Disallowed :( )
 
 before_install:
   - mkdir -p ${BIN_DIR}
@@ -73,5 +75,5 @@ script:
   - mkdir build
   - cd build
   - if [[ "${Platform}" == "VersatilePB" ]]; then meson -D Platform=VersatilePB --cross-file ../meson.cross.file.arm-eabi.txt --buildtype plain ..; fi
-    #- if [[ "${Platform}" == 'Posix' ]]; then meson -D Platform=Posix --cross-file ../meson.cross.file.x86_64.txt ..; fi
+  - if [[ "${Platform}" == 'Posix' ]]; then meson -D Platform=Posix --cross-file ../meson.cross.file.x86_64.txt ..; fi
   - ninja run-test-putchar_dbg
