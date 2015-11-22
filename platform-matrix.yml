@@ -1,8 +1,16 @@
+# A circleci matrix file for the platforms
 env:
   - Platform=VersatilePB
   - Platform=Posix
 
 command:
-  - if [[ "${Platform}" == "VersatilePB" ]]; then meson -D Platform=VersatilePB --cross-file ../meson.cross.file.arm-eabi.txt --buildtype plain ..; fi
-  - if [[ "${Platform}" == 'Posix' ]]; then meson -D Platform=Posix --cross-file ../meson.cross.file.gcc-5.txt ..; fi
-  - ninja run-test-putchar_dbg
+  # VersatilePB: Create the build directory and the build.ninja file
+  - if [[ "${Platform}" == "VersatilePB" ]]; then rm -rf build-${Platform}; mkdir build-${Platform}; fi
+  - if [[ "${Platform}" == "VersatilePB" ]]; then cd build-${Platform}; meson -D Platform=${Platform} --cross-file ../cross-file-${Platform} --buildtype plain ..; fi
+
+  # Posix: Create the build directory and the build.ninja file
+  - if [[ "${Platform}" == 'Posix' ]]; then rm -rf build-${Platform}; mkdir -p build-${Platform}; fi
+  - if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; meson -D Platform=${Platform} ..; fi
+
+  # Run the test from the current build directory
+  - cd build-${Platform}; ninja run-test-putchar_dbg
