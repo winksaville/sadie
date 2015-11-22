@@ -6,4 +6,4 @@
 	url = https://github.com/winksaville/vendor-install-tools.git
 [submodule "circleci-matrix"]
 	path = circleci-matrix
-	url = git@github.com:winksaville/circleci-matrix.git
+	url = https://github.com/winksaville/circleci-matrix.git
