@@ -1,0 +1,8 @@
+env:
+  - Platform=VersatilePB
+  - Platform=Posix
+
+command:
+  - if [[ "${Platform}" == "VersatilePB" ]]; then meson -D Platform=VersatilePB --cross-file ../meson.cross.file.arm-eabi.txt --buildtype plain ..; fi
+  - if [[ "${Platform}" == 'Posix' ]]; then meson -D Platform=Posix --cross-file ../meson.cross.file.gcc-5.txt ..; fi
+  - ninja run-test-putchar_dbg

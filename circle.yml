@@ -1,0 +1,43 @@
+machine:
+  environment:
+    INSTALL_PREFIX_DIR_HOME_REL: ~/opt
+    INSTALL_PREFIX_DIR: ${HOME}/opt
+    INSTALL_PREFIX_BIN_DIR: ${INSTALL_PREFIX_DIR}/bin
+    PATH: ${INSTALL_PREFIX_BIN_DIR}:${PATH}
+
+  pre:
+    # realpath needed by test.sh
+    - sudo apt-get install realpath
+
+    # We need gcc/g++ 5 because options -Wpednatic and -std
+    # are not in older compilers and they generate unknown
+    # command line option errors. The update-alternatives
+    # makes the compilers the default.
+    #- sudo apt-get update; sudo apt-get install gcc-5; sudo apt-get install g++-5
+    #- sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 100
+    #- sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 100
+
+    # Try 4.9 to see if its upto date enough to compile our code.
+    - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 100
+    - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 100
+
+checkout:
+  post:
+    # Update the submodules
+    - git submodule sync --recursive
+    - git submodule update --recursive --init
+
+dependencies:
+  cache_directories:
+    #- ${INSTALL_PREFIX_DIR_HOME_REL} # This doesn't work.
+    - ~/opt
+
+  pre:
+    # Install the tools we need
+    - vendor-install-tools/install.py meson --installPrefixDir=${INSTALL_PREFIX_DIR}
+    - vendor-install-tools/install.py ninja --installPrefixDir=${INSTALL_PREFIX_DIR}
+
+test:
+  override:
+    - circleci-matrix/process-matrix platform-matrix.yml
+        parallel: true
