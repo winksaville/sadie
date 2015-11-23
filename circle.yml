@@ -2,8 +2,7 @@ machine:
   environment:
     INSTALL_PREFIX_DIR_HOME_REL: ~/opt
     INSTALL_PREFIX_DIR: ${HOME}/opt
-    INSTALL_PREFIX_BIN_DIR: ${INSTALL_PREFIX_DIR}/bin
-    PATH: ${INSTALL_PREFIX_BIN_DIR}:${PATH}
+    PATH: ${INSTALL_PREFIX_DIR}/bin:${INSTALL_PREFIX_DIR}/opt/bin:${PATH}
 
   #python:
   #  version: 3.5.0
@@ -46,7 +45,6 @@ dependencies:
 
   pre:
     # Install the tools we need
-    - pyenv global 3.5.0
     - vendor-install-tools/install.py meson --installPrefixDir=${INSTALL_PREFIX_DIR}
     - vendor-install-tools/install.py ninja --installPrefixDir=${INSTALL_PREFIX_DIR}
     - vendor-install-tools/install.py binutils-arm-eabi --installPrefixDir=${INSTALL_PREFIX_DIR}
