@@ -5,8 +5,8 @@ machine:
     INSTALL_PREFIX_BIN_DIR: ${INSTALL_PREFIX_DIR}/bin
     PATH: ${INSTALL_PREFIX_BIN_DIR}:${PATH}
 
-  python:
-    version: 3.5.0
+  #python:
+  #  version: 3.5.0
 
   pre:
     # Needed by test.sh
@@ -46,11 +46,14 @@ dependencies:
 
   pre:
     # Install the tools we need
+    - pyenv global 3.5.0
     - vendor-install-tools/install.py meson --installPrefixDir=${INSTALL_PREFIX_DIR}
     - vendor-install-tools/install.py ninja --installPrefixDir=${INSTALL_PREFIX_DIR}
     - vendor-install-tools/install.py binutils-arm-eabi --installPrefixDir=${INSTALL_PREFIX_DIR}
     - vendor-install-tools/install.py gcc-arm-eabi --installPrefixDir=${INSTALL_PREFIX_DIR}
+    - pyenv global 2.7.9
     - vendor-install-tools/install.py qemu-system-arm --installPrefixDir=${INSTALL_PREFIX_DIR}
+    - pyenv global 3.5.0
 
 test:
   override:
