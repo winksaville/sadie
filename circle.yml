@@ -6,7 +6,7 @@ machine:
     PATH: ${INSTALL_PREFIX_BIN_DIR}:${PATH}
 
   python:
-    version: 3.5
+    version: 3.5.0
 
   pre:
     # Needed by test.sh
