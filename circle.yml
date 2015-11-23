@@ -5,6 +5,9 @@ machine:
     INSTALL_PREFIX_BIN_DIR: ${INSTALL_PREFIX_DIR}/bin
     PATH: ${INSTALL_PREFIX_BIN_DIR}:${PATH}
 
+  python:
+    version: 3.5
+
   pre:
     # Needed by test.sh
     - sudo apt-get install realpath
