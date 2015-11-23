@@ -44,6 +44,9 @@ dependencies:
     - ~/opt
 
   pre:
+    # Default to python 3.5.0, needed because subprocess.run is used in vendor-install-tools
+    - pyenv global 3.5.0
+
     # Install the tools we need
     - vendor-install-tools/install.py meson --installPrefixDir=${INSTALL_PREFIX_DIR}
     - vendor-install-tools/install.py ninja --installPrefixDir=${INSTALL_PREFIX_DIR}
