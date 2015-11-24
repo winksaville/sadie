@@ -13,3 +13,4 @@
 # limitations under the license.
 
 subdir('test-ac_putchar')
+subdir('test-ac_string')

@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_ARM_32_AC_INTTYPES_H
-#define SADIE_ARM_32_AC_INTTYPES_H
+#include <ac_string.h>
 
-#include <generic/incs/ac_inttypes_ll64.h>
-#include <generic/incs/ac_32bit.h>
-#include <generic/incs/ac_common.h>
-
-#endif
+/**
+ * Return the length of the string in bytes.
+ */
+ac_size_t ac_strlen(const char *str) {
+    int result = 0;
+    if (str != AC_NULL) {
+        const char *zero = str;
+        while (*zero != 0) {
+            zero += 1;
+        }
+        result = zero - str;
+    }
+    return result;
+}

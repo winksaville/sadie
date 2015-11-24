@@ -15,11 +15,12 @@
  */
 
 /**
- * Defines uPtr for 64 bit address machines
+ * Defines uPtr for 32 bit address machines
  */
-#ifndef SADIE_GENERIC_AC_UPTR64_H
-#define SADIE_GENERIC_AC_UPTR64_H
+#ifndef SADIE_GENERIC_AC_UPTR32_H
+#define SADIE_GENERIC_AC_UPTR32_H
 
-typedef ac_u64 ac_uPtr;
+typedef ac_u32 ac_uPtr;
+typedef ac_s32 ac_size_t;
 
 #endif

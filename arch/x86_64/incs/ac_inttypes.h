@@ -18,6 +18,7 @@
 #define SADIE_X86_64_AC_INTTYPES_H
 
 #include <generic/incs/ac_inttypes_ll64.h>
-#include <generic/incs/ac_uPtr64.h>
+#include <generic/incs/ac_64bits.h>
+#include <generic/incs/ac_common.h>
 
 #endif

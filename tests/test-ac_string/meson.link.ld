@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_ARM_32_AC_INTTYPES_H
-#define SADIE_ARM_32_AC_INTTYPES_H
-
-#include <generic/incs/ac_inttypes_ll64.h>
-#include <generic/incs/ac_32bit.h>
-#include <generic/incs/ac_common.h>
-
-#endif
+ENTRY(_Reset)
+SECTIONS
+{
+  . = 0x10000;
+  .startup : { *( .startup ) }
+  . = . + 0;
+  .text : { *(.text*) }
+  .data : { *(.data) }
+  .bss : { *(.bss COMMON) }
+  . = ALIGN(8);
+  . = . + 0x1000; /* 4kB stack */
+  stack_top = .;
+}

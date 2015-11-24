@@ -16,3 +16,5 @@
 
 libsIncDirs = include_directories('incs')
 incDirs += [libsIncDirs]
+
+subdir('ac_string')

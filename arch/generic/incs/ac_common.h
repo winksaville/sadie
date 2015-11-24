@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_ARM_32_AC_INTTYPES_H
-#define SADIE_ARM_32_AC_INTTYPES_H
+#ifndef SADIE_GENERIC_AC_COMMON_H
+#define SADIE_GENERIC_AC_COMMON_H
 
-#include <generic/incs/ac_inttypes_ll64.h>
-#include <generic/incs/ac_32bit.h>
-#include <generic/incs/ac_common.h>
+#define AC_NULL ((void*)0)
 
 #endif

@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_ARM_32_AC_INTTYPES_H
-#define SADIE_ARM_32_AC_INTTYPES_H
+#ifndef SADIE_LIBS_AC_STRING_INCS_AC_STRING_H
+#define SADIE_LIBS_AC_STRING_INCS_AC_STRING_H
 
-#include <generic/incs/ac_inttypes_ll64.h>
-#include <generic/incs/ac_32bit.h>
-#include <generic/incs/ac_common.h>
+#include <ac_inttypes.h>
+
+ac_size_t ac_strncmp(const char *str1, const char *str2, ac_size_t num);
+
+ac_size_t ac_strlen(const char *str);
 
 #endif

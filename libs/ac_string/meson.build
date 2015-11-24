@@ -12,31 +12,11 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-project('sadie', ['c'])
+runtimeIncDirs += include_directories(
+  '@0@/incs'.format(meson.current_source_dir())
+)
 
-pkgconfig_gen(
-  version : '0.0.1',
-  name : 'sadie',
-  filebase : 'sadie',
-  description : 'Runtime for asynchronous components')
-
-# Initialize some globals
-compilerArgs = ['-std=c11', '-O2', '-g']
-linkArgs = []
-linkDeps = []
-srcFiles = []
-incDirs = []
-
-# Get options
-Platform = get_option('Platform')
-
-if Platform == 'VersatilePB'
-  subdir('platform/VersatilePB')
-endif
-
-if Platform == 'Posix'
-  subdir('platform/Posix')
-endif
-
-# tests
-subdir('tests')
+runtimeSrcs += [
+  '@0@/srcs/ac_strlen.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_strncmp.c'.format(meson.current_source_dir()),
+]
