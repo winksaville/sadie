@@ -2,12 +2,12 @@
 
 An experimental runtime based on asychronous components
 
-Currently it run on Posix and qemu-system-arm with -M versatilepb.
-And it only outputs 'Hi' to the UART and then shuts down.
+Currently it runs on Posix and qemu-system-arm with -M versatilepb
+and only outputs 'Hi' to the "UART" and then exits.
 
 License
 ---
-All files unless otherwise indicated are licensed under the
+All files, unless otherwise indicated, are licensed under the
 [Apache 2.0 license](http://www.apache.org/licenses/).
 That and any other licenses are available under the LICENSES directory.
 
@@ -18,6 +18,8 @@ Prerequesites
 * [Gcc](https://gcc.gnu.org/) Tested with 5.2
 * [qemu](http://wiki.qemu.org/Main_Page) Tested with 2.4.0.1
 
+Sources
+---
 Get the sources for this project from github.
 NOTE: this git repo uses submodules so use `git clone --recursive`
 ```
