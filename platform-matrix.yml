@@ -13,4 +13,4 @@ command:
   - if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; meson -D Platform=${Platform} ..; fi
 
   # Run the test from the current build directory
-  - cd build-${Platform}; ninja run-test-putchar_dbg
+  - cd build-${Platform}; ninja run-test-ac_putchar

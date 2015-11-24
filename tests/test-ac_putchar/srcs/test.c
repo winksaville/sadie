@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include <ac_putchar_dbg.h>
+#include <ac_putchar.h>
 
 int main(void) {
-  ac_putchar_dbg('H');
-  ac_putchar_dbg('i');
-  ac_putchar_dbg('\n');
+  ac_putchar('H');
+  ac_putchar('i');
+  ac_putchar('\n');
 
   return 0;
 }

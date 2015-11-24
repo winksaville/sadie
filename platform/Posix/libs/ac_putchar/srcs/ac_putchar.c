@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_LIBS_AC_PUTCHAR_DBG_H
-#define SADIE_LIBS_AC_PUTCHAR_DBG_H
+#include <ac_putchar.h>
 
-#include <ac_inttypes.h>
+#include <stdio.h>
 
-void ac_putchar_dbg(ac_u8 ch);
-
-#endif
+void ac_putchar(ac_u8 ch) {
+  putchar(ch);
+}

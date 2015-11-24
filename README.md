@@ -52,7 +52,7 @@ ninja
 Run either of them, cd to the directory and:
 ---
 ```
-ninja run-test-putchar_dbg
+ninja run-test-ac_putchar
 ```
 Testing
 ---

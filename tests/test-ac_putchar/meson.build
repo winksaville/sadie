@@ -35,7 +35,7 @@ if Platform == 'VersatilePB'
       '@0@/test.bin'.format(meson.current_build_dir())],
     depends : [testit])
 
-  run_target('run-test-putchar_dbg',
+  run_target('run-test-ac_putchar',
     'qemu-system-arm', '-M', 'versatilepb',
     '-m', '128M', '-nographic', '-no-reboot', '-kernel', testbin)
 endif
@@ -51,5 +51,5 @@ if Platform == 'Posix'
     dependencies : [libruntime_dep],
   )
 
-  run_target('run-test-putchar_dbg', testit)
+  run_target('run-test-ac_putchar', testit)
 endif

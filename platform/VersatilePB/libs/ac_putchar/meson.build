@@ -17,5 +17,5 @@ runtimeIncDirs += include_directories(
 )
 
 runtimeSrcs += [
-  '@0@/srcs/ac_putchar_dbg.c'.format(meson.current_source_dir())
+  '@0@/srcs/ac_putchar.c'.format(meson.current_source_dir())
 ]

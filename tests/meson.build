@@ -12,4 +12,4 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-subdir('test-putchar_dbg')
+subdir('test-ac_putchar')

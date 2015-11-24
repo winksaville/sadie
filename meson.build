@@ -12,13 +12,13 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-project('xx1-kernel', ['c'])
+project('sadie', ['c'])
 
 pkgconfig_gen(
   version : '0.0.1',
-  name : 'xx1-kernel',
-  filebase : 'xx1-kernel',
-  description : 'Experimental Kernel')
+  name : 'sadie',
+  filebase : 'sadie',
+  description : 'Runtime for asynchronous components')
 
 # Initialize some globals
 compilerArgs = ['-std=c11', '-O2', '-g']
