@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef XX1_KERNEL_ARM_32_INTTYPES_H
-#define XX1_KERNEL_ARM_32_INTTYPES_H
+#ifndef SADIE_ARM_32_AC_INTTYPES_H
+#define SADIE_ARM_32_AC_INTTYPES_H
 
-#include <generic/incs/inttypes_ll64.h>
-#include <generic/incs/uPtr32.h>
+#include <generic/incs/ac_inttypes_ll64.h>
+#include <generic/incs/ac_uPtr32.h>
 
 #endif
