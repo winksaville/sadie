@@ -14,12 +14,12 @@
  * limitations under the license.
  */
 
-#include "poweroff.h"
-#include "inttypes.h"
+#include <ac_poweroff.h>
+#include <ac_inttypes.h>
 
-void poweroff(void) {
-  volatile u32* pUnlockResetReg = (u32*)0x10000020;
-  volatile u32* pResetReg = (u32*)0x10000040;
+void ac_poweroff(void) {
+  volatile ac_u32* pUnlockResetReg = (ac_u32*)0x10000020;
+  volatile ac_u32* pResetReg = (ac_u32*)0x10000040;
 
   // If qemu is executed with -no-reboot option then
   // resetting the board will cause qemu to exit

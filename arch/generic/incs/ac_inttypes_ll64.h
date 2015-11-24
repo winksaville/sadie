@@ -14,10 +14,20 @@
  * limitations under the License.
  */
 
-#include "putchar_dbg.h"
+/**
+ * Defines s8 ... u64 assuming sizeof long long is 64 bits
+ */
+#ifndef SADIE_GENERIC_AC_INTTYPES_ll64_H
+#define SADIE_GENERIC_AC_INTTYPES_ll64_H
 
-#include <stdio.h>
+typedef signed char ac_s8;
+typedef signed short ac_s16;
+typedef signed int ac_s32;
+typedef signed long long ac_s64;
 
-void putchar_dbg(u8 ch) {
-  putchar(ch);
-}
+typedef unsigned char ac_u8;
+typedef unsigned short ac_u16;
+typedef unsigned int ac_u32;
+typedef unsigned long long ac_u64;
+
+#endif

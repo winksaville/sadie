@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef XX1_KERNEL_PLATFORM_VERSATILEPB_H
-#define XX1_KERNEL_PLATFORM_VERSATILEPB_H
+#ifndef SADIE_PLATFORM_VERSATILEPB_H
+#define SADIE_PLATFORM_VERSATILEPB_H
 
-void poweroff(void);
+void ac_poweroff(void);
 
 #endif

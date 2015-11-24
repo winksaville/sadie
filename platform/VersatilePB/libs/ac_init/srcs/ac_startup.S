@@ -40,7 +40,7 @@ _Reset:
   bl  main
 
   // Power off device
-  bl  poweroff
+  bl  ac_poweroff
 
   // Loop endlessly if we get here
   b .

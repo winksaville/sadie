@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef XX1_KERNEL_X86_64_INTTYPES_H
-#define XX1_KERNEL_X86_64_INTTYPES_H
+#include <ac_putchar_dbg.h>
 
-#include <generic/incs/inttypes_ll64.h>
-#include <generic/incs/uPtr64.h>
+#include <stdio.h>
 
-#endif
+void ac_putchar_dbg(ac_u8 ch) {
+  putchar(ch);
+}

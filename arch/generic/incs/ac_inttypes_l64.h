@@ -15,11 +15,19 @@
  */
 
 /**
- * Defines uPtr for 64 bit address machines
+ * Defines s8 ... u64 assuming sizeof long is 64 bits
  */
-#ifndef XX1_KERNEL_GENERIC_UPTR64_H
-#define XX1_KERNEL_GENERIC_UPTR64_H
+#ifndef SADIE_GENERIC_AC_INTTYPES_l64_H
+#define SADIE_GENERIC_AC_INTTYPES_l64_H
 
-typedef u64 uPtr;
+typedef signed char ac_s8;
+typedef signed short ac_s16;
+typedef signed int ac_s32;
+typedef signed long ac_s64;
+
+typedef unsigned char ac_u8;
+typedef unsigned short ac_u16;
+typedef unsigned int ac_u32;
+typedef unsigned long ac_u64;
 
 #endif

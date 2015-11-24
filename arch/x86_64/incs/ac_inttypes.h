@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-/**
- * Defines uPtr for 32 bit address machines
- */
-#ifndef XX1_KERNEL_GENERIC_UPTR32_H
-#define XX1_KERNEL_GENERIC_UPTR32_H
+#ifndef SADIE_X86_64_AC_INTTYPES_H
+#define SADIE_X86_64_AC_INTTYPES_H
 
-typedef u32 uPtr;
+#include <generic/incs/ac_inttypes_ll64.h>
+#include <generic/incs/ac_uPtr64.h>
 
 #endif

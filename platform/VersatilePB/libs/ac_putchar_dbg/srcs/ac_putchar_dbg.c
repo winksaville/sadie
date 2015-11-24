@@ -16,10 +16,8 @@
 
 #include <ac_putchar_dbg.h>
 
-int main(void) {
-  ac_putchar_dbg('H');
-  ac_putchar_dbg('i');
-  ac_putchar_dbg('\n');
+volatile ac_u32* const pUart = (ac_u32*)0x101f1000;
 
-  return 0;
+void ac_putchar_dbg(ac_u8 ch) {
+  *pUart = (ac_u32)ch;
 }

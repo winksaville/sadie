@@ -18,7 +18,7 @@
 runtimeIncDirs = []
 runtimeSrcs = []
 
-subdir('putchar_dbg')
+subdir('ac_putchar_dbg')
 
 runtimeIncDirs += archIncDirs
 

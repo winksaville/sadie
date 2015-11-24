@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-#include "putchar_dbg.h"
+/**
+ * Defines uPtr for 32 bit address machines
+ */
+#ifndef SADIE_GENERIC_AC_UPTR32_H
+#define SADIE_GENERIC_AC_UPTR32_H
 
-volatile u32* const pUart = (u32*)0x101f1000;
+typedef ac_u32 ac_uPtr;
 
-void putchar_dbg(u8 ch) {
-  *pUart = (u32)ch;
-}
+#endif

@@ -14,20 +14,11 @@
  * limitations under the License.
  */
 
-/**
- * Defines s8 ... u64 assuming sizeof long long is 64 bits
- */
-#ifndef XX1_KERNEL_GENERIC_INTTYPES_ll64_H
-#define XX1_KERNEL_GENERIC_INTTYPES_ll64_H
+#ifndef SADIE_LIBS_AC_PUTCHAR_DBG_H
+#define SADIE_LIBS_AC_PUTCHAR_DBG_H
 
-typedef signed char s8;
-typedef signed short s16;
-typedef signed int s32;
-typedef signed long long s64;
+#include <ac_inttypes.h>
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned long long u64;
+void ac_putchar_dbg(ac_u8 ch);
 
 #endif
