@@ -46,7 +46,7 @@ cd ~/prgs/sadie/build-Posix
 meson -D Platform=Posix ..
 ninja
 ```
-Run either of them cd to the directory and:
+Run either of them, cd to the directory and:
 ---
 ```
 ninja run-test-putchar_dbg
