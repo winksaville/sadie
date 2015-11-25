@@ -18,6 +18,10 @@
 runtimeIncDirs = []
 runtimeSrcs = []
 
+# Add general runtime libs
+subdir('@0@/libs'.format(meson.source_root()))
+
+# Add out platform specific libs
 subdir('ac_init')
 subdir('ac_putchar')
 

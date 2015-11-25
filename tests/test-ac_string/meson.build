@@ -39,7 +39,7 @@ if Platform == 'VersatilePB'
 
   run_target('run-test-ac_string',
     'qemu-system-arm', '-M', 'versatilepb',
-    '-m', '128M', '-nographic', '-no-reboot', '-kernel', testbin)
+    '-m', '128M', '-nographic', '-no-reboot', '-kernel', test_ac_string_bin)
 endif
 
 

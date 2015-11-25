@@ -18,8 +18,10 @@ if Platform == 'VersatilePB'
   linkArgs += ['-Wl,-T,@0@/@1@'.format(meson.current_source_dir(), linkfile)]
   linkDeps += [linkfile]
 
-  # Create testit executable
-  testit = executable( 'testit', srcFiles,
+  incDirs += runtimeIncDirs
+
+  # Create test_ac_putchar executable
+  test_ac_putchar = executable( 'test_ac_putchar', srcFiles,
     include_directories : incDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
@@ -27,29 +29,31 @@ if Platform == 'VersatilePB'
     dependencies : [libruntime_dep],
   )
 
-  # Create test.bin suitable for executing with qemu
-  testbin = custom_target( 'testbin',
-    output : ['test.bin'],
+  # Create test_ac_putchar.bin suitable for executing with qemu
+  test_ac_putchar_bin = custom_target( 'test_ac_putchar_bin',
+    output : ['test_ac_putchar.bin'],
     command : ['arm-eabi-objcopy', '-O', 'binary',
-      '@0@/testit'.format(meson.current_build_dir()),
-      '@0@/test.bin'.format(meson.current_build_dir())],
-    depends : [testit])
+      '@0@/test_ac_putchar'.format(meson.current_build_dir()),
+      '@0@/test_ac_putchar.bin'.format(meson.current_build_dir())],
+    depends : [test_ac_putchar])
 
-  run_target('run-test_ac_putchar',
+  run_target('run-test-ac_putchar',
     'qemu-system-arm', '-M', 'versatilepb',
-    '-m', '128M', '-nographic', '-no-reboot', '-kernel', testbin)
+    '-m', '128M', '-nographic', '-no-reboot', '-kernel', test_ac_putchar_bin)
 endif
 
 
 if Platform == 'Posix'
   srcFiles += ['srcs/test.c']
 
-  # Create testit executable
-  testit = executable( 'testit', srcFiles,
+  incDirs += runtimeIncDirs
+
+  # Create test_ac_putchar executable
+  test_ac_putchar = executable( 'test_ac_putchar', srcFiles,
     include_directories : incDirs,
     c_args : compilerArgs,
     dependencies : [libruntime_dep],
   )
 
-  run_target('run-test-ac_putchar', testit)
+  run_target('run-test-ac_putchar', test_ac_putchar)
 endif

@@ -18,7 +18,7 @@
 #define SADIE_ARM_32_AC_INTTYPES_H
 
 #include <generic/incs/ac_inttypes_ll64.h>
-#include <generic/incs/ac_32bit.h>
+#include <generic/incs/ac_32bits.h>
 #include <generic/incs/ac_common.h>
 
 #endif
