@@ -37,9 +37,8 @@ if Platform == 'VersatilePB'
       '@0@/test_ac_putchar.bin'.format(meson.current_build_dir())],
     depends : [test_ac_putchar])
 
-  run_target('run-test-ac_putchar',
-    'qemu-system-arm', '-M', 'versatilepb',
-    '-m', '128M', '-nographic', '-no-reboot', '-kernel', test_ac_putchar_bin)
+  run_target('run-test-ac_putchar', '@0@/tools/qemu-system-arm.runner.sh'.format(meson.source_root()),
+              'versatilepb', test_ac_putchar_bin)
 endif
 
 
