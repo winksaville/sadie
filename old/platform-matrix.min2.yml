@@ -1,0 +1,6 @@
+env:
+  - Platform=VersatilePB
+command:
+  - ninja run-test-ac_string
+  - ninja run-test-ac_putchar
+

@@ -1,0 +1,5 @@
+env:
+  - Platform=VersatilePB
+command:
+  - cd build-${Platform}; qemu-system-arm -M versatilepb -m 128M -nographic -no-reboot -kernel tests/test-ac_string/test_ac_string.bin
+  - echo "some asdfadf  asdfadfas"; cd build-${Platform}; ninja -j 1 run-test-ac_putchar

@@ -1,0 +1,5 @@
+env:
+Platform=VersatilePB
+command:
+qemu-system-arm -M versatilepb -m 128M -nographic -no-reboot -kernel tests/test-ac_string/test_ac_string.bin </dev/null
+qemu-system-arm -M versatilepb -m 128M -nographic -no-reboot -kernel tests/test-ac_string/test_ac_string.bin </dev/null
