@@ -16,4 +16,5 @@ command:
   - cd build-${Platform}; ninja
   - cd build-${Platform}; ninja run-test-ac_string
   - cd build-${Platform}; ninja run-test-ac_putchar
+  - cd build-${Platform}; ninja run-test-ac_arg
 
