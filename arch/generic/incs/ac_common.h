@@ -19,4 +19,8 @@
 
 #define AC_NULL ((void*)0)
 
+typedef ac_u8 ac_bool;
+#define AC_FALSE (0)
+#define AC_TRUE (1)
+
 #endif

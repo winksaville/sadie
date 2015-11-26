@@ -20,7 +20,7 @@
 #ifndef SADIE_GENERIC_AC_64BITS_H
 #define SADIE_GENERIC_AC_64BITS_H
 
-typedef ac_u64 ac_uPtr;
+typedef ac_u64 ac_uptr;
 typedef ac_s64 ac_size_t;
 
 #endif

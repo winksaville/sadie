@@ -20,7 +20,7 @@
 #ifndef SADIE_GENERIC_AC_UPTR32_H
 #define SADIE_GENERIC_AC_UPTR32_H
 
-typedef ac_u32 ac_uPtr;
+typedef ac_u32 ac_uptr;
 typedef ac_s32 ac_size_t;
 
 #endif
