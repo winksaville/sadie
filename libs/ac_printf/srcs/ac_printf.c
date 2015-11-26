@@ -63,7 +63,7 @@ static ac_u32 write_u32(
         ac_writer* writer, ac_u32 val, ac_bool radix16Leading0, ac_u32 radix) {
     static const char val_to_char[] = "0123456789abcdef";
     ac_u32 count = 0;
-    char result[256];
+    char result[65];
 
     // Validate radix
     if ((radix <= 1) || (radix > sizeof(val_to_char))) {
@@ -141,7 +141,7 @@ static ac_u32 formatter(ac_writer* writer, const char* format, ac_va_list args) 
     ac_u32 count = 0;
 
     // Check inputs
-    if (format == AC_NULL || args == AC_NULL || writer == AC_NULL) {
+    if (IS_AC_NULL(writer) || IS_AC_NULL(formatter)) {
         goto done;
     }
 

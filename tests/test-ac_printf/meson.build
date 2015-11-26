@@ -15,7 +15,7 @@
 if Platform == 'VersatilePB'
   srcFiles += ['srcs/test.c']
   linkfile = 'meson.link.ld'
-  linkArgs += ['-Wl,-T,@0@/@1@'.format(meson.current_source_dir(), linkfile)]
+  linkArgs += ['-Wl,-lgcc,-T,@0@/@1@'.format(meson.current_source_dir(), linkfile)]
   linkDeps += [linkfile]
 
   incDirs += runtimeIncDirs

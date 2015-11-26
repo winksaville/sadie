@@ -137,8 +137,10 @@ ac_bool test_printf(void) {
 
     failure |= TEST_PRINTING("%s", "string", "string");
     failure |= TEST_PRINTING("%b", 0, "0");
-    failure |= TEST_PRINTING("%b", 0x87654321, "10000111011001010100001100100001");
-    failure |= TEST_PRINTING("%b", 0xFFFFFFFF, "11111111111111111111111111111111");
+    failure |= TEST_PRINTING("%b", 0x87654321,
+        "10000111011001010100001100100001");
+    failure |= TEST_PRINTING("%b", 0xFFFFFFFF,
+        "11111111111111111111111111111111");
 
     failure |= TEST_PRINTING("%d", 1, "1");
     failure |= TEST_PRINTING("%d", 0x7FFFFFFF, "2147483647");

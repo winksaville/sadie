@@ -19,6 +19,9 @@
 
 #define AC_NULL ((void*)0)
 
+#define IS_AC_NULL(ptr) (((ac_uptr)ptr) == ((ac_uptr)AC_NULL))
+#define IS_NOT_AC_NULL(ptr) (((ac_uptr)ptr) != ((ac_uptr)AC_NULL))
+
 typedef ac_u8 ac_bool;
 #define AC_FALSE (0)
 #define AC_TRUE (1)

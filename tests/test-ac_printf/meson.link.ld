@@ -24,6 +24,6 @@ SECTIONS
   .data : { *(.data) }
   .bss : { *(.bss COMMON) }
   . = ALIGN(8);
-  . = . + 0x1000; /* 4kB stack */
+  . = . + 0x10000; /* 64kB stack */
   stack_top = .;
 }
