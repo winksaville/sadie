@@ -14,7 +14,9 @@ command:
 
   # Run the tests from the current build directory
   - cd build-${Platform}; ninja
-  - cd build-${Platform}; ninja run-test-ac_string
   - cd build-${Platform}; ninja run-test-ac_putchar
+  - cd build-${Platform}; ninja run-test-ac_string
   - cd build-${Platform}; ninja run-test-ac_arg
+  - cd build-${Platform}; ninja run-test-ac_printf
+  - cd build-${Platform}; ninja run-test-ac_assert
 

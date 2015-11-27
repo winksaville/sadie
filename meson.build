@@ -25,7 +25,7 @@ compilerArgs = ['-std=c11', '-O2', '-g']
 linkArgs = []
 linkDeps = []
 srcFiles = []
-incDirs = []
+runtimeIncDirs = []
 
 # Get options
 Platform = get_option('Platform')

@@ -12,9 +12,7 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-runtimeIncDirs += include_directories(
-  '@0@/libs/incs'.format(meson.source_root())
-)
+# The include for this is in source_root()/libs/incs which is already included
 
 runtimeSrcs += [
   '@0@/srcs/ac_putchar.c'.format(meson.current_source_dir())

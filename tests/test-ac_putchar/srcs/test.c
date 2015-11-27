@@ -17,8 +17,8 @@
 #include <ac_putchar.h>
 
 int main(void) {
-  ac_putchar('H');
-  ac_putchar('i');
+  ac_putchar('O');
+  ac_putchar('K');
   ac_putchar('\n');
 
   return 0;

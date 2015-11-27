@@ -18,11 +18,9 @@ if Platform == 'VersatilePB'
   linkArgs += ['-Wl,-T,@0@/@1@'.format(meson.current_source_dir(), linkfile)]
   linkDeps += [linkfile]
 
-  incDirs += runtimeIncDirs
-
   # Create test-ac_string executable
   test_ac_string = executable( 'test_ac_string', srcFiles,
-    include_directories : incDirs,
+    include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
     link_depends : linkDeps,
@@ -45,11 +43,9 @@ endif
 if Platform == 'Posix'
   srcFiles += ['srcs/test.c']
 
-  incDirs += runtimeIncDirs
-
   # Create testit executable
   test_ac_string = executable( 'test_ac_string', srcFiles,
-    include_directories : incDirs,
+    include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     dependencies : [libruntime_dep],
   )

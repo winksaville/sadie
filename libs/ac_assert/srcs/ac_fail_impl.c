@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_LIBS_INCS_AC_PUTCHAR_H
-#define SADIE_LIBS_INCS_AC_PUTCHAR_H
+#include <ac_stop.h>
+#include <ac_printf.h>
 
-#include <ac_inttypes.h>
-
-void ac_putchar(ac_u8 ch);
-
-#endif
+/**
+ * Invoked by macro ac_assert in ac_assert.h
+ */
+void ac_fail_impl(const char* assertion, const char* file, int line, const char* function) {
+    ac_printf("Assert/Failure: '%s' at %s:%u in function %s\n",
+       assertion, file, line, function);
+    ac_stop();
+}

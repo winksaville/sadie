@@ -14,8 +14,9 @@
 
 
 
-libsIncDirs = include_directories('incs')
-incDirs += [libsIncDirs]
+#libsIncDirs = include_directories('incs')
+runtimeIncDirs += [include_directories('incs')]
 
-subdir('ac_string')
+subdir('ac_assert')
 subdir('ac_printf')
+subdir('ac_string')

@@ -13,12 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef SADIE_LIBS_INCS_AC_DEBUG_ASSERT_H
+#define SADIE_LIBS_INCS_AC_DEBUG_ASSERT_H
 
-#ifndef SADIE_LIBS_INCS_AC_PUTCHAR_H
-#define SADIE_LIBS_INCS_AC_PUTCHAR_H
+#ifdef NDEBUG
 
-#include <ac_inttypes.h>
+/** NDEBUG is defined do nothing */
+#define ac_debug_assert(expr) ((void)(0))
 
-void ac_putchar(ac_u8 ch);
+#define ac_debug_static_assert(expr) ((void)(0))
+
+#else // NDEBUG is not defined
+
+#include <ac_assert.h>
+
+/**
+ * NDEBUG is not defined invoke ac_assert(expr).
+ */
+#define ac_debug_assert(expr) ac_assert(expr)
+
+#define ac_debug_static assert(expr) ac_static_assert(expr)
+
+#endif
 
 #endif

@@ -204,9 +204,11 @@ ac_bool test_printf(void) {
 int main(void) {
     if (test_printf()) {
         // Failed
+        ac_printf("ERR\n");
         return 1;
     } else {
         // Succeeded
+        ac_printf("OK\n");
         return 0;
     }
 }

@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_LIBS_INCS_AC_PUTCHAR_H
-#define SADIE_LIBS_INCS_AC_PUTCHAR_H
+#ifndef SADIE_PLATFORM_VERSATILEPB_LIBS_AC_STOP_H
+#define SADIE_PLATFORM_VERSATILEPB_LIBS_aC_STOP_H
 
-#include <ac_inttypes.h>
-
-void ac_putchar(ac_u8 ch);
+void ac_stop(void);
 
 #endif

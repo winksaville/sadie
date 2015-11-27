@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_LIBS_INCS_AC_PUTCHAR_H
-#define SADIE_LIBS_INCS_AC_PUTCHAR_H
-
-#include <ac_inttypes.h>
-
-void ac_putchar(ac_u8 ch);
-
-#endif
+ENTRY(_Reset)
+SECTIONS
+{
+  . = 0x10000;
+  .startup : { *( .startup ) }
+  . = . + 0;
+  .text : { *(.text*) }
+  .data : { *(.data) }
+  .bss : { *(.bss COMMON) }
+  . = ALIGN(8);
+  . = . + 0x10000; /* 64kB stack */
+  stack_top = .;
+}
