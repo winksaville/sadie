@@ -12,12 +12,11 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
+runtimeIncDirs += include_directories(
+  '@0@/incs'.format(meson.current_source_dir())
+)
 
-
-#libsIncDirs = include_directories('incs')
-runtimeIncDirs += [include_directories('incs')]
-
-subdir('ac_assert')
-subdir('ac_mpscfifo')
-subdir('ac_printf')
-subdir('ac_string')
+runtimeSrcs += [
+  '@0@/srcs/ac_mpscfifo.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_mpscfifo_dbg.c'.format(meson.current_source_dir()),
+]
