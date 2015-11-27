@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define NDEBUG
+//#define NDEBUG
 
 #include <ac_inttypes.h>
 #include <ac_assert.h>
@@ -25,33 +25,21 @@ volatile ac_u32 volatile0 = 0;
 
 ac_bool test_assert(void) {
     /*
-     * Manually test these compile time errors by enabling both
-     * and the compilation should fail.
-     */
-    //ac_static_assert(1 == 0, "ac_static_assert(1 == 0), should always fail");
-    //ac_static_assert(volatile0 == 0);
-
-    /*
      * Manually test these runtime errors, enable one at a time
      * and compile and run, each statement should fail.
      */
+    //ac_static_assert(1 == 0, "ac_static_assert(1 == 0), should always fail");
+    //ac_static_assert(volatile0 == 0, "ac_static_assert(volatile0 == 0), should always fail");
     //ac_fail("failing");
     //ac_assert(0 == 1);
     //ac_assert(volatile0 == 1);
-    //ac_debug_assert(1 == 2);
 
     /*
-     * Manually uncomment the statement below and in .config
-     * set CONFIG_USER_DEBUG_BUILD=y this causes NDEBUG to NOT
-     * be defined. Compile and run and you should see a runtime
-     * error.
-     *
-     * Next set CONFIG_USER_DEBUG_BUILD=n recompile and rerun.
-     * The statement will NOT fail because NDEBUG is now defined.
-     * This verifies seL4_DebugAssert compiles to a NOP when
-     * NDEBUG is defined.
+     * Manually uncomment the statements below one at a time both should fail.
+     * Next uncomment NDEBUG and retest each, this should be OK
      */
-    ac_debug_assert(volatile0 == 2);
+    //ac_debug_assert(1 == 2);
+    //ac_debug_assert(volatile0 == 2);
 
     // These should always succeed
     ac_static_assert(0 == 0, "ac_static_assert(0 == 0) should never fail");
