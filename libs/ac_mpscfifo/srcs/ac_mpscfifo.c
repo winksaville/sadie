@@ -16,11 +16,11 @@
  * you remove it from the queue. Of course the contents are
  * the same but the returned pointer will be different.
  */
+
+#include <ac_mpscfifo.h>
+
 #include <ac_assert.h>
 #include <ac_inttypes.h>
-
-#include <ac_mpscfifo_misc.h>
-#include <ac_mpscfifo.h>
 
 /**
  * @see mpscfifo.h

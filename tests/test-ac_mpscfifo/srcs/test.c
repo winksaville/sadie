@@ -15,8 +15,8 @@
  */
 
 #include <ac_inttypes.h>
+#include <ac_test.h>
 #include <ac_mpscfifo.h>
-#include <ac_mpscfifo_misc.h>
 
 
 /**
@@ -31,16 +31,17 @@ static int test_init_and_deinit_mpscfifo() {
 
   stub.cmd = -1;
 
-  ac_mpscfifo* pQ = ac_init_mpscfifo(&q, &stub);
-  error |= TEST(pQ != AC_NULL, "expecting q");
-  error |= TEST(pQ->phead == &stub, "phead not initialized");
-  error |= TEST(pQ->ptail == &stub, "ptail not initialized");
-  error |= TEST(pQ->phead->pnext == AC_NULL, "pStub->pnext not initialized");
+  ac_mpscfifo* pq = ac_init_mpscfifo(&q, &stub);
+  error |= AC_TEST(pq != AC_NULL, "expecting pointer != AC_NULL");
+  error |= AC_TEST(pq == &q, "expecting pointer == q");
+  error |= AC_TEST(pq->phead == &stub, "phead not initialized");
+  error |= AC_TEST(pq->ptail == &stub, "ptail not initialized");
+  error |= AC_TEST(pq->phead->pnext == AC_NULL, "pStub->pnext not initialized");
 
-  ac_msg *pStub = ac_deinit_mpscfifo(&q);
-  error |= TEST(pStub == &stub, "pStub not retuned");
-  error |= TEST(pQ->phead == AC_NULL, "phead not deinitialized");
-  error |= TEST(pQ->ptail == AC_NULL, "ptail not deinitialized");
+  ac_msg *pStub = ac_deinit_mpscfifo(pq);
+  error |= AC_TEST(pStub == &stub, "pStub not retuned");
+  error |= AC_TEST(pq->phead == AC_NULL, "phead not deinitialized");
+  error |= AC_TEST(pq->ptail == AC_NULL, "ptail not deinitialized");
 
   return error ? 1 : 0;
 }
@@ -59,25 +60,25 @@ static int test_add_rmv_msg() {
 
   stub.cmd = -1;
 
-  ac_mpscfifo* pQ = ac_init_mpscfifo(&q, &stub);
-  presult = ac_rmv_msg(pQ);
-  error |= TEST(presult == AC_NULL, "expecting rmv from empty queue to return AC_NULL");
+  ac_mpscfifo* pq = ac_init_mpscfifo(&q, &stub);
+  presult = ac_rmv_msg(pq);
+  error |= AC_TEST(presult == AC_NULL, "expecting rmv from empty queue to return AC_NULL");
 
   msg.cmd = 1;
-  ac_add_msg(pQ, &msg);
-  error |= TEST(pQ->phead == &msg, "phead should point at msg");
-  error |= TEST(pQ->ptail->pnext == &msg, "ptail->pnext should point at msg");
+  ac_add_msg(pq, &msg);
+  error |= AC_TEST(pq->phead == &msg, "phead should point at msg");
+  error |= AC_TEST(pq->ptail->pnext == &msg, "ptail->pnext should point at msg");
 
-  presult = ac_rmv_msg(pQ);
-  error |= TEST(presult != AC_NULL, "expecting Q is not empty");
-  error |= TEST(presult != &msg, "expecting return msg to not have original address");
-  error |= TEST(presult->cmd == 1, "expecting msg.cmd == 1");
+  presult = ac_rmv_msg(pq);
+  error |= AC_TEST(presult != AC_NULL, "expecting Q is not empty");
+  error |= AC_TEST(presult != &msg, "expecting return msg to not have original address");
+  error |= AC_TEST(presult->cmd == 1, "expecting msg.cmd == 1");
 
-  presult = ac_rmv_msg(pQ);
-  error |= TEST(presult == AC_NULL, "expecting Q is empty");
+  presult = ac_rmv_msg(pq);
+  error |= AC_TEST(presult == AC_NULL, "expecting Q is empty");
 
   presult = ac_deinit_mpscfifo(&q);
-  error |= TEST(presult == &msg, "expecting last stub to be address of msg");
+  error |= AC_TEST(presult == &msg, "expecting last stub to be address of msg");
 
   return error ? 1 : 0;
 }

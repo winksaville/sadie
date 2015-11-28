@@ -23,7 +23,7 @@
 /**
  * Test the condition and return AC_FALSE if cond is "true" else return AC_TRUE
  */
-#define TEST(cond, text) ({                                             \
+#define AC_TEST(cond, text) ({                                          \
   ac_bool result = (cond) ? AC_FALSE : AC_TRUE;                         \
   if (result) {                                                         \
     ac_printf("Error %s:%d FN %s: %s. Condition '" #cond "' failed.\n", \
