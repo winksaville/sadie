@@ -22,8 +22,24 @@
 #define IS_AC_NULL(ptr) (((ac_uptr)ptr) == ((ac_uptr)AC_NULL))
 #define IS_NOT_AC_NULL(ptr) (((ac_uptr)ptr) != ((ac_uptr)AC_NULL))
 
+/**
+ * Boolean
+ */
 typedef ac_u8 ac_bool;
+
+/**
+ * Boolean false is 0
+ */
 #define AC_FALSE (0)
+
+/**
+ * Boolean true is 1
+ */
 #define AC_TRUE (1)
+
+/**
+ * Indicate to compiler an that the unused parameter is OK
+ */
+#define AC_UNUSED(x) (void)(x)
 
 #endif
