@@ -18,8 +18,8 @@ if Platform == 'VersatilePB'
   linkArgs += ['-Wl,-lgcc,-T,@0@/@1@'.format(meson.current_source_dir(), linkfile)]
   linkDeps += [linkfile]
 
-  # Create test-ac_mpscfifio executable
-  test_ac_mpscfifio = executable( 'test_ac_mpscfifio', srcFiles,
+  # Create test-ac_mpscfifo executable
+  test_ac_mpscfifo = executable( 'test_ac_mpscfifo', srcFiles,
     include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
@@ -28,16 +28,16 @@ if Platform == 'VersatilePB'
   )
 
   # Create test.bin suitable for executing with qemu
-  test_ac_mpscfifio_bin = custom_target( 'test_ac_mpscfifio_bin',
-    output : ['test_ac_mpscfifio.bin'],
+  test_ac_mpscfifo_bin = custom_target( 'test_ac_mpscfifo_bin',
+    output : ['test_ac_mpscfifo.bin'],
     command : ['arm-eabi-objcopy', '-O', 'binary',
-      '@0@/test_ac_mpscfifio'.format(meson.current_build_dir()),
-      '@0@/test_ac_mpscfifio.bin'.format(meson.current_build_dir())],
-    depends : [test_ac_mpscfifio])
+      '@0@/test_ac_mpscfifo'.format(meson.current_build_dir()),
+      '@0@/test_ac_mpscfifo.bin'.format(meson.current_build_dir())],
+    depends : [test_ac_mpscfifo])
 
-  run_target('run-test-ac_mpscfifio',
+  run_target('run-test-ac_mpscfifo',
      '@0@/tools/qemu-system-arm.runner.sh'.format(meson.source_root()),
-     'versatilepb', test_ac_mpscfifio_bin)
+     'versatilepb', test_ac_mpscfifo_bin)
 endif
 
 
@@ -45,11 +45,11 @@ if Platform == 'Posix'
   srcFiles += ['srcs/test.c']
 
   # Create testit executable
-  test_ac_mpscfifio = executable( 'test_ac_mpscfifio', srcFiles,
+  test_ac_mpscfifo = executable( 'test_ac_mpscfifo', srcFiles,
     include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     dependencies : [libruntime_dep],
   )
 
-  run_target('run-test-ac_mpscfifio', test_ac_mpscfifio)
+  run_target('run-test-ac_mpscfifo', test_ac_mpscfifo)
 endif
