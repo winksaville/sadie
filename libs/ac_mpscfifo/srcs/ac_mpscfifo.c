@@ -25,40 +25,40 @@
 /**
  * @see mpscfifo.h
  */
-ac_mpscfifo *ac_init_mpscfifo(ac_mpscfifo *pQ, ac_msg *pStub) {
-  pStub->pNext = AC_NULL;
-  pQ->pHead = pStub;
-  pQ->pTail = pStub;
-  return pQ;
+ac_mpscfifo *ac_init_mpscfifo(ac_mpscfifo *pq, ac_msg *pStub) {
+  pStub->pnext = AC_NULL;
+  pq->phead = pStub;
+  pq->ptail = pStub;
+  return pq;
 }
 
 /**
  * @see mpscfifo.h
  */
-ac_msg *ac_deinit_mpscfifo(ac_mpscfifo *pQ) {
+ac_msg *ac_deinit_mpscfifo(ac_mpscfifo *pq) {
   // Assert that the Q empty
-  ac_assert(pQ->pTail->pNext == AC_NULL);
-  ac_assert(pQ->pTail == pQ->pHead);
+  ac_assert(pq->ptail->pnext == AC_NULL);
+  ac_assert(pq->ptail == pq->phead);
 
   // Get the stub and null head and tail
-  ac_msg *pStub = pQ->pHead;
-  pQ->pHead = AC_NULL;
-  pQ->pTail = AC_NULL;
+  ac_msg *pStub = pq->phead;
+  pq->phead = AC_NULL;
+  pq->ptail = AC_NULL;
   return pStub;
 }
 
 /**
  * @see mpscifo.h
  */
-void ac_add_msg(ac_mpscfifo *pQ, ac_msg *pMsg) {
-  ac_assert(pQ != AC_NULL);
-  if (pMsg != AC_NULL) {
-    // Be sure pMsg->pNext == AC_NULL
-    pMsg->pNext = AC_NULL;
+void ac_add_msg(ac_mpscfifo *pq, ac_msg *pmsg) {
+  ac_assert(pq != AC_NULL);
+  if (pmsg != AC_NULL) {
+    // Be sure pmsg->pnext == AC_NULL
+    pmsg->pnext = AC_NULL;
 
     // Using Builtin Clang doesn't seem to support stdatomic.h
-    ac_msg *pPrevHead = __atomic_exchange_n(&pQ->pHead, pMsg, __ATOMIC_ACQ_REL);
-    __atomic_store_n(&pPrevHead->pNext, pMsg, __ATOMIC_RELEASE);
+    ac_msg *pprev_head = __atomic_exchange_n(&pq->phead, pmsg, __ATOMIC_ACQ_REL);
+    __atomic_store_n(&pprev_head->pnext, pmsg, __ATOMIC_RELEASE);
 
     // TODO: Support "blocking" which means use condition variable
   }
@@ -67,20 +67,20 @@ void ac_add_msg(ac_mpscfifo *pQ, ac_msg *pMsg) {
 /**
  * @see mpscifo.h
  */
-ac_msg *ac_rmv_msg(ac_mpscfifo *pQ) {
-  ac_assert(pQ != AC_NULL);
-  ac_msg *pResult = pQ->pTail;
-  ac_msg *pNext = __atomic_load_n(&pResult->pNext, __ATOMIC_ACQUIRE);
-  if (pNext != AC_NULL) {
+ac_msg *ac_rmv_msg(ac_mpscfifo *pq) {
+  ac_assert(pq != AC_NULL);
+  ac_msg *presult = pq->ptail;
+  ac_msg *pnext = __atomic_load_n(&presult->pnext, __ATOMIC_ACQUIRE);
+  if (pnext != AC_NULL) {
     // TODO: Support "blocking" which means use condition variable
-    pQ->pTail = pNext;
-    pResult->pNext = AC_NULL;
-    pResult->pRspq = pNext->pRspq;
-    pResult->pExtra = pNext->pExtra;
-    pResult->cmd = pNext->cmd;
-    pResult->arg = pNext->arg;
+    pq->ptail = pnext;
+    presult->pnext = AC_NULL;
+    presult->prspq = pnext->prspq;
+    presult->pextra = pnext->pextra;
+    presult->cmd = pnext->cmd;
+    presult->arg = pnext->arg;
   } else {
-    pResult = AC_NULL;
+    presult = AC_NULL;
   }
-  return pResult;
+  return presult;
 }

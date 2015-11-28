@@ -8,25 +8,25 @@
 /**
  * @see ac_mpscfifo_dbg.h
  */
-void ac_print_msg(ac_msg *pMsg) {
-  if (pMsg != AC_NULL) {
-    ac_printf("pMsg=%p pNext=%p pRspq=%p pExtra=%p cmd=%d\n", (void *)pMsg,
-           (void *)(pMsg->pNext), pMsg->pRspq, pMsg->pExtra, pMsg->cmd);
+void ac_print_msg(ac_msg *pmsg) {
+  if (pmsg != AC_NULL) {
+    ac_printf("pmsg=%p pnext=%p pRspq=%p pExtra=%p cmd=%d\n", (void *)pmsg,
+           (void *)(pmsg->pnext), pmsg->prspq, pmsg->pextra, pmsg->cmd);
   } else {
-    ac_printf("pMsg == AC_NULL\n");
+    ac_printf("pmsg == AC_NULL\n");
   }
 }
 
 /**
  * @see ac_mpscfifo_dbg.h
  */
-void ac_print_mpscfifo(ac_mpscfifo *pQ) {
-  if (pQ != AC_NULL) {
-    ac_printf("pQ->pHead: ");
-    ac_print_msg(pQ->pHead);
-    ac_printf("pQ->pTail: ");
-    ac_print_msg(pQ->pTail);
+void ac_print_mpscfifo(ac_mpscfifo *pq) {
+  if (pq != AC_NULL) {
+    ac_printf("pq->phead: ");
+    ac_print_msg(pq->phead);
+    ac_printf("pq->ptail: ");
+    ac_print_msg(pq->ptail);
   } else {
-    ac_printf("pQ == AC_NULL");
+    ac_printf("pq == AC_NULL");
   }
 }
