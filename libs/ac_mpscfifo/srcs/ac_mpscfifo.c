@@ -25,7 +25,7 @@
 /**
  * @see mpscfifo.h
  */
-ac_mpscfifo *initMpscFifo(ac_mpscfifo *pQ, ac_msg *pStub) {
+ac_mpscfifo *ac_init_mpscfifo(ac_mpscfifo *pQ, ac_msg *pStub) {
   pStub->pNext = AC_NULL;
   pQ->pHead = pStub;
   pQ->pTail = pStub;
@@ -35,7 +35,7 @@ ac_mpscfifo *initMpscFifo(ac_mpscfifo *pQ, ac_msg *pStub) {
 /**
  * @see mpscfifo.h
  */
-ac_msg *deinitMpscFifo(ac_mpscfifo *pQ) {
+ac_msg *ac_deinit_mpscfifo(ac_mpscfifo *pQ) {
   // Assert that the Q empty
   ac_assert(pQ->pTail->pNext == AC_NULL);
   ac_assert(pQ->pTail == pQ->pHead);
@@ -50,7 +50,7 @@ ac_msg *deinitMpscFifo(ac_mpscfifo *pQ) {
 /**
  * @see mpscifo.h
  */
-void add(ac_mpscfifo *pQ, ac_msg *pMsg) {
+void ac_add_msg(ac_mpscfifo *pQ, ac_msg *pMsg) {
   ac_assert(pQ != AC_NULL);
   if (pMsg != AC_NULL) {
     // Be sure pMsg->pNext == AC_NULL
@@ -67,7 +67,7 @@ void add(ac_mpscfifo *pQ, ac_msg *pMsg) {
 /**
  * @see mpscifo.h
  */
-ac_msg *rmv(ac_mpscfifo *pQ) {
+ac_msg *ac_rmv_msg(ac_mpscfifo *pQ) {
   ac_assert(pQ != AC_NULL);
   ac_msg *pResult = pQ->pTail;
   ac_msg *pNext = __atomic_load_n(&pResult->pNext, __ATOMIC_ACQUIRE);

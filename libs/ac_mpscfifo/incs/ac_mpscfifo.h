@@ -31,25 +31,25 @@ typedef struct _ac_mpscfifo {
  * Initialize an ac_mpscfifo. Don't forget to empty the fifo
  * and delete the stub before freeing ac_mpscfifo.
  */
-extern ac_mpscfifo *initMpscFifo(ac_mpscfifo *pQ, ac_msg *pStub);
+extern ac_mpscfifo *ac_init_mpscfifo(ac_mpscfifo *pQ, ac_msg *pStub);
 
 /**
  * Deinitialize the ac_mpscfifo and return the stub which
  * needs to be disposed of properly. Assumes the fifo is empty.
  */
-extern ac_msg *deinitMpscFifo(ac_mpscfifo *pQ);
+extern ac_msg *ac_deinit_mpscfifo(ac_mpscfifo *pQ);
 
 /**
  * Add a ac_msg to the Queue. This maybe used by multiple
  * entities on the same or different thread. This will never
  * block as it is a wait free algorithm.
  */
-extern void add(ac_mpscfifo *pQ, ac_msg *pMsg);
+extern void ac_add_msg(ac_mpscfifo *pQ, ac_msg *pMsg);
 
 /**
  * Remove a ac_msg from the Queue. This maybe used only by
  * a single thread and returns nil if non-blocking.
  */
-extern ac_msg *rmv(ac_mpscfifo *pQ);
+extern ac_msg *ac_rmv_msg(ac_mpscfifo *pQ);
 
 #endif

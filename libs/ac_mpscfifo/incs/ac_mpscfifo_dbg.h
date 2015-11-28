@@ -10,11 +10,11 @@
 /**
  * Print a ac_msg
  */
-void printMsg(ac_msg *pMsg);
+void ac_print_msg(ac_msg *pMsg);
 
 /**
  * Print a ac_mpscfifo
  */
-void printMpscFifo(ac_mpscfifo *pQ);
+void ac_print_mpscfifo(ac_mpscfifo *pQ);
 
 #endif

@@ -24,20 +24,20 @@
  *
  * return !0 if an error.
  */
-static int test_init_And_deinit_MpscFifo() {
+static int test_init_and_deinit_mpscfifo() {
   ac_bool error = AC_FALSE;
   ac_msg stub;
   ac_mpscfifo q;
 
   stub.cmd = -1;
 
-  ac_mpscfifo* pQ = initMpscFifo(&q, &stub);
+  ac_mpscfifo* pQ = ac_init_mpscfifo(&q, &stub);
   error |= TEST(pQ != AC_NULL, "expecting q");
   error |= TEST(pQ->pHead == &stub, "pHead not initialized");
   error |= TEST(pQ->pTail == &stub, "pTail not initialized");
   error |= TEST(pQ->pHead->pNext == AC_NULL, "pStub->pNext not initialized");
 
-  ac_msg *pStub = deinitMpscFifo(&q);
+  ac_msg *pStub = ac_deinit_mpscfifo(&q);
   error |= TEST(pStub == &stub, "pStub not retuned");
   error |= TEST(pQ->pHead == AC_NULL, "pHead not deinitialized");
   error |= TEST(pQ->pTail == AC_NULL, "pTail not deinitialized");
@@ -50,7 +50,7 @@ static int test_init_And_deinit_MpscFifo() {
  *
  * return !0 if an error.
  */
-static int test_add_rmv() {
+static int test_add_rmv_msg() {
   ac_bool error = AC_FALSE;
   ac_msg stub;
   ac_msg msg;
@@ -59,24 +59,24 @@ static int test_add_rmv() {
 
   stub.cmd = -1;
 
-  ac_mpscfifo* pQ = initMpscFifo(&q, &stub);
-  pResult = rmv(pQ);
+  ac_mpscfifo* pQ = ac_init_mpscfifo(&q, &stub);
+  pResult = ac_rmv_msg(pQ);
   error |= TEST(pResult == AC_NULL, "expecting rmv from empty queue to return AC_NULL");
 
   msg.cmd = 1;
-  add(pQ, &msg);
+  ac_add_msg(pQ, &msg);
   error |= TEST(pQ->pHead == &msg, "pHead should point at msg");
   error |= TEST(pQ->pTail->pNext == &msg, "pTail->pNext should point at msg");
 
-  pResult = rmv(pQ);
+  pResult = ac_rmv_msg(pQ);
   error |= TEST(pResult != AC_NULL, "expecting Q is not empty");
   error |= TEST(pResult != &msg, "expecting return msg to not have original address");
   error |= TEST(pResult->cmd == 1, "expecting msg.cmd == 1");
 
-  pResult = rmv(pQ);
+  pResult = ac_rmv_msg(pQ);
   error |= TEST(pResult == AC_NULL, "expecting Q is empty");
 
-  pResult = deinitMpscFifo(&q);
+  pResult = ac_deinit_mpscfifo(&q);
   error |= TEST(pResult == &msg, "expecting last stub to be address of msg");
 
   return error ? 1 : 0;
@@ -85,8 +85,8 @@ static int test_add_rmv() {
 int main(void) {
   int result = 0;
 
-  result |= test_init_And_deinit_MpscFifo();
-  result |= test_add_rmv();
+  result |= test_init_and_deinit_mpscfifo();
+  result |= test_add_rmv_msg();
 
   if (result != 0) {
       // Failed
