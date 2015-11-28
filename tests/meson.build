@@ -14,6 +14,7 @@
 
 subdir('test-ac_arg')
 subdir('test-ac_assert')
+subdir('test-ac_mpscfifo')
 subdir('test-ac_printf')
 subdir('test-ac_putchar')
 subdir('test-ac_string')

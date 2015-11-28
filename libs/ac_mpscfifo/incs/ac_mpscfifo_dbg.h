@@ -8,13 +8,13 @@
 #include <ac_mpscfifo.h>
 
 /**
- * Print a Msg_t
+ * Print a ac_msg
  */
-void printMsg(Msg_t *pMsg);
+void printMsg(ac_msg *pMsg);
 
 /**
- * Print a MpscFifo_t
+ * Print a ac_mpscfifo
  */
-void printMpscFifo(MpscFifo_t *pQ);
+void printMpscFifo(ac_mpscfifo *pQ);
 
 #endif

@@ -19,13 +19,13 @@
 #include <ac_assert.h>
 #include <ac_inttypes.h>
 
-#include "ac_mpscfifo_misc.h"
-#include "ac_mpscfifo.h"
+#include <ac_mpscfifo_misc.h>
+#include <ac_mpscfifo.h>
 
 /**
  * @see mpscfifo.h
  */
-MpscFifo_t *initMpscFifo(MpscFifo_t *pQ, Msg_t *pStub) {
+ac_mpscfifo *initMpscFifo(ac_mpscfifo *pQ, ac_msg *pStub) {
   pStub->pNext = AC_NULL;
   pQ->pHead = pStub;
   pQ->pTail = pStub;
@@ -35,13 +35,13 @@ MpscFifo_t *initMpscFifo(MpscFifo_t *pQ, Msg_t *pStub) {
 /**
  * @see mpscfifo.h
  */
-Msg_t *deinitMpscFifo(MpscFifo_t *pQ) {
+ac_msg *deinitMpscFifo(ac_mpscfifo *pQ) {
   // Assert that the Q empty
   ac_assert(pQ->pTail->pNext == AC_NULL);
   ac_assert(pQ->pTail == pQ->pHead);
 
   // Get the stub and null head and tail
-  Msg_t *pStub = pQ->pHead;
+  ac_msg *pStub = pQ->pHead;
   pQ->pHead = AC_NULL;
   pQ->pTail = AC_NULL;
   return pStub;
@@ -50,14 +50,14 @@ Msg_t *deinitMpscFifo(MpscFifo_t *pQ) {
 /**
  * @see mpscifo.h
  */
-void add(MpscFifo_t *pQ, Msg_t *pMsg) {
+void add(ac_mpscfifo *pQ, ac_msg *pMsg) {
   ac_assert(pQ != AC_NULL);
   if (pMsg != AC_NULL) {
     // Be sure pMsg->pNext == AC_NULL
     pMsg->pNext = AC_NULL;
 
     // Using Builtin Clang doesn't seem to support stdatomic.h
-    Msg_t *pPrevHead = __atomic_exchange_n(&pQ->pHead, pMsg, __ATOMIC_ACQ_REL);
+    ac_msg *pPrevHead = __atomic_exchange_n(&pQ->pHead, pMsg, __ATOMIC_ACQ_REL);
     __atomic_store_n(&pPrevHead->pNext, pMsg, __ATOMIC_RELEASE);
 
     // TODO: Support "blocking" which means use condition variable
@@ -67,10 +67,10 @@ void add(MpscFifo_t *pQ, Msg_t *pMsg) {
 /**
  * @see mpscifo.h
  */
-Msg_t *rmv(MpscFifo_t *pQ) {
+ac_msg *rmv(ac_mpscfifo *pQ) {
   ac_assert(pQ != AC_NULL);
-  Msg_t *pResult = pQ->pTail;
-  Msg_t *pNext = __atomic_load_n(&pResult->pNext, __ATOMIC_ACQUIRE);
+  ac_msg *pResult = pQ->pTail;
+  ac_msg *pNext = __atomic_load_n(&pResult->pNext, __ATOMIC_ACQUIRE);
   if (pNext != AC_NULL) {
     // TODO: Support "blocking" which means use condition variable
     pQ->pTail = pNext;

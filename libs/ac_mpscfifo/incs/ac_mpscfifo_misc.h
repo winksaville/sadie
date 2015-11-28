@@ -11,15 +11,18 @@
 /**
  * Set "bool error" to "true" if cond is "false"
  */
-#define TEST(cond, text)                                                       \
+#define TEST(cond, text) ({                                                     \
+  error = 0;                                                                   \
   do {                                                                         \
-    ac_bool result = !(cond);                                                     \
+    ac_bool result = !(cond);                                                  \
     error |= result;                                                           \
     if (result) {                                                              \
-      ac_printf("Error %s:%d FN %s: %s. Condition '" #cond "' failed.\n",         \
+      ac_printf("Error %s:%d FN %s: %s. Condition '" #cond "' failed.\n",      \
              __FILE__, __LINE__, __func__, text);                              \
     }                                                                          \
-  } while (AC_FALSE);
+  } while (AC_FALSE);                                                          \
+  error;                                                                       \
+})
 
 #define UNUSED(x) (void)(x)
 

@@ -7,12 +7,12 @@
 
 #include <ac_inttypes.h>
 
-typedef struct _msg_t {
-  struct _msg_t *pNext; // Next message
+typedef struct _ac_msg {
+  struct _ac_msg *pNext; // Next message
   void *pRspq;          // Response queue, null if none
   void *pExtra;         // Extra information, null if none
   ac_u32 cmd;           // Command to perform
   ac_u32 arg;           // argument
-} Msg_t;
+} ac_msg;
 
 #endif

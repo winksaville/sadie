@@ -22,34 +22,34 @@
 
 #include <ac_msg.h>
 
-typedef struct _MpscFifo_t {
-  Msg_t *pHead;
-  Msg_t *pTail;
-} MpscFifo_t;
+typedef struct _ac_mpscfifo {
+  ac_msg *pHead;
+  ac_msg *pTail;
+} ac_mpscfifo;
 
 /**
- * Initialize an MpscFifo_t. Don't forget to empty the fifo
- * and delete the stub before freeing MpscFifo_t.
+ * Initialize an ac_mpscfifo. Don't forget to empty the fifo
+ * and delete the stub before freeing ac_mpscfifo.
  */
-extern MpscFifo_t *initMpscFifo(MpscFifo_t *pQ, Msg_t *pStub);
+extern ac_mpscfifo *initMpscFifo(ac_mpscfifo *pQ, ac_msg *pStub);
 
 /**
- * Deinitialize the MpscFifo_t and return the stub which
+ * Deinitialize the ac_mpscfifo and return the stub which
  * needs to be disposed of properly. Assumes the fifo is empty.
  */
-extern Msg_t *deinitMpscFifo(MpscFifo_t *pQ);
+extern ac_msg *deinitMpscFifo(ac_mpscfifo *pQ);
 
 /**
- * Add a Msg_t to the Queue. This maybe used by multiple
+ * Add a ac_msg to the Queue. This maybe used by multiple
  * entities on the same or different thread. This will never
  * block as it is a wait free algorithm.
  */
-extern void add(MpscFifo_t *pQ, Msg_t *pMsg);
+extern void add(ac_mpscfifo *pQ, ac_msg *pMsg);
 
 /**
- * Remove a Msg_t from the Queue. This maybe used only by
+ * Remove a ac_msg from the Queue. This maybe used only by
  * a single thread and returns nil if non-blocking.
  */
-extern Msg_t *rmv(MpscFifo_t *pQ);
+extern ac_msg *rmv(ac_mpscfifo *pQ);
 
 #endif
