@@ -1,6 +1,6 @@
 # A circleci matrix file for the platforms
 env:
-  - Platform=VersatilePB
+  #- Platform=VersatilePB
   - Platform=Posix
 
 command:
@@ -19,4 +19,5 @@ command:
   - cd build-${Platform}; ninja run-test-ac_arg
   - cd build-${Platform}; ninja run-test-ac_printf
   - cd build-${Platform}; ninja run-test-ac_assert
+  - cd build-${Platform}; ninja run-test-ac_dispatcher
 

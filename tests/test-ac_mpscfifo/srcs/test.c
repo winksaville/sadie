@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
+#include <ac_mpscfifo.h>
+
 #include <ac_inttypes.h>
 #include <ac_test.h>
-#include <ac_mpscfifo.h>
 
 
 /**

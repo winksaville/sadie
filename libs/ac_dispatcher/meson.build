@@ -12,10 +12,10 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-subdir('test-ac_arg')
-subdir('test-ac_assert')
-subdir('test-ac_dispatcher')
-subdir('test-ac_mpscfifo')
-subdir('test-ac_printf')
-subdir('test-ac_putchar')
-subdir('test-ac_string')
+runtimeIncDirs += include_directories(
+  '@0@/incs'.format(meson.current_source_dir())
+)
+
+runtimeSrcs += [
+  '@0@/srcs/ac_dispatcher.c'.format(meson.current_source_dir()),
+]
