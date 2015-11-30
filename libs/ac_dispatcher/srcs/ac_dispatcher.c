@@ -20,21 +20,14 @@
 
 #include <ac_inttypes.h>
 #include <ac_debug_printf.h>
-#include <malloc.h>
+
+#include <ac_memmgr.h>
 
 /** pd->acq[i] is empty and can be reallocated */
 #define ACQ_EMPTY       ((acq*)(0))
 
 /** pd->acq[i] messages are being processed by ac_dispatcher */
 #define ACQ_PROCESSING  ((acq*)(!ACQ_EMPTY))
-
-void* ac_malloc(ac_size_t size) {
-  return malloc(size);
-}
-
-void ac_free(void* p) {
-  free(p);
-}
 
 void ret_acq(acq* pacq) {
   // Only posix at the momment
