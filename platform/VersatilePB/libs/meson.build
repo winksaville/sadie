@@ -20,10 +20,11 @@ runtimeSrcs = []
 # Add general runtime libs
 subdir('@0@/libs'.format(meson.source_root()))
 
-# Add out platform specific libs
+# Add our platform specific libs
 subdir('ac_init')
 subdir('ac_putchar')
 subdir('ac_stop')
+subdir('ac_sysconf')
 
 libruntime = static_library('runtime', runtimeSrcs,
   c_args : compilerArgs,

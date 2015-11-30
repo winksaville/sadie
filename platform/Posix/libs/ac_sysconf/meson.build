@@ -12,22 +12,8 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-# ARM Versatile Platform Board
+# The include for this is in source_root()/libs/incs which is already included
 
-
-runtimeSrcs = []
-
-# Add general runtime libs
-subdir('@0@/libs'.format(meson.source_root()))
-
-# Add our platform specific libs
-subdir('ac_putchar')
-subdir('ac_stop')
-subdir('ac_sysconf')
-
-libruntime = static_library('runtime', runtimeSrcs,
-  c_args : compilerArgs,
-  include_directories : runtimeIncDirs)
-
-libruntime_dep = declare_dependency(
-  link_with : libruntime)
+runtimeSrcs += [
+  '@0@/srcs/ac_sysconf.c'.format(meson.current_source_dir())
+]
