@@ -19,5 +19,6 @@ command:
   - cd build-${Platform}; ninja run-test-ac_arg
   - cd build-${Platform}; ninja run-test-ac_printf
   - cd build-${Platform}; ninja run-test-ac_assert
+  - cd build-${Platform}; ninja run-test-ac_mpscfifo
   - cd build-${Platform}; ninja run-test-ac_dispatcher
 
