@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_LIBS_INCS_TEST_H
-#define SADIE_LIBS_INCS_TEST_H
+#ifndef SADIE_LIBS_INCS_AC_TEST_H
+#define SADIE_LIBS_INCS_AC_TEST_H
 
 #include <ac_inttypes.h>
 #include <ac_printf.h>
