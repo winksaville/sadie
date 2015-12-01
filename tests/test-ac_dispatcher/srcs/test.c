@@ -83,6 +83,13 @@ static int test_dispatcher_add_rmv_acq() {
   pac1 = ac_dispatcher_add_acq(pd, &ac1, &q1);
   error |= AC_TEST(pac1 != AC_NULL);
 
+  // And finally remove so we leave with the pd empty
+  pac2 = ac_dispatcher_rmv_ac(pd, pac1);
+  error |= AC_TEST(pac2 == pac1);
+
+  // Return the dispatcher
+  ac_dispatcher_ret(pd);
+
   return error ? 1 : 0;
 }
 
