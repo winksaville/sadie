@@ -21,42 +21,30 @@
 
 #include <ac_mpscfifo.h>
 
-typedef struct {
-    ac* pac;
-    ac_mpscfifo* pq;
-} acq;
-
-typedef struct {
-  ac_u32 max_count;
-  acq* acqs[];
-} ac_dispatcher;
+// The opaque ac_dipatcher
+typedef struct _ac_dispatcher ac_dispatcher;
 
 /**
- * Initialize dispatcher able to support max_count ac's
+ * Get a dispatcher able to support max_count ac's.
  */
 ac_dispatcher* ac_dispatcher_get(ac_u32 max_count);
 
 /**
- * Deinitialize dispatcher
+ * Return dispatcher to the system.
  */
 void ac_dispatcher_ret(ac_dispatcher* pd);
 
 /**
- * Add the ac to this dispatcher
+ * Add the ac and its queue to this dispatcher.
  *
  * return the ac or AC_NULL if this ac was not added
  * this might occur if there are to many ac's registered
  * or the the ac has already been registered.
- *
- * TODO: Should we allow multiple fifos for a single
- * component? There is no reason not to allow it from
- * a dispatcher point of view, but to keep things
- * simple we'll disallow it for now.
  */
 ac* ac_dispatcher_add_acq(ac_dispatcher* pd, ac* pac, ac_mpscfifo* pq);
 
 /**
- * Remove the ac from this dispatcher.
+ * Remove all instances of this ac assoicated with this dispatcher
  *
  * return the ac or AC_NULL if this ac was not added.
  */

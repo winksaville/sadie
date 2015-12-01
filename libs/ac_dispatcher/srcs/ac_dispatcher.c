@@ -23,6 +23,16 @@
 
 #include <ac_memmgr.h>
 
+typedef struct _acq {
+    ac* pac;
+    ac_mpscfifo* pq;
+} acq;
+
+typedef struct _ac_dispatcher {
+  ac_u32 max_count;
+  acq* acqs[];
+} ac_dispatcher;
+
 /** pd->acq[i] is empty and can be reallocated */
 #define ACQ_EMPTY       ((acq*)(0))
 
@@ -239,7 +249,7 @@ ac* ac_dispatcher_add_acq(ac_dispatcher* pd, ac* pac, ac_mpscfifo* pq) {
 }
 
 /**
- * Remove the ac and q from this dispatcher.
+ * Remove all instances of this ac assoicated with this dispatcher
  *
  * return the ac or AC_NULL if this ac was not added.
  */

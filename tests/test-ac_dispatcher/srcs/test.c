@@ -32,10 +32,6 @@ static int test_dispatcher_get_ret() {
   ac_dispatcher* pd = ac_dispatcher_get(10);
   error |= AC_TEST(pd != AC_NULL, "expecting pd != AC_NULL");
   if (pd != AC_NULL) {
-    // max_count must == 10, although pd->max_count should not be used
-    // or modified. In the future pd may be opaque.
-    error |= AC_TEST(pd->max_count == 10, "expecting max_count == 10");
-
     // We can request to remove a non-existant ac and null must be
     // returned. This must return AC_NULL because nothing has been
     // added.
@@ -52,6 +48,40 @@ static int test_dispatcher_get_ret() {
   return error ? 1 : 0;
 }
 
+///**
+// * Test dispatching a message
+// *
+// * return !0 if an error.
+// */
+//static int test_dispatcher_add_rmv_acq() {
+//  ac_bool error = AC_FALSE;
+//
+//  ac_dispatcher* pd = ac_dispatcher_get(10);
+//  error |= AC_TEST(pd != AC_NULL, "expecting pd != AC_NULL");
+//
+//  ackk
+//
+//  if (pd != AC_NULL) {
+//    // max_count must == 10, although pd->max_count should not be used
+//    // or modified. In the future pd may be opaque.
+//    error |= AC_TEST(pd->max_count == 10, "expecting max_count == 10");
+//
+//    // We can request to remove a non-existant ac and null must be
+//    // returned. This must return AC_NULL because nothing has been
+//    // added.
+//    error |= AC_TEST(ac_dispatcher_rmv_acq(pd, (ac*)0x10000) == AC_NULL,
+//        "expecting AC_NULL");
+//
+//    // Any use to pd after this is ILLEGAL
+//    ac_dispatcher_ret(pd);
+//  }
+//
+//  // Attempting to return AC_NULL should be a NOP
+//  ac_dispatcher_ret(AC_NULL);
+//
+//  return error ? 1 : 0;
+//}
+//
 ///**
 // * Test we can add and remove from Q.
 // *
