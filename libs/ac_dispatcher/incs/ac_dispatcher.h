@@ -48,6 +48,6 @@ ac* ac_dispatcher_add_acq(ac_dispatcher* pd, ac* pac, ac_mpscfifo* pq);
  *
  * return the ac or AC_NULL if this ac was not added.
  */
-ac* ac_dispatcher_rmv_acq(ac_dispatcher* pd, ac* pac);
+ac* ac_dispatcher_rmv_ac(ac_dispatcher* pd, ac* pac);
 
 #endif

@@ -35,7 +35,7 @@ static int test_dispatcher_get_ret() {
     // We can request to remove a non-existant ac and null must be
     // returned. This must return AC_NULL because nothing has been
     // added.
-    error |= AC_TEST(ac_dispatcher_rmv_acq(pd, (ac*)0x10000) == AC_NULL);
+    error |= AC_TEST(ac_dispatcher_rmv_ac(pd, (ac*)0x10000) == AC_NULL);
 
     // Any use to pd after this is ILLEGAL
     ac_dispatcher_ret(pd);
@@ -61,14 +61,27 @@ static int test_dispatcher_add_rmv_acq() {
 
   // Add a acq
   ac ac1;
-  ac_mpscfifo q;
-  ac_msg stub;
+  ac* pac1;
+  ac_mpscfifo q1;
+  ac_msg stub1;
 
-  ac_mpscfifo* pq = ac_init_mpscfifo(&q, &stub);
-  error |= AC_TEST(pq != AC_NULL);
+  ac_mpscfifo* pq1 = ac_init_mpscfifo(&q1, &stub1);
+  error |= AC_TEST(pq1 != AC_NULL);
 
-  ac* pac = ac_dispatcher_add_acq(pd, &ac1, &q);
-  error |= AC_TEST(pac != AC_NULL);
+  pac1 = ac_dispatcher_add_acq(pd, &ac1, &q1);
+  error |= AC_TEST(pac1 != AC_NULL);
+
+  // Test that adding a second acq fails because we
+  // only are allowing 1
+  ac_mpscfifo q2;
+  ac* pac2 = ac_dispatcher_add_acq(pd, &ac1, &q2);
+  error |= AC_TEST(pac2 == AC_NULL);
+
+  // Test we can remove pac1 and then add it back
+  pac2 = ac_dispatcher_rmv_ac(pd, pac1);
+  error |= AC_TEST(pac2 == pac1);
+  pac1 = ac_dispatcher_add_acq(pd, &ac1, &q1);
+  error |= AC_TEST(pac1 != AC_NULL);
 
   return error ? 1 : 0;
 }
@@ -117,8 +130,8 @@ int main(void) {
   result |= test_dispatcher_add_rmv_acq();
 
   if (result != 0) {
-      // Failed
-      ac_printf("ERR\n");
+      // Failed, don't print anything as there is enough already
+      //ac_printf("ERR\n");
       return 1;
   } else {
       // Succeeded

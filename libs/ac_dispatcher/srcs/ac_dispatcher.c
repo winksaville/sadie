@@ -20,7 +20,6 @@
 
 #include <ac_inttypes.h>
 #include <ac_debug_printf.h>
-
 #include <ac_memmgr.h>
 
 typedef struct _acq {
@@ -100,7 +99,8 @@ static ac_bool process_msgs(acq* pacq) {
     processed_a_msg = AC_TRUE;
   }
 
-  ac_debug_printf("process_msgs:- pacq=%p\n", pacq);
+  ac_debug_printf("process_msgs:- pacq=%p processed_a_msg=%d\n",
+      pacq, processed_a_msg);
   return processed_a_msg;
 }
 
@@ -108,7 +108,7 @@ static ac_bool process_msgs(acq* pacq) {
  * Remove the ac at pd->acqs[ac_idx]
  */
 static void rmv_acq(ac_dispatcher* pd, int acq_idx) {
-  ac_debug_printf("rmv_ac:+ pd=%p cq_idx=%d\n", pd, acq_idx);
+  ac_debug_printf("rmv_acq:+ pd=%p cq_idx=%d\n", pd, acq_idx);
 
   // Get pacq atomically and set to ACQ_EMPTY so no more messages
   // will be added.
@@ -126,7 +126,7 @@ static void rmv_acq(ac_dispatcher* pd, int acq_idx) {
 
     ret_acq(pacq);
 
-    ac_debug_printf("rmv_ac:- REMOVED pd=%p acq_idx=%d\n", pd, acq_idx);
+    ac_debug_printf("rmv_acq:- REMOVED pd=%p acq_idx=%d\n", pd, acq_idx);
     return;
   }
 
@@ -145,6 +145,7 @@ void ac_dispatch(ac_dispatcher* pd) {
     return;
   }
 
+  const acq* acq_processing = ACQ_PROCESSING;
   for (int i = 0; i < pd->max_count; i++) {
     // Mark this acq that we're processing
     acq** ppacq = &pd->acqs[i];
@@ -159,7 +160,6 @@ void ac_dispatch(ac_dispatcher* pd) {
     }
 
     // Restore pacq if ac_dispatcher_deinit didn't mark it ACQ_EMPTY
-    static void* acq_processing = ACQ_PROCESSING;
     ac_bool restored = __atomic_compare_exchange_n(
                         &pacq, &acq_processing, pacq,
                         AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
@@ -224,25 +224,30 @@ ac* ac_dispatcher_add_acq(ac_dispatcher* pd, ac* pac, ac_mpscfifo* pq) {
     return AC_NULL;
   }
 
+  // Get the acq and initialize
   acq* pacq = get_acq(); 
   if (pacq == AC_NULL) {
     ac_debug_printf("ac_dispatcher_add_acq:- ERR no acq's"
         " pd=%p pac=%p pq=%p\n", pd, pac, pq);
     return AC_NULL;
   }
+  pacq->pac = pac;
+  pacq->pq = pq;
 
-  // Find a slot in the array to st
+  // Find a slot in the array to save the pacq
+  const acq* acq_empty = ACQ_EMPTY;
   for(int i = 0; i < pd->max_count; i++) {
-    static acq* pacq_empty = ACQ_EMPTY;
     acq** ppacq = &pd->acqs[i];
     if (__atomic_compare_exchange_n(
-           ppacq, &pacq_empty, pacq,
+           ppacq, &acq_empty, pacq,
            AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
       ac_debug_printf("ac_dispatcher_add_acq:- OK"
           " pd=%p pac=%p pq=%p\n", pd, pac, pq);
       return pac;
     }
   }
+
+  // Couldn't find a slot so return the acq and return AC_NULL
   ac_debug_printf("ac_dispatcher_add_acq:- ERR pd full\n");
   ret_acq(pacq);
   return AC_NULL;
@@ -253,19 +258,19 @@ ac* ac_dispatcher_add_acq(ac_dispatcher* pd, ac* pac, ac_mpscfifo* pq) {
  *
  * return the ac or AC_NULL if this ac was not added.
  */
-ac* ac_dispatcher_rmv_acq(ac_dispatcher* pd, ac* pac) {
-  ac_debug_printf("ac_dispatcher_rmv_acq:+ pd=%p pac=%p\n", pd, pac);
+ac* ac_dispatcher_rmv_ac(ac_dispatcher* pd, ac* pac) {
+  ac_debug_printf("ac_dispatcher_rmv_ac:+ pd=%p pac=%p\n", pd, pac);
 
   ac_bool ok = AC_FALSE;
 
   if (pd == AC_NULL) {
-    ac_debug_printf("ac_dispatcher_rmv_acq:- ERR no pd"
+    ac_debug_printf("ac_dispatcher_rmv_ac:- ERR no pd"
         " pd=%p pac=%p\n", pd, pac);
     return AC_NULL;
   }
 
   if (pac == AC_NULL) {
-    ac_debug_printf("ac_dispatcher_rmv_acq:- ERR no ac"
+    ac_debug_printf("ac_dispatcher_rmv_ac:- ERR no ac"
         " pd=%p pac=%p\n", pd, pac);
     return AC_NULL;
   }
@@ -284,6 +289,8 @@ ac* ac_dispatcher_rmv_acq(ac_dispatcher* pd, ac* pac) {
       continue;
     }
     if (pac == pacq->pac) {
+      ac_debug_printf("ac_dispatcher_rmv_ac: OK removing pac=%p pq=%p\n",
+          pac, pacq->pq);
       ok = AC_TRUE;
       rmv_acq(pd, i);
     }
@@ -292,6 +299,6 @@ ac* ac_dispatcher_rmv_acq(ac_dispatcher* pd, ac* pac) {
   if (!ok) {
     pac = AC_NULL;
   }
-  ac_debug_printf("ac_dispatcher_rmv_acq:- pd=%p pac=%p\n", pd, pac);
+  ac_debug_printf("ac_dispatcher_rmv_ac:- pd=%p pac=%p\n", pd, pac);
   return pac;
 }
