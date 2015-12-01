@@ -21,6 +21,7 @@ runtimeSrcs = []
 subdir('@0@/libs'.format(meson.source_root()))
 
 # Add our platform specific libs
+subdir('ac_memmgr')
 subdir('ac_putchar')
 subdir('ac_stop')
 subdir('ac_sysconf')

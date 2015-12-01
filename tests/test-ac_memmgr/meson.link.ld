@@ -14,21 +14,16 @@
  * limitations under the License.
  */
 
-#include <ac_memmgr.h>
-
-#include <malloc.h>
-
-void* ac_malloc(ac_size_t size) {
-  if (size == 0) {
-    // Standard C99 implementations may return AC_NULL or other value
-    // but its undefined behavior if the returned value is used.
-    // Therefore we require ac_malloc(0) to always return AC_NULL
-    return AC_NULL;
-  } else {
-    return malloc(size);
-  }
-}
-
-void ac_free(void* p) {
-  free(p);
+ENTRY(_Reset)
+SECTIONS
+{
+  . = 0x10000;
+  .startup : { *( .startup ) }
+  . = . + 0;
+  .text : { *(.text*) }
+  .data : { *(.data) }
+  .bss : { *(.bss COMMON) }
+  . = ALIGN(8);
+  . = . + 0x10000; /* 64kB stack */
+  stack_top = .;
 }
