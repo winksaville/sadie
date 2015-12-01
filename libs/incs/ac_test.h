@@ -21,13 +21,14 @@
 #include <ac_printf.h>
 
 /**
- * Test the condition and return AC_FALSE if cond is "true" else return AC_TRUE
+ * Test the condition and return AC_FALSE if cond is "true"
+ * else return AC_TRUE.
  */
-#define AC_TEST(cond, text) ({                                          \
+#define AC_TEST(cond) ({                                                \
   ac_bool result = (cond) ? AC_FALSE : AC_TRUE;                         \
   if (result) {                                                         \
     ac_printf("Error %s:%d FN %s: %s. Condition '" #cond "' failed.\n", \
-           __FILE__, __LINE__, __func__, text);                         \
+           __FILE__, __LINE__, __func__);                               \
   }                                                                     \
   result;                                                               \
 })

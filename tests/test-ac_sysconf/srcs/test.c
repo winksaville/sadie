@@ -22,7 +22,7 @@ ac_bool test_sysconf() {
   ac_bool error = AC_FALSE;
 
   ac_u32 numcpus = ac_numcpus();
-  error |= AC_TEST(numcpus > 0, "expected numcpus > 0");
+  error |= AC_TEST(numcpus > 0);
 
   return error;
 }
