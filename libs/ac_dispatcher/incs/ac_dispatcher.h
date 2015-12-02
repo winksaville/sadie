@@ -25,6 +25,11 @@
 typedef struct _ac_dispatcher ac_dispatcher;
 
 /**
+ * Dispatch messages to asynchronous components
+ */
+ac_bool ac_dispatch(ac_dispatcher* pd);
+
+/**
  * Get a dispatcher able to support max_count ac's.
  */
 ac_dispatcher* ac_dispatcher_get(ac_u32 max_count);

@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
+#define NDEBUG
+
 #include <ac_dispatcher.h>
 
 #include <ac_inttypes.h>
 #include <ac_mpscfifo.h>
+#include <ac_debug_printf.h>
 #include <ac_test.h>
 
 
@@ -93,48 +96,91 @@ static int test_dispatcher_add_rmv_acq() {
   return error ? 1 : 0;
 }
 
-///**
-// * Test we can add and remove from Q.
-// *
-// * return !0 if an error.
-// */
-//static int test_add_rmv_msg() {
-//  ac_bool error = AC_FALSE;
-//  ac_msg stub;
-//  ac_msg msg;
-//  ac_mpscfifo q;
-//  ac_msg* presult;
-//
-//  stub.cmd = -1;
-//
-//  ac_mpscfifo* pq = ac_init_mpscfifo(&q, &stub);
-//  presult = ac_rmv_msg(pq);
-//  error |= AC_TEST(presult == AC_NULL);
-//
-//  msg.cmd = 1;
-//  ac_add_msg(pq, &msg);
-//  error |= AC_TEST(pq->phead == &msg);
-//  error |= AC_TEST(pq->ptail->pnext == &msg);
-//
-//  presult = ac_rmv_msg(pq);
-//  error |= AC_TEST(presult != AC_NULL);
-//  error |= AC_TEST(presult != &msg);
-//  error |= AC_TEST(presult->cmd == 1);
-//
-//  presult = ac_rmv_msg(pq);
-//  error |= AC_TEST(presult == AC_NULL);
-//
-//  presult = ac_deinit_mpscfifo(&q);
-//  error |= AC_TEST(presult == &msg);
-//
-//  return error ? 1 : 0;
-//}
+
+static ac_bool ac1_process_msg(ac* this, ac_msg* pmsg) {
+  ac_bool error = AC_FALSE;
+
+  ac_debug_printf("ac1_process_msg:+ pmsg->cmd=%d, pmsg->arg=%d\n",
+      pmsg->cmd, pmsg->arg);
+
+  error |= AC_TEST(pmsg->cmd == 1);
+  error |= AC_TEST(pmsg->arg > 1);
+
+  pmsg->arg = (ac_u32)error;
+
+  ac_debug_printf("ac1_process_msg:- pmsg->cmd=%d, pmsg->arg=%d\n",
+      pmsg->cmd, pmsg->arg);
+
+  return AC_TRUE;
+}
+
+static void * ac1_get_data(ac* this) {
+  return AC_NULL;
+}
+
+ac ac1 = {
+  .process_msg = &ac1_process_msg,
+  .get_data = &ac1_get_data,
+};
+
+
+/**
+ * Test dispatching a message
+ *
+ * return !0 if an error.
+ */
+static int test_dispatching() {
+  ac_bool error = AC_FALSE;
+  ac_debug_printf("test_dispatching:+\n");
+
+  // Get a dispatcher
+  ac_dispatcher* pd = ac_dispatcher_get(1);
+  error |= AC_TEST(pd != AC_NULL);
+
+  // Add an acq
+  ac* pac1;
+  ac_mpscfifo ac1q;
+  ac_msg stub1;
+
+  ac_mpscfifo* pac1q = ac_init_mpscfifo(&ac1q, &stub1);
+  error |= AC_TEST(pac1q == &ac1q);
+
+  pac1 = ac_dispatcher_add_acq(pd, &ac1, &ac1q);
+  error |= AC_TEST(pac1 != AC_NULL);
+
+  // Initialize message and add it to queue
+  ac_msg msg1 = {
+    .cmd = 1,
+    .arg = 2
+  };
+  ac_add_msg(pac1q, &msg1);
+
+
+  ac_debug_printf("test_dispatching: dispatch now\n");
+  ac_bool processed_msgs = ac_dispatch(pd);
+  ac_debug_printf("test_dispatching: dispatch complete\n");
+  error |= AC_TEST(processed_msgs == AC_TRUE);
+
+  ac_msg msg2 = {
+    .cmd = 1,
+    .arg = 3
+  };
+  ac_add_msg(pac1q, &msg2);
+
+  ac_debug_printf("test_dispatching: rmv_ac\n");
+  ac* pac2 = ac_dispatcher_rmv_ac(pd, pac1);
+  error |= AC_TEST(pac2 == pac1);
+
+  ac_debug_printf("test_dispatching:- error=%d\n", error);
+  return error ? 1 : 0;
+}
 
 int main(void) {
   int result = 0;
 
   result |= test_dispatcher_get_ret();
   result |= test_dispatcher_add_rmv_acq();
+  result |= test_dispatching();
 
   if (result != 0) {
       // Failed, don't print anything as there is enough already

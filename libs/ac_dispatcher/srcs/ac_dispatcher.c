@@ -137,12 +137,13 @@ static void rmv_acq(ac_dispatcher* pd, int acq_idx) {
 /**
  * Dispatch messages to asynchronous components
  */
-void ac_dispatch(ac_dispatcher* pd) {
+ac_bool ac_dispatch(ac_dispatcher* pd) {
+  ac_bool processed_msgs = AC_FALSE;
   ac_debug_printf("ac_dispatch:+ pd=%p\n", pd);
 
   if (pd == AC_NULL) {
     ac_debug_printf("ac_dispatch:- ERR no pd pd=%p\n", pd);
-    return;
+    return processed_msgs;
   }
 
   const acq* acq_processing = ACQ_PROCESSING;
@@ -156,12 +157,12 @@ void ac_dispatch(ac_dispatcher* pd) {
     // we've set it to ACQ_PROCESSING and we'll process the messages.
     if ((pacq != ACQ_EMPTY) && (pacq != ACQ_PROCESSING)) {
       // The acq is not empty and someone else isn't processing
-      process_msgs(pacq);
+      processed_msgs = process_msgs(pacq);
     }
 
     // Restore pacq if ac_dispatcher_deinit didn't mark it ACQ_EMPTY
     ac_bool restored = __atomic_compare_exchange_n(
-                        &pacq, &acq_processing, pacq,
+                        ppacq, &acq_processing, pacq,
                         AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
     if (!restored) {
       ac_debug_printf("ac_dispatch: ret_acq we won race pd=%p acq_idx=%d\n",
@@ -170,7 +171,9 @@ void ac_dispatch(ac_dispatcher* pd) {
     }
   }
 
-  ac_debug_printf("ac_dispatch:- pd=%p\n", pd);
+  ac_debug_printf("ac_dispatch:- pd=%p processed_msgs=%d\n",
+      pd, processed_msgs);
+  return processed_msgs;
 }
 
 /**
