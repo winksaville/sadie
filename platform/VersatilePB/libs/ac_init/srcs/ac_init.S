@@ -14,11 +14,73 @@
  * limitations under the License.
  */
 
-  //.section .text, "ax"
-  //.section .text, "ax"
+#define PROC_MODE_MASK  0x1F
+#define USR_MODE        0x10
+#define FIQ_MODE        0x11
+#define IRQ_MODE        0x12
+#define SVC_MODE        0x13
+#define MON_MODE        0x16
+#define ABT_MODE        0x17
+#define HYP_MODE        0x1A
+#define UND_MODE        0x1C
+#define SYS_MODE        0x1F
 
   .global ac_init
 ac_init:
+  // Setup stacks for the various processor modes
+  
+  // Start out and use r0 to contain the current cpsr
+  mrs r0, cpsr    // Read Program Status Register
+
+  // Cannot setup user stack this way because
+  // we can't change the mode bits in cpsr from
+  // usr-mode.
+  //bic r1, r0, #PROC_MODE_MASK
+  //orr r1, r1, #USR_MODE
+  //msr cpsr, r1
+  //ldr sp, =usr_stack_top
+
+  // Change to IRQ_MODE and set its stack
+  bic r1, r0, #PROC_MODE_MASK
+  orr r1, r1, #IRQ_MODE
+  msr cpsr, r1
+  ldr sp, =irq_stack_top
+
+  // Change to FIQ_MODE and set its stack
+  bic r1, r0, #PROC_MODE_MASK
+  orr r1, r1, #FIQ_MODE
+  msr cpsr, r1
+  ldr sp, =fiq_stack_top
+
+  // Change to MON_MODE and set its stack
+  bic r1, r0, #PROC_MODE_MASK
+  orr r1, r1, #MON_MODE
+  msr cpsr, r1
+  ldr sp, =mon_stack_top
+
+  // Change to ABT_MODE and set its stack
+  bic r1, r0, #PROC_MODE_MASK
+  orr r1, r1, #ABT_MODE
+  msr cpsr, r1
+  ldr sp, =abt_stack_top
+
+  // Change to UND_MODE and set its stack
+  bic r1, r0, #PROC_MODE_MASK
+  orr r1, r1, #UND_MODE
+  msr cpsr, r1
+  ldr sp, =und_stack_top
+
+  // Change to SYS_MODE and set its stack
+  bic r1, r0, #PROC_MODE_MASK
+  orr r1, r1, #SYS_MODE
+  msr cpsr, r1
+  ldr sp, =sys_stack_top
+
+  // Change back to Supervisor mode and continue
+  bic r1, r0, #PROC_MODE_MASK
+  orr r1, r1, #SVC_MODE
+  msr cpsr, r1
+
   mov r0, #0x00   // Address base of the ARM Interrupt Vectors
   ldr r1, =vector_table
   ldr r3, =vector_table_end

@@ -33,8 +33,8 @@
   .global _Reset
 _Reset:
 
-  // Initialize the statck which is defined in link.xxx.d script
-  ldr sp, =stack_top
+  // Initialize the supervisor stack which is defined in link.xxx.d script
+  ldr sp, =svc_stack_top
 
   // Initialize such as interrupts
   bl ac_init
