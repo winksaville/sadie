@@ -36,6 +36,9 @@ _Reset:
   // Initialize the statck which is defined in link.xxx.d script
   ldr sp, =stack_top
 
+  // Initialize such as interrupts
+  bl ac_init
+
   // Call main
   bl  main
 
@@ -44,3 +47,5 @@ _Reset:
 
   // Loop endlessly if we get here
   b .
+
+  //ldr pc, ac_exception_undef_handler
