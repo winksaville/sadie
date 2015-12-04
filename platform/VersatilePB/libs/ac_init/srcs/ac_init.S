@@ -19,7 +19,7 @@
 
   .global ac_init
 ac_init:
-  mov r0, #0x04   // Address base of the ARM instruction table
+  mov r0, #0x00   // Address base of the ARM Interrupt Vectors
   ldr r1, =vector_table
   ldr r3, =vector_table_end
 
