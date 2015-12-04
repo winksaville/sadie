@@ -16,7 +16,7 @@
 
 #include <ac_putchar.h>
 
-volatile ac_u32* const pUart = (ac_u32*)0x101f1000;
+volatile ac_u32* const pUart = (volatile ac_u32*)0x101f1000;
 
 void ac_putchar(ac_u8 ch) {
   *pUart = (ac_u32)ch;
