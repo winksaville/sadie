@@ -35,12 +35,12 @@ void ac_exception_svc_handler(void) {
 }
 
 void ac_exception_prefetch_abort_handler(void) {
-  ac_putchar('A');
+  ac_putchar('P');
   ac_putchar('\n');
 }
 
 void ac_exception_data_abort_handler(void) {
-  ac_putchar('A');
+  ac_putchar('D');
   ac_putchar('\n');
 }
 
