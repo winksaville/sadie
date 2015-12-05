@@ -14,8 +14,8 @@
 
 if Platform == 'VersatilePB'
   srcFiles += ['srcs/test.c']
-  linkfile = 'meson.link.ld'
-  linkArgs += ['-Wl,-lgcc,-T,@0@/@1@'.format(meson.current_source_dir(), linkfile)]
+  linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
+  linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
   # Create test-ac_sysconf executable
