@@ -36,6 +36,7 @@ ac_bool test_ac_timer() {
     ac_printf("test_ac_timer: control=0x%x(%u)\n", control, control);
     ac_printf("test_ac_timer: ris=0x%x(%u)\n", ris, ris);
     ac_printf("test_ac_timer: mis=0x%x(%u)\n", mis, mis);
+    ac_printf("test_ac_timer: bgload=0x%x(%u)\n", bgload, bgload);
   }
 
   ac_u32 cur_value = 0;
