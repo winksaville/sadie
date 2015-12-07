@@ -22,8 +22,6 @@
 
 #include <ac_inttypes.h>
 
-#define TIMER_COUNT 4
-
 /**
  * Return the number of timers
  */
@@ -130,7 +128,7 @@ ac_u32 ac_timer_periodic(ac_u32 timer, ac_u32 period_in_micro) {
  *
  * Return 0 if successful, !0 if error
  */
-ac_u32 ac_timer_one_shot(ac_u32 timer, ac_u32 period_in_nano) {
+ac_u32 ac_timer_one_shot(ac_u32 timer, ac_u32 period_in_micro) {
   return 1;
 }
 

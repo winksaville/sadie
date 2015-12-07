@@ -17,8 +17,15 @@
 #include <ac_timer.h>
 
 #include <ac_test.h>
+#if defined(VersatilePB)
+#include <ac_interrupts.h>
+#endif
 
 ac_bool test_ac_timer() {
+#if defined(Posix)
+  ac_printf("test_ac_timer: no tests for Posix\n");
+  return AC_FALSE;
+#elif defined(VersatilePB)
   ac_bool error = AC_FALSE;
 
   ac_u32 count = ac_timer_get_count();
@@ -41,31 +48,56 @@ ac_bool test_ac_timer() {
 
   ac_u32 cur_value = 0;
   ac_timer_free_running(1);
-  for (ac_u32 i = 0; i < 100; i++) {
+  for (ac_u32 i = 0; i < 20; i++) {
     cur_value = ac_timer_rd_free_running(1);
     ac_printf("test_ac_timer: new free_running_value=0x%x(%u)\n",
           cur_value, cur_value);
   }
 
   cur_value = 0;
-  ac_timer_periodic(0, 1000);
-  for (ac_u32 i = 0; i < 100; i++) {
-    cur_value = ac_timer_rd_value(0);
-    ac_printf("test_ac_timer: new cur_value=0x%x(%u)\n", cur_value, cur_value);
+  ac_timer_one_shot(2, 1000);
+  for (ac_u32 i = 0; i < 20; i++) {
+    cur_value = ac_timer_rd_value(2);
+    ac_u32 timer_ris = ac_timer_rd_ris(2);
+    ac_u32 timer_mis = ac_timer_rd_mis(2);
+    ac_u32 irq_status = ac_interrupts_rd_irq_status();
+    ac_u32 fiq_status = ac_interrupts_rd_fiq_status();
+    ac_u32 ris_status = ac_interrupts_rd_ris_status();
+    ac_u32 int_select = ac_interrupts_rd_int_select();
+    ac_u32 int_enable = ac_interrupts_rd_int_enable();
+    ac_printf("test_ac_timer: new cur_value=0x%x(%u) timer_ris=%x(%x) timer_mis=%x(%x)\n",
+        cur_value, cur_value, timer_ris, timer_ris, timer_mis, timer_mis);
+    ac_printf("test_ac_timer: irq_status=0x%x(%u) fiq_status=%x(%x) ris_status=%x(%x)\n",
+        irq_status, irq_status, fiq_status, fiq_status, ris_status, ris_status);
+    ac_printf("test_ac_timer: int_select=0x%x(%u) int_enable=%x(%x)\n",
+        int_select, int_select, int_enable, int_enable);
   }
 
+  //cur_value = 0;
+  //ac_timer_periodic(0, 1000);
+  //for (ac_u32 i = 0; i < 10000; i++) {
+  //  cur_value = ac_timer_rd_value(0);
+  //  //ac_printf("test_ac_timer: new cur_value=0x%x(%u)\n",
+  //  //    cur_value, cur_value);
+  //}
+
+
   return error;
+#else
+  ac_printf("test_ac_timer: Unknown Platform\n");
+  return AC_FALSE;
+#endif
 }
 
 int main(void) {
-    if (test_ac_timer()) {
-        // Failed
-        ac_printf("ERR\n");
-        return 1;
-    } else {
-        // Succeeded
-        ac_printf("OK\n");
-        return 0;
-    }
+  if (test_ac_timer()) {
+      // Failed
+      ac_printf("ERR\n");
+      return 1;
+  } else {
+      // Succeeded
+      ac_printf("OK\n");
+      return 0;
+  }
 }
 

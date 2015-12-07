@@ -165,11 +165,13 @@ void ac_timer_wr_bgload(ac_u32 timer, ac_u32 value) {
  * Return 0 if successful, !0 if error
  */
 void ac_timer_free_running(ac_u32 timer) {
-  ac_timer_wr_control(timer, TIMER_DISABLED | TIMER_MODE_FREE_RUNNING | TIMER_INT_DISABLED
-      | TIMER_PRE_SCALE_DIV_01 | TIMER_32BIT | TIMER_WRAPPING);
+#define FREE_RUNNING TIMER_MODE_FREE_RUNNING \
+      | TIMER_INT_DISABLED | TIMER_PRE_SCALE_DIV_01 | TIMER_32BIT \
+      | TIMER_WRAPPING
+
+  ac_timer_wr_control(timer, TIMER_DISABLED | FREE_RUNNING);
   ac_timer_wr_load(timer, 0);
-  ac_timer_wr_control(timer, TIMER_ENABLED | TIMER_MODE_FREE_RUNNING | TIMER_INT_DISABLED
-      | TIMER_PRE_SCALE_DIV_01 | TIMER_32BIT | TIMER_WRAPPING);
+  ac_timer_wr_control(timer, TIMER_ENABLED | FREE_RUNNING);
 }
 
 /**
@@ -187,11 +189,12 @@ ac_u32 ac_timer_rd_free_running(ac_u32 timer) {
  * Return 0 if successful, !0 if error
  */
 ac_u32 ac_timer_periodic(ac_u32 timer, ac_u32 period_in_micro) {
-  ac_timer_wr_control(timer, TIMER_DISABLED | TIMER_MODE_PERIODIC | TIMER_INT_DISABLED
-      | TIMER_PRE_SCALE_DIV_01 | TIMER_32BIT | TIMER_WRAPPING);
+  #define PERIODIC TIMER_MODE_PERIODIC \
+      | TIMER_PRE_SCALE_DIV_01 | TIMER_32BIT | TIMER_WRAPPING
+
+  ac_timer_wr_control(timer, TIMER_DISABLED | TIMER_INT_DISABLED | PERIODIC);
   ac_timer_wr_load(timer, period_in_micro);
-  ac_timer_wr_control(timer, TIMER_ENABLED | TIMER_MODE_PERIODIC | TIMER_INT_DISABLED
-      | TIMER_PRE_SCALE_DIV_01 | TIMER_32BIT | TIMER_WRAPPING);
+  ac_timer_wr_control(timer, TIMER_ENABLED | TIMER_INT_ENABLED | PERIODIC);
   return 0;
 }
 
@@ -200,7 +203,13 @@ ac_u32 ac_timer_periodic(ac_u32 timer, ac_u32 period_in_micro) {
  *
  * Return 0 if successful, !0 if error
  */
-ac_u32 ac_timer_one_shot(ac_u32 timer, ac_u32 period_in_nano) {
+ac_u32 ac_timer_one_shot(ac_u32 timer, ac_u32 time_in_micro) {
+  #define ONE_SHOT TIMER_MODE_FREE_RUNNING \
+      | TIMER_PRE_SCALE_DIV_01 | TIMER_32BIT | TIMER_ONE_SHOT
+
+  ac_timer_wr_control(timer, TIMER_DISABLED | TIMER_INT_DISABLED | ONE_SHOT);
+  ac_timer_wr_load(timer, time_in_micro);
+  ac_timer_wr_control(timer, TIMER_ENABLED | TIMER_INT_ENABLED | ONE_SHOT);
   return 1;
 }
 

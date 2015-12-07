@@ -27,6 +27,8 @@
 
   .global ac_init
 ac_init:
+  stmfd sp!, {lr}
+
   // Setup stacks for the various processor modes
   
   // Start out and use r0 to contain the current cpsr
@@ -94,7 +96,9 @@ loop:
   b   loop
 
 done:
-  mov pc, lr      // Return
+  bl  ac_interrupts_cpu_enable
+
+  ldmfd sp!, {pc} // Return
 
 vector_table:
   ldr pc, addr_ac_exception_reset_handler
