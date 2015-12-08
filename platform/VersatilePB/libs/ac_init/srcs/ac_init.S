@@ -97,6 +97,7 @@ loop:
 
 done:
   bl  ac_exception_init
+  //bl  ac_cpu_perf_init // Does NOT work on qemu
   bl  ac_interrupts_cpu_enable
 
   ldmfd sp!, {pc} // Return

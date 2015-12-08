@@ -28,7 +28,7 @@
 ac_u32 one_shot_counter;
 
 void one_shot_handler(void *param) {
-  ac_u32 timer = (ac_u32)(param);
+  ac_u32 timer = (ac_u32)(ac_uptr)param;
   ac_u32 timer_ris = ac_timer_rd_ris(timer);
   if ((timer_ris & 0x1) != 0) {
     __atomic_add_fetch(&one_shot_counter, 1, __ATOMIC_RELEASE);
@@ -40,7 +40,7 @@ void one_shot_handler(void *param) {
 ac_u32 periodic_counter;
 
 void periodic_handler(void *param) {
-  ac_u32 timer = (ac_u32)(param);
+  ac_u32 timer = (ac_u32)(ac_uptr)(param);
   ac_u32 timer_ris = ac_timer_rd_ris(timer);
   if ((timer_ris & 0x1) != 0) {
     __atomic_add_fetch(&periodic_counter, 1, __ATOMIC_RELEASE);
