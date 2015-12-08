@@ -45,34 +45,41 @@ ac_u32 ac_interrupts_rd_fiq_status();
 ac_u32 ac_interrupts_rd_ris_status();
 
 /**
- * Read Interrupt Select Register a 0 means an interrupt
- * will generate an IRQ and 1 means FIQ
+ * Return the current interrupts routes, a 0 means an interrupt
+ * will generate an IRQ and 1 means FIQ.
  */
-ac_u32 ac_interrupts_rd_int_select();
+ac_u32 ac_interrupts_rd_int_routes();
 
 /**
- * Write Interrupt Select Register a 0 means an interrupt
- * will generate an IRQ and 1 means FIQ
+ * For bits == 1 make those interrupts route to the IRQ.
+ *
+ * return the resulting value.
  */
-void ac_interrupts_wr_int_select(ac_u32 bits);
-
+ac_u32 ac_interrupts_int_route_to_irq(ac_u32 bits);
 
 /**
- * Read Interrupt Enable Bits a 0 means an interrupt
- * is disabled and 1 is enabled
+ * For bits == 1 make those interrupts route to the FIQ.
+ *
+ * return the resulting value.
+ */
+ac_u32 ac_interrupts_int_route_to_fiq(ac_u32 bits);
+
+/**
+ * Read Interrupt Enable Bits a 1 means an interrupt
+ * is enabled and 0 is disabled.
+ *
+ * return the resulting value.
  */
 ac_u32 ac_interrupts_rd_int_enable();
 
 /**
- * Read Interrupt Enable Bits a 0 means an interrupt
- * is disabled and 1 is enabled
+ * For bits == 1 enable the interrupt.
  */
-void ac_interrupts_wr_int_enable(ac_u32 bits);
+void ac_interrupts_int_enable(ac_u32 bits);
 
 /**
- * Write Interrupt Clear Bit a 1 means an interrupt
- * is cleared a 0 is no effect
+ * For bits == 1 disable the interrupt.
  */
-void ac_interrupts_wr_int_clear(ac_u32 bits);
+void ac_interrupts_int_disable(ac_u32 bits);
 
 #endif

@@ -20,6 +20,9 @@
  */
 #include <ac_timer.h>
 
+#include <ac_interrupts.h>
+#include <ac_pl190_vic.h>
+
 #include <ac_inttypes.h>
 
 #define TIMER_COUNT 4
@@ -193,6 +196,10 @@ ac_u32 ac_timer_periodic(ac_u32 timer, ac_u32 period_in_micro) {
       | TIMER_PRE_SCALE_DIV_01 | TIMER_32BIT | TIMER_WRAPPING
 
   ac_timer_wr_control(timer, TIMER_DISABLED | TIMER_INT_DISABLED | PERIODIC);
+  ac_u32 pic_timer = ((timer == 0) || (timer == 1)) ?
+      PIC_TIMERS0_1 : PIC_TIMERS2_3;
+  ac_interrupts_int_route_to_irq(pic_timer);
+  ac_interrupts_int_enable(pic_timer);
   ac_timer_wr_load(timer, period_in_micro);
   ac_timer_wr_control(timer, TIMER_ENABLED | TIMER_INT_ENABLED | PERIODIC);
   return 0;
@@ -208,6 +215,9 @@ ac_u32 ac_timer_one_shot(ac_u32 timer, ac_u32 time_in_micro) {
       | TIMER_PRE_SCALE_DIV_01 | TIMER_32BIT | TIMER_ONE_SHOT
 
   ac_timer_wr_control(timer, TIMER_DISABLED | TIMER_INT_DISABLED | ONE_SHOT);
+  ac_u32 pic_timer = ((timer == 0) || (timer == 1)) ? PIC_TIMERS0_1 : PIC_TIMERS2_3;
+  ac_interrupts_int_route_to_irq(pic_timer);
+  ac_interrupts_int_enable(pic_timer);
   ac_timer_wr_load(timer, time_in_micro);
   ac_timer_wr_control(timer, TIMER_ENABLED | TIMER_INT_ENABLED | ONE_SHOT);
   return 1;
