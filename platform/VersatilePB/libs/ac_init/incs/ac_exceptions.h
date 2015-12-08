@@ -17,13 +17,21 @@
 #ifndef SADIE_PLATFORM_VERSATILEPB_LIBS_AC_INIT_INCS_AC_EXCEPTIONS_H
 #define SADIE_PLATFORM_VERSATILEPB_LIBS_AC_INIT_INCS_AC_EXCEPTIONS_H
 
-void ac_exception_reset_handler(void) __attribute__ ((interrupt ("UNDEF")));
-void ac_exception_undef_handler(void) __attribute__ ((interrupt ("UNDEF")));
-void ac_exception_svc_handler(void) __attribute__ ((interrupt ("SWI")));
-void ac_exception_prefetch_abort_handler(void) __attribute__ ((interrupt ("ABORT")));
-void ac_exception_data_abort_handler(void) __attribute__ ((interrupt ("ABORT")));
-void ac_exception_irq_handler(void) __attribute__ ((interrupt ("IRQ")));
-void ac_exception_fiq_handler(void) __attribute__ ((interrupt ("FIQ")));
+#include <ac_inttypes.h>
+
+typedef void (*int_handler)(void* param);
+
+/**
+ * Register a irq handler and its parameter.
+ *
+ * return 0 if OK
+ */
+ac_u32 ac_exception_irq_register(int_handler handler, void* param);
+
+/**
+ * Initialize this module
+ */
+void ac_exception_init();
 
 #endif
 

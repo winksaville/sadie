@@ -36,7 +36,7 @@ ac_init:
 
   // Cannot setup user stack this way because
   // we can't change the mode bits in cpsr from
-  // usr-mode.
+  // usr-mode back to system.
   //bic r1, r0, #PROC_MODE_MASK
   //orr r1, r1, #USR_MODE
   //msr cpsr, r1
@@ -91,11 +91,12 @@ ac_init:
 loop:
   cmp r1, r3
   bge done
-  ldr r2, [r1],#4 // Get next vecotor
+  ldr r2, [r1],#4 // Get next vector
   str r2, [r0],#4 // Store it
   b   loop
 
 done:
+  bl  ac_exception_init
   bl  ac_interrupts_cpu_enable
 
   ldmfd sp!, {pc} // Return

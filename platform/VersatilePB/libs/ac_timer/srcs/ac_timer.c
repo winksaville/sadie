@@ -15,8 +15,9 @@
  */
 
 /**
- * The timers on the VersatilePB are SP804 with the documenation
+ * The timers on the VersatilePB are SP804 with the online documenation
  * [here](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0271d/index.html)
+ * and the pdf [here](http://infocenter.arm.com/help/topic/com.arm.doc.ddi0271d/DDI0271.pdf).
  */
 #include <ac_timer.h>
 
@@ -27,7 +28,7 @@
 
 #define TIMER_COUNT 4
 
-// The base memory address for the VersatilePB is
+// The base memory address for the SP804 in the VersatilePB is documented
 // [here](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0425f/CACDCGDI.html)
 #define TIMER0_1_BASE_REG  ((ac_u8*)0x101E2000)
 #define TIMER2_3_BASE_REG  ((ac_u8*)0x101E3000)
@@ -50,24 +51,24 @@ static ac_u8* timer_base[TIMER_COUNT] = {
 
 // Timer Control Register fields
 // http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0271d/Babgabfg.html
-#define TIMER_ENABLED 0x80
 #define TIMER_DISABLED 0x00
+#define TIMER_ENABLED  0x80
 
-#define TIMER_MODE_PERIODIC 0x40
 #define TIMER_MODE_FREE_RUNNING 0x00
+#define TIMER_MODE_PERIODIC     0x40
 
-#define TIMER_INT_ENABLED 0x40
 #define TIMER_INT_DISABLED 0x00
+#define TIMER_INT_ENABLED  0x20
 
-#define TIMER_PRE_SCALE_DIV_01 0x00
-#define TIMER_PRE_SCALE_DiV_16 0x01
-#define TIMER_PRE_SCALE_DiV_256 0x11
+#define TIMER_PRE_SCALE_DIV_01  0x00
+#define TIMER_PRE_SCALE_DiV_16  0x04
+#define TIMER_PRE_SCALE_DiV_256 0x08
 
-#define TIMER_32BIT 0x02
 #define TIMER_16BIT 0x00
+#define TIMER_32BIT 0x02
 
-#define TIMER_ONE_SHOT 0x01
 #define TIMER_WRAPPING 0x00
+#define TIMER_ONE_SHOT 0x01
 
 
 
