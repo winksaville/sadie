@@ -20,13 +20,26 @@
 #include <ac_putchar.h>
 #include <ac_timer.h>
 
-void ac_exception_reset_handler(void) __attribute__ ((interrupt ("UNDEF")));
-void ac_exception_undef_handler(void) __attribute__ ((interrupt ("UNDEF")));
-void ac_exception_svc_handler(void) __attribute__ ((interrupt ("SWI")));
-void ac_exception_prefetch_abort_handler(void) __attribute__ ((interrupt ("ABORT")));
-void ac_exception_data_abort_handler(void) __attribute__ ((interrupt ("ABORT")));
-void ac_exception_irq_handler(void) __attribute__ ((interrupt ("IRQ")));
-void ac_exception_fiq_handler(void) __attribute__ ((interrupt ("FIQ")));
+void ac_exception_reset_handler(void)
+  __attribute__ ((interrupt ("UNDEF")));
+
+void ac_exception_undef_handler(void)
+  __attribute__ ((interrupt ("UNDEF")));
+
+void ac_exception_svc_handler(void)
+  __attribute__ ((interrupt ("SWI")));
+
+void ac_exception_prefetch_abort_handler(void)
+  __attribute__ ((interrupt ("ABORT")));
+
+void ac_exception_data_abort_handler(void)
+  __attribute__ ((interrupt ("ABORT")));
+
+void ac_exception_irq_handler(void)
+  __attribute__ ((interrupt ("IRQ")));
+
+void ac_exception_fiq_handler(void)
+  __attribute__ ((interrupt ("FIQ")));
 
 typedef struct {
   ac_bool available;
@@ -53,8 +66,8 @@ ac_u32 ac_exception_irq_register(int_handler handler, void* param) {
   for (ac_u32 i = 0; i < MAX_HANDLERS; i++) {
     ac_bool* pavailable = &irq_handlers[i].available;
     ac_bool expected = AC_TRUE;
-    ac_bool ok = __atomic_compare_exchange_n(pavailable, &expected, AC_FALSE,
-        AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
+    ac_bool ok = __atomic_compare_exchange_n(pavailable, &expected,
+        AC_FALSE, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
     if (ok) {
       irq_handlers[i].param = param;
       int_handler* phandler = &irq_handlers[i].handler;
