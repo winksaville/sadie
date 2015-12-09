@@ -14,26 +14,50 @@
  * limitations under the License.
  */
 
+/**
+ * This module implements ac_assert and is like assert but
+ * is testable because the failure code, ac_fail_impl is not
+ * required to stop and the ac_assert macro will return AC_TRUE
+ * if it did invoke ac_fail_impl.
+ *
+ * See test-ac_assert for examples.
+ */
+
 #ifndef SADIE_LIBS_INCS_AC_ASSERT_H
 #define SADIE_LIBS_INCS_AC_ASSERT_H
 
+#include <ac_inttypes.h>
+
 /**
- * Function for use by ac_fail and ac_assert.
+ * Function for use by ac_fail and ac_assert. This function can
+ * be overridden but the default implemenaton will print the
+ * parameters and invoke ac_stop().
  */
 void ac_fail_impl(const char*  str, const char* file, int line, const char* function);
 
 /**
  * Unconditionally fail writing the message to the terminal
- * plus the file, line and function printed.
+ * plus the file, line and function printed and always
+ * return AC_TRUE indicating there was a failure.
  */
-#define ac_fail(s) ac_fail_impl(s, __FILE__, __LINE__, __func__)
+#define ac_fail(s) ({ ac_fail_impl(s, __FILE__, __LINE__, __func__); AC_TRUE; })
 
 /**
- * If the expr is false at runtime _ac_fail is called with the
- * expr as a string plus the file, line and function.
+ * If the expr is false at runtime ac_fail is called with the
+ * expr as a string and AC_TRUE is returned indicating a failure.
  */
-#define ac_assert(expr) \
-    do { if (!(expr)) { ac_fail_impl(#expr, __FILE__, __LINE__, __FUNCTION__); } } while(0)
+#define ac_assert(expr) ({ \
+  ac_bool failed;          \
+  if (expr) {              \
+    failed = AC_FALSE;     \
+  } else {                 \
+    ac_fail(#expr);        \
+    failed = AC_TRUE;      \
+  }                        \
+  failed;                  \
+})
+
+//#define ac_assert(expr) expr
 
 /**
  * If expr is false at compile time a compile error is generated.

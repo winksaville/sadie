@@ -18,6 +18,7 @@
 #include <ac_inttypes.h>
 #include <ac_putchar.h>
 #include <ac_string.h>
+#include <ac_test.h>
 
 /**
  * Only assumes ac_putchar works
@@ -93,62 +94,22 @@ int main(void) {
   const ac_u16 acU16 = 16;
   const ac_u32 acU32 = 32; 
   const ac_u64 acU64 = 64;
-  ac_u32 result = 0;
-  ac_u32 r;
+  ac_bool error = AC_FALSE;
 
+  error |= AC_TEST(test1("") == 0);
+  error |= AC_TEST(test1("s", s) == 0);
+  error |= AC_TEST(test1("8", acU8) == 0);
+  error |= AC_TEST(test1("6", acU16) == 0);
+  error |= AC_TEST(test1("2", acU32) == 0);
+  error |= AC_TEST(test1("4", acU64) == 0);
+  error |= AC_TEST(test1("8624s", acU8, acU16, acU32, acU64, s) == 0);
+  error |= AC_TEST(test1("s4268", s, acU64, acU32, acU16, acU8) == 0);
 
-  r = test1("");
-  result |= r;
-  if (r != 0) {
-    ac_putchar('0');
-  }
-  if (r != 0) {
-    ac_putchar('1');
-  }
-  r = test1("s", s);
-  result |= r;
-  if (r != 0) {
-    ac_putchar('2');
-  }
-  r = test1("8", acU8);
-  result |= r;
-  if (r != 0) {
-    ac_putchar('3');
-  }
-  r = test1("6", acU16);
-  result |= r;
-  if (r != 0) {
-    ac_putchar('4');
-  }
-  r = test1("2", acU32);
-  result |= r;
-  if (r != 0) {
-    ac_putchar('5');
-  }
-  r = test1("4", acU64);
-  result |= r;
-  if (r != 0) {
-    ac_putchar('6');
-  }
-  r = test1("8624s", acU8, acU16, acU32, acU64, s);
-  result |= r;
-  if (r != 0) {
-    ac_putchar('7');
-  }
-  r = test1("s4268", s, acU64, acU32, acU16, acU8);
-  result |= r;
-
-  if (result == 0) {
+  if (!error) {
     ac_putchar('O');
     ac_putchar('K');
     ac_putchar('\n');
-  } else {
-    ac_putchar('-');
-    ac_putchar('E');
-    ac_putchar('R');
-    ac_putchar('R');
-    ac_putchar('\n');
   }
 
-  return result;
+  return error;
 }

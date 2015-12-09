@@ -18,24 +18,16 @@
 
 #include <ac_test.h>
 
-ac_bool test_sysconf() {
+int main(void) {
   ac_bool error = AC_FALSE;
 
   ac_u32 numcpus = ac_numcpus();
   error |= AC_TEST(numcpus > 0);
 
+  if (!error) {
+    // Succeeded
+    ac_printf("OK\n");
+  }
+
   return error;
 }
-
-int main(void) {
-    if (test_sysconf()) {
-        // Failed
-        ac_printf("ERR\n");
-        return 1;
-    } else {
-        // Succeeded
-        ac_printf("OK\n");
-        return 0;
-    }
-}
-

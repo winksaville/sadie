@@ -27,9 +27,9 @@
 /**
  * Test dispatcher get and return
  *
- * return !0 if an error.
+ * return AC_TRUE if an error.
  */
-static int test_dispatcher_get_ret() {
+static ac_bool test_dispatcher_get_ret() {
   ac_bool error = AC_FALSE;
 
   ac_dispatcher* pd = ac_dispatcher_get(10);
@@ -47,13 +47,13 @@ static int test_dispatcher_get_ret() {
   // Return AC_NULL should be a NOP
   ac_dispatcher_ret(AC_NULL);
 
-  return error ? 1 : 0;
+  return error;
 }
 
 /**
  * Test dispatching a message
  *
- * return !0 if an error.
+ * return AC_TRUE if an error.
  */
 static int test_dispatcher_add_rmv_acq() {
   ac_bool error = AC_FALSE;
@@ -93,7 +93,7 @@ static int test_dispatcher_add_rmv_acq() {
   // Return the dispatcher
   ac_dispatcher_ret(pd);
 
-  return error ? 1 : 0;
+  return error;
 }
 
 
@@ -127,9 +127,9 @@ ac ac1 = {
 /**
  * Test dispatching a message
  *
- * return !0 if an error.
+ * return AC_TRUE if an error.
  */
-static int test_dispatching() {
+static ac_bool test_dispatching() {
   ac_bool error = AC_FALSE;
   ac_debug_printf("test_dispatching:+\n");
 
@@ -172,25 +172,21 @@ static int test_dispatching() {
   error |= AC_TEST(pac2 == pac1);
 
   ac_debug_printf("test_dispatching:- error=%d\n", error);
-  return error ? 1 : 0;
+  return error;
 }
 
 int main(void) {
-  int result = 0;
+  ac_bool error = AC_FALSE;
 
-  result |= test_dispatcher_get_ret();
-  result |= test_dispatcher_add_rmv_acq();
-  result |= test_dispatching();
+  error |= test_dispatcher_get_ret();
+  error |= test_dispatcher_add_rmv_acq();
+  error |= test_dispatching();
 
-  if (result != 0) {
-      // Failed, don't print anything as there is enough already
-      //ac_printf("ERR\n");
-      return 1;
-  } else {
+  if (!error) {
       // Succeeded
       ac_printf("OK\n");
       return 0;
   }
 
-  return result;
+  return error;
 }

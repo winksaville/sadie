@@ -18,7 +18,7 @@
 
 #include <ac_test.h>
 
-ac_bool test_memmgr() {
+int main(void) {
   ac_bool error = AC_FALSE;
 
   // Must return AC_NULL although according to C99 standard a
@@ -62,18 +62,11 @@ ac_bool test_memmgr() {
   error |= AC_TEST(p65 != AC_NULL);
   ac_free(p65);
 
-  return error;
-}
+  if (!error) {
+    // Succeeded
+    ac_printf("OK\n");
+  }
 
-int main(void) {
-    if (test_memmgr()) {
-        // Failed
-        ac_printf("ERR\n");
-        return 1;
-    } else {
-        // Succeeded
-        ac_printf("OK\n");
-        return 0;
-    }
+  return error;
 }
 

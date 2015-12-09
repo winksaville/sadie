@@ -2,8 +2,7 @@
  * Copyright 2015 Wink Saville
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * you may not use this file except in compliance with the License.  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -21,11 +20,10 @@
 
 
 /**
- * Test we can initialize and deinitialize ac_mpscfifo
- *
+ * Test we can initialize and deinitialize ac_mpscfifo *
  * return !0 if an error.
  */
-static int test_init_and_deinit_mpscfifo() {
+static ac_bool test_init_and_deinit_mpscfifo() {
   ac_bool error = AC_FALSE;
   ac_msg stub;
   ac_mpscfifo q;
@@ -44,7 +42,7 @@ static int test_init_and_deinit_mpscfifo() {
   error |= AC_TEST(pq->phead == AC_NULL);
   error |= AC_TEST(pq->ptail == AC_NULL);
 
-  return error ? 1 : 0;
+  return error;
 }
 
 /**
@@ -52,7 +50,7 @@ static int test_init_and_deinit_mpscfifo() {
  *
  * return !0 if an error.
  */
-static int test_add_rmv_msg() {
+static ac_bool test_add_rmv_msg() {
   ac_bool error = AC_FALSE;
   ac_msg stub;
   ac_msg msg;
@@ -81,24 +79,19 @@ static int test_add_rmv_msg() {
   presult = ac_deinit_mpscfifo(&q);
   error |= AC_TEST(presult == &msg);
 
-  return error ? 1 : 0;
+  return error;
 }
 
 int main(void) {
-  int result = 0;
+  ac_bool error = AC_FALSE;
 
-  result |= test_init_and_deinit_mpscfifo();
-  result |= test_add_rmv_msg();
+  error |= test_init_and_deinit_mpscfifo();
+  error |= test_add_rmv_msg();
 
-  if (result != 0) {
-      // Failed
-      ac_printf("ERR\n");
-      return 1;
-  } else {
-      // Succeeded
-      ac_printf("OK\n");
-      return 0;
+  if (!error) {
+    // Succeeded
+    ac_printf("OK\n");
   }
 
-  return result;
+  return error;
 }

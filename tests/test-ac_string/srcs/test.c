@@ -16,72 +16,31 @@
 
 #include <ac_string.h>
 #include <ac_putchar.h>
+#include <ac_test.h>
 
 int main(void) {
+  ac_size_t ret;
   char* empty = "";
   char* onechar = "1";
   char* fourchars = "1234";
   int result = 0;
-  ac_size_t ret;
+  ac_bool error = AC_FALSE;
   
-  ret = ac_strlen(empty);
-  if (ret != 0) {
-    result |= 0x01;
-  }
+  error |= AC_TEST(ac_strlen(empty) == 0);
+  error |= AC_TEST(ac_strlen(onechar) == 1);
+  
+  error |= AC_TEST(ac_strlen(fourchars) == 4);
+  error |= AC_TEST(ac_strncmp(empty, empty, 0) == 0);
+  error |= AC_TEST(ac_strncmp(empty, onechar, 1) < 0);
+  error |= AC_TEST(ac_strncmp(onechar, empty, 1) > 0);
+  error |= AC_TEST(ac_strncmp(onechar, onechar, 1) == 0);
+  error |= AC_TEST(ac_strncmp(onechar, fourchars, 4) < 0);
+  error |= AC_TEST(ac_strncmp(fourchars, onechar, 4) > 0);
+  error |= AC_TEST(ac_strncmp(fourchars, fourchars, 4) == 0);
 
-  ret = ac_strlen(onechar);
-  if (ret != 1) {
-    result |= 0x02;
-  }
-
-  ret = ac_strlen(fourchars);
-  if (ret != 4) {
-    result |= 0x04;
-  }
-
-  ret = ac_strncmp(empty, empty, 0);
-  if (ret != 0) {
-    result |= 0x08;
-  }
-
-  ret = ac_strncmp(empty, onechar, 1);
-  if (ret >= 0) {
-    result |= 0x10;
-  }
-
-  ret = ac_strncmp(onechar, empty, 1);
-  if (ret <= 0) {
-    result |= 0x20;
-  }
-
-  ret = ac_strncmp(onechar, onechar, 1);
-  if (ret != 0) {
-    result |= 0x40;
-  }
-
-  ret = ac_strncmp(onechar, fourchars, 4);
-  if (ret >= 0) {
-    result |= 0x80;
-  }
-
-  ret = ac_strncmp(fourchars, onechar, 4);
-  if (ret <= 0) {
-    result |= 0x100;
-  }
-
-  ret = ac_strncmp(fourchars, fourchars, 4);
-  if (ret != 0) {
-    result |= 0x200;
-  }
-
-  if (result == 0) {
+  if (!error) {
     ac_putchar('O');
     ac_putchar('K');
-    ac_putchar('\n');
-  } else {
-    ac_putchar('E');
-    ac_putchar('R');
-    ac_putchar('R');
     ac_putchar('\n');
   }
 

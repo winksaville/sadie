@@ -49,11 +49,12 @@ void periodic_handler(void *param) {
   }
 }
 
-ac_bool test_ac_timer() {
+int main(void) {
   ac_bool error = AC_FALSE;
 #if defined(Posix)
 
   ac_printf("test_ac_timer: no tests for Posix\n");
+  //error = AC_TRUE;
 
 #elif defined(VersatilePB)
 
@@ -80,7 +81,6 @@ ac_bool test_ac_timer() {
   error |= AC_TEST(ac_interrupts_rd_int_routes() == 0);
   ac_interrupts_int_disable(PIC_ALL);
   error |= AC_TEST(ac_interrupts_rd_int_enable() == 0);
-
 
   // Expect 4 timers
   ac_u32 count = ac_timer_get_count();
@@ -117,7 +117,8 @@ ac_bool test_ac_timer() {
     ac_u32 timer_ris = ac_timer_rd_ris(0);
     ac_u32 timer_mis = ac_timer_rd_mis(0);
     ac_u32 timer_control = ac_timer_rd_control(0);
-    ac_printf("test_ac_timer: new value=%u timer_ris=0x%x timer_mis=0x%x timer_control=0x%x\n",
+    ac_printf("test_ac_timer: new value=%u timer_ris=0x%x"
+        " timer_mis=0x%x timer_control=0x%x\n",
         timer_value, timer_ris, timer_mis, timer_control);
 
     ac_u32 irq_status = ac_interrupts_rd_irq_status();
@@ -125,42 +126,40 @@ ac_bool test_ac_timer() {
     ac_u32 ris_status = ac_interrupts_rd_ris_status();
     ac_u32 int_routes = ac_interrupts_rd_int_routes();
     ac_u32 int_enable = ac_interrupts_rd_int_enable();
-    ac_printf("test_ac_timer: irq_status=0x%x fiq_status=0x%x ris_status=0x%x\n",
+    ac_printf("test_ac_timer: irq_status=0x%x fiq_status=0x%x"
+        " ris_status=0x%x\n",
         irq_status, fiq_status, ris_status);
     ac_printf("test_ac_timer: int_routes=0x%x int_enable=0x%x\n",
         int_routes, int_enable);
   }
 
+  // TODO: This is brittle, Instead of using a counter w
   ac_exception_irq_register(&periodic_handler, (void*)1);
   ac_timer_periodic(1, 1000000);
   cur_value =  __atomic_load_n(&periodic_counter, __ATOMIC_ACQUIRE);
   ac_printf("test_ac_timer: periodic value is %u\n", cur_value);
-  ac_u32 prev_value =  cur_value;
-  ac_u32 terminal_value = cur_value + 10;
-  for (ac_u32 i = 0; (i < 1000000000) && (cur_value != terminal_value); i++) {
-    cur_value =  __atomic_load_n(&periodic_counter, __ATOMIC_ACQUIRE);
+  ac_u32 prev_value = cur_value;
+  ac_u32 terminal_value = cur_value + 3;
+  for (ac_u64 i = 0; i < 1000000000 && cur_value != terminal_value; i++) {
+    cur_value = __atomic_load_n(&periodic_counter, __ATOMIC_ACQUIRE);
     if (cur_value != prev_value) {
       prev_value = cur_value;
       ac_printf("test_ac_timer: periodic value changed to %u\n", cur_value);
     }
   }
+  error |= AC_TEST(cur_value == terminal_value);
 
 #else
+
   ac_printf("test_ac_timer: Unknown Platform\n");
+
 #endif
 
-  return error;
-}
-
-int main(void) {
-  if (test_ac_timer()) {
-      // Failed
-      ac_printf("ERR\n");
-      return 1;
-  } else {
-      // Succeeded
-      ac_printf("OK\n");
-      return 0;
+  if (!error) {
+    // Succeeded
+    ac_printf("OK\n");
   }
+
+  return error;
 }
 

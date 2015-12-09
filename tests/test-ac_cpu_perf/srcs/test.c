@@ -28,14 +28,14 @@ ac_bool test_ac_cpu_perf() {
   ac_u64 cc1 = ac_cpu_perf_cycle_counter_rd();
   ac_u64 cc2 = ac_cpu_perf_cycle_counter_rd();
   ac_u64 diff = cc2 - cc1;
-  AC_TEST(cc1 != 0);
-  AC_TEST(cc2 != 0);
-  AC_TEST(diff > 0);
+  error |= AC_TEST(cc1 != 0);
+  error |= AC_TEST(cc2 != 0);
+  error |= AC_TEST(diff > 0);
   ac_printf("test_ac_cpu_perf: cc1=%llx cc2=%llx diff=%llx\n",
       cc1, cc2, diff);
 
   ac_u32 freq = ac_cpu_perf_cycle_counter_freq();
-  AC_TEST(freq >= 1000000);
+  error |= AC_TEST(freq >= 1000000);
   ac_printf("test_ac_cpu_perf: freq=%d\n", freq);
 
 #elif defined(VersatilePB)
@@ -53,14 +53,10 @@ ac_bool test_ac_cpu_perf() {
 }
 
 int main(void) {
-  if (test_ac_cpu_perf()) {
-      // Failed
-      ac_printf("ERR\n");
-      return 1;
-  } else {
-      // Succeeded
-      ac_printf("OK\n");
-      return 0;
+  if (!test_ac_cpu_perf()) {
+    // Succeeded
+    ac_printf("OK\n");
+    return 0;
   }
 }
 

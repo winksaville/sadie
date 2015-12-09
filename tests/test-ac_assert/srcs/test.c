@@ -20,44 +20,45 @@
 #include <ac_assert.h>
 #include <ac_debug_assert.h>
 #include <ac_printf.h>
+#include <ac_test.h>
 
-volatile ac_u32 volatile0 = 0;
+volatile ac_u32 volatile0;
 
-ac_bool test_assert(void) {
-    /*
-     * Manually test these runtime errors, enable one at a time
-     * and compile and run, each statement should fail.
-     */
-    //ac_static_assert(1 == 0, "ac_static_assert(1 == 0), should always fail");
-    //ac_static_assert(volatile0 == 0, "ac_static_assert(volatile0 == 0), should always fail");
-    //ac_fail("failing");
-    //ac_assert(0 == 1);
-    //ac_assert(volatile0 == 1);
-
-    /*
-     * Manually uncomment the statements below one at a time both should fail.
-     * Next uncomment NDEBUG and retest each, this should be OK
-     */
-    //ac_debug_assert(1 == 2);
-    //ac_debug_assert(volatile0 == 2);
-
-    // These should always succeed
-    ac_static_assert(0 == 0, "ac_static_assert(0 == 0) should never fail");
-    ac_assert(0 == 0);
-    ac_assert(volatile0 == 0);
-
-    return 0;
+void ac_fail_impl(const char* assertion, const char* file, int line,
+    const char* function) {
+    ac_printf("Assert/Failure: '%s' at %s:%u in function %s\n",
+       assertion, file, line, function);
 }
 
 int main(void) {
-    if (test_assert()) {
-        // Failed
-        ac_printf("ERR\n");
-        return 1;
-    } else {
-        // Succeeded
-        ac_printf("OK\n");
-        return 0;
-    }
-}
+  volatile0 = 0;
+  ac_bool error = AC_FALSE;
 
+  /*
+   * Manually test these runtime errors, enable one at a time
+   * and compile and run, each statement should fail.
+   */
+  //ac_static_assert(1 == 0, "ac_static_assert(1 == 0), should always fail");
+  //ac_static_assert(volatile0 == 0, "ac_static_assert(volatile0 == 0), should always fail");
+
+  // Expect these asserts to fail, but since our ac_fail_impl
+  // does not invoke "stop()" we can use AC_TEST to validate
+  // that they failed (returned AC_TRUE) and PASS.
+  error |= AC_TEST(ac_fail("failing"));
+  error |= AC_TEST(ac_assert(0 == 1));
+  error |= AC_TEST(ac_assert(volatile0 == 1));
+  error |= AC_TEST(ac_debug_assert(1 == 2));
+  error |= AC_TEST(ac_debug_assert(volatile0 == 2));
+
+  // These should never fail
+  ac_static_assert(0 == 0, "ac_static_assert(0 == 0) should never fail");
+  error |= AC_TEST(!ac_assert(0 == 0));
+  error |= AC_TEST(!ac_assert(volatile0 == 0));
+
+  if (!error) {
+    // Succeeded
+    ac_printf("OK\n");
+  }
+
+  return error;
+}
