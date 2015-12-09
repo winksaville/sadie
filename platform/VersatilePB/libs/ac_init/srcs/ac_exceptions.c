@@ -48,6 +48,8 @@ typedef struct {
 } irq_handler_obj;
 
 #define MAX_HANDLERS 8
+
+static irq_handler_count;
 static irq_handler_obj irq_handlers[MAX_HANDLERS];
 
 /**
@@ -63,7 +65,7 @@ ac_u32 ac_exception_irq_register(int_handler handler, void* param) {
   // will be looking at the handler only and if its not AC_NULL
   // assume is good. Thus we'll update that last when we add
   // a new entry.
-  for (ac_u32 i = 0; i < MAX_HANDLERS; i++) {
+  for (ac_u32 i = irq_handler_count; i < MAX_HANDLERS; i++) {
     ac_bool* pavailable = &irq_handlers[i].available;
     ac_bool expected = AC_TRUE;
     ac_bool ok = __atomic_compare_exchange_n(pavailable, &expected,
@@ -72,6 +74,7 @@ ac_u32 ac_exception_irq_register(int_handler handler, void* param) {
       irq_handlers[i].param = param;
       int_handler* phandler = &irq_handlers[i].handler;
       __atomic_store_n(phandler, handler, __ATOMIC_RELEASE);
+      irq_handler_count += 1;
       status = 0;
       break;
     }
@@ -83,6 +86,7 @@ ac_u32 ac_exception_irq_register(int_handler handler, void* param) {
  * Initialize this module
  */
 void ac_exception_init() {
+  irq_handler_count = 0;
   for (ac_u32 i = 0; i < MAX_HANDLERS; i++) {
     irq_handlers[i].available = AC_TRUE;
     irq_handlers[i].handler = AC_NULL;
@@ -118,7 +122,7 @@ void ac_exception_data_abort_handler(void) {
 void ac_exception_irq_handler(void) {
   //ac_putchar('I');
   //ac_putchar('\n');
-  for (ac_u32 i = 0; i < MAX_HANDLERS; i++) {
+  for (ac_u32 i = 0; i < irq_handler_count; i++) {
     if (irq_handlers[i].handler != AC_NULL) {
       irq_handlers[i].handler(irq_handlers[i].param);
     }
