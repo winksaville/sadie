@@ -44,11 +44,13 @@ int main(void) {
   // Expect these asserts to fail, but since our ac_fail_impl
   // does not invoke "stop()" we can use AC_TEST to validate
   // that they failed (returned AC_TRUE) and PASS.
+  ac_printf("Expect 5 failures vvvvvvvvvvvvvvvvvvvvvvv\n");
   error |= AC_TEST(ac_fail("failing"));
   error |= AC_TEST(ac_assert(0 == 1));
   error |= AC_TEST(ac_assert(volatile0 == 1));
   error |= AC_TEST(ac_debug_assert(1 == 2));
   error |= AC_TEST(ac_debug_assert(volatile0 == 2));
+  ac_printf("Expect 5 failures ^^^^^^^^^^^^^^^^^^^^^^^\n");
 
   // These should never fail
   ac_static_assert(0 == 0, "ac_static_assert(0 == 0) should never fail");
