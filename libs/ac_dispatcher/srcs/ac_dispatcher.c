@@ -136,6 +136,10 @@ static void rmv_acq(ac_dispatcher* pd, int acq_idx) {
 
 /**
  * Dispatch messages to asynchronous components
+ *
+ * CAUTION: This supports multiple dispatcher working on the same
+ * list although this is untested as of now and we may want to
+ * disallow it!!!
  */
 ac_bool ac_dispatch(ac_dispatcher* pd) {
   ac_bool processed_msgs = AC_FALSE;
@@ -152,22 +156,37 @@ ac_bool ac_dispatch(ac_dispatcher* pd) {
     acq** ppacq = &pd->acqs[i];
     acq* pacq = __atomic_exchange_n(ppacq, ACQ_PROCESSING,__ATOMIC_ACQUIRE);
 
-    // If we're racing with ac_dispatcher_deinit and we lost then
-    // pacq == ACQ_EMPTY and we won't do anything. If we won then
-    // we've set it to ACQ_PROCESSING and we'll process the messages.
-    if ((pacq != ACQ_EMPTY) && (pacq != ACQ_PROCESSING)) {
-      // The acq is not empty and someone else isn't processing
-      processed_msgs = process_msgs(pacq);
-    }
-
-    // Restore pacq if ac_dispatcher_deinit didn't mark it ACQ_EMPTY
-    ac_bool restored = __atomic_compare_exchange_n(
-                        ppacq, &acq_processing, pacq,
-                        AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
-    if (!restored) {
-      ac_debug_printf("ac_dispatch: ret_acq we won race pd=%p acq_idx=%d\n",
+    // If pacq == ACQ_EMPTY then this entry is already removed or
+    // will be so we're just store ACQ_EMPTY
+    //
+    // If pacq == ACQ_PROCESSING then someone else is processing
+    // this and we should do nothing.
+    //
+    // If pacq is nither than we're going to process the queue.
+    if (pacq == ACQ_EMPTY) {
+      ac_debug_printf("ac_dispatch: skip empty entry pd=%p acq_idx=%d\n",
           pd, i);
-      ret_acq(pacq);
+       __atomic_store_n(ppacq, ACQ_EMPTY, __ATOMIC_RELEASE);
+    } else if (pacq == ACQ_PROCESSING) {
+      ac_debug_printf("ac_dispatch: skip busy entry pd=%p acq_idx=%d\n",
+          pd, i);
+    } else {
+      ac_debug_printf("ac_dispatch: process msgs pd=%p acq_idx=%d\n",
+          pd, i);
+      processed_msgs = process_msgs(pacq);
+
+      // Now restore the previous pacq if it is still ACQ_PROCESSING.
+      ac_bool restored = __atomic_compare_exchange_n(
+                          ppacq, &acq_processing, pacq,
+                          AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
+      if (!restored) {
+        // It wasn't restored so the only possibility is that while
+        // we were processing the messages rmv_acq was invoked and
+        // pacq is now ACQ_EMPTY so we need to finish the removal.
+        ac_debug_printf("ac_dispatch: ret_acq as we won race with rmv_acq"
+            " pd=%p acq_idx=%d\n", pd, i);
+        ret_acq(pacq);
+      }
     }
   }
 
