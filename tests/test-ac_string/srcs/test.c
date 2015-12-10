@@ -19,7 +19,6 @@
 #include <ac_test.h>
 
 int main(void) {
-  ac_size_t ret;
   char* empty = "";
   char* onechar = "1";
   char* fourchars = "1234";
