@@ -13,3 +13,11 @@
 # limitations under the license.
 
 runtimeIncDirs = [include_directories('../', 'incs')]
+
+# The compiler arguments
+compilerArgs += [
+  '-D@0@'.format(Platform),
+  '-D@0@'.format(Arch),
+  '-m64',
+]
+

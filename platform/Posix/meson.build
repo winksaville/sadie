@@ -14,8 +14,8 @@
 
 # ARM Versatile Platform Board
 
-# The name of the subdirectory directly under arch/
-Arch = 'x86_64' # Need to look this up Posix could be on many other Arch
+# The name of the subdirectory directly under arch/ so arch/x86_64
+Arch = 'x86_64'
 
 # The compiler arguments
 compilerArgs += [
@@ -23,6 +23,6 @@ compilerArgs += [
   '-D@0@'.format(Arch),
 ]
 
-subdir('@0@/arch/@1@'.format(meson.source_root(), Arch))
+subdir('@0@/arch'.format(meson.source_root()))
 
 subdir('libs')

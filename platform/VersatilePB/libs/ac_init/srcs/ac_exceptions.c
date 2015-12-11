@@ -49,7 +49,7 @@ typedef struct {
 
 #define MAX_HANDLERS 8
 
-static irq_handler_count;
+static ac_u32 irq_handler_count;
 static irq_handler_obj irq_handlers[MAX_HANDLERS];
 
 /**

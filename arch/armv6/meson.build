@@ -13,3 +13,5 @@
 # limitations under the license.
 
 runtimeIncDirs = [include_directories('../', 'incs')]
+
+subdir(Cpu)

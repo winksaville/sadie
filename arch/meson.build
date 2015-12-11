@@ -12,10 +12,4 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-if Arch == 'arm_32'
-  subdir('arm_32')
-endif
-
-if Arch == 'x86_64'
-  subdir('x86_64')
-endif
+subdir(Arch)

@@ -13,49 +13,22 @@
 # limitations under the license.
 
 # ARM Versatile Platform Board
+#  Note this isn't a real VersatilePB because a real VersatilePB
+#  has an armv5 (arm926) Cpu but I'm using __atomic_xxxx builtins
+#  and they aren't available in armv5 so this is a fictional device
+#  but allows me to use qemu.
 
-# The name of the subdirectory directly under arch/
-Arch = 'arm_32'
+# The name of a subdirectory under arch so arch/armv6zk
+Arch = 'armv6'
 
-# From (http://www.gurucoding.com/en/rpi_cross_compiler/diff_hardfp_softfp.php)
-# the Raspberry Pi main chip is Broadcom BCM2835, and it's a SoC (System-on-Chip).
-# This SoC includes CPU, GPU and RAM. CPU is ARM1176JZF-S 700 MHz processor,
-# capable of doing floating point math in hardware, including VFP extensions
-# (Vector Floating Point), somewhat similar to x86 SIMD called SSE2.
-#
-# CFlags that could be useful to other builds,
-# such as arc/arm_32/meson.build
+# The name of a subdirecotry under arch/$Arch so arch/armv6/arm1176jzf-s
+Cpu = 'arm1176jzf-s'
 
-# Valid arguments to '-march=' are:
-#  armv2 armv2a armv3 armv3m armv4 armv4t armv5 armv5e armv5t armv5te
-#  armv6 armv6-m armv6j armv6k armv6s-m armv6t2 armv6z armv6zk
-#  armv7 armv7-a armv7-m armv7-r armv7e-m armv7ve
-#  armv8-a armv8-a+crc
-#  iwmmxt iwmmxt2 native
+# Can be 'hard' or 'soft;
+Float = 'hard'
 
-# Original VersatilePB flags
-#CFlagMArch = 'armv5te'
-#CFlagMCpu = 'arm926ej-s'
-#CFlagMTune ='arm926ej-s'
-#CFlagMFloatHardSoft = 'soft'
+# Load the architecture specific information
+subdir('@0@/arch'.format(meson.source_root()))
 
-# BCM2635 for RaspberryPi
-CFlagMArch = 'armv6zk'
-CFlagMCpu = 'arm1176jzf-s'
-CFlagMTune = 'arm1176jzf-s'
-CFlagMFloatHardSoft = 'hard'
-
-# The compiler arguments
-compilerArgs += [
-  '-D@0@'.format(Platform),
-  '-D@0@'.format(Arch),
-  '-march=@0@'.format(CFlagMArch),
-  '-mcpu=@0@'.format(CFlagMCpu),
-  '-mtune=@0@'.format(CFlagMTune),
-  '-m@0@-float'.format(CFlagMFloatHardSoft),
-  '-mfloat-abi=@0@'.format(CFlagMFloatHardSoft),
-]
-
-subdir('@0@/arch/@1@'.format(meson.source_root(), Arch))
-
+# And then the libraries for VersatilePB
 subdir('libs')
