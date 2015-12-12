@@ -25,6 +25,7 @@ compilerArgs = ['-std=c11', '-O2', '-g']
 linkArgs = []
 linkDeps = []
 srcFiles = []
+runtimeSrcs = []
 runtimeIncDirs = []
 
 # Get options

@@ -15,8 +15,6 @@
 # ARM Versatile Platform Board
 
 
-runtimeSrcs = []
-
 # Add general runtime libs
 subdir('@0@/libs'.format(meson.source_root()))
 

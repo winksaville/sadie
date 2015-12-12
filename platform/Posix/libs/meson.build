@@ -12,10 +12,8 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-# ARM Versatile Platform Board
+# Posix
 
-
-runtimeSrcs = []
 
 # Add general runtime libs
 subdir('@0@/libs'.format(meson.source_root()))
