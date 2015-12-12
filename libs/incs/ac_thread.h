@@ -19,6 +19,8 @@
 
 #include <ac_inttypes.h>
 
+#include <ac_thread_stack_min.h>
+
 /**
  * Initialize module
  */

@@ -58,10 +58,34 @@ int main(void) {
         break;
       }
     }
-    ac_debug_printf("test-ac_thread: loops=%d\n", loops);
+    ac_debug_printf("test-ac_thread: loops=%d result=%d\n", loops, result);
     error |= AC_TEST(loops < max_loops);
-    error |= AC_TEST(result != t1_count_initial);
     error |= AC_TEST(result == t1_count_initial + t1_count_increment);
+
+    // Since we don't have a 'ac_thread_join' we're racing, so
+    // this delay give greater assurance the tests works.
+    // TODO: Add ac_thread_join although that means blocking
+    // which I don't like so we'll see.
+    for (int i = 0; i < 1000000; i++) {
+      __atomic_load_n(&t1_count, __ATOMIC_ACQUIRE);
+    }
+
+    created = ac_thread_create(0, t1, (void*)(ac_uptr)t1_count_increment);
+    error |= AC_TEST(created == 0);
+
+    if (created == 0) {
+      const ac_u32 max_loops = 1000000000;
+      ac_u32 loops;
+      for (loops = 0; loops < max_loops; loops++) {
+        result = __atomic_load_n(&t1_count, __ATOMIC_ACQUIRE);
+        if (result != t1_count_initial + t1_count_increment) {
+          break;
+        }
+      }
+      ac_debug_printf("test-ac_thread: loops=%d result=%d\n", loops, result);
+      error |= AC_TEST(loops < max_loops);
+      error |= AC_TEST(result == t1_count_initial + (2 * t1_count_increment));
+    }
   }
 
 #else

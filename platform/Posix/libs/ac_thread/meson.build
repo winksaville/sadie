@@ -12,6 +12,8 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
+runtimeIncDirs += include_directories('incs')
+
 runtimeSrcs += [
   '@0@/srcs/ac_thread.c'.format(meson.current_source_dir()),
 ]

@@ -19,18 +19,38 @@
 #include <ac_assert.h>
 #include <ac_memmgr.h>
 
-#include <pthread.h>
+//#define NDEBUG
+#include <ac_debug_printf.h>
 
+#include <pthread.h>
+#include <unistd.h>
+
+typedef struct {
+  ac_uptr thread_id;
+  void*(*entry)(void*);
+  void* entry_arg;
+} ac_tcb;
 
 typedef struct {
   ac_u32 max_count;
-  ac_uptr thread_id[];
+  ac_tcb tcbs[];
 } ac_threads;
 
 #define AC_THREAD_ID_EMPTY (ac_uptr)-1
 #define AC_THREAD_ID_NOT_EMPTY (ac_uptr)-2
 
 static ac_threads* pthreads;
+
+static void* entry_trampoline(void* param) {
+  // Invoke the entry point
+  ac_tcb* ptcb = (ac_tcb*)param;
+  ptcb->entry(ptcb->entry_arg);
+
+  // Marke AC_THREAD_ID_EMPTY
+  ac_uptr* pthread_id = &ptcb->thread_id;
+  __atomic_store_n(pthread_id, AC_THREAD_ID_EMPTY, __ATOMIC_RELEASE);
+  return AC_NULL;
+}
 
 /**
  * Initialize module
@@ -42,13 +62,13 @@ void ac_thread_init(ac_u32 max_threads) {
 
   ac_assert(max_threads > 0);
 
-  ac_u32 size = sizeof(ac_threads) + (max_threads * sizeof(ac_uptr));
+  ac_u32 size = sizeof(ac_threads) + (max_threads * sizeof(ac_tcb));
   pthreads = ac_malloc(size);
   ac_assert(pthreads != AC_NULL);
 
   pthreads->max_count = max_threads;
   for (ac_u32 i = 0; i < pthreads->max_count; i++) {
-    pthreads->thread_id[i] = AC_THREAD_ID_EMPTY;
+    pthreads->tcbs[i].thread_id = AC_THREAD_ID_EMPTY;
   }
 }
 
@@ -77,12 +97,15 @@ ac_u32 ac_thread_create(ac_size_t stack_size,
   for (ac_u32 i = 0; i < pthreads->max_count; i++) {
     ac_uptr empty = AC_THREAD_ID_EMPTY;
 
-    ac_uptr* pthread_id = &pthreads->thread_id[i];
+    ac_tcb* ptcb = &pthreads->tcbs[i];
+    ac_uptr* pthread_id = &ptcb->thread_id;
     ac_bool ok = __atomic_compare_exchange_n(pthread_id, &empty,
         AC_THREAD_ID_NOT_EMPTY, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
     if (ok) {
+      ptcb->entry = entry;
+      ptcb->entry_arg = entry_arg;
       error |= pthread_create((pthread_t *)pthread_id, &attr,
-          entry, entry_arg);
+          entry_trampoline, ptcb);
       ac_assert(*pthread_id != AC_THREAD_ID_EMPTY);
       ac_assert(*pthread_id != AC_THREAD_ID_NOT_EMPTY);
       if (error != 0) {
