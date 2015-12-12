@@ -47,14 +47,14 @@ void ac_fail_impl(const char*  str, const char* file, int line, const char* func
  * expr as a string and AC_TRUE is returned indicating a failure.
  */
 #define ac_assert(expr) ({ \
-  ac_bool failed;          \
+  ac_bool __failed__;      \
   if (expr) {              \
-    failed = AC_FALSE;     \
+    __failed__ = AC_FALSE; \
   } else {                 \
     ac_fail(#expr);        \
-    failed = AC_TRUE;      \
+    __failed__ = AC_TRUE;  \
   }                        \
-  failed;                  \
+  __failed__;              \
 })
 
 //#define ac_assert(expr) expr

@@ -25,12 +25,12 @@
  * else return AC_TRUE.
  */
 #define AC_TEST(expr) ({                                         \
-  ac_bool result = (expr) ? AC_FALSE : AC_TRUE;                  \
-  if (result) {                                                  \
+  ac_bool __result__ = (expr) ? AC_FALSE : AC_TRUE;              \
+  if (__result__) {                                              \
     ac_printf("ERROR: expr '" #expr "' failed in %s:%d FN %s\n", \
            __FILE__, __LINE__, __func__);                        \
   }                                                              \
-  result;                                                        \
+  __result__;                                                    \
 })
 
 #endif
