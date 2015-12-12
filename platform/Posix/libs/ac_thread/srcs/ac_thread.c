@@ -76,10 +76,9 @@ ac_u32 ac_thread_create(ac_size_t stack_size,
   // Find an empty slot
   for (ac_u32 i = 0; i < pthreads->max_count; i++) {
     ac_uptr empty = AC_THREAD_ID_EMPTY;
-    ac_uptr* pempty = &empty;
 
     ac_uptr* pthread_id = &pthreads->thread_id[i];
-    ac_bool ok =__atomic_compare_exchange_n(pthread_id, pempty,
+    ac_bool ok = __atomic_compare_exchange_n(pthread_id, &empty,
         AC_THREAD_ID_NOT_EMPTY, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
     if (ok) {
       error |= pthread_create((pthread_t *)pthread_id, &attr,
