@@ -19,3 +19,7 @@ runtimeSrcs += [
 compilerArgs += [
   '-pthread',
 ]
+
+linkArgs += [
+  '-Wl,-lpthread',
+]
