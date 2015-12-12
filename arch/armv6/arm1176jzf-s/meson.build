@@ -37,3 +37,5 @@ compilerArgs += [
   '-m@0@-float'.format(Float),
   '-mfloat-abi=@0@'.format(Float),
 ]
+
+subdir('libs')
