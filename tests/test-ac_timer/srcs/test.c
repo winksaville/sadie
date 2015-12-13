@@ -18,6 +18,7 @@
 
 #include <ac_bits.h>
 #include <ac_test.h>
+#include <ac_debug_printf.h>
 
 #if defined(VersatilePB)
 #include <ac_exceptions.h>
@@ -27,27 +28,81 @@
 
 ac_u32 one_shot_counter;
 
-void one_shot_handler(void *param) {
-  ac_u32 timer = (ac_u32)(ac_uptr)param;
-  ac_u32 timer_ris = ac_timer_rd_ris(timer);
+typedef struct {
+  ac_u32  timer;
+  ac_bool  source;
+} irq_param;
+
+/**
+ * Indentify and clear source of interrupt.
+ * After returning interrupts will be enabled
+ * so we use __atomic operations on source.
+ */
+void one_shot_iacs(ac_uptr param) {
+  irq_param* pirq_param = (irq_param*)param;
+  ac_u32 timer_ris = ac_timer_rd_ris(pirq_param->timer);
   if ((timer_ris & 0x1) != 0) {
+    ac_bool* psource = &pirq_param->source;
+    __atomic_store_n(psource, AC_TRUE, __ATOMIC_RELEASE);
+    ac_timer_wr_int_clr(pirq_param->timer);
+    ac_debug_printf("\n\none_shot: %d cleared\n", pirq_param->timer);
+  }
+}
+
+/**
+ * Handle the one_shot interrupt.
+ *
+ * NOTE: Interrupts are enabled so __atomic operations are used.
+ */
+void one_shot_handler(ac_uptr param) {
+  irq_param* pirq_param = (irq_param*)param;
+  ac_bool ac_true = AC_TRUE;
+  ac_bool* psource = &pirq_param->source;
+
+  ac_bool ok = __atomic_compare_exchange_n(psource, &ac_true, AC_FALSE,
+      AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
+  if (ok) {
     __atomic_add_fetch(&one_shot_counter, 1, __ATOMIC_RELEASE);
-    ac_timer_wr_int_clr(timer);
-    ac_printf("\n\none_shot: %d\n\n", timer);
+    ac_debug_printf("one_shot: %d inc counter\n\n", pirq_param->timer);
   }
 }
 
 ac_u32 periodic_counter;
 
-void periodic_handler(void *param) {
-  ac_u32 timer = (ac_u32)(ac_uptr)(param);
-  ac_u32 timer_ris = ac_timer_rd_ris(timer);
+/**
+ * Indentify and clear source of interrupt.
+ * After returning interrupts will be enabled
+ * so we use __atomic operations on source.
+ */
+void periodic_iacs(ac_uptr param) {
+  irq_param* pirq_param = (irq_param*)param;
+  ac_u32 timer_ris = ac_timer_rd_ris(pirq_param->timer);
   if ((timer_ris & 0x1) != 0) {
-    __atomic_add_fetch(&periodic_counter, 1, __ATOMIC_RELEASE);
-    ac_timer_wr_int_clr(timer);
-    ac_printf("\n\nperiodic: %d\n\n", timer);
+    ac_bool* psource = &pirq_param->source;
+    __atomic_store_n(psource, AC_TRUE, __ATOMIC_RELEASE);
+    ac_timer_wr_int_clr(pirq_param->timer);
+    ac_debug_printf("\n\nperiodic: %d cleared\n", pirq_param->timer);
   }
 }
+
+/**
+ * Handle the one_shot interrupt.
+ *
+ * NOTE: Interrupts are enabled so __atomic operations are used.
+ */
+void periodic_handler(ac_uptr param) {
+  irq_param* pirq_param = (irq_param*)param;
+  ac_bool ac_true = AC_TRUE;
+  ac_bool* psource = &pirq_param->source;
+
+  ac_bool ok = __atomic_compare_exchange_n(psource, &ac_true, AC_FALSE,
+      AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
+  if (ok) {
+    __atomic_add_fetch(&periodic_counter, 1, __ATOMIC_RELEASE);
+    ac_debug_printf("periodic: %d inc counter\n\n", pirq_param->timer);
+  }
+}
+
 
 int main(void) {
   ac_bool error = AC_FALSE;
@@ -110,8 +165,14 @@ int main(void) {
     ac_printf("test_ac_timer: new free_running_value=%u\n", cur_value);
   }
 
-  ac_exception_irq_register(&one_shot_handler, (void*)0);
-  ac_timer_one_shot(0, 1000);
+  irq_param one_shot_param = {
+    .timer = 0,
+    .source = AC_FALSE,
+  };
+
+  ac_exception_irq_register(&one_shot_handler, &one_shot_iacs,
+      (ac_uptr)&one_shot_param);
+  ac_timer_one_shot(one_shot_param.timer, 1000);
   for (ac_u32 i = 0; i < 20; i++) {
     ac_u32 timer_value = ac_timer_rd_value(0);
     ac_u32 timer_ris = ac_timer_rd_ris(0);
@@ -133,9 +194,15 @@ int main(void) {
         int_routes, int_enable);
   }
 
+  irq_param periodic_param = {
+    .timer = 1,
+    .source = AC_FALSE,
+  };
+
   // TODO: This is brittle, Instead of using a counter w
-  ac_exception_irq_register(&periodic_handler, (void*)1);
-  ac_timer_periodic(1, 1000000);
+  ac_exception_irq_register(&periodic_handler, &periodic_iacs,
+      (ac_uptr)&periodic_param);
+  ac_timer_periodic(periodic_param.timer, 1000000);
   cur_value =  __atomic_load_n(&periodic_counter, __ATOMIC_ACQUIRE);
   ac_printf("test_ac_timer: periodic value is %u\n", cur_value);
   ac_u32 prev_value = cur_value;

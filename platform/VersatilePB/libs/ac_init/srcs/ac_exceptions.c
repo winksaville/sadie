@@ -43,8 +43,9 @@ void ac_exception_fiq_handler(void)
 
 typedef struct {
   ac_bool available;
+  ac_uptr param;
+  identify_and_clear_source iacs;
   int_handler handler;
-  void* param;
 } irq_handler_obj;
 
 #define MAX_HANDLERS 8
@@ -57,7 +58,8 @@ static irq_handler_obj irq_handlers[MAX_HANDLERS];
  *
  * return 0 if OK
  */
-ac_u32 ac_exception_irq_register(int_handler handler, void* param) {
+ac_u32 ac_exception_irq_register(int_handler handler,
+    identify_and_clear_source iacs, ac_uptr param) {
   ac_u32 status = 1;
 
   // Currently there is no unregtister so we're just racing
@@ -72,6 +74,7 @@ ac_u32 ac_exception_irq_register(int_handler handler, void* param) {
         AC_FALSE, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
     if (ok) {
       irq_handlers[i].param = param;
+      irq_handlers[i].iacs = iacs;
       int_handler* phandler = &irq_handlers[i].handler;
       __atomic_store_n(phandler, handler, __ATOMIC_RELEASE);
       irq_handler_count += 1;
@@ -89,8 +92,9 @@ void ac_exception_init() {
   irq_handler_count = 0;
   for (ac_u32 i = 0; i < MAX_HANDLERS; i++) {
     irq_handlers[i].available = AC_TRUE;
+    irq_handlers[i].param = 0;
+    irq_handlers[i].iacs = AC_NULL;
     irq_handlers[i].handler = AC_NULL;
-    irq_handlers[i].param = AC_NULL;
   }
 }
 
@@ -117,6 +121,17 @@ void ac_exception_prefetch_abort_handler(void) {
 void ac_exception_data_abort_handler(void) {
   ac_putchar('D');
   ac_putchar('\n');
+}
+
+void ac_exception_irq_identify_and_clear_source(ac_uptr param) {
+  //ac_putchar('I');
+  //ac_putchar('\n');
+  for (ac_u32 i = 0; i < irq_handler_count; i++) {
+    // We use handler as if its set then icas is set.
+    if (irq_handlers[i].handler != AC_NULL) {
+      irq_handlers[i].iacs(irq_handlers[i].param);
+    }
+  }
 }
 
 void ac_exception_irq_handler(void) {

@@ -19,14 +19,29 @@
 
 #include <ac_inttypes.h>
 
-typedef void (*int_handler)(void* param);
+/**
+ * Identify and clear the interrupt sources. After returning
+ * interrupts will be reenabled thus they must be cleared. This
+ * means that the interrupts sources must be made available to
+ * int_handler, probably via param but other mechanisms could
+ * be created.
+ */
+typedef void (*identify_and_clear_source)(ac_uptr param);
+
+/**
+ * Handle the interrupts, takes two parameters the original
+ * param passed when registering as well as the source returned
+ * by identify_and_clear_source.
+ */
+typedef void (*int_handler)(ac_uptr param);
 
 /**
  * Register a irq handler and its parameter.
  *
  * return 0 if OK
  */
-ac_u32 ac_exception_irq_register(int_handler handler, void* param);
+ac_u32 ac_exception_irq_register(int_handler handler,
+    identify_and_clear_source iacs, ac_uptr param);
 
 /**
  * Initialize this module

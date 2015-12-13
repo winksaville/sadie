@@ -66,8 +66,8 @@
  *
  */
 
-  .global ac_irq_wrapper
-ac_irq_wrapper:
+  .global ac_exception_irq_wrapper
+ac_exception_irq_wrapper:
   SUB   lr, lr, #4      // Adjust LR so it points at the correct PC
   SRSFD sp!,#31         // Save LR_irq and SPSR_irq to System mode stack
   CPS   #31             // Switch to System mode
@@ -77,8 +77,8 @@ ac_irq_wrapper:
   SUB   sp, sp, R1      // Substract 0 or 4 to align on 64 bit boundry
   PUSH  {R1, lr}        // Push R1 to save realign facotr and LR to
                         // keep it on 64 bit boundry
-  //BL    identify_and_clear_source
-  //CPSIE i               // Enable IRQ
+  BL    ac_exception_irq_identify_and_clear_source
+  CPSIE i               // Enable IRQ
   BL    ac_exception_irq_handler // Invoke the irq handler
   CPSID  i              // Disable IRQ
   POP   {R1,lr}         // Get realign factor back to R1 and pop LR
