@@ -35,8 +35,8 @@ void ac_exception_prefetch_abort_handler(void)
 void ac_exception_data_abort_handler(void)
   __attribute__ ((interrupt ("ABORT")));
 
-void ac_exception_irq_handler(void)
-  __attribute__ ((interrupt ("IRQ")));
+//void ac_exception_irq_handler(void)
+//  __attribute__ ((interrupt ("IRQ")));
 
 void ac_exception_fiq_handler(void)
   __attribute__ ((interrupt ("FIQ")));

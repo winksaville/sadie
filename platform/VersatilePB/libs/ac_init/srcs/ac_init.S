@@ -109,7 +109,7 @@ vector_table:
   ldr pc, addr_ac_exception_prefetch_abort_handler
   ldr pc, addr_ac_exception_data_abort_handler
   ldr pc, addr_ac_exception_undef_handler
-  ldr pc, addr_ac_exception_irq_handler
+  ldr pc, addr_ac_irq_wrapper
   ldr pc, addr_ac_exception_fiq_handler
 
 addr_ac_exception_reset_handler:
@@ -122,8 +122,8 @@ addr_ac_exception_prefetch_abort_handler:
   .word ac_exception_prefetch_abort_handler
 addr_ac_exception_data_abort_handler:
   .word ac_exception_data_abort_handler
-addr_ac_exception_irq_handler:
-  .word ac_exception_irq_handler
+addr_ac_irq_wrapper:
+  .word ac_irq_wrapper
 addr_ac_exception_fiq_handler:
   .word ac_exception_fiq_handler
 
