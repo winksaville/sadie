@@ -15,20 +15,20 @@
  */
 
 /**
- * The timers on the VersatilePB is an SP804 the documenation is
- * [here](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0271d/index.html)
+ * The ARMPL190 Vectored Interrupt Controller the documenation is
+ * [here](http://infocenter.arm.com/help/topic/com.arm.doc.ddi0181e/DDI0181.pdf)
  */
-#include <ac_timer.h>
+#include <ac_interrupts.h>
 
 #include <ac_inttypes.h>
 #include <ac_printf.h>
 
-// The base memory address for the VersatilePB
+// The base memory address for the ARMPL190 VIC (Vectored Interrupt Controller)
+// for the VersatilePB
 // [see](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0224i/I1042232.html)
 #define PIC_BASE  ((ac_u8*)0x10140000)
 
-// Register offsets from timer_base
-// [see](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0271d/index.html)
+// Register offsets for PL190
 #define PIC_IRQ_STATUS      0x00
 #define PIC_FIQ_STATUS      0x04
 #define PIC_RAW_STATUS      0x08
@@ -92,7 +92,8 @@ ac_u32 ac_interrupts_rd_int_routes() {
  * For bits == 1 make those interrupts route to the IRQ.
  */
 ac_u32 ac_interrupts_int_route_to_irq(ac_u32 bits) {
-  return __atomic_and_fetch(REG_PTR_U32(PIC_INT_SELECT), ~bits, __ATOMIC_ACQUIRE);
+  return __atomic_and_fetch(REG_PTR_U32(PIC_INT_SELECT), ~bits,
+      __ATOMIC_ACQUIRE);
 }
 
 /**
@@ -101,7 +102,8 @@ ac_u32 ac_interrupts_int_route_to_irq(ac_u32 bits) {
  * return the resulting value.
  */
 ac_u32 ac_interrupts_int_route_to_fiq(ac_u32 bits) {
-  return __atomic_or_fetch(REG_PTR_U32(PIC_INT_SELECT), bits, __ATOMIC_ACQUIRE);
+  return __atomic_or_fetch(REG_PTR_U32(PIC_INT_SELECT), bits,
+      __ATOMIC_ACQUIRE);
 }
 
 
@@ -112,10 +114,6 @@ ac_u32 ac_interrupts_int_route_to_fiq(ac_u32 bits) {
  * return the resulting value.
  */
 ac_u32 ac_interrupts_rd_int_enable() {
-  //ac_printf("ac_interrupts_rd_int_enable: before=0x%x\n", READ_REG_U32(PIC_INT_ENABLE));
-  //ac_u32 retVal = __atomic_load_n(REG_PTR_U32(PIC_INT_ENABLE), __ATOMIC_ACQUIRE);
-  //ac_printf("ac_interrupts_rd_int_enable: after=0x%x ret=0x%x\n", READ_REG_U32(PIC_INT_ENABLE), retVal);
-  //return retVal;
   return READ_REG_U32(PIC_INT_ENABLE);
 }
 
@@ -125,7 +123,6 @@ ac_u32 ac_interrupts_rd_int_enable() {
  * return the resulting value.
  */
 void ac_interrupts_int_enable(ac_u32 bits) {
-  //return __atomic_or_fetch(REG_PTR_U32(PIC_INT_ENABLE), ~bits, __ATOMIC_ACQUIRE);
   WRITE_REG_U32(PIC_INT_ENABLE, bits);
 }
 
@@ -135,6 +132,5 @@ void ac_interrupts_int_enable(ac_u32 bits) {
  * return the resulting value.
  */
 void ac_interrupts_int_disable(ac_u32 bits) {
-  //return __atomic_and_fetch(REG_PTR_U32(PIC_INT_ENABLE), ~bits, __ATOMIC_ACQUIRE);
   WRITE_REG_U32(PIC_INT_ENABLE_CLR, bits);
 }
