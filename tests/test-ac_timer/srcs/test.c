@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define NDEBUG
+
 #include <ac_timer.h>
 
 #include <ac_bits.h>
@@ -170,15 +172,21 @@ int main(void) {
     .source = AC_FALSE,
   };
 
+  cur_value = 1;
+  one_shot_counter = cur_value;
+  ac_u32 prev_value = cur_value;
+  ac_u32 terminal_value = cur_value + 1;
+  ac_printf("test_ac_timer: one_shot_counter is %u\n", cur_value);
+
   ac_exception_irq_register(&one_shot_handler, &one_shot_iacs,
       (ac_uptr)&one_shot_param);
   ac_timer_one_shot(one_shot_param.timer, 1000);
-  for (ac_u32 i = 0; i < 20; i++) {
+  for (ac_u32 i = 0; i < 10000 && cur_value != terminal_value; i++) {
     ac_u32 timer_value = ac_timer_rd_value(0);
     ac_u32 timer_ris = ac_timer_rd_ris(0);
     ac_u32 timer_mis = ac_timer_rd_mis(0);
     ac_u32 timer_control = ac_timer_rd_control(0);
-    ac_printf("test_ac_timer: new value=%u timer_ris=0x%x"
+    ac_debug_printf("test_ac_timer: new value=%u timer_ris=0x%x"
         " timer_mis=0x%x timer_control=0x%x\n",
         timer_value, timer_ris, timer_mis, timer_control);
 
@@ -187,38 +195,46 @@ int main(void) {
     ac_u32 ris_status = ac_interrupts_rd_ris_status();
     ac_u32 int_routes = ac_interrupts_rd_int_routes();
     ac_u32 int_enable = ac_interrupts_rd_int_enable();
-    ac_printf("test_ac_timer: irq_status=0x%x fiq_status=0x%x"
+    ac_debug_printf("test_ac_timer: irq_status=0x%x fiq_status=0x%x"
         " ris_status=0x%x\n",
         irq_status, fiq_status, ris_status);
-    ac_printf("test_ac_timer: int_routes=0x%x int_enable=0x%x\n",
+    ac_debug_printf("test_ac_timer: int_routes=0x%x int_enable=0x%x\n",
         int_routes, int_enable);
+
+    cur_value = __atomic_load_n(&one_shot_counter, __ATOMIC_ACQUIRE);
+    if (cur_value != prev_value) {
+      prev_value = cur_value;
+      ac_printf("test_ac_timer: one_shot_counter changed to %u\n",
+          cur_value);
+    }
   }
+  error |= AC_TEST(one_shot_counter == terminal_value);
 
   irq_param periodic_param = {
     .timer = 1,
     .source = AC_FALSE,
   };
 
-  // TODO: This is brittle, Instead of using a counter w
   ac_exception_irq_register(&periodic_handler, &periodic_iacs,
       (ac_uptr)&periodic_param);
   ac_timer_periodic(periodic_param.timer, 1000000);
-  cur_value =  __atomic_load_n(&periodic_counter, __ATOMIC_ACQUIRE);
-  ac_printf("test_ac_timer: periodic value is %u\n", cur_value);
-  ac_u32 prev_value = cur_value;
-  ac_u32 terminal_value = cur_value + 3;
+  cur_value = 1;
+  periodic_counter = cur_value;
+  prev_value = cur_value;
+  terminal_value = cur_value + 3;
+  ac_printf("test_ac_timer: periodic_counter is %u\n", cur_value);
   for (ac_u64 i = 0; i < 1000000000 && cur_value != terminal_value; i++) {
     cur_value = __atomic_load_n(&periodic_counter, __ATOMIC_ACQUIRE);
     if (cur_value != prev_value) {
       prev_value = cur_value;
-      ac_printf("test_ac_timer: periodic value changed to %u\n", cur_value);
+      ac_printf("test_ac_timer: periodic_counter changed to %u\n", cur_value);
     }
   }
   error |= AC_TEST(cur_value == terminal_value);
 
 #else
 
-  ac_printf("test_ac_timer: Unknown Platform\n");
+ac_printf("test_ac_timer: Unknown Platform\n");
 
 #endif
 
