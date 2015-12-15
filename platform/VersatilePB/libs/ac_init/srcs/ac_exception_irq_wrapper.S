@@ -68,21 +68,21 @@
 
   .global ac_exception_irq_wrapper
 ac_exception_irq_wrapper:
-  SUB   lr, lr, #4      // Adjust LR so it points at the correct PC
-  SRSFD sp!,#31         // Save LR_irq and SPSR_irq to System mode stack
-  CPS   #31             // Switch to System mode
-  PUSH  {R0-R3,R12}     // Store other AAPCS registers
-  AND   R1, sp, #4      // R1 will be 0 if already on 64 bit boundry
+  sub   lr, lr, #4      // Adjust LR so it points at the correct PC
+  srsfd sp!,#31         // Save LR_irq and SPSR_irq to System mode stack
+  cps   #31             // Switch to System mode
+  push  {R0-R3,R12}     // Store other AAPCS registers
+  and   r1, sp, #4      // R1 will be 0 if already on 64 bit boundry
                         // or 4 if its not.
-  SUB   sp, sp, R1      // Substract 0 or 4 to align on 64 bit boundry
-  PUSH  {R1, lr}        // Push R1 to save realign facotr and LR to
+  sub   sp, sp, R1      // Substract 0 or 4 to align on 64 bit boundry
+  push  {r1, lr}        // Push R1 to save realign facotr and LR to
                         // keep it on 64 bit boundry
-  BL    ac_exception_irq_identify_and_clear_source
-  CPSIE i               // Enable IRQ
-  BL    ac_exception_irq_handler // Invoke the irq handler
-  CPSID  i              // Disable IRQ
-  POP   {R1,lr}         // Get realign factor back to R1 and pop LR
-  ADD   sp, sp, R1      // Realign sp to old value
-  POP   {R0-R3, R12}    // Restore registers
-  RFEFD sp!             // Return using RFE from System mode stack
+  bl    ac_exception_irq_identify_and_clear_source
+  cpsie i               // Enable IRQ
+  bl    ac_exception_irq_handler // Invoke the irq handler
+  cpsid  i              // Disable IRQ
+  pop   {r1,lr}         // Get realign factor back to R1 and pop LR
+  add   sp, sp, r1      // Realign sp to old value
+  pop   {r0-r3, r12}    // Restore registers
+  rfefd sp!             // Return using RFE from System mode stack
 
