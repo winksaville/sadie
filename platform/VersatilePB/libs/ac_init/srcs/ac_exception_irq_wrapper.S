@@ -81,6 +81,12 @@ ac_exception_irq_wrapper:
   cpsie i               // Enable IRQ
   bl    ac_exception_irq_handler // Invoke the irq handler
   cpsid  i              // Disable IRQ
+
+  // Invoke scheduler passing sp as the first parameter
+  mov   r0, sp
+  bl    ac_thread_scheduler
+  mov   sp, r0          // Replace sp with the return value
+
   pop   {r1,lr}         // Get realign factor back to R1 and pop LR
   add   sp, sp, r1      // Realign sp to old value
   pop   {r0-r3, r12}    // Restore registers

@@ -97,6 +97,8 @@ loop:
 
 done:
   bl  ac_exception_init
+  mov r0, #10
+  bl  ac_thread_init
   //bl  ac_cpu_perf_init // Does NOT work on qemu
   bl  ac_interrupts_cpu_enable
 
