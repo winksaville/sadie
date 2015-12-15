@@ -207,7 +207,7 @@ static ac_tcb* get_tcb(void*(*entry)(void*), void* entry_arg) {
     ptcb = &pthreads->tcbs[i];
     ac_u32* pthread_id = &ptcb->thread_id;
     ac_bool ok = __atomic_compare_exchange_n(pthread_id, &empty,
-        AC_THREAD_ID_ZOMBIE, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
+        AC_THREAD_ID_STARTING, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
     if (ok) {
       ptcb->entry = entry;
       ptcb->entry_arg = entry_arg;
@@ -326,43 +326,38 @@ void ac_thread_init(ac_u32 max_threads) {
 }
 
 /**
- * Get the stack of the next thread to run and
- * ASSUMES interrupts are DISABLED!!!!!
+ * Thread scheduler, for internal only, ASSUMES interrupts are DISABLED!
  *
- * @param pcur_stack is the stack of the current thread
+ * @param pcur_sp is the stack of the current thread
  * @return the stack of the next thread to run
  */
-ac_u8* ac_thread_scheduler(ac_u8* pcur_stack) {
-  pready->pstack = pcur_stack;
+ac_u8* ac_thread_scheduler(ac_u8* sp) {
+  // Save the current
+  pready->sp = sp;
   pready = pready->pnext_tcb;
-  if (pready == pidle_tcb) {
-    // Skip idle, although if its the
-    // only item on the list then it
-    // will run.
+  ac_u32* pthread_id = &pready->thread_id;
+  ac_u32 thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
+  while(pready == pidle_tcb || thread_id == AC_THREAD_ID_ZOMBIE) {
     pready = pready->pnext_tcb;
+    pthread_id = &pready->thread_id;
+    thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
   }
-  return pready->pstack;
+  return pready->sp;
 }
 
 /**
- * Get an execution thread and invoke the entry_point passing
+ * Create a thread and invoke the entry_point passing
  * the parameter entry_arg.
  *
- * If stack_size is <= 0 a "default" stack size will be used.
+ * @param stack_size is <= 0 a "default" stack size will be used.
+ *        If stack_size is > 0 it must be at AC_THREAD_MIN_STACK_SIZE
+ *        otherwise an error is returned and the thread is not created.
  *
- * If stack_size is > 0 it must be at AC_THREAD_MIN_STACK_SIZE
- * otherwise an error is returned and the thread is not created.
- *
- * Return 0 on success !0 if an error.
+ * @return 0 on success !0 if an error.
  */
 ac_u32 ac_thread_create(ac_size_t stack_size,
     void*(*entry)(void*), void* entry_arg) {
-  ac_u8* pstack = AC_NULL;
-  int error = 0;
-
   ac_tcb* ptcb = thread_create(stack_size,
-      PSR_MODE_SVC | PSR_FIQ_DISABLED | PSR_IRQ_ENABLED,
-      entry, entry_arg);
-
+      PSR_MODE_SVC | PSR_FIQ_DISABLED | PSR_IRQ_ENABLED, entry, entry_arg);
   return ptcb == AC_NULL ? 1 : 0;
 }
