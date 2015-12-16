@@ -23,7 +23,6 @@ subdir('ac_cpu_perf')
 subdir('ac_memmgr')
 subdir('ac_putchar')
 subdir('ac_stop')
-subdir('ac_sysconf')
 
 libruntime = static_library('runtime', runtimeSrcs,
   c_args : compilerArgs,
