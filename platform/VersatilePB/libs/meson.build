@@ -24,7 +24,6 @@ subdir('ac_memmgr')
 subdir('ac_putchar')
 subdir('ac_stop')
 subdir('ac_sysconf')
-subdir('ac_timer')
 
 libruntime = static_library('runtime', runtimeSrcs,
   c_args : compilerArgs,
