@@ -25,7 +25,7 @@ SECTIONS
   .bss : { *(.bss COMMON) }
   . = ALIGN(8);
   . = . + 0x10000; /* 64kB stack */
-  svc_stack_top = .;
+  sys_stack_top = .;
   . = . + 0x1000;
   usr_stack_top = .;
   . = . + 0x1000;
@@ -39,5 +39,5 @@ SECTIONS
   . = . + 0x1000;
   und_stack_top = .;
   . = . + 0x1000;
-  sys_stack_top = .;
+  svc_stack_top = .;
 }

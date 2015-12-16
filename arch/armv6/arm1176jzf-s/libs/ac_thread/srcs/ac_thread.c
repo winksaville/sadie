@@ -21,6 +21,11 @@
 #include <ac_inttypes.h>
 #include <ac_interrupts.h>
 
+static void* entry_trampoline(void* param) __attribute__ ((noreturn));
+
+static void thread_yield(void) __attribute__ ((noreturn))
+                               __attribute__ ((naked));
+
 typedef struct ac_tcb {
   ac_u32 thread_id;
   struct ac_tcb* pnext_tcb;
@@ -73,9 +78,9 @@ static ac_tcb* pwaiting_list;
 #define PSR_MODE_UDEF 0x1B
 #define PSR_MODE_SYS  0x1F
 
-#define PSR_IRQ_ENABLED  0x80
+#define PSR_IRQ_ENABLED  0x00
 #define PSR_IRQ_DISABLED 0x80
-#define PSR_FIQ_ENABLED  0x40
+#define PSR_FIQ_ENABLED  0x00
 #define PSR_FIQ_DISABLED 0x40
 
 /**
@@ -85,18 +90,18 @@ static ac_tcb* pwaiting_list;
  * Because ac_malloc always aligns on a 8 byte boundry
  * there is a padding work and the align_factor is 4.
  */
-#pragma pack(push,1)
+#pragma pack(push,4)
 typedef struct {
-  ac_u32 pc;                // Program Counter
-  ac_u32 psr;               // Program Status word
+  ac_u32 align_factor;      // A 4 as stack needed to be aligned
+  ac_u32 lr;                // Extra align
+  ac_u32 padding;           // Padding to align stack on 8 byte boundry
   ac_u32 r0;                // R0
   ac_u32 r1;                // R1
   ac_u32 r2;                // R2
   ac_u32 r3;                // R3
   ac_u32 r12;               // R12
-  ac_u32 padding;           // Padding to align stack on 8 byte boundry
-  ac_u32 align_factor;      // A 4 as stack needed to be aligned
-  ac_u32 lr;                // Extra align
+  ac_u32 pc;                // Program Counter
+  ac_u32 psr;               // Program Status word
 } irq_wrapper_stack;
 #pragma pack(pop)
 
@@ -106,16 +111,16 @@ ac_u8* init_stack_frame(ac_u8* tos, ac_u32 psr, void* (*entry)(void*),
 
   ac_static_assert(sizeof(void*) == sizeof(ac_u32),
       "Assumption that void* is 32 bits if false");
-  sp->pc = (ac_u32)entry;
-  sp->psr = psr;
+  sp->align_factor = 4;
+  sp->lr = (ac_u32)entry;
+  sp->padding = 0;
   sp->r0 = (ac_u32)entry_arg;
   sp->r1 = 0;
   sp->r2 = 0;
   sp->r3 = 0;
   sp->r12 = 0;
-  sp->padding = 0;
-  sp->align_factor = 4;
-  sp->lr = (ac_u32)entry;
+  sp->pc = (ac_u32)entry;
+  sp->psr = psr;
 
   return (ac_u8*)sp;
 }
@@ -135,7 +140,8 @@ static void* entry_trampoline(void* param) {
   // Mark as zombie
   ac_u32* pthread_id = &ptcb->thread_id;
   __atomic_store_n(pthread_id, AC_THREAD_ID_ZOMBIE, __ATOMIC_RELEASE);
-  return AC_NULL;
+  
+  thread_yield();
 }
 
 /**
@@ -168,7 +174,9 @@ static void remove_zombies(void) {
 }
 
 /**
- * Add a tcb to pready
+ * Add a tcb to pready, we assume its already ininitialize
+ *
+ * @param tcb to add to the ready list
  */
 static void add_pready(ac_tcb* ptcb) {
   ac_interrupts_cpu_disable();
@@ -266,8 +274,7 @@ static ac_tcb* thread_create(ac_size_t stack_size, ac_u32 psr,
     goto done;
   }
   ptcb->pstack = pstack;
-  ptcb->sp = init_stack_frame(tos, PSR_MODE_SVC | PSR_FIQ_DISABLED
-      | PSR_IRQ_ENABLED, entry_trampoline, ptcb);
+  ptcb->sp = init_stack_frame(tos, psr, entry_trampoline, ptcb);
 
   // Add this to pready
   add_pready(ptcb);
@@ -280,6 +287,40 @@ done:
   }
 
   return ptcb;
+}
+
+static void thread_yield(void) {
+  // Start another thread
+  __asm__ (
+    "mov   r0, sp\n"
+    "bl    ac_thread_scheduler\n"
+    "mov   sp, r0          // Replace sp with the return value\n"
+    "pop   {r1,lr}         // Get realign factor back to R1 and pop LR\n"
+    "add   sp, sp, r1      // Realign sp to old value\n"
+    "pop   {r0-r3, r12}    // Restore registers\n"
+    "rfefd sp!             // Return using RFE from System mode stack\n"
+  );
+}
+
+
+/**
+ * Thread scheduler, for internal only, ASSUMES interrupts are DISABLED!
+ *
+ * @param pcur_sp is the stack of the current thread
+ * @return the stack of the next thread to run
+ */
+ac_u8* ac_thread_scheduler(ac_u8* sp) {
+  // Save the current
+  pready->sp = sp;
+  pready = pready->pnext_tcb;
+  ac_u32* pthread_id = &pready->thread_id;
+  ac_u32 thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
+  while(pready == pidle_tcb || thread_id == AC_THREAD_ID_ZOMBIE) {
+    pready = pready->pnext_tcb;
+    pthread_id = &pready->thread_id;
+    thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
+  }
+  return pready->sp;
 }
 
 /**
@@ -320,29 +361,18 @@ void ac_thread_init(ac_u32 max_threads) {
 
   // Allocate the idle thread. It must never exit and
   // will always be on the ready list.
-  pidle_tcb = thread_create(IDLE_STACK_SIZE, PSR_MODE_SVC | PSR_FIQ_DISABLED
+  pidle_tcb = thread_create(IDLE_STACK_SIZE, PSR_MODE_SYS | PSR_FIQ_DISABLED
       | PSR_IRQ_ENABLED, &idle, AC_NULL);
 
 }
 
 /**
- * Thread scheduler, for internal only, ASSUMES interrupts are DISABLED!
- *
- * @param pcur_sp is the stack of the current thread
- * @return the stack of the next thread to run
+ * The current thread yeilds the CPU to the next
+ * ready thread. This is the exact same exit sequence
+ * at the in ac_exception_irq_wrapper.
  */
-ac_u8* ac_thread_scheduler(ac_u8* sp) {
-  // Save the current
-  pready->sp = sp;
-  pready = pready->pnext_tcb;
-  ac_u32* pthread_id = &pready->thread_id;
-  ac_u32 thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
-  while(pready == pidle_tcb || thread_id == AC_THREAD_ID_ZOMBIE) {
-    pready = pready->pnext_tcb;
-    pthread_id = &pready->thread_id;
-    thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
-  }
-  return pready->sp;
+void ac_thread_yield(void) {
+  thread_yield();
 }
 
 /**
@@ -358,6 +388,6 @@ ac_u8* ac_thread_scheduler(ac_u8* sp) {
 ac_u32 ac_thread_create(ac_size_t stack_size,
     void*(*entry)(void*), void* entry_arg) {
   ac_tcb* ptcb = thread_create(stack_size,
-      PSR_MODE_SVC | PSR_FIQ_DISABLED | PSR_IRQ_ENABLED, entry, entry_arg);
+      PSR_MODE_SYS | PSR_FIQ_DISABLED | PSR_IRQ_ENABLED, entry, entry_arg);
   return ptcb == AC_NULL ? 1 : 0;
 }

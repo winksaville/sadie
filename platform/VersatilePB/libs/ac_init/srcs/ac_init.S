@@ -72,16 +72,15 @@ ac_init:
   msr cpsr, r1
   ldr sp, =und_stack_top
 
-  // Change to SYS_MODE and set its stack
-  bic r1, r0, #PROC_MODE_MASK
-  orr r1, r1, #SYS_MODE
-  msr cpsr, r1
-  ldr sp, =sys_stack_top
-
-  // Change back to Supervisor mode and continue
+  // Change to SVC_MODE and set its stack
   bic r1, r0, #PROC_MODE_MASK
   orr r1, r1, #SVC_MODE
   msr cpsr, r1
+  ldr sp, =svc_stack_top
+
+  // Change back to the original mode
+  // which is system mode and continue
+  msr cpsr, r0
 
   mov r0, #0x00   // Address base of the ARM Interrupt Vectors
   ldr r1, =vector_table

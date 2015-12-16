@@ -14,6 +14,17 @@
  * limitations under the License.
  */
 
+#define PROC_MODE_MASK  0x1F
+#define USR_MODE        0x10
+#define FIQ_MODE        0x11
+#define IRQ_MODE        0x12
+#define SVC_MODE        0x13
+#define MON_MODE        0x16
+#define ABT_MODE        0x17
+#define HYP_MODE        0x1A
+#define UND_MODE        0x1C
+#define SYS_MODE        0x1F
+
   // This will be placed in the .starup section which
   // must be the first section. The _Reset label is currently
   // not used and instead this code must be loactaed at
@@ -32,11 +43,14 @@
   // else where and executed by "Calling" _Reset
   .global _Reset
 _Reset:
+  // Change to system mode and set the stack which is defined in link.xxx.d
+  mrs r0, cpsr    // Read Program Status Register
+  bic r1, r0, #PROC_MODE_MASK
+  orr r1, r1, #SYS_MODE
+  msr cpsr, r1
+  ldr sp, =sys_stack_top
 
-  // Initialize the supervisor stack which is defined in link.xxx.d script
-  ldr sp, =svc_stack_top
-
-  // Initialize such as interrupts
+  // Initialize things such as interrupts
   bl ac_init
 
   // Call main
