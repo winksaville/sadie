@@ -13,4 +13,5 @@
 # limitations under the license.
 
 subdir('ac_init')
+subdir('ac_interrupts')
 subdir('ac_thread')
