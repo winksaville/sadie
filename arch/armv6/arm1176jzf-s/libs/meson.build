@@ -12,4 +12,5 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
+subdir('ac_init')
 subdir('ac_thread')
