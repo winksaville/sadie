@@ -30,8 +30,7 @@ void ac_thread_init(ac_u32 max_threads);
  * The current thread yeilds the CPU to the next
  * ready thread.
  */
-void ac_thread_yield(void) __attribute__ ((naked))
-                           __attribute__ ((noreturn));
+void ac_thread_yield(void);
 
 /**
  * Create a thread and invoke the entry passing entry_arg. If

@@ -21,6 +21,8 @@
 #include <ac_inttypes.h>
 #include <ac_interrupts.h>
 
+#include <_timer.h>
+
 static void* entry_trampoline(void* param) __attribute__ ((noreturn));
 
 static void thread_yield(void) __attribute__ ((noreturn))
@@ -45,19 +47,19 @@ typedef struct {
 #define AC_THREAD_ID_ZOMBIE (ac_u32)-3
 
 /**
- * All of the threads
+ * The idle thread
  */
-static ac_threads* pthreads;
+static ac_u8 idle_stack[AC_THREAD_STACK_MIN] __attribute__ ((aligned(64)));
+static ac_tcb idle_tcb;
 
 /**
- * The idle task
+ * The main thread
  */
-static ac_tcb* pidle_tcb;
+static ac_tcb main_tcb;
 
 /**
  * A NON-EMPTY circular linked list of tcbs to run,
- * it always contains at least the idle tcb
- * if nohting else.
+ * it always contains at least the idle tcb, if nohting else.
  */
 static ac_tcb* pready;
 
@@ -66,6 +68,11 @@ static ac_tcb* pready;
  * type of event??
  */
 static ac_tcb* pwaiting_list;
+
+/**
+ * All of the threads
+ */
+static ac_threads* pthreads;
 
 /**
  * ARMv6 PSR mode
@@ -105,7 +112,7 @@ typedef struct {
 } irq_wrapper_stack;
 #pragma pack(pop)
 
-ac_u8* init_stack_frame(ac_u8* tos, ac_u32 psr, void* (*entry)(void*),
+static ac_u8* init_stack_frame(ac_u8* tos, ac_u32 psr, void* (*entry)(void*),
     void* entry_arg) {
   irq_wrapper_stack* sp = (irq_wrapper_stack*)(tos - sizeof(irq_wrapper_stack));
 
@@ -150,19 +157,30 @@ static void* entry_trampoline(void* param) {
  */
 static void remove_zombies(void) {
   ac_tcb* pzombie = AC_NULL;
-  ac_tcb* ptail = pready;
-  ac_tcb* phead = pready->pnext_tcb;
-  while (phead != pidle_tcb) {
+
+  // Loop through the list of ready tcb removing
+  // ZOMBIE entries. We'll start at idle_tcb as
+  // the tail since its guaranteed to be on the
+  // list and not a ZOMBIE.
+  ac_tcb* ptail = &idle_tcb;
+  ac_tcb* phead = idle_tcb.pnext_tcb;
+  while (phead != &idle_tcb) {
     ac_interrupts_cpu_disable();
     if (phead->thread_id == AC_THREAD_ID_ZOMBIE) {
+      // phead is a ZOMBIE, remove it from the
+      // list advancing the head past it.
       pzombie = phead;
       phead = phead->pnext_tcb;
       ptail->pnext_tcb = phead;
     } else {
+      // Not a ZOMBIE advance head and tail
+      ptail = phead;
       phead = phead->pnext_tcb;
     }
     ac_interrupts_cpu_enable();
+
     if (pzombie != AC_NULL) {
+      // Remove the ZOMBIE
       if (pzombie->pstack != AC_NULL) {
         ac_free(pzombie->pstack);
       }
@@ -174,14 +192,12 @@ static void remove_zombies(void) {
 }
 
 /**
- * Add a tcb to pready, we assume its already ininitialize
- *
- * @param tcb to add to the ready list
- */
-static void add_pready(ac_tcb* ptcb) {
+ * Add an initialized tcb following pcur
+ * * @param tcb to add to the ready list */
+static void add_after(ac_tcb* pcur, ac_tcb* pnew) {
   ac_interrupts_cpu_disable();
-  ptcb->pnext_tcb = pready->pnext_tcb;
-  pready->pnext_tcb = ptcb;
+  pnew->pnext_tcb = pcur->pnext_tcb;
+  pcur->pnext_tcb = pnew;
   ac_interrupts_cpu_enable();
 }
 
@@ -193,8 +209,26 @@ static void add_pready(ac_tcb* ptcb) {
 static void* idle(void* param) {
   remove_zombies();
   while (AC_TRUE) {
+    // TODO: Goto a lower power state
   }
   return AC_NULL;
+}
+
+/**
+ * Initialize tcb it with the entry and entry_arg.
+ *
+ * @param entry routine to call to start thread
+ * @param entry_arg is the argument to pass to entry
+ *
+ * Return AC_NULL if an error, i.e. nono available
+ */
+static void tcb_init(ac_tcb* ptcb, ac_u32 thread_id, ac_u8* pstack,
+    void*(*entry)(void*), void* entry_arg) {
+  ptcb->entry = entry;
+  ptcb->entry_arg = entry_arg;
+  ptcb->pstack = pstack;
+  ac_u32* pthread_id = &ptcb->thread_id;
+  __atomic_store_n(pthread_id, thread_id, __ATOMIC_RELEASE);
 }
 
 /**
@@ -210,17 +244,14 @@ static ac_tcb* get_tcb(void*(*entry)(void*), void* entry_arg) {
   ac_tcb* ptcb;
   ac_bool found = AC_FALSE;
   for (ac_u32 i = 0; i < pthreads->max_count; i++) {
-    ac_u32 empty = AC_THREAD_ID_EMPTY;
-
     ptcb = &pthreads->tcbs[i];
+
+    ac_u32 empty = AC_THREAD_ID_EMPTY;
     ac_u32* pthread_id = &ptcb->thread_id;
     ac_bool ok = __atomic_compare_exchange_n(pthread_id, &empty,
         AC_THREAD_ID_STARTING, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
     if (ok) {
-      ptcb->entry = entry;
-      ptcb->entry_arg = entry_arg;
-      ptcb->pstack = AC_NULL;
-      __atomic_store_n(pthread_id, i, __ATOMIC_RELEASE);
+      tcb_init(ptcb, i, AC_NULL, entry, entry_arg);
       found = AC_TRUE;
       break;
     }
@@ -263,10 +294,6 @@ static ac_tcb* thread_create(ac_size_t stack_size, ac_u32 psr,
     goto done;
   }
 
-  // Full Decending Stack, i.e. sp is pre-decremented when pushing and
-  // post-decremented when popping.
-  ac_u8* tos = pstack + stack_size;
-
   // Get the tcb and initialize the stack frame
   ptcb = get_tcb(entry, entry_arg);
   if (ptcb == AC_NULL) {
@@ -274,10 +301,10 @@ static ac_tcb* thread_create(ac_size_t stack_size, ac_u32 psr,
     goto done;
   }
   ptcb->pstack = pstack;
-  ptcb->sp = init_stack_frame(tos, psr, entry_trampoline, ptcb);
+  ptcb->sp = init_stack_frame(pstack + stack_size, psr, entry_trampoline, ptcb);
 
-  // Add this to pready
-  add_pready(ptcb);
+  // Add this after pready
+  add_after(pready, ptcb);
 
 done:
   if (error != 0) {
@@ -304,33 +331,82 @@ static void thread_yield(void) {
 
 
 /**
+ * Next tcb
+ */
+static ac_tcb* next_tcb(ac_tcb* pcur_tcb) {
+  // Next thread
+  ac_tcb* pnext = pcur_tcb->pnext_tcb;
+
+  // Skip any ZOMBIE threads it is ASSUMED the list
+  // has at least one non ZOMBIE thread, the idle thread,
+  // so this is guarranteed to not be an endless loop.
+  ac_u32* pthread_id = &pnext->thread_id;
+  ac_u32 thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
+  while(thread_id == AC_THREAD_ID_ZOMBIE) {
+    // Skip the ZOMBIE
+    pnext = pnext->pnext_tcb;
+    pthread_id = &pnext->thread_id;
+    thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
+  }
+
+  return pnext;
+}
+
+/**
  * Thread scheduler, for internal only, ASSUMES interrupts are DISABLED!
  *
  * @param pcur_sp is the stack of the current thread
  * @return the stack of the next thread to run
  */
 ac_u8* ac_thread_scheduler(ac_u8* sp) {
-  // Save the current
+  // Save the current thread stack pointer
   pready->sp = sp;
-  pready = pready->pnext_tcb;
-  ac_u32* pthread_id = &pready->thread_id;
-  ac_u32 thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
-  while(pready == pidle_tcb || thread_id == AC_THREAD_ID_ZOMBIE) {
-    pready = pready->pnext_tcb;
-    pthread_id = &pready->thread_id;
-    thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
+
+  // Get the next tcb
+  pready = next_tcb(pready);
+  if (pready == &idle_tcb) {
+    // Skip idle once, if idle is the only thread
+    // then we'll execute this time.
+    pready = next_tcb(pready);
   }
+
   return pready->sp;
 }
 
 /**
- * Initialize module this is called before interrupts are enabled.
+ * Early initialization of this module
+ */
+void ac_thread_early_init() {
+  // Initialize the idle_stack
+  ac_u32 idle_psr = PSR_MODE_SYS | PSR_FIQ_DISABLED | PSR_IRQ_ENABLED;
+  init_stack_frame(idle_stack + sizeof(idle_stack), idle_psr, idle, AC_NULL);
+
+  // Get the main tcb, no stack is needed because its
+  // the one currently being used.
+  tcb_init(&main_tcb, 0, AC_NULL, AC_NULL, AC_NULL);
+  tcb_init(&idle_tcb, 1, idle_stack, idle, AC_NULL);
+
+  // Empty waiting list
+  pwaiting_list = AC_NULL;
+
+  // Add main as the only tcb on pready to start
+  main_tcb.pnext_tcb = &main_tcb;
+  pready = &main_tcb;
+
+  // Add idle after that
+  add_after(pready, &idle_tcb);
+
+  // Start a periodic timer for scheduling
+  ac_start_periodic_timer(1000);
+}
+
+/**
+ * Initialize this module
  */
 void ac_thread_init(ac_u32 max_threads) {
   ac_assert(max_threads > 0);
 
-  // Create two extra threads one for main and one for idle
-  max_threads += 2;
+  // Create array of the threads
   ac_u32 size = sizeof(ac_threads) + (max_threads * sizeof(ac_tcb));
   pthreads = ac_malloc(size);
   ac_assert(pthreads != AC_NULL);
@@ -344,26 +420,6 @@ void ac_thread_init(ac_u32 max_threads) {
     pthreads->tcbs[i].pstack = AC_NULL;
     pthreads->tcbs[i].sp = AC_NULL;
   }
-
-  // Get the main tcb, no stack is needed because its
-  // the one currently being used.
-  ac_tcb* pmain_tcb = get_tcb(AC_NULL, AC_NULL);
-  ac_assert(pmain_tcb != AC_NULL);
-  ac_assert(pmain_tcb->pstack == AC_NULL);
-  ac_assert(pmain_tcb->sp == AC_NULL);
-
-  // Empty waiting list
-  pwaiting_list = AC_NULL;
-
-  // The current thread will be main
-  pmain_tcb->pnext_tcb = pmain_tcb;
-  pready = pmain_tcb;
-
-  // Allocate the idle thread. It must never exit and
-  // will always be on the ready list.
-  pidle_tcb = thread_create(IDLE_STACK_SIZE, PSR_MODE_SYS | PSR_FIQ_DISABLED
-      | PSR_IRQ_ENABLED, &idle, AC_NULL);
-
 }
 
 /**

@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+/**
+ * Timer 0 and 1 are reserved by the system.
+ */
+
 #define NDEBUG
 
 #include <ac_timer.h>
@@ -107,6 +111,7 @@ void periodic_handler(ac_uptr param) {
 
 
 int main(void) {
+  ac_u32 result = 0;
   ac_bool error = AC_FALSE;
 #if defined(Posix)
 
@@ -168,7 +173,7 @@ int main(void) {
   }
 
   irq_param one_shot_param = {
-    .timer = 0,
+    .timer = 2,
     .source = AC_FALSE,
   };
 
@@ -178,8 +183,10 @@ int main(void) {
   ac_u32 terminal_value = cur_value + 1;
   ac_printf("test_ac_timer: one_shot_counter is %u\n", cur_value);
 
-  ac_exception_irq_register(&one_shot_handler, &one_shot_iacs,
+  result = ac_exception_irq_register(&one_shot_handler, &one_shot_iacs,
       (ac_uptr)&one_shot_param);
+  error |= AC_TEST(result == 0);
+
   ac_timer_one_shot(one_shot_param.timer, 1000);
   for (ac_u32 i = 0; i < 10000 && cur_value != terminal_value; i++) {
     ac_u32 timer_value = ac_timer_rd_value(0);
@@ -211,12 +218,14 @@ int main(void) {
   error |= AC_TEST(one_shot_counter == terminal_value);
 
   irq_param periodic_param = {
-    .timer = 1,
+    .timer = 3,
     .source = AC_FALSE,
   };
 
-  ac_exception_irq_register(&periodic_handler, &periodic_iacs,
+  result = ac_exception_irq_register(&periodic_handler, &periodic_iacs,
       (ac_uptr)&periodic_param);
+  error |= AC_TEST(result == 0);
+
   ac_timer_periodic(periodic_param.timer, 1000000);
   cur_value = 1;
   periodic_counter = cur_value;
