@@ -52,3 +52,22 @@ if Platform == 'Posix'
 
   run_target('run-test-ac_putchar', test_ac_putchar)
 endif
+
+if Platform == 'pc_i586'
+  srcFiles += ['srcs/test.c']
+  linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
+  linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
+  linkDeps += [linkfile]
+
+  # Create test_ac_putchar executable
+  test_ac_putchar = executable( 'test_ac_putchar', srcFiles,
+    include_directories : runtimeIncDirs,
+    c_args : compilerArgs,
+    link_args : linkArgs,
+    link_depends : linkDeps,
+    dependencies : [libruntime_dep],
+  )
+
+  run_target('run-test-ac_putchar', '@0@/tools/qemu-system-i386.runner.sh'.format(meson.source_root()),
+             test_ac_putchar)
+endif

@@ -19,6 +19,7 @@ runtimeIncDirs += [include_directories('incs')]
 
 subdir('ac_assert')
 subdir('ac_dispatcher')
+subdir('ac_memcmp')
 subdir('ac_mpscfifo')
 subdir('ac_printf')
 subdir('ac_string')

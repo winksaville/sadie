@@ -14,8 +14,10 @@
 
 # ARM Versatile Platform Board
 
-# The name of the subdirectory directly under arch/ so arch/x86_64
-Arch = 'x86_64'
+# The name of the subdirectory directly under arch/ so arch/x86
+Arch = 'x86'
+
+Cpu = 'x86_64'
 
 # The compiler arguments
 compilerArgs += [

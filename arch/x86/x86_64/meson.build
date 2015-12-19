@@ -12,7 +12,12 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-# Add this as and include directory to easily reference the generic
-runtimeIncDirs += [include_directories('@0@'.format(meson.current_source_dir()))]
+runtimeIncDirs += [include_directories('incs')]
 
-subdir(Arch)
+# The compiler arguments
+compilerArgs += [
+  '-D@0@'.format(Platform),
+  '-D@0@'.format(Arch),
+  '-m64',
+]
+

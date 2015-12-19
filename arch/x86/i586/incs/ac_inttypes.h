@@ -14,24 +14,11 @@
  * limitations under the License.
  */
 
-#include <ac_string.h>
+#ifndef SADIE_X86_64_AC_INTTYPES_H
+#define SADIE_X86_64_AC_INTTYPES_H
 
-/**
- * Compare two strings, returns 0 if they are identical.
- * return < 0 if the first non-matching character of str1
- * is < that of str2 or > 0 if str1 > str2.
- */
-int ac_strncmp(const char *str1, const char *str2, ac_size_t num) {
-    int diff = 0;
-    if (num > 0) {
-        for (int i = 0; i < num; i++) {
-            char ch1 = str1[i];
-            char ch2 = str2[i];
-            diff = ch1 - ch2;
-            if (diff != 0) {
-                return diff;
-            }
-        }
-    }
-    return diff;
-}
+#include <generic/incs/ac_inttypes_ll64.h>
+#include <generic/incs/ac_32bits.h>
+#include <generic/incs/ac_common.h>
+
+#endif

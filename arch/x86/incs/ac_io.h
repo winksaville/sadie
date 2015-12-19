@@ -14,24 +14,29 @@
  * limitations under the License.
  */
 
-#include <ac_string.h>
+#ifndef SADIE_ARCH_X86_64_INCS_AC_IO_H
+#define SADIE_ARCH_X86_64_INCS_AC_IO_H
 
-/**
- * Compare two strings, returns 0 if they are identical.
- * return < 0 if the first non-matching character of str1
- * is < that of str2 or > 0 if str1 > str2.
- */
-int ac_strncmp(const char *str1, const char *str2, ac_size_t num) {
-    int diff = 0;
-    if (num > 0) {
-        for (int i = 0; i < num; i++) {
-            char ch1 = str1[i];
-            char ch2 = str2[i];
-            diff = ch1 - ch2;
-            if (diff != 0) {
-                return diff;
-            }
-        }
-    }
-    return diff;
+#include <ac_inttypes.h>
+
+static inline ac_u8 inb(ac_u16 port) {
+  ac_u8 val;
+  __asm volatile ( "inb %0, %1" :"=r"(val) : "d"(port));
+  return val;
 }
+
+static inline ac_u16 inw(ac_u16 port) {
+  ac_u16 val;
+  __asm volatile ( "inw %0, %1" : "=r"(val) : "d"(port));
+  return val;
+}
+
+static inline void outb(ac_u8 val, ac_u16 port) {
+    __asm volatile ( "outb %0, %1" : : "a"(val), "d"(port) );
+}
+
+static inline void outw(ac_u16 val, ac_u16 port) {
+    __asm volatile ( "outw %0, %1" : : "a"(val), "d"(port) );
+}
+
+#endif

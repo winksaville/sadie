@@ -12,7 +12,19 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-# Add this as and include directory to easily reference the generic
-runtimeIncDirs += [include_directories('@0@'.format(meson.current_source_dir()))]
+# Platform pc_i386 or 486/586 but not x86_64
 
-subdir(Arch)
+
+# Add general runtime libs
+subdir('@0@/libs'.format(meson.source_root()))
+
+# Add our platform specific libs
+#subdir('ac_memmgr')
+subdir('ac_putchar')
+
+libruntime = static_library('runtime', runtimeSrcs,
+  c_args : compilerArgs,
+  include_directories : runtimeIncDirs)
+
+libruntime_dep = declare_dependency(
+  link_with : libruntime)

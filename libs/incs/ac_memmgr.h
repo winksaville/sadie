@@ -23,5 +23,4 @@ void* ac_malloc(ac_size_t size);
 
 void ac_free(void* p);
 
-
 #endif

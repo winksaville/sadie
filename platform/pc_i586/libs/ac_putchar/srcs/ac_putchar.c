@@ -14,24 +14,27 @@
  * limitations under the License.
  */
 
-#include <ac_string.h>
+#include <ac_putchar.h>
+#include <ac_io.h>
 
-/**
- * Compare two strings, returns 0 if they are identical.
- * return < 0 if the first non-matching character of str1
- * is < that of str2 or > 0 if str1 > str2.
- */
-int ac_strncmp(const char *str1, const char *str2, ac_size_t num) {
-    int diff = 0;
-    if (num > 0) {
-        for (int i = 0; i < num; i++) {
-            char ch1 = str1[i];
-            char ch2 = str2[i];
-            diff = ch1 - ch2;
-            if (diff != 0) {
-                return diff;
-            }
-        }
-    }
-    return diff;
+// From [here](//http://www.lammertbies.nl/comm/info/RS-232_io.html)
+#define COM1_BASE 0x3F8
+#define COM2_BASE 0x2F8
+#define COM3_BASE 0x3E8
+#define COM4_BASE 0x2E8
+
+#define COM1_IRQ 4
+#define COM2_IRQ 3
+#define COM3_IRQ 4
+#define COM4_IRQ 3
+
+// and [here](http://www.lammertbies.nl/comm/info/serial-uart.html)
+#define RX_FIFO 0
+#define TX_FIFO 0
+
+#define COM_TX_FIFO ((ac_u16)(COM1_BASE + TX_FIFO))
+
+void ac_putchar(ac_u8 ch)  {
+  outb(ch, COM_TX_FIFO);
 }
+

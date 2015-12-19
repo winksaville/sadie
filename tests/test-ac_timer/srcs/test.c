@@ -111,20 +111,16 @@ void periodic_handler(ac_uptr param) {
 
 
 int main(void) {
-  ac_u32 result = 0;
   ac_bool error = AC_FALSE;
 #if defined(Posix)
 
   ac_printf("test_ac_timer: no tests for Posix\n");
-  //error = AC_TRUE;
 
 #elif defined(VersatilePB)
+  ac_u32 result;
 
   //ac_printf("test_ac_timer: initial routes=0x%x enable=0x%x\n",
   //    ac_interrupts_rd_int_routes(), ac_interrupts_rd_int_enable());
-
-  ac_u32 int_routes;
-  ac_u32 int_enabled;
 
   // Set to route to irq then fiq
   ac_interrupts_int_route_to_irq(PIC_ALL);
@@ -193,7 +189,7 @@ int main(void) {
     ac_u32 timer_ris = ac_timer_rd_ris(0);
     ac_u32 timer_mis = ac_timer_rd_mis(0);
     ac_u32 timer_control = ac_timer_rd_control(0);
-    ac_debug_printf("test_ac_timer: new value=%u timer_ris=0x%x"
+    ac_printf("test_ac_timer: new value=%u timer_ris=0x%x"
         " timer_mis=0x%x timer_control=0x%x\n",
         timer_value, timer_ris, timer_mis, timer_control);
 
@@ -202,10 +198,10 @@ int main(void) {
     ac_u32 ris_status = ac_interrupts_rd_ris_status();
     ac_u32 int_routes = ac_interrupts_rd_int_routes();
     ac_u32 int_enable = ac_interrupts_rd_int_enable();
-    ac_debug_printf("test_ac_timer: irq_status=0x%x fiq_status=0x%x"
+    ac_printf("test_ac_timer: irq_status=0x%x fiq_status=0x%x"
         " ris_status=0x%x\n",
         irq_status, fiq_status, ris_status);
-    ac_debug_printf("test_ac_timer: int_routes=0x%x int_enable=0x%x\n",
+    ac_printf("test_ac_timer: int_routes=0x%x int_enable=0x%x\n",
         int_routes, int_enable);
 
     cur_value = __atomic_load_n(&one_shot_counter, __ATOMIC_ACQUIRE);

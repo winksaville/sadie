@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_PLATFORM_VERSATILEPB_LIBS_AC_INIT_INCS_AC_POWEROFF_H
-#define SADIE_PLATFORM_VERSATILEPB_LIBS_AC_INIT_INCS_AC_POWEROFF_H
+#ifndef SADIE_LIBS_AC_MEMCMP_INCS_AC_MEMCMP_H
+#define SADIE_LIBS_AC_MEMCMP_INCS_AC_MEMCMP_H
 
-void ac_poweroff(void);
+int ac_memcmp(const void* s1, const void* s2, ac_size_t count);
 
 #endif

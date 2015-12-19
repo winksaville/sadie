@@ -39,5 +39,9 @@ if Platform == 'Posix'
   subdir('platform/Posix')
 endif
 
+if Platform == 'pc_i586'
+  subdir('platform/pc_i586')
+endif
+
 # tests
 subdir('tests')

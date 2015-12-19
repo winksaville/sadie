@@ -19,7 +19,7 @@
 
 #include <ac_inttypes.h>
 
-ac_size_t ac_strncmp(const char *str1, const char *str2, ac_size_t num);
+int ac_strncmp(const char *str1, const char *str2, ac_size_t num);
 
 ac_size_t ac_strlen(const char *str);
 
