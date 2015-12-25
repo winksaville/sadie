@@ -15,9 +15,9 @@
  */
 
 /*
- * An "i386/486/586" linker script not sure about x86_64
+ * An i386 linker script
  *
- * Model after [BareBones](http://wiki.osdev.org/Bare_Bones)
+ * Modeled after [BareBones](http://wiki.osdev.org/Bare_Bones)
  *
  * One difference was I put .bootstrap_stack in a separate
  * section because I was getting a warning from the linker:

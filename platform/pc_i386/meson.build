@@ -18,7 +18,7 @@
 Arch = 'x86'
 
 # The name of a subdirectory under arch/x86 so arch/x86/i586
-Cpu = 'i586'
+Cpu = 'i386'
 
 # Load the architecture specific information
 subdir('@0@/arch'.format(meson.source_root()))

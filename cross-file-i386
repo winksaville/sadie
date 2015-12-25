@@ -13,11 +13,11 @@
 # limitations under the license.
 
 [binaries]
-c = 'i586-elf-gcc'
-cpp = 'i586-elf-g++'
-ar = 'i586-elf-ar'
-ld = 'i586-elf-ld'
-strip = 'i586-elf-strip'
+c = 'i386-elf-gcc'
+cpp = 'i386-elf-g++'
+ar = 'i386-elf-ar'
+ld = 'i386-elf-ld'
+strip = 'i386-elf-strip'
 
 [properties]
 has_function_printf = false
@@ -26,13 +26,13 @@ c_link_args = ['-ffreestanding', '-nostdlib', '-nostartfiles', '-nodefaultlibs']
 
 [host_machine]
 system = 'qemu'
-cpu = 'i586'
+cpu = 'i386'
 cpu_family = 'x86'
 endian = 'little'
 
 [target_machine]
 system = 'qemu'
-cpu = 'i586'
+cpu = 'i386'
 cpu_family = 'x86'
 endian = 'little'
 
