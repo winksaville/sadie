@@ -50,6 +50,7 @@ dependencies:
     # Install the tools we need
     - vendor-install-tools/install.py meson --installPrefixDir=${INSTALL_PREFIX_DIR}
     - vendor-install-tools/install.py ninja --installPrefixDir=${INSTALL_PREFIX_DIR}
+    - vendor-install-tools/install.py ct-ng --installPrefixDir=${INSTALL_PREFIX_DIR}
     - vendor-install-tools/install.py gcc-x86_64 --installPrefixDir=${INSTALL_PREFIX_DIR}
     - vendor-install-tools/install.py gcc-i386 --installPrefixDir=${INSTALL_PREFIX_DIR}
     - vendor-install-tools/install.py gcc-arm-eabi --installPrefixDir=${INSTALL_PREFIX_DIR}
