@@ -12,13 +12,14 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-runtimeIncDirs += [include_directories('incs')]
+#runtimeIncDirs += include_directories('incs')
 
-# The compiler arguments
-compilerArgs += [
-  '-D@0@'.format(Platform),
-  '-D@0@'.format(Arch),
-  '-m64',
+compilerArgs += [ '-mno-red-zone' ]
+
+runtimeSrcs += [
+  '@0@/srcs/mb2.S'.format(meson.current_source_dir()),
+  '@0@/srcs/boot.gas.S'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_startup.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_init.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_poweroff.c'.format(meson.current_source_dir()),
 ]
-
-subdir('libs')

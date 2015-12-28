@@ -12,13 +12,16 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-runtimeIncDirs += [include_directories('incs')]
+# An "pc" as defined by qemu
 
-# The compiler arguments
-compilerArgs += [
-  '-D@0@'.format(Platform),
-  '-D@0@'.format(Arch),
-  '-m64',
-]
+# The name of a subdirectory under arch so arch/x86
+Arch = 'x86'
 
+# The name of a subdirectory under arch/x86 so arch/x86/i586
+Cpu = 'x86_64'
+
+# Load the architecture specific information
+subdir('@0@/arch'.format(meson.source_root()))
+
+# And then the libraries for VersatilePB
 subdir('libs')

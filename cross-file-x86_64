@@ -12,13 +12,27 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-runtimeIncDirs += [include_directories('incs')]
+[binaries]
+c = 'x86_64-elf-gcc'
+cpp = 'x86_64-elf-g++'
+ar = 'x86_64-elf-ar'
+ld = 'x86_64-elf-ld'
+strip = 'x86_64-elf-strip'
 
-# The compiler arguments
-compilerArgs += [
-  '-D@0@'.format(Platform),
-  '-D@0@'.format(Arch),
-  '-m64',
-]
+[properties]
+has_function_printf = false
+c_args = ['-ffreestanding', '-nostdlib', '-nostartfiles', '-nodefaultlibs', '-mno-red-zone']
+c_link_args = ['-ffreestanding', '-nostdlib', '-nostartfiles', '-nodefaultlibs', '-mno-red-zone']
 
-subdir('libs')
+[host_machine]
+system = 'qemu'
+cpu = 'x86_64'
+cpu_family = 'x86'
+endian = 'little'
+
+[target_machine]
+system = 'qemu'
+cpu = 'x86_64'
+cpu_family = 'x86'
+endian = 'little'
+

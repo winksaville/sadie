@@ -12,13 +12,4 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-runtimeIncDirs += [include_directories('incs')]
-
-# The compiler arguments
-compilerArgs += [
-  '-D@0@'.format(Platform),
-  '-D@0@'.format(Arch),
-  '-m64',
-]
-
-subdir('libs')
+subdir('ac_init')

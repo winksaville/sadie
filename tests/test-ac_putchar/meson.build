@@ -71,3 +71,32 @@ if Platform == 'pc_i586'
   run_target('run-test-ac_putchar', '@0@/tools/qemu-system-i386.runner.sh'.format(meson.source_root()),
              test_ac_putchar)
 endif
+
+if Platform == 'pc_x86_64'
+  srcFiles += ['srcs/test.c']
+  linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
+  linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
+  linkDeps += [linkfile]
+
+  # Create test_ac_putchar executable
+  test_ac_putchar = executable( 'test_ac_putchar', srcFiles,
+    include_directories : runtimeIncDirs,
+    c_args : compilerArgs,
+    link_args : linkArgs,
+    link_depends : linkDeps,
+    dependencies : [libruntime_dep],
+  )
+
+  # Create test_ac_putchar.bin suitable for executing with qemu
+  test_ac_putchar_bin = custom_target( 'test_ac_putchar.img',
+    output : ['test_ac_putchar.img'],
+    command : ['@0@/tools/grub-mkrescue.runner.sh'.format(meson.source_root()),
+      '@0@/test_ac_putchar'.format(meson.current_build_dir()),
+      '@0@/grub.cfg'.format(meson.current_source_dir()),
+      '@0@/test_ac_putchar.img'.format(meson.current_build_dir())],
+    depends : [test_ac_putchar])
+
+  run_target('run-test-ac_putchar', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
+              test_ac_putchar_bin)
+endif
+

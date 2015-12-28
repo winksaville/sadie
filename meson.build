@@ -39,8 +39,8 @@ if Platform == 'Posix'
   subdir('platform/Posix')
 endif
 
-if Platform == 'pc_i586'
-  subdir('platform/pc_i586')
+if Platform == 'pc_x86_64'
+  subdir('platform/pc_x86_64')
 endif
 
 # tests
