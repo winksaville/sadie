@@ -16,8 +16,11 @@
 
 compilerArgs += [ '-mno-red-zone' ]
 
-runtimeSrcs += [
+srcFiles = [
   '@0@/srcs/mb2.S'.format(meson.current_source_dir()),
+]
+
+runtimeSrcs += [
   '@0@/srcs/boot.gas.S'.format(meson.current_source_dir()),
   '@0@/srcs/ac_startup.c'.format(meson.current_source_dir()),
   '@0@/srcs/ac_init.c'.format(meson.current_source_dir()),

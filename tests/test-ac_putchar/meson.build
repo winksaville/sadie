@@ -75,7 +75,7 @@ endif
 if Platform == 'pc_x86_64'
   srcFiles += ['srcs/test.c']
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
-  linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
+  linkArgs += ['-Wl,-n,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
   # Create test_ac_putchar executable
