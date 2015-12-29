@@ -66,6 +66,12 @@
  *
  */
 
+  .extern ac_reschedule
+
+/**
+ * The stack frame saved here must be identical to that assumed
+ * by ac_thread/srcs/ac_thread.c:__reschedule.
+ */
   .global ac_exception_irq_wrapper
 ac_exception_irq_wrapper:
   sub   lr, lr, #4      // Adjust LR so it points at the correct PC
@@ -80,15 +86,8 @@ ac_exception_irq_wrapper:
   bl    ac_exception_irq_identify_and_clear_source
   cpsie i               // Enable IRQ
   bl    ac_exception_irq_handler // Invoke the irq handler
-  cpsid  i              // Disable IRQ
 
-  // Invoke scheduler passing sp as the first parameter
-  mov   r0, sp
-  bl    ac_thread_scheduler
-  mov   sp, r0          // Replace sp with the return value
-
-  pop   {r1,lr}         // Get realign factor back to R1 and pop LR
-  add   sp, sp, r1      // Realign sp to old value
-  pop   {r0-r3, r12}    // Restore registers
-  rfefd sp!             // Return using RFE from System mode stack
+  // Reschedule the CPU
+  ldr   r0, =ac_reschedule
+  bx    r0
 

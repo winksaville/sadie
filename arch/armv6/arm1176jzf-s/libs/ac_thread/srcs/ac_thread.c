@@ -25,7 +25,7 @@
 
 static void* entry_trampoline(void* param) __attribute__ ((noreturn));
 
-static void thread_yield(void) __attribute__ ((noreturn))
+void ac_reschedule(void) __attribute__ ((noreturn))
                                __attribute__ ((naked));
 
 typedef struct ac_tcb {
@@ -148,7 +148,7 @@ static void* entry_trampoline(void* param) {
   ac_u32* pthread_id = &ptcb->thread_id;
   __atomic_store_n(pthread_id, AC_THREAD_ID_ZOMBIE, __ATOMIC_RELEASE);
   
-  thread_yield();
+  ac_reschedule();
 }
 
 /**
@@ -316,20 +316,6 @@ done:
   return ptcb;
 }
 
-static void thread_yield(void) {
-  // Start another thread
-  __asm__ (
-    "mov   r0, sp\n"
-    "bl    ac_thread_scheduler\n"
-    "mov   sp, r0          // Replace sp with the return value\n"
-    "pop   {r1,lr}         // Get realign factor back to R1 and pop LR\n"
-    "add   sp, sp, r1      // Realign sp to old value\n"
-    "pop   {r0-r3, r12}    // Restore registers\n"
-    "rfefd sp!             // Return using RFE from System mode stack\n"
-  );
-}
-
-
 /**
  * Next tcb
  */
@@ -358,7 +344,7 @@ static ac_tcb* next_tcb(ac_tcb* pcur_tcb) {
  * @param pcur_sp is the stack of the current thread
  * @return the stack of the next thread to run
  */
-ac_u8* ac_thread_scheduler(ac_u8* sp) {
+ac_u8* thread_scheduler(ac_u8* sp) {
   // Save the current thread stack pointer
   pready->sp = sp;
 
@@ -372,6 +358,50 @@ ac_u8* ac_thread_scheduler(ac_u8* sp) {
 
   return pready->sp;
 }
+
+/**
+ * The current thread yeilds the CPU to the next
+ * ready thread.
+ */
+void ac_thread_yield(void) {
+  // Setup the stack frame exected by ac_reschedule
+  // and branch to ac_reschedule
+  __asm__ (
+    "srsfd sp!,#31         // Save LR_irq and SPSR_irq to System mode stack\n"
+    "cps   #31             // Switch to System mode\n"
+    "push  {R0-R3,R12}     // Store other AAPCS registers\n"
+    "and   r1, sp, #4      // R1 will be 0 if already on 64 bit boundry\n"
+    "                      // or 4 if its not.\n"
+    "sub   sp, sp, R1      // Substract 0 or 4 to align on 64 bit boundry\n"
+    "push  {r1, lr}        // Push R1 to save realign facotr and LR to\n"
+    "                      // keep it on 64 bit boundry\n"
+    "// Reschedule the CPU\n"
+    "ldr   r0, =ac_reschedule\n"
+    "bx    r0\n"
+  );
+}
+
+/**
+ * Reschedule the CPU to the next ready thread. CAREFUL, this is
+ * invoked by ac_init/srcs/ac_exception_irq_wrapper.S as such the
+ * stack frame pointed to by sp must be identical.
+ *
+ * Interrupts will be disabled as the scheduler will be invoked
+ */
+void ac_reschedule(void) {
+  // Start another thread
+  __asm__ (
+    "cpsid  i              // Disable IRQ\n"
+    "mov   r0, sp          // Pass stackframe to thread_scheduler\n"
+    "bl    thread_scheduler\n"
+    "mov   sp, r0          // Replace sp with the return value\n"
+    "pop   {r1,lr}         // Get realign factor back to R1 and pop LR\n"
+    "add   sp, sp, r1      // Realign sp to old value\n"
+    "pop   {r0-r3, r12}    // Restore registers\n"
+    "rfefd sp!             // Return using RFE from System mode stack\n"
+  );
+}
+
 
 /**
  * Early initialization of this module
@@ -420,15 +450,6 @@ void ac_thread_init(ac_u32 max_threads) {
     pthreads->tcbs[i].pstack = AC_NULL;
     pthreads->tcbs[i].sp = AC_NULL;
   }
-}
-
-/**
- * The current thread yeilds the CPU to the next
- * ready thread. This is the exact same exit sequence
- * at the in ac_exception_irq_wrapper.
- */
-void ac_thread_yield(void) {
-  thread_yield();
 }
 
 /**

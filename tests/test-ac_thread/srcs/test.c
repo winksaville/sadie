@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define NDEBUG
+//#define NDEBUG
 
 #include <ac_thread.h>
 
@@ -49,6 +49,8 @@ int main(void) {
       result = __atomic_load_n(&t1_count, __ATOMIC_ACQUIRE);
       if (result != t1_count_initial) {
         break;
+      } else {
+        ac_thread_yield();
       }
     }
     ac_debug_printf("test-ac_thread: loops=%d result=%d\n", loops, result);
@@ -73,6 +75,8 @@ int main(void) {
         result = __atomic_load_n(&t1_count, __ATOMIC_ACQUIRE);
         if (result != t1_count_initial + t1_count_increment) {
           break;
+        } else {
+          ac_thread_yield();
         }
       }
       ac_debug_printf("test-ac_thread: loops=%d result=%d\n", loops, result);

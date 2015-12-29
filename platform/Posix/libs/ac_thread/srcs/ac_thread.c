@@ -24,6 +24,7 @@
 
 #include <pthread.h>
 #include <unistd.h>
+#include <sched.h>
 
 typedef struct {
   ac_uptr thread_id;
@@ -71,6 +72,15 @@ void ac_thread_init(ac_u32 max_threads) {
     pthreads->tcbs[i].thread_id = AC_THREAD_ID_EMPTY;
   }
 }
+
+/**
+ * The current thread yeilds the CPU to the next
+ * ready thread.
+ */
+void ac_thread_yield(void) {
+  sched_yield();
+}
+
 
 /**
  * Get an execution thread and invoke the entry_point passing
