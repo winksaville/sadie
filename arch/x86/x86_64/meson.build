@@ -21,4 +21,6 @@ compilerArgs += [
   '-m64',
 ]
 
-subdir('libs')
+if Platform != 'Posix'
+  subdir('libs')
+endif
