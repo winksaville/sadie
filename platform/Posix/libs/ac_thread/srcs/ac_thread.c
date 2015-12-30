@@ -19,7 +19,7 @@
 #include <ac_assert.h>
 #include <ac_memmgr.h>
 
-//#define NDEBUG
+#define NDEBUG
 #include <ac_debug_printf.h>
 
 #include <pthread.h>
@@ -47,7 +47,7 @@ static void* entry_trampoline(void* param) {
   ac_tcb* ptcb = (ac_tcb*)param;
   ptcb->entry(ptcb->entry_arg);
 
-  // Marke AC_THREAD_ID_EMPTY
+  // Mark AC_THREAD_ID_EMPTY
   ac_uptr* pthread_id = &ptcb->thread_id;
   __atomic_store_n(pthread_id, AC_THREAD_ID_EMPTY, __ATOMIC_RELEASE);
   return AC_NULL;
@@ -118,16 +118,17 @@ ac_u32 ac_thread_create(ac_size_t stack_size,
           entry_trampoline, ptcb);
       ac_assert(*pthread_id != AC_THREAD_ID_EMPTY);
       ac_assert(*pthread_id != AC_THREAD_ID_NOT_EMPTY);
-      if (error != 0) {
+      if (error == 0) {
+        break;
+      } else {
+        // Mark as empty and try again, although probably won't work
         __atomic_store_n(pthread_id, AC_THREAD_ID_EMPTY, __ATOMIC_RELEASE);
       }
     }
   }
 
-done:
-  if (error != 0) {
-    pthread_attr_destroy(&attr);
-  }
+  pthread_attr_destroy(&attr);
 
+done:
   return (ac_u32)error;
 }
