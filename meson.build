@@ -14,7 +14,9 @@
 
 project('sadie', ['c'])
 
-pkgconfig_gen(
+pkgg = import('pkgconfig')
+
+pkgg.generate(
   version : '0.0.1',
   name : 'sadie',
   filebase : 'sadie',
