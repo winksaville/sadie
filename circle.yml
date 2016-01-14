@@ -2,7 +2,7 @@ machine:
   environment:
     INSTALL_PREFIX_DIR_HOME_REL: ~/opt
     INSTALL_PREFIX_DIR: ${HOME}/opt
-    PATH: ${INSTALL_PREFIX_DIR}/bin:${INSTALL_PREFIX_DIR}/x-tools/arm-unknown-eabi/bin:{INSTALL_PREFIX_DIR}/x-tools/i386-unknown-elf/bin:${INSTALL_PREFIX_DIR}/x-tools/x86_64-unknown-elf/bin:${PATH}
+    PATH: ${INSTALL_PREFIX_DIR}/bin:${INSTALL_PREFIX_DIR}/x-tools/arm-unknown-eabi/bin:${INSTALL_PREFIX_DIR}/x-tools/i386-unknown-elf/bin:${INSTALL_PREFIX_DIR}/x-tools/x86_64-unknown-elf/bin:${PATH}
 
   #python:
   #  version: 3.5.0
@@ -56,7 +56,7 @@ dependencies:
     - vendor-install-tools/install.py ct-ng --installPrefixDir=${INSTALL_PREFIX_DIR}
     - vendor-install-tools/install.py gcc-x86_64 --installPrefixDir=${INSTALL_PREFIX_DIR}
     - vendor-install-tools/install.py gcc-i386 --installPrefixDir=${INSTALL_PREFIX_DIR}
-    - vendor-install-tools/install.py gcc-arm-eabi --installPrefixDir=${INSTALL_PREFIX_DIR}
+    - vendor-install-tools/install.py gcc-arm --installPrefixDir=${INSTALL_PREFIX_DIR}
     - vendor-install-tools/install.py qemu-system-arm --installPrefixDir=${INSTALL_PREFIX_DIR}
 
 test:
