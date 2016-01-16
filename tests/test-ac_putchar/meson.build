@@ -72,6 +72,8 @@ if Platform == 'pc_i586'
              test_ac_putchar)
 endif
 
+grub_cfg = '@0@/grub.cfg'.format(meson.current_source_dir())
+
 if Platform == 'pc_x86_64'
   srcFiles += ['srcs/test.c']
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
@@ -87,6 +89,9 @@ if Platform == 'pc_x86_64'
     dependencies : [libruntime_dep],
   )
 
+
+  # TODO: How to make test_ac_put_char_bin depend upon changes to grub.cfg?
+  # this doesn't work -->  depends : [test_ac_putchar, grub_cfg])
   # Create test_ac_putchar.bin suitable for executing with qemu
   test_ac_putchar_bin = custom_target( 'test_ac_putchar.img',
     output : ['test_ac_putchar.img'],
