@@ -20,6 +20,9 @@ int main(void) {
   ac_putchar('O');
   ac_putchar('K');
   ac_putchar('\n');
+  ac_putchar('\r');
+
+  //while (1) ;
 
   return 0;
 }
