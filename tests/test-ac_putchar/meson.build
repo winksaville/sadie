@@ -72,7 +72,6 @@ if Platform == 'pc_i586'
              test_ac_putchar)
 endif
 
-grub_cfg = '@0@/grub.cfg'.format(meson.current_source_dir())
 
 if Platform == 'pc_x86_64'
   srcFiles += ['srcs/test.c']
@@ -89,16 +88,17 @@ if Platform == 'pc_x86_64'
     dependencies : [libruntime_dep],
   )
 
+  grub_cfg = '@0@/grub.cfg'.format(meson.current_source_dir())
+  test_ac_putchar_exe = '@0@/test_ac_putchar'.format(meson.current_build_dir())
 
   # TODO: How to make test_ac_put_char_bin depend upon changes to grub.cfg?
   # this doesn't work -->  depends : [test_ac_putchar, grub_cfg])
   # Create test_ac_putchar.bin suitable for executing with qemu
   test_ac_putchar_bin = custom_target( 'test_ac_putchar.img',
-    output : ['test_ac_putchar.img'],
+    input : grub_cfg,
+    output : 'test_ac_putchar.img',
     command : ['@0@/tools/grub-mkrescue.runner.sh'.format(meson.source_root()),
-      '@0@/test_ac_putchar'.format(meson.current_build_dir()),
-      '@0@/grub.cfg'.format(meson.current_source_dir()),
-      '@0@/test_ac_putchar.img'.format(meson.current_build_dir())],
+      test_ac_putchar_exe, grub_cfg, '@OUTPUT@'],
     depends : [test_ac_putchar])
 
   run_target('run-test-ac_putchar', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
