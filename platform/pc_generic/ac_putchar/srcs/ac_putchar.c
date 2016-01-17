@@ -36,5 +36,12 @@
 
 void ac_putchar(ac_u8 ch)  {
   outb(ch, COM_TX_FIFO);
+
+  // Needed for vt100 terminals like when the screen app
+  // is connected to a serial port such as with the when
+  // testing with the x86 serial port.
+  if (ch == '\n') {
+    outb('\r', COM_TX_FIFO);
+  }
 }
 
