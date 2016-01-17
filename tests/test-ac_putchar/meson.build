@@ -91,9 +91,7 @@ if Platform == 'pc_x86_64'
   grub_cfg = '@0@/grub.cfg'.format(meson.current_source_dir())
   test_ac_putchar_exe = '@0@/test_ac_putchar'.format(meson.current_build_dir())
 
-  # TODO: How to make test_ac_put_char_bin depend upon changes to grub.cfg?
-  # this doesn't work -->  depends : [test_ac_putchar, grub_cfg])
-  # Create test_ac_putchar.bin suitable for executing with qemu
+  # Create test_ac_putchar.bin suitable for executing with qemu or on hardware
   test_ac_putchar_bin = custom_target( 'test_ac_putchar.img',
     input : grub_cfg,
     output : 'test_ac_putchar.img',
