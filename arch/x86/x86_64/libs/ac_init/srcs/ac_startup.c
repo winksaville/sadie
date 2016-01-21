@@ -19,8 +19,18 @@
 extern void main(void);
 extern void ac_init(void);
 
+__attribute__ ((__noreturn__))
 void ac_startup(void) {
   ac_init();
   main();
   ac_poweroff();
+
+  /*
+   * If poweroff didn't work, execute an undefined instruction.
+   * This is particularly helpful as this will cause qemu to
+   * terminate if we pass it the -no-reboot option
+   */
+  while (1) {
+    __asm__ ("ud2");
+  }
 }
