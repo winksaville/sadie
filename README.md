@@ -57,3 +57,20 @@ ninja run-test-ac_putchar
 Testing
 ---
 [CircleCi](https://circleci.com/home) is used for [testing sadie](https://circleci.com/gh/winksaville/sadie)
+
+Notes
+---
+For some x86_64 applications like test-ac_putchar you can test
+using qemu by doing:
+
+   ninja run-test-ac_putchar
+
+And the image `test_ac_putchar.img` can also be used on real hardware.
+The way I test the image on real hardware is to write the image to a
+usb stick using dd and then inserting the usb stick into the test PC
+which is configured to boot from a usb stick. The dd command I use
+is below, note the `sync` command to besure everything is written:
+
+*WARNING* Using dd can wipe out you HD *WARNING*
+
+  sudo dd bs=4M if=tests/test-ac_putchar/test_ac_putchar.img of=/dev/sdb ; sync
