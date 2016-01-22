@@ -74,3 +74,16 @@ is below, note the `sync` command to besure everything is written:
 *WARNING* Using dd can wipe out you HD *WARNING*
 
   sudo dd bs=4M if=tests/test-ac_putchar/test_ac_putchar.img of=/dev/sdb ; sync
+
+I'm using grub2 as the bootloader and I've configured it to route its
+terminal input/output to the serial port 0 and buad rate is 115200.
+See tests/test-ac_putchar/grub.cfg for details.
+
+On my MSI B85M-E45 test system I'm using a USB to serial adapter with has
+a PL2303 chip. I plug it into a USB port on my dev system and connect it
+to the serial port test system via a NULL modem cable.
+
+On my dev system I use screen to connect to /dev/ttyUSB0 to see the grub and
+putchar output, I use the following command:
+
+  screen /dev/ttyUSB0 115200,cs8
