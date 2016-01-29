@@ -15,6 +15,7 @@
  */
 
 #include <ac_poweroff.h>
+#include <ac_reset.h>
 
 extern void main(void);
 extern void ac_init(void);
@@ -26,11 +27,7 @@ void ac_startup(void) {
   ac_poweroff();
 
   /*
-   * If poweroff didn't work, execute an undefined instruction.
-   * This is particularly helpful as this will cause qemu to
-   * terminate if we pass it the -no-reboot option
+   * If poweroff didn't work, reset the cpu
    */
-  while (1) {
-    __asm__ ("ud2");
-  }
+  ac_reset();
 }
