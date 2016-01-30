@@ -1,4 +1,4 @@
-# Copyright 2015 wink saville
+# Copyright 2016 wink saville
 #
 # licensed under the apache license, version 2.0 (the "license");
 # you may not use this file except in compliance with the license.
@@ -12,14 +12,19 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-subdir('test-ac_arg')
-subdir('test-ac_assert')
-subdir('test-ac_cpu_perf')
-subdir('test-ac_dispatcher')
-subdir('test-ac_memmgr')
-subdir('test-ac_mpscfifo')
-subdir('test-ac_printf')
-subdir('test-ac_string')
-subdir('test-ac_sysconf')
-subdir('test-ac_thread')
-subdir('test-ac_timer')
+# Use Platform variable set in <root> meson.build to decide
+# which platform subdir to use.
+if Platform == 'VersatilePB'
+  subdir('VersatilePB')
+elif Platform == 'Posix'
+  subdir('Posix')
+elif Platform == 'pc_x86_64'
+  subdir('pc_x86_64')
+elif Platform == 'pc_x86_32'
+  subdir('pc_x86_32')
+else
+  error('Unknown Platform @0@'.format(Platform))
+endif
+
+# platform tests
+subdir('tests')

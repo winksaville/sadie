@@ -33,17 +33,7 @@ runtimeIncDirs = []
 # Get options
 Platform = get_option('Platform')
 
-if Platform == 'VersatilePB'
-  subdir('platform/VersatilePB')
-elif Platform == 'Posix'
-  subdir('platform/Posix')
-elif Platform == 'pc_x86_64'
-  subdir('platform/pc_x86_64')
-elif Platform == 'pc_x86_32'
-  subdir('platform/pc_x86_32')
-else
-  # Unknown, generate an error in meson
-endif
+subdir('platform')
 
 # tests
 subdir('tests')
