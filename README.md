@@ -71,7 +71,7 @@ usb stick using dd and then inserting the usb stick into the test PC
 which is configured to boot from a usb stick. The dd command I use
 is below, note the `sync` command to besure everything is written:
 
-*WARNING* Using dd can wipe out you HD *WARNING*
+**WARNING:** Using dd can wipe out your Hard Drive
 
   sudo dd bs=4M if=tests/test-ac_putchar/test_ac_putchar.img of=/dev/sdb ; sync
 
