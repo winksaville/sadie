@@ -15,4 +15,6 @@
 # Add this as and include directory to easily reference the generic
 runtimeIncDirs += [include_directories('@0@'.format(meson.current_source_dir()))]
 
+# Include the directory defined by the Cpu variable set
+# in the current platform's meson.build.
 subdir(Arch)

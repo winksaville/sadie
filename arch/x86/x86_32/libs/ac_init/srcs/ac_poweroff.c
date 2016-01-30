@@ -21,5 +21,5 @@
 void ac_poweroff(void) {
   // [From here](http://forum.osdev.org/viewtopic.php?t=16990)
   // didn't work but I'm hoping to find something easy.
-  outw(0xB004, 0x2000);
+  //outw(0xB004, 0x2000);
 }

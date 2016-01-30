@@ -35,14 +35,14 @@ Platform = get_option('Platform')
 
 if Platform == 'VersatilePB'
   subdir('platform/VersatilePB')
-endif
-
-if Platform == 'Posix'
+elif Platform == 'Posix'
   subdir('platform/Posix')
-endif
-
-if Platform == 'pc_x86_64'
+elif Platform == 'pc_x86_64'
   subdir('platform/pc_x86_64')
+elif Platform == 'pc_x86_32'
+  subdir('platform/pc_x86_32')
+else
+  # Unknown, generate an error in meson
 endif
 
 # tests

@@ -17,7 +17,7 @@
 # The name of a subdirectory under arch so arch/x86
 Arch = 'x86'
 
-# The name of a subdirectory under arch/x86 so arch/x86/i586
+# The name of a subdirectory under arch/x86 so arch/x86/x86_64
 Cpu = 'x86_64'
 
 # Load the architecture specific information

@@ -12,16 +12,18 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-# An "pc" as defined by qemu
+# Platform pc_x86_32
 
-# The name of a subdirectory under arch so arch/x86
-Arch = 'x86'
+# Add general runtime libs
+subdir('@0@/libs'.format(meson.source_root()))
 
-# The name of a subdirectory under arch/x86 so arch/x86/i586
-Cpu = 'i386'
+# Add our platform specific libs
+#subdir('ac_memmgr')
+subdir('@0@/platform/pc_generic/ac_putchar'.format(meson.source_root()))
 
-# Load the architecture specific information
-subdir('@0@/arch'.format(meson.source_root()))
+libruntime = static_library('runtime', runtimeSrcs,
+  c_args : compilerArgs,
+  include_directories : runtimeIncDirs)
 
-# And then the libraries for VersatilePB
-subdir('libs')
+libruntime_dep = declare_dependency(
+  link_with : libruntime)

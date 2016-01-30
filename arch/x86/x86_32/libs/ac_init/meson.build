@@ -12,19 +12,11 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-# Platform pc_i386 or 486/586 but not x86_64
+#runtimeIncDirs += include_directories('incs')
 
-
-# Add general runtime libs
-subdir('@0@/libs'.format(meson.source_root()))
-
-# Add our platform specific libs
-#subdir('ac_memmgr')
-subdir('@0@/platform/pc_generic/ac_putchar')
-
-libruntime = static_library('runtime', runtimeSrcs,
-  c_args : compilerArgs,
-  include_directories : runtimeIncDirs)
-
-libruntime_dep = declare_dependency(
-  link_with : libruntime)
+runtimeSrcs += [
+  '@0@/srcs/ac_init.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_startup.S'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_poweroff.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_reset.c'.format(meson.current_source_dir()),
+]

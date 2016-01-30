@@ -15,5 +15,5 @@
 option('Platform',
         description : 'Target Platform',
         type : 'combo',
-        value : 'VersatilePB',
-        choices : ['VersatilePB', 'Posix', 'pc_x86_64'] )
+        value : 'pc_x86_64',
+        choices : ['VersatilePB', 'Posix', 'pc_x86_64', 'pc_x86_32'] )

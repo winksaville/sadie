@@ -12,8 +12,7 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-# Platform pc_i386 or 486/586 but not x86_64
-
+# Platform pc using x86_64
 
 # Add general runtime libs
 subdir('@0@/libs'.format(meson.source_root()))

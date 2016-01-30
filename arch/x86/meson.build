@@ -14,4 +14,6 @@
 
 runtimeIncDirs += [include_directories('incs')]
 
+# Include the directory pointed to in the Cpu variable. The
+# Cpu variable is set  set in the current platform's meson.build.
 subdir(Cpu)

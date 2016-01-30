@@ -12,10 +12,16 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-#runtimeIncDirs += include_directories('incs')
+# An "pc" as defined by qemu
 
-runtimeSrcs += [
-  '@0@/srcs/ac_init.c'.format(meson.current_source_dir()),
-  '@0@/srcs/ac_startup.S'.format(meson.current_source_dir()),
-  '@0@/srcs/ac_poweroff.c'.format(meson.current_source_dir()),
-]
+# The name of a subdirectory under arch so arch/x86
+Arch = 'x86'
+
+# The name of a subdirectory under arch/x86 so arch/x86/x86_32
+Cpu = 'x86_32'
+
+# Load the architecture specific information
+subdir('@0@/arch'.format(meson.source_root()))
+
+# And then the libraries for VersatilePB
+subdir('libs')

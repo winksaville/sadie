@@ -53,7 +53,7 @@ if Platform == 'Posix'
   run_target('run-test-ac_putchar', test_ac_putchar)
 endif
 
-if Platform == 'pc_i586'
+if Platform == 'pc_x86_32'
   srcFiles += ['srcs/test.c']
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
   linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
