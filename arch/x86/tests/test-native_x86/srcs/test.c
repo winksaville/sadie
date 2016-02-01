@@ -52,7 +52,7 @@ ac_bool test_seg_regs() {
       "Unable to get/set/get register ES");
 
   seg_reg1 = get_tr();
-  set_tr(seg_reg1);
+  //set_tr(seg_reg1); // Work's on QEMU but fails on real hardware
   seg_reg2 = get_tr();
 
   error |= AC_TEST_EM(seg_reg1 == seg_reg2,
