@@ -6,7 +6,7 @@
 #   $2 grub.cfg file
 #   $3 iso image file
 tmpdir=$(mktemp -d /tmp/grub-mkrescue.isofiles.XXX)
-echo "'tmpdir=${tmpdir}"
+#echo "'tmpdir=${tmpdir}"
 mkdir -p ${tmpdir}/boot/grub
 cp $1 ${tmpdir}/boot/
 cp $2 ${tmpdir}/boot/grub/grub.cfg

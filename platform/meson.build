@@ -25,6 +25,3 @@ elif Platform == 'pc_x86_32'
 else
   error('Unknown Platform @0@'.format(Platform))
 endif
-
-# platform tests
-subdir('tests')

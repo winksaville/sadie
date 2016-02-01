@@ -12,18 +12,4 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-# Platform pc using x86_64
-
-# Add general runtime libs
-subdir('@0@/libs'.format(meson.source_root()))
-
-# Add our platform specific libs
-#subdir('ac_memmgr')
-subdir('@0@/platform/pc_generic/ac_putchar'.format(meson.source_root()))
-
-libruntime = static_library('runtime', runtimeSrcs,
-  c_args : compilerArgs,
-  include_directories : runtimeIncDirs)
-
-libruntime_dep += declare_dependency(
-  link_with : libruntime)
+subdir('test-regs_x86')

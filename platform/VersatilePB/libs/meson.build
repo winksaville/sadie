@@ -27,5 +27,5 @@ libruntime = static_library('runtime', runtimeSrcs,
   c_args : compilerArgs,
   include_directories : runtimeIncDirs)
 
-libruntime_dep = declare_dependency(
+libruntime_dep += declare_dependency(
   link_with : libruntime)
