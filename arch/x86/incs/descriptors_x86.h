@@ -378,13 +378,14 @@ union seg_type_u {
     struct seg_type_data data;
     struct seg_type_code code;
 } __attribute__((__packed__));
-_Static_assert(sizeof(union seg_type_u) == 1, L"sizeof seg_type_u must be one byte");
+_Static_assert(sizeof(union seg_type_u) == 1,
+    L"sizeof seg_type_u must be one byte");
 
 /**
  * Pointer to Global Descriptor Table and Interrupt Descriptor Table
  */
 struct descriptor_ptr {
-    ac_u16 unused[3];      // Align descriptor_ptr.limit to an odd ac_u16 boundary
+    ac_u16 unused[3];   // Align descriptor_ptr.limit to an odd ac_u16 boundary
                         // so descriptor_ptr.address is on a ac_uptr boundary.
                         // This is for better performance and for user mode
                         // it avoids an alignment check fault. See the last
