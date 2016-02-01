@@ -138,7 +138,6 @@ static __inline__ void iret(void) {
 #endif
 }
 
-
 /** hlt, halt instruction */
 static __inline void hlt(void) {
   __asm__ volatile("hlt");

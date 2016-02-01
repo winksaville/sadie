@@ -12,4 +12,4 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-subdir('test-regs_x86')
+subdir('test-native_x86')

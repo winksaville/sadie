@@ -41,12 +41,12 @@ subdir('platform')
 # subdir('arch/test') doesn't work because in arch/tests/meson.build
 # I need to use an "absolute path":
 #   subdir('@0@/arch/@1@/@2@'.format(meson.source_root(),Arch,'tests'))
-# and for some reason this causes the generated code for test-regs_x86
+# and for some reason this causes the generated code for test-native_x86
 # to end up in the source tree so instead I'm invoking the test
 # directly from here for now:
-#   subdir('arch/x86/tests/test-regs_x86')
+#   subdir('arch/x86/tests/test-native_x86')
 
 #subdir('arch/tests')
-subdir('arch/x86/tests/test-regs_x86')
+subdir('arch/x86/tests/test-native_x86')
 subdir('platform/tests')
 subdir('tests')
