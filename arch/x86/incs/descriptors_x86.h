@@ -32,10 +32,10 @@
 #define SEG_DESC_SIZE  16
 #else /* CPU_X86_32 */
 #define IDT_INTR_GATE_OFFSET_HI_MASK  ((ac_uptr)0xFFFF)
-#define IDT_INTR_GATE_SIZE  8;
+#define IDT_INTR_GATE_SIZE  8
 #define TSS_DESC_BASE_ADDR_HI_MASK  ((ac_uptr)0xFFFF)
 #define TSS_DESC_SIZE  8
-#define SEG_DESC_SIZE  8
+#define SEG_DESC_SIZE  12
 #endif
 
 #define IDT_TASK_GATE_SIZE  8
@@ -397,7 +397,7 @@ struct descriptor_ptr {
       idt_intr_gate* iig;
       seg_desc* sd;
     };
-} __attribute__((__packed__, __aligned__(16)));
+} __attribute__((__packed__));
 
 _Static_assert(sizeof(struct descriptor_ptr) == SEG_DESC_SIZE,
     L"struct descriptor_ptr != " xstr(SEG_DESC_SIZE) " bytes");
