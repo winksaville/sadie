@@ -14,13 +14,46 @@
  * limitations under the License.
  */
 
-//#include <regs_x86.h>
+#include <regs_x86.h>
+#include <descriptors_x86.h>
 
+#include <ac_test.h>
 #include <ac_printf.h>
 
-int main(void) {
-  ac_printf("Hello this is test_ac_regs, NO TESTS YET\n");
-  ac_printf("OK\n");
+ac_bool test_gdt() {
+  descriptor_ptr dp1;
+  descriptor_ptr dp2;
+  ac_bool error = AC_FALSE;
 
-  return 0;
+  // Get current value and verifiy we can write it
+  // and read back the same value. Not a great test
+  // but in the short term anything else would be
+  // fatal.
+  get_gdt(&dp1);
+  set_gdt(&dp1);
+  get_gdt(&dp2);
+
+  if (dp1.limit != dp2.limit) {
+    ac_printf("Error: dp1.limit != dp2.limit");
+    error |= AC_TRUE;
+  }
+
+  if (dp1.address != dp2.address) {
+    ac_printf("Error: dp1.limit != dp2.limit");
+    error |= AC_TRUE;
+  }
+
+  return error;
+}
+
+int main(void) {
+  ac_bool error = AC_FALSE;
+
+  error |= AC_TEST(test_gdt() == 0);
+
+  if (!error) {
+    ac_printf("OK\n");
+  }
+
+  return error;
 }

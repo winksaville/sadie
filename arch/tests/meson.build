@@ -12,8 +12,8 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-# Support tests for current architecture
+# Support tests for the current Arch
 subdir('@0@/arch/@1@/@2@'.format(meson.source_root(),Arch,'tests'))
 
-# Support tests for current architecture
+# Support tests for the current Arch and a particular Cpu
 subdir('@0@/arch/@1@/@2@/@3@'.format(meson.source_root(),Arch,Cpu,'tests'))

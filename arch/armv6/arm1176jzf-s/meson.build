@@ -27,6 +27,9 @@
 #  armv8-a armv8-a+crc
 #  iwmmxt iwmmxt2 native
 
+# Update runtimeIncDirs
+runtimeIncDirs += [include_directories('incs')]
+
 # The compiler arguments for bcm2835
 compilerArgs += [
   '-D@0@'.format(Platform),
