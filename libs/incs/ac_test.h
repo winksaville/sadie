@@ -21,13 +21,26 @@
 #include <ac_printf.h>
 
 /**
- * Test the condition and return AC_FALSE if cond is "true"
- * else return AC_TRUE.
+ * If expr is false then print an "ERROR: '#expr' ..." and return AC_TRUE
+ * else return AC_FALSE and no error is printed.
  */
 #define AC_TEST(expr) ({                                         \
   ac_bool __result__ = (expr) ? AC_FALSE : AC_TRUE;              \
   if (__result__) {                                              \
     ac_printf("ERROR: expr '" #expr "' failed in %s:%d FN %s\n", \
+           __FILE__, __LINE__, __func__);                        \
+  }                                                              \
+  __result__;                                                    \
+})
+
+/**
+ * If expr is false then print an "ERROR: 'errstr' ..." and return AC_TRUE
+ * else return AC_FALSE and no error is printed.
+ */
+#define AC_TEST_EM(expr, err_msg) ({                             \
+  ac_bool __result__ = (expr) ? AC_FALSE : AC_TRUE;              \
+  if (__result__) {                                              \
+    ac_printf("ERROR: '" err_msg "' in %s:%d FN %s\n",           \
            __FILE__, __LINE__, __func__);                        \
   }                                                              \
   __result__;                                                    \
