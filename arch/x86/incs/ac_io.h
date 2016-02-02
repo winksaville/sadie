@@ -21,22 +21,22 @@
 
 static inline ac_u8 inb(ac_u16 port) {
   ac_u8 val;
-  __asm volatile ( "inb %0, %1" :"=r"(val) : "d"(port));
+  __asm volatile ( "inb %[port], %[val]" : [val]"=a"(val) : [port] "d"(port));
   return val;
 }
 
 static inline ac_u16 inw(ac_u16 port) {
   ac_u16 val;
-  __asm volatile ( "inw %0, %1" : "=r"(val) : "d"(port));
+  __asm volatile ( "inw %[port], %[val]" : [val]"=a"(val) : [port] "d"(port));
   return val;
 }
 
 static inline void outb(ac_u8 val, ac_u16 port) {
-    __asm volatile ( "outb %0, %1" : : "a"(val), "d"(port) );
+    __asm volatile ( "outb %[val], %[port]" : : [val] "a"(val), [port] "d"(port) );
 }
 
 static inline void outw(ac_u16 val, ac_u16 port) {
-    __asm volatile ( "outw %0, %1" : : "a"(val), "d"(port) );
+    __asm volatile ( "outw %[val], %[port]" : : [val] "a"(val), [port] "d"(port) );
 }
 
 #endif
