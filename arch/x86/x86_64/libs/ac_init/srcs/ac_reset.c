@@ -15,17 +15,80 @@
  */
 
 #include <ac_inttypes.h>
+#include <descriptors_x86.h>
+#include <native_x86.h>
+
+#include <ac_printf.h>
+
+typedef unsigned short uint16_t;
+typedef unsigned long long uint64_t;
+
+#if 0
+// This does not work and is the original code from
+// [The easiest way to reset i386/x86_64 system]
+// (http://www.pagetable.com/?p=140). The reson it
+// doesn't work is the lidt instruction caused a
+// general protection fault because the object lidt
+// loads is two fields a u16 and a u64.
 
 __attribute__ ((__noreturn__))
 void ac_reset(void) {
-  // [The easiest way to reset i386/x86_64 system]
-  // (http://www.pagetable.com/?p=140)
-  //  Initialize idt register to null then perform
-  //  an interrupt. This causes a triple fault and
-  //  resets the CPU.
-  ac_u64 null_idtr = 0;
+  uint64_t null_idtr = 0;
   __asm__ volatile ("lidt %0; int3" :: "m" (null_idtr));
+
+  // Loop with interrupts off if it doesn't work
+  __asm__ volatile ("cli");
   while (1) {
-    __asm__ volatile ("cli; hlt;");
+    __asm__ volatile ("hlt");
   }
 }
+#endif
+
+#if 0
+// This does work and is what I posted as the solution
+// to the above code on [The easiest way to reset i386/x86_64 system]
+// (http://www.pagetable.com/?p=140).
+
+__attribute__ ((__noreturn__))
+void ac_reset(void) {
+  struct {
+    uint16_t limit;
+    uint64_t address;
+  } null_idtr;
+
+  null_idtr.limit = 0;
+  null_idtr.address = 0;
+
+  __asm__ volatile ("lidt %0; int3" :: "m" (null_idtr));
+
+  // Loop with interrupts off if it doesn't work
+  while (1) {
+    hlt();
+  }
+}
+#endif
+
+#if 1
+__attribute__ ((__noreturn__))
+void ac_reset(void) {
+
+  // From [The easiest way to reset i386/x86_64 system]
+  // (http://www.pagetable.com/?p=140). The original code
+  // caused an GP fault (exception 13), but this code
+  // works.
+
+  descriptor_ptr null_idtr;
+
+  null_idtr.limit = 0;
+  null_idtr.address = 0;
+
+  cli();
+  set_idt(&null_idtr);
+  intr(3);
+
+  // Loop with interrupts off if it doesn't work
+  while (1) {
+    hlt();
+  }
+}
+#endif
