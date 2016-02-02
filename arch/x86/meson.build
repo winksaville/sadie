@@ -14,6 +14,12 @@
 
 runtimeIncDirs += [include_directories('incs')]
 
+runtimeSrcs += [
+  '@0@/srcs/descriptors_x86.c'.format(meson.current_source_dir()),
+  '@0@/srcs/descriptors_x86_print.c'.format(meson.current_source_dir()),
+  '@0@/srcs/interrupts_x86.c'.format(meson.current_source_dir()),
+]
+
 # Include the directory pointed to in the Cpu variable. The
-# Cpu variable is set  set in the current platform's meson.build.
+# Cpu variable is set in the current platform's meson.build.
 subdir(Cpu)

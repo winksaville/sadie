@@ -13,3 +13,4 @@
 # limitations under the license.
 
 subdir('test-native_x86')
+subdir('test-interrupts_x86')

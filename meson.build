@@ -48,5 +48,6 @@ subdir('platform')
 
 #subdir('arch/tests')
 subdir('arch/x86/tests/test-native_x86')
+subdir('arch/x86/tests/test-interrupts_x86')
 subdir('platform/tests')
 subdir('tests')
