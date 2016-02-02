@@ -16,7 +16,7 @@
 
 #include <ac_poweroff.h>
 
-#include <ac_io.h>
+#include <io_x86.h>
 
 void ac_poweroff(void) {
   //outw(0xB004, 0x2000);

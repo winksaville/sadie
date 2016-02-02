@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef ARCH_X86_X86_64_LIBS_AC_INIT_INCS_AC_RESET_H
-#define ARCH_X86_X86_64_LIBS_AC_INIT_INCS_AC_RESET_H
+#ifndef ARCH_X86_INCS_RESET_X86_H
+#define ARCH_X86_INCS_RESET_X86_H
 
 __attribute__ ((__noreturn__))
-void ac_reset();
+void reset_x86();
 
 #endif

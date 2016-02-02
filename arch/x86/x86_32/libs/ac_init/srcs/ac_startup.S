@@ -37,7 +37,7 @@ _start:
   call  ac_init           // Initialize the system
   call  main              // Call main
   call  ac_poweroff       // Power off device
-  call  ac_reset          // Reset if power off doesn't work
+  call  reset_x86         // Reset if power off doesn't work
 
   // If we return from poweroff we hang
   cli                     // Turn off interrupts

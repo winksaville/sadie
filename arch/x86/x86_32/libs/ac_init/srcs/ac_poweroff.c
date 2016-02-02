@@ -16,7 +16,7 @@
 
 #include <ac_poweroff.h>
 
-#include <ac_io.h>
+#include <io_x86.h>
 
 void ac_poweroff(void) {
   // [From here](http://forum.osdev.org/viewtopic.php?t=16990)

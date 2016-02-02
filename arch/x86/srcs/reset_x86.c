@@ -32,7 +32,7 @@ typedef unsigned long long uint64_t;
 // loads is two fields a u16 and a u64.
 
 __attribute__ ((__noreturn__))
-void ac_reset(void) {
+void reset_x86(void) {
   uint64_t null_idtr = 0;
   __asm__ volatile ("lidt %0; int3" :: "m" (null_idtr));
 
@@ -50,7 +50,7 @@ void ac_reset(void) {
 // (http://www.pagetable.com/?p=140).
 
 __attribute__ ((__noreturn__))
-void ac_reset(void) {
+void reset_x86(void) {
   struct {
     uint16_t limit;
     uint64_t address;
@@ -70,7 +70,7 @@ void ac_reset(void) {
 
 #if 1
 __attribute__ ((__noreturn__))
-void ac_reset(void) {
+void reset_x86(void) {
 
   // From [The easiest way to reset i386/x86_64 system]
   // (http://www.pagetable.com/?p=140). The original code

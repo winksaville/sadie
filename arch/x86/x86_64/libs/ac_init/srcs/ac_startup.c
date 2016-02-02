@@ -15,7 +15,7 @@
  */
 
 #include <ac_poweroff.h>
-#include <ac_reset.h>
+#include <reset_x86.h>
 
 extern void main(void);
 extern void ac_init(void);
@@ -29,5 +29,5 @@ void ac_startup(void) {
   /*
    * If poweroff didn't work, reset the cpu
    */
-  ac_reset();
+  reset_x86();
 }

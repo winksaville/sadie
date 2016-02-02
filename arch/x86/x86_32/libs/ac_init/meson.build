@@ -14,9 +14,10 @@
 
 #runtimeIncDirs += include_directories('incs')
 
+compilerArgs += [ '-mno-red-zone' ]
+
 runtimeSrcs += [
   '@0@/srcs/ac_init.c'.format(meson.current_source_dir()),
   '@0@/srcs/ac_startup.S'.format(meson.current_source_dir()),
   '@0@/srcs/ac_poweroff.c'.format(meson.current_source_dir()),
-  '@0@/srcs/ac_reset.c'.format(meson.current_source_dir()),
 ]

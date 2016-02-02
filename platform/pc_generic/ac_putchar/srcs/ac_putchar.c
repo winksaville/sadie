@@ -15,7 +15,7 @@
  */
 
 #include <ac_putchar.h>
-#include <ac_io.h>
+#include <io_x86.h>
 
 #include <ac_inttypes.h>
 
