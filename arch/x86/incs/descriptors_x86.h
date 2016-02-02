@@ -25,9 +25,9 @@
 #endif
 
 #ifdef CPU_X86_64 
-#define IDT_INTR_GATE_OFFSET_HI_MASK  ((ac_uptr)0xFFFFFFFFFFFF)
+#define IDT_INTR_GATE_OFFSET_HI_MASK  ((ac_uptr)0xFFFFFFFFFFFFLL)
 #define IDT_INTR_GATE_SIZE  16
-#define TSS_DESC_BASE_ADDR_HI_MASK  ((ac_uptr)0xFFFFFFFFFFFF)
+#define TSS_DESC_BASE_ADDR_HI_MASK  ((ac_uptr)0xFFFFFFFFFFFFLL)
 #define TSS_DESC_SIZE  16
 #define SEG_DESC_SIZE  16
 #else /* CPU_X86_32 */
@@ -131,13 +131,13 @@ typedef struct idt_task_gate idt_task_gate;
 
 /** Return the bits for idt_intr_gate.offset_hi as a ac_uptr */
 #define IDT_INTR_GATE_OFFSET_HI(addr) ({ \
-  ac_uptr r = ((ac_uptr)(addr) >> 16) & IDT_INTR_GATE_OFFSET_HI_MASK \
+  ac_uptr r = ((ac_uptr)(addr) >> 16) & IDT_INTR_GATE_OFFSET_HI_MASK; \
   r; \
 })
 
 /** Return the idt_intr_gate.offset as an ac_uptr */
-#define IDT_INTR_GET_GATE_OFFSET(gate) ({ \
-  ac_uptr r = (ac_uptr)((((uptr)(gate).offset_hi) << 16) \
+#define GET_IDT_INTR_GATE_OFFSET(gate) ({ \
+  ac_uptr r = (ac_uptr)((((ac_uptr)(gate).offset_hi) << 16) \
       | (ac_uptr)((gate).offset_lo)); \
   r; \
 })
@@ -177,26 +177,25 @@ struct tss_desc {
 _Static_assert(sizeof(struct tss_desc) == TSS_DESC_SIZE,
     L"TSS/LDT segment_descriptor is not " xstr(TSS_DESC_SIZE) " bytes");
 
-typedef struct tss_ldt_desc tss_desc;
+typedef struct tss_desc tss_desc;
 
-#define TSS_DESC_COMMON_INITIALIZER { \
-  .seg_limit_lo = 0, \
-  .base_addr_lo = 0, \
-  .type = 0, \
-  .unused_1 = 0, \
-  .dpl = 0, \
-  .p = 0, \
-  .seg_limit_hi = 0, \
-  .avl = 0, \
-  .unused_2 = 0, \
-  .g = 0, \
-  .base_addr_hi = 0, \
-}
+#define TSS_DESC_COMMON_INITIALIZER \
+   .seg_limit_lo = 0, \
+   .base_addr_lo = 0, \
+   .type = 0, \
+   .unused_1 = 0, \
+   .dpl = 0, \
+   .p = 0, \
+   .seg_limit_hi = 0, \
+   .avl = 0, \
+   .unused_2 = 0, \
+   .g = 0, \
+   .base_addr_hi = 0, \
 
 #ifdef CPU_X86_64
 #define TSS_DESC_INITIALIZER { \
   TSS_DESC_COMMON_INITIALIZER \
-  unused_3 = 0, \
+  .unused_3 = 0, \
 }
 #else /* CPU_X86_32 */
 #define TSS_DESC_INITIALIZER { \
@@ -236,7 +235,7 @@ typedef struct tss_ldt_desc tss_desc;
 })
 
 /** Return tss_desc.base_addr as a ac_uptr */
-#define GET_TSS_LDT_DESC_BASE_ADDR(desc) ({ \
+#define GET_TSS_DESC_BASE_ADDR(desc) ({ \
   ac_uptr r = (ac_uptr)((((ac_uptr)(desc).base_addr_hi) << 24) \
       | (ac_uptr)((desc).base_addr_lo)); \
   r; \
@@ -298,7 +297,7 @@ typedef struct seg_desc seg_desc;
 
 /** Return seg_desc.seg_limit as a ac_uptr */
 #define GET_SEG_DESC_SEG_LIMIT(sd) ({ \
-  ac_uptr r = (ac_uptr)((((uptr)(sd).seg_limit_hi) << 16) \
+  ac_uptr r = (ac_uptr)((((ac_uptr)(sd).seg_limit_hi) << 16) \
       | (ac_uptr)((sd).seg_limit_lo)); \
   r; \
 })
@@ -317,7 +316,7 @@ typedef struct seg_desc seg_desc;
 
 /** Return seg_desc.base_addr as a ac_uptr */
 #define GET_SEG_DESC_BASE_ADDR(desc) ({ \
-  ac_uptr r = (ac_uptr)((((uptr)(desc).base_addr_hi) << 24) \
+  ac_uptr r = (ac_uptr)((((ac_uptr)(desc).base_addr_hi) << 24) \
       | (ac_uptr)((desc).base_addr_lo)); \
   r; \
 })
@@ -393,7 +392,7 @@ struct descriptor_ptr {
                         // Software Developer's Manual" Volume 3 chapter 3.5.1
                         // "Segment Descriptor Tables".
     volatile ac_u16 limit;
-    volatile union {    // Volatile so compiler stores the address in set_idtr.
+    volatile union {    // Volatile so compiler stores the address in set_idt.
       ac_uptr address;
       idt_intr_gate* iig;
       seg_desc* sd;
