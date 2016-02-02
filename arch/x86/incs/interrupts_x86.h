@@ -37,7 +37,7 @@ typedef struct intr_frame {
 
 typedef void (intr_handler)(struct intr_frame* frame);
 
-typedef void (expt_handler) (struct intr_frame* frame, ac_uptr error_code);
+typedef void (expt_handler) (struct intr_frame* frame, ac_uint error_code);
 
 void set_intr_handler(ac_u32 intr_num, intr_handler ih);
 

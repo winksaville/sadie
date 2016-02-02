@@ -119,7 +119,7 @@ typedef struct idt_task_gate idt_task_gate;
 }
 #else /* CPU_X86_32 */
 #define IDT_INTR_GATE_INITIALIZER { \
-   IDT_COMMON_INITIALIZER \
+   IDT_INTR_GATE_COMMON_INITIALIZER \
 }
 #endif
 

@@ -37,47 +37,47 @@ static void intr_undefined(struct intr_frame *frame) {
 }
 
 __attribute__ ((__interrupt__))
-static void expt_08_undefined(struct intr_frame *frame, ac_u64 error_code) {
+static void expt_08_undefined(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
   print_intr_frame("expt_08_undefined", frame);
   ac_printf(" rsp: %p\n", get_sp());
-  ac_printf(" error_code: %p\n", error_code);
+  ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
 }
 
 __attribute__ ((__interrupt__))
-static void expt_10_undefined(struct intr_frame *frame, ac_u64 error_code) {
+static void expt_10_undefined(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
   print_intr_frame("expt_10_undefined", frame);
   ac_printf(" rsp: %p\n", get_sp());
-  ac_printf(" error_code: %p\n", error_code);
+  ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
 }
 
 __attribute__ ((__interrupt__))
-static void expt_11_undefined(struct intr_frame *frame, ac_u64 error_code) {
+static void expt_11_undefined(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
   print_intr_frame("expt_11_undefined", frame);
   ac_printf(" rsp: %p\n", get_sp());
-  ac_printf(" error_code: %p\n", error_code);
+  ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
 }
 
 __attribute__ ((__interrupt__))
-static void expt_12_undefined(struct intr_frame *frame, ac_u64 error_code) {
+static void expt_12_undefined(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
   print_intr_frame("expt_12_undefined", frame);
   ac_printf(" rsp: %p\n", get_sp());
-  ac_printf(" error_code: %p\n", error_code);
+  ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
 }
 
 __attribute__ ((__interrupt__))
-static void expt_13_undefined(struct intr_frame *frame, ac_u64 error_code) {
+static void expt_13_undefined(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
   print_intr_frame("expt_13_undefined", frame);
   ac_printf(" rsp: %p\n", get_sp());
-  ac_printf(" error_code: %p\n", error_code);
+  ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
 
   descriptor_ptr dp;
@@ -87,20 +87,20 @@ static void expt_13_undefined(struct intr_frame *frame, ac_u64 error_code) {
 }
 
 __attribute__ ((__interrupt__))
-static void expt_14_undefined(struct intr_frame *frame, ac_u64 error_code) {
+static void expt_14_undefined(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
   print_intr_frame("expt_14_undefined", frame);
   ac_printf(" rsp: %p\n", get_sp());
-  ac_printf(" error_code: %p\n", error_code);
+  ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
 }
 
 __attribute__ ((__interrupt__))
-static void expt_17_undefined(struct intr_frame *frame, ac_u64 error_code) {
+static void expt_17_undefined(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
   print_intr_frame("expt_17_undefined", frame);
   ac_printf(" rsp: %p\n", get_sp());
-  ac_printf(" error_code: %p\n", error_code);
+  ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
 }
 
@@ -120,7 +120,9 @@ static void set_intr_gate(idt_intr_gate* gate, intr_handler* ih) {
   gate->offset_hi = IDT_INTR_GATE_OFFSET_HI(ih);
   gate->segment = 8; // Code Segment TI=0, RPL=0
                      // FIXME: How to know where the Code Segement is
+#ifdef CPU_X86_64
   gate->ist = 0; // Modified legacy stack switching mode
+#endif
   gate->type = DT_64_INTR_GATE;
   gate->dpl = 0;
   gate->p = 1;
@@ -134,7 +136,9 @@ static void set_expt_gate(idt_intr_gate* gate, expt_handler* eh) {
   gate->offset_hi = IDT_INTR_GATE_OFFSET_HI(eh);
   gate->segment = 8; // Code Segment TI=0, RPL=0
                      // FIXME: How to know where the Code Segement is
+#ifdef CPU_X86_64
   gate->ist = 0; // Modified legacy stack switching mode
+#endif
   gate->type = DT_64_INTR_GATE;
   gate->dpl = 0;
   gate->p = 1;

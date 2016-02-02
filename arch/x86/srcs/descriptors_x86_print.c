@@ -33,14 +33,18 @@ void print_idt_intr_gate(char *str, idt_intr_gate* gate) {
   ac_printf("%s:\n", str);
   ac_printf(" gate->offset_lo: %p\n", gate->offset_lo);
   ac_printf(" gate->segment: %p\n", gate->segment);
+#ifdef CPU_X86_64
   ac_printf(" gate->ist: %d\n", gate->ist);
+#endif
   ac_printf(" gate->unused_1: %d\n", gate->unused_1);
   ac_printf(" gate->type: %d\n", gate->type);
   ac_printf(" gate->unused_2: %d\n", gate->unused_2);
   ac_printf(" gate->dpl: %d\n", gate->dpl);
   ac_printf(" gate->p: %d\n", gate->p);
   ac_printf(" gate->offset_hi: %p\n", gate->offset_hi);
+#ifdef CPU_X86_64
   ac_printf(" gate->unused_3: %d\n", gate->unused_3);
+#endif
   ac_printf(" gate->offset: %p\n", GET_IDT_INTR_GATE_OFFSET(*gate));
 }
 
@@ -57,7 +61,9 @@ void print_tss_desc(char *str, tss_desc* desc) {
   ac_printf(" desc->unused_2: %d\n", desc->unused_2);
   ac_printf(" desc->g: %d\n", desc->g);
   ac_printf(" desc->base_addr_hi: %p\n", desc->base_addr_hi);
+#ifdef CPU_X86_64
   ac_printf(" desc->unused_3: %d\n", desc->unused_3);
+#endif
   ac_printf(" desc->seg_limit: %p\n", GET_TSS_DESC_SEG_LIMIT(*desc));
   ac_printf(" desc->base_addr: %p\n", GET_TSS_DESC_BASE_ADDR(*desc));
 }

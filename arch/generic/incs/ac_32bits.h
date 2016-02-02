@@ -23,4 +23,7 @@
 typedef ac_u32 ac_uptr;
 typedef ac_u32 ac_size_t;
 
+typedef ac_u32 ac_uint;
+typedef ac_s32 ac_int;
+
 #endif
