@@ -42,4 +42,9 @@ typedef ac_u8 ac_bool;
  */
 #define AC_UNUSED(x) (void)(x)
 
+/**
+ * AC_ARRAY_COUNT return number of elements in a array
+ */
+#define AC_ARRAY_COUNT(__array) (sizeof(__array)/sizeof(__typeof__(__array[0])))
+
 #endif
