@@ -14,7 +14,11 @@
 
 #runtimeIncDirs += include_directories('incs')
 
-compilerArgs += [ '-mno-red-zone' ]
+compilerArgs += [
+ '-mno-red-zone',
+ '-mno-sse', '-mno-sse2', '-mno-sse3', '-mno-sse4',
+ '-mno-ssse3', '-mno-mmx', '-mno-3dnow', '-mno-avx',
+]
 
 runtimeSrcs += [
   '@0@/srcs/ac_init.c'.format(meson.current_source_dir()),
