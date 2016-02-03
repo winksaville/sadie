@@ -12,14 +12,18 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-runtimeIncDirs += [include_directories('incs')]
+if (Platform == 'pc_x86_32') or (Platform == 'pc_x86_64')
 
-runtimeSrcs += [
-  '@0@/srcs/descriptors_x86.c'.format(meson.current_source_dir()),
-  '@0@/srcs/descriptors_x86_print.c'.format(meson.current_source_dir()),
-  '@0@/srcs/interrupts_x86.c'.format(meson.current_source_dir()),
-  '@0@/srcs/reset_x86.c'.format(meson.current_source_dir()),
-]
+  runtimeIncDirs += [include_directories('incs')]
+
+  runtimeSrcs += [
+    '@0@/srcs/descriptors_x86.c'.format(meson.current_source_dir()),
+    '@0@/srcs/descriptors_x86_print.c'.format(meson.current_source_dir()),
+    '@0@/srcs/interrupts_x86.c'.format(meson.current_source_dir()),
+    '@0@/srcs/reset_x86.c'.format(meson.current_source_dir()),
+  ]
+
+endif
 
 # Include the directory pointed to in the Cpu variable. The
 # Cpu variable is set in the current platform's meson.build.
