@@ -2,8 +2,12 @@
 
 An experimental runtime based on asychronous components
 
-Currently it runs on Posix and qemu-system-arm with -M versatilepb
-and only outputs 'Hi' to the "UART" and then exits.
+Currently there are four platforms that sadie test/applications runs on:
+* Posix which has been tested on linux
+* Versatilpb which is tested using qemu-system-arm with -M versatilepb
+* pc_x86_64 which runs on qemu-system-x86_64 and real hardware using Grub bootloader
+* pc_x86_32 which runs on qemu-system-i386
+
 
 License
 ---
@@ -48,8 +52,17 @@ mkdir -p ~/prgs/sadie/build-Posix
 cd ~/prgs/sadie/build-Posix
 meson -D Platform=Posix ..
 ninja
+
+Build sadie for pc_x86_64
+---
 ```
-Run either of them, cd to the directory and:
+mkdir -p ~/prgs/sadie/build-pc_x86_64
+cd ~/prgs/sadie/build-pc_x86_64
+meson -D Platform=pc_x86_64 --cross-file ../cross-file-x86_64 ..
+ninja
+```
+Run a test application such as test-ac_putchar, cd to the
+respecitive directory and:
 ---
 ```
 ninja run-test-ac_putchar
@@ -60,16 +73,17 @@ Testing
 
 Notes
 ---
-For some x86_64 applications like test-ac_putchar you can test
+For some x86_64 I also test on reapplications like test-ac_putchar you can test
 using qemu by doing:
 
    ninja run-test-ac_putchar
 
-And the image `test_ac_putchar.img` can also be used on real hardware.
-The way I test the image on real hardware is to write the image to a
-usb stick using dd and then inserting the usb stick into the test PC
-which is configured to boot from a usb stick. The dd command I use
-is below, note the `sync` command to besure everything is written:
+X86_64 tests can be run on real hardware, in my case a i5 with an
+MSI B85M-E45 motherboard. The way I test the image on real hardware
+is to write the image to a usb stick using dd and then insert the
+usb stick into the test PC which is configured to boot from a usb stick.
+The dd command I use is below, note the `sync` command to besure
+everything is written:
 
 **WARNING:** Using dd can wipe out your Hard Drive
 
@@ -87,3 +101,4 @@ On my dev system I use screen to connect to /dev/ttyUSB0 to see the grub and
 putchar output, I use the following command:
 
   screen /dev/ttyUSB0 115200,cs8
+
