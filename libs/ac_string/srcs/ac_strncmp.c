@@ -31,6 +31,10 @@ int ac_strncmp(const char *str1, const char *str2, ac_size_t num) {
             if (diff != 0) {
                 return diff;
             }
+            // Check for 0 terminator and == if found
+            if (ch1 == 0) {
+              return 0;
+            }
         }
     }
     return diff;

@@ -37,6 +37,11 @@ int main(void) {
   error |= AC_TEST(ac_strncmp(fourchars, onechar, 4) > 0);
   error |= AC_TEST(ac_strncmp(fourchars, fourchars, 4) == 0);
 
+  // Test that compison stops at a 0 character
+  char a1[4] = { '1', '2', '\0', '1' };
+  char a2[4] = { '1', '2', '\0', '2' };
+  error |= AC_TEST(ac_strncmp(a1, a2, 4) == 0);
+
   if (!error) {
     ac_putchar('O');
     ac_putchar('K');
