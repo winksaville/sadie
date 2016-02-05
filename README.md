@@ -52,6 +52,7 @@ mkdir -p ~/prgs/sadie/build-Posix
 cd ~/prgs/sadie/build-Posix
 meson -D Platform=Posix ..
 ninja
+```
 
 Build sadie for pc_x86_64
 ---
@@ -61,12 +62,12 @@ cd ~/prgs/sadie/build-pc_x86_64
 meson -D Platform=pc_x86_64 --cross-file ../cross-file-x86_64 ..
 ninja
 ```
-Run a test application such as test-ac_putchar, cd to the
-respecitive directory and:
+Run a test application such as test-ac_putchar, cd to the respecitive directory and:
 ---
 ```
 ninja run-test-ac_putchar
 ```
+
 Testing
 ---
 [CircleCi](https://circleci.com/home) is used for [testing sadie](https://circleci.com/gh/winksaville/sadie)
@@ -85,7 +86,7 @@ usb stick into the test PC which is configured to boot from a usb stick.
 The dd command I use is below, note the `sync` command to besure
 everything is written:
 
-**WARNING:** Using dd can wipe out your Hard Drive
+**WARNING:** Using dd can wipe out your Hard Drive **WARNING**
 
   sudo dd bs=4M if=tests/test-ac_putchar/test_ac_putchar.img of=/dev/sdb ; sync
 
@@ -101,4 +102,3 @@ On my dev system I use screen to connect to /dev/ttyUSB0 to see the grub and
 putchar output, I use the following command:
 
   screen /dev/ttyUSB0 115200,cs8
-
