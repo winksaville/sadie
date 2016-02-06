@@ -125,9 +125,16 @@ static __inline__ ac_u64 get_msr(ac_u32 msr) {
 }
 
 /** interrupt instruction */
-static __inline__ void intr(ac_u8 num) {
-  __asm__ volatile("int %0;" :: "i"(num));
+#if 0
+//This inline doesn't work if optimization is -O0
+static __inline__ void intr(const ac_u8 num) {
+  __asm__ volatile("int %0" :: "i"(num));
 }
+#else
+#define intr(num) ({ \
+  __asm__ volatile("int %0" :: "i"(num)); \
+  })
+#endif
 
 /** interrupt return instruction */
 static __inline__ void iret(void) {
