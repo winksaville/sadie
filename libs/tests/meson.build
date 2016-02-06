@@ -1,4 +1,4 @@
-# Copyright 2015 wink saville
+# Copyright 2016 wink saville
 #
 # licensed under the apache license, version 2.0 (the "license");
 # you may not use this file except in compliance with the license.
@@ -12,15 +12,5 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-
-
-#libsIncDirs = include_directories('incs')
-runtimeIncDirs += [include_directories('incs')]
-
-subdir('ac_assert')
-subdir('ac_bits')
-subdir('ac_dispatcher')
-subdir('ac_memcmp')
-subdir('ac_mpscfifo')
-subdir('ac_printf')
-subdir('ac_string')
+# Library tests
+subdir('@0@/libs/ac_bits/tests'.format(messon.source_root()));

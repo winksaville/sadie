@@ -24,6 +24,7 @@ typedef ac_u64 ac_uptr;
 typedef ac_u64 ac_size_t;
 
 typedef ac_u64 ac_uint;
+typedef ac_s64 ac_sint;
 typedef ac_s64 ac_int;
 
 
