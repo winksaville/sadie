@@ -20,6 +20,32 @@
 #include <ac_inttypes.h>
 #include <descriptors_x86.h>
 
+/** CPUID on a sublead with leaf in eax and subleaf in ecx */
+static __inline__ void  get_cpuid_subleaf(ac_u32 leaf_eax, ac_u32 subleaf_ecx,
+    ac_u32 *out_eax, ac_u32 *out_ebx, ac_u32* out_ecx, ac_u32* out_edx) {
+  ac_u32 eax, ebx, ecx, edx;
+  __asm__ volatile("cpuid"
+      : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+      : "0"(leaf_eax), "2"(subleaf_ecx));
+  *out_eax = eax;
+  *out_ebx = ebx;
+  *out_ecx = ecx;
+  *out_edx = edx;
+}
+
+/** CPUID with the leaf in eax */
+static __inline__ void  get_cpuid(ac_u32 leaf_eax,
+    ac_u32 *out_eax, ac_u32 *out_ebx, ac_u32* out_ecx, ac_u32* out_edx) {
+  ac_u32 eax, ebx, ecx, edx;
+  __asm__ volatile("cpuid"
+      : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+      : "0"(leaf_eax));
+  *out_eax = eax;
+  *out_ebx = ebx;
+  *out_ecx = ecx;
+  *out_edx = edx;
+}
+
 /** Set the GDT register from desc_ptr */
 static __inline__ void set_gdt(descriptor_ptr* desc_ptr) {
   ac_u16* p = (ac_u16*)&desc_ptr->limit;
