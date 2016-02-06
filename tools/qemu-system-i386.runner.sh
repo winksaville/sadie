@@ -8,8 +8,11 @@
 #
 # Parameters:
 #   $1 is the file to execute
+echo "param1=$1"
+param1_filename=$1
+shift
 tmpfile=$(mktemp /tmp/sadie-qemu-system-i386.runner.XXX)
-qemu-system-i386 -nographic -no-reboot -kernel $1 </dev/null 2>&1 | tee ${tmpfile}
+qemu-system-i386 $@ -nographic -no-reboot -kernel $param1_filename </dev/null 2>&1 | tee ${tmpfile}
 err_count=$(grep -c -e 'ERROR: expr' ${tmpfile})
 #echo err_count=${err_count}
 ((${err_count} == 0)) && rm ${tmpfile}

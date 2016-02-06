@@ -12,14 +12,27 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
+if Platform == 'Posix'
+  srcFiles += ['srcs/test.c']
+
+  # Create testit executable
+  test_cpuid_x86 = executable( 'test_cpuid_x86', srcFiles,
+    include_directories : runtimeIncDirs,
+    c_args : compilerArgs,
+    dependencies : [libruntime_dep],
+  )
+
+  run_target('run-test-cpuid_x86', test_cpuid_x86)
+endif
+
 if Platform == 'pc_x86_32'
   srcFiles += ['srcs/test.c']
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
   linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
-  # Create test_native_x86 executable
-  test_native_x86 = executable( 'test_native_x86', srcFiles,
+  # Create test_cpuid_x86 executable
+  test_cpuid_x86 = executable( 'test_cpuid_x86', srcFiles,
     include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
@@ -27,8 +40,8 @@ if Platform == 'pc_x86_32'
     dependencies : [libruntime_dep],
   )
 
-  run_target('run-test-native_x86', '@0@/tools/qemu-system-i386.runner.sh'.format(meson.source_root()),
-             test_native_x86)
+  run_target('run-test-cpuid_x86', '@0@/tools/qemu-system-i386.runner.sh'.format(meson.source_root()),
+             test_cpuid_x86)
 endif
 
 
@@ -38,8 +51,8 @@ if Platform == 'pc_x86_64'
   linkArgs += ['-Wl,-n,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
-  # Create test_native_x86 executable
-  test_native_x86 = executable( 'test_native_x86', srcFiles,
+  # Create test_cpuid_x86 executable
+  test_cpuid_x86 = executable( 'test_cpuid_x86', srcFiles,
     include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
@@ -48,17 +61,17 @@ if Platform == 'pc_x86_64'
   )
 
   grub_cfg = '@0@/grub.cfg'.format(meson.current_source_dir())
-  test_native_x86_exe = '@0@/test_native_x86'.format(meson.current_build_dir())
+  test_cpuid_x86_exe = '@0@/test_cpuid_x86'.format(meson.current_build_dir())
 
-  # Create test_native_x86.bin suitable for executing with qemu or on hardware
-  test_native_x86_bin = custom_target( 'test_native_x86.img',
+  # Create test_cpuid_x86.bin suitable for executing with qemu or on hardware
+  test_cpuid_x86_bin = custom_target( 'test_cpuid_x86.img',
     input : grub_cfg,
-    output : 'test_native_x86.img',
+    output : 'test_cpuid_x86.img',
     command : ['@0@/tools/grub-mkrescue.runner.sh'.format(meson.source_root()),
-      test_native_x86_exe, grub_cfg, '@OUTPUT@'],
-    depends : [test_native_x86])
+      test_cpuid_x86_exe, grub_cfg, '@OUTPUT@'],
+    depends : [test_cpuid_x86])
 
-  run_target('run-test-native_x86', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              test_native_x86_bin, '-enable-kvm', '-cpu', 'host')
+  run_target('run-test-cpuid_x86', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
+              test_cpuid_x86_bin, '-enable-kvm', '-cpu', 'host')
 endif
 

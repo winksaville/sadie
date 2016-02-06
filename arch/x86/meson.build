@@ -12,16 +12,22 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-if (Platform == 'pc_x86_32') or (Platform == 'pc_x86_64')
+if (Platform == 'pc_x86_32') or (Platform == 'pc_x86_64') or (Platform == 'Posix')
 
   runtimeIncDirs += [include_directories('incs')]
 
   runtimeSrcs += [
     '@0@/srcs/descriptors_x86.c'.format(meson.current_source_dir()),
     '@0@/srcs/descriptors_x86_print.c'.format(meson.current_source_dir()),
-    '@0@/srcs/interrupts_x86.c'.format(meson.current_source_dir()),
     '@0@/srcs/reset_x86.c'.format(meson.current_source_dir()),
   ]
+
+  if (Platform != 'Posix')
+    # Interrupts not supported on Posix
+    runtimeSrcs += [
+      '@0@/srcs/interrupts_x86.c'.format(meson.current_source_dir()),
+    ]
+  endif
 
 endif
 

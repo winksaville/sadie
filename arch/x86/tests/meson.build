@@ -12,5 +12,6 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-subdir('test-native_x86')
+subdir('test-cpuid_x86')
 subdir('test-interrupts_x86')
+subdir('test-native_x86')

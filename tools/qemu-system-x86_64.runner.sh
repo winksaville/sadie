@@ -9,8 +9,10 @@
 # Parameters:
 #   $1 is the file to execute
 echo "param1=$1"
+param1_filename=$1
+shift
 tmpfile=$(mktemp /tmp/sadie-qemu-system-x86_64.runner.XXX)
-qemu-system-x86_64 -nographic -no-reboot -drive format=raw,file=$1 </dev/null 2>&1 | tee ${tmpfile}
+qemu-system-x86_64 $@ -nographic -no-reboot -drive format=raw,file=$param1_filename </dev/null 2>&1 | tee ${tmpfile}
 err_count=$(grep -c -e 'ERROR: expr' ${tmpfile})
 #echo err_count=${err_count}
 ((${err_count} == 0)) && rm ${tmpfile}
