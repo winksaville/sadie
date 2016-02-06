@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-#include <native_x86.h>
-#include <descriptors_x86.h>
+#include <cpuid_x86.h>
 
-#include <ac_architecture.h>
 #include <ac_bits.h>
 #include <ac_printf.h>
 #include <ac_string.h>
@@ -99,8 +97,6 @@ ac_bool test_cpuid() {
 
   // See that when we request a leaf greater than max_leaf zero's are returned
   get_cpuid(max_leaf+1, &out_eax, &out_ebx, &out_ecx, &out_edx);
-  ac_printf("Too large subleaf should be 0's eax=%x ebx=%x ecx=%x edx=%x\n",
-     out_eax, out_ebx, out_ecx, out_edx);
   error |= AC_TEST(out_eax == 0);
   error |= AC_TEST(out_ebx == 0);
   error |= AC_TEST(out_ecx == 0);
@@ -114,13 +110,26 @@ ac_bool test_cpuid() {
 
   // See that when we request a leaf greater than max_leaf zero's are returned
   get_cpuid(max_extleaf+1, &out_eax, &out_ebx, &out_ecx, &out_edx);
-  ac_printf("Too large max_extleaf should be 0's eax=%x ebx=%x ecx=%x edx=%x\n",
-     out_eax, out_ebx, out_ecx, out_edx);
   error |= AC_TEST(out_eax == 0);
   error |= AC_TEST(out_ebx == 0);
   error |= AC_TEST(out_ecx == 0);
   error |= AC_TEST(out_edx == 0);
 
+  // Display the max physical memory
+  if (max_extleaf <= 0x80000008) {
+    get_cpuid(0x80000008, &out_eax, &out_ebx, &out_ecx, &out_edx);
+    ac_printf("Max physical address bits=%d\n", AC_GET_BITS(ac_u32, out_eax, 0, 8));
+    ac_printf("Max linear address bits=%d\n", AC_GET_BITS(ac_u32, out_eax, 8, 8));
+
+    // upper eax ebx, ecx and edx should be 0
+    error |= AC_TEST(AC_GET_BITS(ac_u32, out_eax, 16, 16) == 0);
+    error |= AC_TEST(out_ebx == 0);
+    error |= AC_TEST(out_ecx == 0);
+    error |= AC_TEST(out_edx == 0);
+  } else {
+    ac_printf("No liner/physical address size cpuid\n");
+  }
+  
   if (ac_strncmp(vendor_id, "GenuineIntel", sizeof(vendor_id)) == 0) {
     ac_u32 max_subleaf = 0;
     get_cpuid_subleaf(0x7, 0,
@@ -131,8 +140,6 @@ ac_bool test_cpuid() {
     // Test that 0 is retured if max_subleaf is too large
     get_cpuid_subleaf(0x7, max_subleaf+1,
         &out_eax, &out_ebx, &out_ecx, &out_edx);
-    ac_printf("Too large max subleaf should be 0's eax=%x ebx=%x ecx=%x edx=%x\n",
-       out_eax, out_ebx, out_ecx, out_edx);
     error |= AC_TEST(out_eax == 0);
     //error |= AC_TEST(out_ebx == 0); Not true on my i7 ?
     error |= AC_TEST(out_ecx == 0);

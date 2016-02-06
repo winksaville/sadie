@@ -23,7 +23,7 @@
 })
 
 #define AC_BIT_MASK(type, bit_count) ({ \
-  type result = ~(((type)(-1)) << bit_count); \
+  type result = ~(((type)(-1)) << (bit_count)); \
   result; \
 })
 

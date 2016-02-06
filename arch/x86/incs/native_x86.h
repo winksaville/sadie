@@ -14,37 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef REGS_X86_H
-#define REGS_X86_H
+#ifndef ARCH_X86_INCS_NATIVE_X86_H
+#define ARCH_X86_INCS_NATIVE_X86_H
 
 #include <ac_inttypes.h>
 #include <descriptors_x86.h>
 
-/** CPUID on a sublead with leaf in eax and subleaf in ecx */
-static __inline__ void  get_cpuid_subleaf(ac_u32 leaf_eax, ac_u32 subleaf_ecx,
-    ac_u32 *out_eax, ac_u32 *out_ebx, ac_u32* out_ecx, ac_u32* out_edx) {
-  ac_u32 eax, ebx, ecx, edx;
-  __asm__ volatile("cpuid"
-      : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
-      : "0"(leaf_eax), "2"(subleaf_ecx));
-  *out_eax = eax;
-  *out_ebx = ebx;
-  *out_ecx = ecx;
-  *out_edx = edx;
-}
-
-/** CPUID with the leaf in eax */
-static __inline__ void  get_cpuid(ac_u32 leaf_eax,
-    ac_u32 *out_eax, ac_u32 *out_ebx, ac_u32* out_ecx, ac_u32* out_edx) {
-  ac_u32 eax, ebx, ecx, edx;
-  __asm__ volatile("cpuid"
-      : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
-      : "0"(leaf_eax));
-  *out_eax = eax;
-  *out_ebx = ebx;
-  *out_ecx = ecx;
-  *out_edx = edx;
-}
+#include <interrupts_x86.h>
+#include <io_x86.h>
+#include <cpuid_x86.h>
+#include <msr_x86.h>
 
 /** Set the GDT register from desc_ptr */
 static __inline__ void set_gdt(descriptor_ptr* desc_ptr) {
@@ -139,15 +118,6 @@ static __inline__ ac_uptr get_sp(void) {
   __asm__ volatile("movl %%esp, %0;" : "=r" (sp));
 #endif
   return sp;
-}
-
-/** get msr */
-static __inline__ ac_u64 get_msr(ac_u32 msr) {
-  ac_u32 lo;
-  ac_u32 hi;
-  __asm__ volatile("movl  %0, %%ecx\n" :: "g"(msr));
-  __asm__ volatile("rdmsr\n" : "=d"(hi), "=a"(lo));
-  return (ac_u64)hi << 32 | (ac_u64)lo;
 }
 
 /** interrupt instruction */

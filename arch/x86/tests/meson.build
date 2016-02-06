@@ -15,3 +15,4 @@
 subdir('test-cpuid_x86')
 subdir('test-interrupts_x86')
 subdir('test-native_x86')
+subdir('test-rdwrmsr_x86')

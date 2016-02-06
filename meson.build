@@ -48,8 +48,9 @@ subdir('platform')
 
 #subdir('arch/tests')
 subdir('arch/x86/tests/test-cpuid_x86')
-subdir('arch/x86/tests/test-native_x86')
 subdir('arch/x86/tests/test-interrupts_x86')
+subdir('arch/x86/tests/test-native_x86')
+subdir('arch/x86/tests/test-rdwrmsr_x86')
 
 #subdir('libs/tests')
 subdir('libs/ac_bits/tests')
