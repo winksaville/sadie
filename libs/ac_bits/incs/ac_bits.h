@@ -17,25 +17,28 @@
 #ifndef SADIE_LIBS_AC_BITS_INCS_AC_BITS_H
 #define SADIE_LIBS_AC_BITS_INCS_AC_BITS_H
 
+#include <ac_inttypes.h>
+
 #define AC_BIT(type, n) ({ \
-  type result = (type)(1 << n); \
+  type result = (type)1 << n; \
   result; \
 })
 
 #define AC_BIT_MASK(type, bit_count) ({ \
-  type result = ~(((type)(-1)) << (bit_count)); \
+  type result = ~(((type)-1) << (bit_count)); \
   result; \
 })
 
 #define AC_GET_BITS(type, val, bit_idx, bit_count) ({ \
-  type result = ((type)val >> bit_idx) & AC_BIT_MASK(type, bit_count); \
+  type result = (type)(val >> (bit_idx)) & AC_BIT_MASK(__typeof__(val), bit_count); \
   result; \
 })
 
 #define AC_SET_BITS(type, val, new_bits, bit_idx, bit_count) ({ \
-  type mask = AC_BIT_MASK(type, bit_count); \
-  type result = (type)((type)val & ~(mask << bit_idx)); \
-  result |= (type)(((type)new_bits & mask) << bit_idx); \
+  __typeof__(val) mask = AC_BIT_MASK(__typeof__(val), bit_count); \
+  __typeof__(val) bits = val & ~(mask << (bit_idx)); \
+  type result = (type)(bits | ((((__typeof__(val))(new_bits)) & mask) << (bit_idx))); \
+  result; \
 })
 
 #endif
