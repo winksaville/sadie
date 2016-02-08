@@ -49,7 +49,7 @@ ac_u32 max_linear_address_bits() {
 ac_bool test_rdwrmsr() {
   ac_bool error = AC_FALSE;
 
-  ac_u64 msr_apic_base = get_msr(MSR_APIC_BASE); 
+  ac_u64 msr_apic_base = get_msr(MSR_IA32_APIC_BASE);
   ac_printf("msr_apic_base=%llx\n",msr_apic_base);
   ac_printf(" bsp=%b\n", AC_GET_BITS(ac_u32, msr_apic_base, 8, 1));
   ac_printf(" ign=%b\n", AC_GET_BITS(ac_u32, msr_apic_base, 9, 1));

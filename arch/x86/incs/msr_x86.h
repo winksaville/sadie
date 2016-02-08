@@ -19,7 +19,7 @@
 
 #include <ac_inttypes.h>
 
-#define MSR_APIC_BASE   0x1B
+#define MSR_IA32_APIC_BASE   0x1B
 
 /** Get msr */
 static __inline__ ac_u64 get_msr(ac_u32 msr) {
