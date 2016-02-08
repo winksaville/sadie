@@ -232,6 +232,13 @@ ac_bool test_cpuid() {
   ac_printf(" PBE=%b\n", AC_GET_BITS(ac_u32, out_ecx, 31, 1));
 
 
+  ac_uint max_pab = cpuid_max_physical_address_bits();
+  ac_uint max_lab = cpuid_max_linear_address_bits();
+
+  error |= AC_TEST(max_pab > 0);
+  error |= AC_TEST(max_lab > 0);
+  error |= AC_TEST(max_lab >= max_pab);
+
   return error;
 }
 

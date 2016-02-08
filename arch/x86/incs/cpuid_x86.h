@@ -45,4 +45,14 @@ static __inline__ void  get_cpuid(ac_u32 leaf_eax,
   *out_edx = edx;
 }
 
+/**
+ * @return the maximum number of physical address bits
+ */
+ac_uint cpuid_max_physical_address_bits();
+
+/**
+ * @return the maximum number of linear address bits
+ */
+ac_uint cpuid_max_linear_address_bits();
+
 #endif
