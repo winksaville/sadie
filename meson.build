@@ -51,7 +51,7 @@ subdir('arch/x86/apic_x86/tests')
 subdir('arch/x86/cpuid_x86/tests')
 subdir('arch/x86/tests/test-interrupts_x86')
 subdir('arch/x86/native_x86/tests')
-subdir('arch/x86/tests/test-rdwrmsr_x86')
+subdir('arch/x86/msr_x86/tests')
 
 #subdir('libs/tests')
 subdir('libs/ac_bits/tests')
