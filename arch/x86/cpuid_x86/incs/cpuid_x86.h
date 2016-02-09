@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ARCH_X86_INCS_CPUID_X86_H
-#define ARCH_X86_INCS_CPUID_X86_H
+#ifndef ARCH_X86_CPUID_X86_INCS_CPUID_X86_H
+#define ARCH_X86_CPUID_X86_INCS_CPUID_X86_H
 
 #include <ac_inttypes.h>
 
