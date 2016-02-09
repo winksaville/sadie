@@ -22,37 +22,43 @@
 /** CPUID on a sublead with leaf in eax and subleaf in ecx */
 static __inline__ void  get_cpuid_subleaf(ac_u32 leaf_eax, ac_u32 subleaf_ecx,
     ac_u32 *out_eax, ac_u32 *out_ebx, ac_u32* out_ecx, ac_u32* out_edx) {
-  ac_u32 eax, ebx, ecx, edx;
   __asm__ volatile("cpuid"
-      : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+      : "=a"(*out_eax), "=b"(*out_ebx), "=c"(*out_ecx), "=d"(*out_edx)
       : "0"(leaf_eax), "2"(subleaf_ecx));
-  *out_eax = eax;
-  *out_ebx = ebx;
-  *out_ecx = ecx;
-  *out_edx = edx;
 }
 
 /** CPUID with the leaf in eax */
 static __inline__ void  get_cpuid(ac_u32 leaf_eax,
     ac_u32 *out_eax, ac_u32 *out_ebx, ac_u32* out_ecx, ac_u32* out_edx) {
-  ac_u32 eax, ebx, ecx, edx;
   __asm__ volatile("cpuid"
-      : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+      : "=a"(*out_eax), "=b"(*out_ebx), "=c"(*out_ecx), "=d"(*out_edx)
       : "0"(leaf_eax));
-  *out_eax = eax;
-  *out_ebx = ebx;
-  *out_ecx = ecx;
-  *out_edx = edx;
 }
+
+
+/**
+ * Get the vendor_id, the size should be at least 13.
+ */
+void cpuid_get_vendor_id(char* vendor_id, ac_uint size_vendor_id);
+
+/**
+ * @return the maximum leaf
+ */
+ac_u32 cpuid_max_leaf(void);
+
+/**
+ * @return the maximum extended leaf
+ */
+ac_u32 cpuid_max_extd_leaf(void);
 
 /**
  * @return the maximum number of physical address bits
  */
-ac_uint cpuid_max_physical_address_bits();
+ac_u32 cpuid_max_physical_address_bits();
 
 /**
  * @return the maximum number of linear address bits
  */
-ac_uint cpuid_max_linear_address_bits();
+ac_u32 cpuid_max_linear_address_bits();
 
 #endif

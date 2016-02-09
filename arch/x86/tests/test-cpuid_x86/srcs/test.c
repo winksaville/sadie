@@ -21,34 +21,6 @@
 #include <ac_string.h>
 #include <ac_test.h>
 
-ac_u8 get_byte(ac_u32 int32, ac_u32 idx) {
-  return (ac_u8)(int32 >> (idx * 8));
-}
-
-char* get_str(ac_u32 ebx, ac_u32 ecx, ac_u32 edx,
-    char* s, ac_int sizeof_s) {
-  ac_int i;
-  if (sizeof_s <= 0) {
-    // Should never happen
-    return AC_NULL;
-  }
-
-  for (i = 0; i < 4; i++) {
-    if (i < sizeof_s - 1) {
-      s[i] = get_byte(ebx, i);
-    }
-    if ((8+i) < sizeof_s - 1) {
-      s[8+i] = get_byte(ecx, i);
-    }
-    if ((4+i) < sizeof_s - 1) {
-      s[4+i] = get_byte(edx, i);
-    }
-  }
-  s[sizeof_s - 1] = 0;
-
-  return s;
-}
-
 ac_bool test_cpuid() {
   ac_u32 out_eax = 0;
   ac_u32 out_ebx = 0;
@@ -57,9 +29,10 @@ ac_bool test_cpuid() {
   ac_bool error = AC_FALSE;
   char vendor_id[13];
 
+  ac_u32 max_leaf = cpuid_max_leaf();
+
   get_cpuid(0, &out_eax, &out_ebx, &out_ecx, &out_edx);
-  ac_u32 max_leaf = out_eax;
-  get_str(out_ebx, out_ecx, out_edx, vendor_id, sizeof(vendor_id));
+  cpuid_get_vendor_id(vendor_id, sizeof(vendor_id));
 
   static char* vendor_id_list[] = {
     "AMDisbetter!",
@@ -90,10 +63,9 @@ ac_bool test_cpuid() {
       break;
     }
   }
-  error |= AC_TEST_EM(out_eax != 0, "max leaf was 0");
   error |= AC_TEST_EM(i < AC_ARRAY_COUNT(vendor_id_list),
       "Invalid cpuid vendor");
-  ac_printf(" max leaf=%d vendor_id=%s\n", max_leaf, vendor_id);
+  ac_printf("Max leaf=%d vendor_id=%s\n", max_leaf, vendor_id);
 
   // See that when we request a leaf greater than max_leaf zero's are returned
   get_cpuid(max_leaf+1, &out_eax, &out_ebx, &out_ecx, &out_edx);
@@ -115,27 +87,11 @@ ac_bool test_cpuid() {
   error |= AC_TEST(out_ecx == 0);
   error |= AC_TEST(out_edx == 0);
 
-  // Display the max physical memory
-  if (max_extleaf <= 0x80000008) {
-    get_cpuid(0x80000008, &out_eax, &out_ebx, &out_ecx, &out_edx);
-    ac_printf("Max physical address bits=%d\n", AC_GET_BITS(ac_u32, out_eax, 0, 8));
-    ac_printf("Max linear address bits=%d\n", AC_GET_BITS(ac_u32, out_eax, 8, 8));
-
-    // upper eax ebx, ecx and edx should be 0
-    error |= AC_TEST(AC_GET_BITS(ac_u32, out_eax, 16, 16) == 0);
-    error |= AC_TEST(out_ebx == 0);
-    error |= AC_TEST(out_ecx == 0);
-    error |= AC_TEST(out_edx == 0);
-  } else {
-    ac_printf("No liner/physical address size cpuid\n");
-  }
-  
   if (ac_strncmp(vendor_id, "GenuineIntel", sizeof(vendor_id)) == 0) {
     ac_u32 max_subleaf = 0;
     get_cpuid_subleaf(0x7, 0,
         &max_subleaf, &out_ebx, &out_ecx, &out_edx);
-    ac_printf("Max subleaf=%x ebx=%x ecx=%x edx=%x\n",
-        max_subleaf, out_ebx, out_ecx, out_edx);
+    ac_printf("Max subleaf=%x\n", max_subleaf);
 
     // Test that 0 is retured if max_subleaf is too large
     get_cpuid_subleaf(0x7, max_subleaf+1,
@@ -148,7 +104,7 @@ ac_bool test_cpuid() {
 
   // Get Processor Info and Feature Bits
   get_cpuid(1, &out_eax, &out_ebx, &out_ecx, &out_edx);
-  ac_printf("Processor info and feature bits eax=%x ebx=%x ecx=%x edx=%x\n",
+  ac_printf("Cpu info and feature bits eax=0x%x ebx=0x%x ecx=0x%x edx=0x%x\n",
      out_eax, out_ebx, out_ecx, out_edx);
   ac_printf("EAX:\n");
   ac_printf(" Extended Family ID=%x\n", AC_GET_BITS(ac_u32, out_eax, 20, 8));
@@ -160,7 +116,8 @@ ac_bool test_cpuid() {
 
   ac_printf("EBX:\n");
   ac_printf(" Brand Index=%x\n", AC_GET_BITS(ac_u32, out_ebx, 0, 8));
-  ac_printf(" CFLUSH instruction cache line size=%x\n", AC_GET_BITS(ac_u32, out_ebx, 8, 8));
+  ac_printf(" CFLUSH instruction cache line size=%x\n",
+      AC_GET_BITS(ac_u32, out_ebx, 8, 8));
   ac_printf(" Local APIC ID=%x\n", AC_GET_BITS(ac_u32, out_ebx, 24, 8));
 
   ac_printf("ECX:\n");
@@ -235,9 +192,12 @@ ac_bool test_cpuid() {
   ac_uint max_pab = cpuid_max_physical_address_bits();
   ac_uint max_lab = cpuid_max_linear_address_bits();
 
+  error |= AC_TEST(max_lab >= max_pab);
   error |= AC_TEST(max_pab > 0);
   error |= AC_TEST(max_lab > 0);
-  error |= AC_TEST(max_lab >= max_pab);
+
+  ac_printf(" max_pab=%u\n", max_pab);
+  ac_printf(" max_lab=%u\n", max_lab);
 
   return error;
 }
