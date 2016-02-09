@@ -1,4 +1,4 @@
-# Copyright 2015 wink saville
+# Copyright 2016 wink saville
 #
 # licensed under the apache license, version 2.0 (the "license");
 # you may not use this file except in compliance with the license.
@@ -12,18 +12,4 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-if (Platform == 'pc_x86_32') or (Platform == 'pc_x86_64') or (Platform == 'Posix')
-
-  subdir('apic_x86')
-  subdir('cpuid_x86')
-  subdir('descriptors_x86')
-  subdir('interrupts_x86')
-  subdir('io_x86')
-  subdir('msr_x86')
-  subdir('native_x86')
-  subdir('reset_x86')
-endif
-
-# Include the directory pointed to in the Cpu variable. The
-# Cpu variable is set in the current platform's meson.build.
-subdir(Cpu)
+runtimeIncDirs += [include_directories('incs')]
