@@ -16,16 +16,10 @@ if (Platform == 'pc_x86_32') or (Platform == 'pc_x86_64') or (Platform == 'Posix
 
   runtimeIncDirs += [include_directories('incs')]
 
-  if (Platform != 'Posix')
-    # Interrupts not supported on Posix
-    runtimeSrcs += [
-      '@0@/srcs/interrupts_x86.c'.format(meson.current_source_dir()),
-    ]
-  endif
-
   subdir('apic_x86')
   subdir('cpuid_x86')
   subdir('descriptors_x86')
+  subdir('interrupts_x86')
   subdir('msr_x86')
   subdir('native_x86')
   subdir('reset_x86')

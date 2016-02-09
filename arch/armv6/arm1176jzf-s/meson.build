@@ -32,8 +32,6 @@ runtimeIncDirs += [include_directories('incs')]
 
 # The compiler arguments for bcm2835
 compilerArgs += [
-  '-D@0@'.format(Platform),
-  '-D@0@'.format(Arch),
   '-march=@0@'.format('armv6zk'),
   '-mcpu=@0@'.format(Cpu),
   '-mtune=@0@'.format(Cpu),

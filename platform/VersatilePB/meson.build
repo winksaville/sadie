@@ -27,6 +27,18 @@ Cpu = 'arm1176jzf-s'
 # Can be 'hard' or 'soft;
 Float = 'hard'
 
+# The compiler arguments
+compilerArgs += [
+  '-DPRIVILEGE_SYSTEM',
+  '-D@0@'.format(Platform),
+  '-D@0@'.format(Arch),
+  '-static',
+  '-ffreestanding',
+  '-nostartfiles',
+  '-nodefaultlibs',
+  '-nostdlib',
+]
+
 # Load the architecture specific information
 subdir('@0@/arch'.format(meson.source_root()))
 

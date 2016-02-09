@@ -14,6 +14,6 @@
 
 subdir('../apic_x86/tests')
 subdir('../cpuid_x86/tests')
-subdir('test-interrupts_x86')
+subdir('../interrupts_x86/tests')
 subdir('../native_x86/tests')
 subdir('../msr_x86/tests')

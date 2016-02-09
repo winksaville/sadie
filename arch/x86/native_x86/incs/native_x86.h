@@ -20,7 +20,6 @@
 #include <ac_inttypes.h>
 #include <descriptors_x86.h>
 
-#include <interrupts_x86.h>
 #include <io_x86.h>
 #include <cpuid_x86.h>
 #include <msr_x86.h>

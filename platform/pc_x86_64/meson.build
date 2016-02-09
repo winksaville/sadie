@@ -20,6 +20,18 @@ Arch = 'x86'
 # The name of a subdirectory under arch/x86 so arch/x86/x86_64
 Cpu = 'x86_64'
 
+# The compiler arguments
+compilerArgs += [
+  '-DPRIVILEGE_SYSTEM',
+  '-D@0@'.format(Platform),
+  '-D@0@'.format(Arch),
+  '-static',
+  '-ffreestanding',
+  '-nostartfiles',
+  '-nodefaultlibs',
+  '-nostdlib',
+]
+
 # Load the architecture specific information
 subdir('@0@/arch'.format(meson.source_root()))
 

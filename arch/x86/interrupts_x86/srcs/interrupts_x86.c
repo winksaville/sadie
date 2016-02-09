@@ -21,6 +21,14 @@
 #include <descriptors_x86.h>
 #include <descriptors_x86_print.h>
 
+#ifdef PRIVILEGE_USER
+// Interrupt attribute not allowed at user privilege.
+// This allows these to be compiled without warnings.
+#define INTERRUPT_HANDLER
+#else
+#define INTERRUPT_HANDLER __attribute__ ((__interrupt__))
+#endif
+
 /* Interrupt Descriptor Table */
 static idt_intr_gate idt[256];
 
@@ -28,7 +36,7 @@ static ac_u32 intr_undefined_counter;
 static ac_u32 expt_undefined_counter;
 static ac_u32 intr_invalid_opcode_counter;
 
-__attribute__ ((__interrupt__))
+INTERRUPT_HANDLER
 static void intr_undefined(struct intr_frame *frame) {
   intr_undefined_counter += 1;
   print_intr_frame("intr_undefined", frame);
@@ -36,7 +44,7 @@ static void intr_undefined(struct intr_frame *frame) {
   ac_printf(" intr_undefined_counter: %d\n", intr_undefined_counter);
 }
 
-__attribute__ ((__interrupt__))
+INTERRUPT_HANDLER
 static void expt_08_undefined(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
   print_intr_frame("expt_08_undefined", frame);
@@ -45,7 +53,7 @@ static void expt_08_undefined(struct intr_frame *frame, ac_uint error_code) {
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
 }
 
-__attribute__ ((__interrupt__))
+INTERRUPT_HANDLER
 static void expt_10_undefined(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
   print_intr_frame("expt_10_undefined", frame);
@@ -54,7 +62,7 @@ static void expt_10_undefined(struct intr_frame *frame, ac_uint error_code) {
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
 }
 
-__attribute__ ((__interrupt__))
+INTERRUPT_HANDLER
 static void expt_11_undefined(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
   print_intr_frame("expt_11_undefined", frame);
@@ -63,7 +71,7 @@ static void expt_11_undefined(struct intr_frame *frame, ac_uint error_code) {
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
 }
 
-__attribute__ ((__interrupt__))
+INTERRUPT_HANDLER
 static void expt_12_undefined(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
   print_intr_frame("expt_12_undefined", frame);
@@ -72,7 +80,7 @@ static void expt_12_undefined(struct intr_frame *frame, ac_uint error_code) {
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
 }
 
-__attribute__ ((__interrupt__))
+INTERRUPT_HANDLER
 static void expt_13_undefined(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
   print_intr_frame("expt_13_undefined", frame);
@@ -86,7 +94,7 @@ static void expt_13_undefined(struct intr_frame *frame, ac_uint error_code) {
   ac_printf(" idt.address=%p\n", dp.address);
 }
 
-__attribute__ ((__interrupt__))
+INTERRUPT_HANDLER
 static void expt_14_undefined(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
   print_intr_frame("expt_14_undefined", frame);
@@ -95,7 +103,7 @@ static void expt_14_undefined(struct intr_frame *frame, ac_uint error_code) {
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
 }
 
-__attribute__ ((__interrupt__))
+INTERRUPT_HANDLER
 static void expt_17_undefined(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
   print_intr_frame("expt_17_undefined", frame);
@@ -104,7 +112,7 @@ static void expt_17_undefined(struct intr_frame *frame, ac_uint error_code) {
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
 }
 
-__attribute__ ((__interrupt__))
+INTERRUPT_HANDLER
 static void intr_invalid_opcode(struct intr_frame *frame) {
   intr_invalid_opcode_counter += 1;
   print_intr_frame("intr_invalid_opcode", frame);

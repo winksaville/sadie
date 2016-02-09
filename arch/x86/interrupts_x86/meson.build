@@ -14,11 +14,6 @@
 
 runtimeIncDirs += [include_directories('incs')]
 
-# The compiler arguments
-compilerArgs += [
-  '-m64',
+runtimeSrcs += [
+  '@0@/srcs/interrupts_x86.c'.format(meson.current_source_dir()),
 ]
-
-if Platform != 'Posix'
-  subdir('libs')
-endif
