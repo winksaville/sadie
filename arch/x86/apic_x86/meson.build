@@ -12,8 +12,8 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-subdir('../apic_x86/test-apic_x86')
-subdir('test-cpuid_x86')
-subdir('test-interrupts_x86')
-subdir('test-native_x86')
-subdir('test-rdwrmsr_x86')
+runtimeIncDirs += [include_directories('incs')]
+
+runtimeSrcs += [
+  '@0@/srcs/apic_x86.c'.format(meson.current_source_dir()),
+]
