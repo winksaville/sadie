@@ -17,6 +17,7 @@ if (Platform == 'pc_x86_32') or (Platform == 'pc_x86_64') or (Platform == 'Posix
   runtimeIncDirs += [include_directories('incs')]
 
   runtimeSrcs += [
+    '@0@/srcs/apic_x86.c'.format(meson.current_source_dir()),
     '@0@/srcs/cpuid_x86.c'.format(meson.current_source_dir()),
     '@0@/srcs/descriptors_x86.c'.format(meson.current_source_dir()),
     '@0@/srcs/descriptors_x86_print.c'.format(meson.current_source_dir()),
