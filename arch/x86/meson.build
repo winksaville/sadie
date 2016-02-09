@@ -16,10 +16,6 @@ if (Platform == 'pc_x86_32') or (Platform == 'pc_x86_64') or (Platform == 'Posix
 
   runtimeIncDirs += [include_directories('incs')]
 
-  runtimeSrcs += [
-    '@0@/srcs/reset_x86.c'.format(meson.current_source_dir()),
-  ]
-
   if (Platform != 'Posix')
     # Interrupts not supported on Posix
     runtimeSrcs += [
@@ -32,6 +28,7 @@ if (Platform == 'pc_x86_32') or (Platform == 'pc_x86_64') or (Platform == 'Posix
   subdir('descriptors_x86')
   subdir('msr_x86')
   subdir('native_x86')
+  subdir('reset_x86')
 endif
 
 # Include the directory pointed to in the Cpu variable. The

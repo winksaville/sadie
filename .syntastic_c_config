@@ -13,6 +13,8 @@
 -I
 /home/wink/prgs/sadie/arch/x86/native_x86/incs
 -I
+/home/wink/prgs/sadie/arch/x86/reset_x86/incs
+-I
 /home/wink/prgs/sadie/arch/x86/x86_64/incs
 -I
 /home/wink/prgs/sadie/arch/x86/x86_64/libs/ac_init/incs
