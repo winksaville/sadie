@@ -50,7 +50,7 @@ subdir('platform')
 subdir('arch/x86/apic_x86/tests')
 subdir('arch/x86/cpuid_x86/tests')
 subdir('arch/x86/tests/test-interrupts_x86')
-subdir('arch/x86/tests/test-native_x86')
+subdir('arch/x86/native_x86/tests')
 subdir('arch/x86/tests/test-rdwrmsr_x86')
 
 #subdir('libs/tests')
