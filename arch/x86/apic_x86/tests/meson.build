@@ -19,7 +19,7 @@ if Platform == 'VersatilePB'
   linkDeps += [linkfile]
 
   # Create test-ac_string executable
-  test_ac_bits = executable( 'test_ac_bits', srcFiles,
+  test_apic_x86 = executable( 'test_apic_x86', srcFiles,
     include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
@@ -28,15 +28,15 @@ if Platform == 'VersatilePB'
   )
 
   # Create test.bin suitable for executing with qemu
-  test_ac_bits_bin = custom_target( 'test_ac_bits_bin',
-    output : ['test_ac_bits.bin'],
+  test_apic_x86_bin = custom_target( 'test_apic_x86_bin',
+    output : ['test_apic_x86.bin'],
     command : ['arm-eabi-objcopy', '-O', 'binary',
-      '@0@/test_ac_bits'.format(meson.current_build_dir()),
-      '@0@/test_ac_bits.bin'.format(meson.current_build_dir())],
-    depends : [test_ac_bits])
+      '@0@/test_apic_x86'.format(meson.current_build_dir()),
+      '@0@/test_apic_x86.bin'.format(meson.current_build_dir())],
+    depends : [test_apic_x86])
 
-  run_target('run-test-ac_bits', '@0@/tools/qemu-system-arm.runner.sh'.format(meson.source_root()),
-              'versatilepb', test_ac_bits_bin)
+  run_target('run-test-apic_x86', '@0@/tools/qemu-system-arm.runner.sh'.format(meson.source_root()),
+              'versatilepb', test_apic_x86_bin)
 endif
 
 
@@ -44,13 +44,13 @@ if Platform == 'Posix'
   srcFiles += ['srcs/test.c']
 
   # Create testit executable
-  test_ac_bits = executable( 'test_ac_bits', srcFiles,
+  test_apic_x86 = executable( 'test_apic_x86', srcFiles,
     include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     dependencies : [libruntime_dep],
   )
 
-  run_target('run-test-ac_bits', test_ac_bits)
+  run_target('run-test-apic_x86', test_apic_x86)
 endif
 
 if Platform == 'pc_x86_32'
@@ -59,8 +59,8 @@ if Platform == 'pc_x86_32'
   linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
-  # Create test_ac_bits executable
-  test_ac_bits = executable( 'test_ac_bits', srcFiles,
+  # Create test_apic_x86 executable
+  test_apic_x86 = executable( 'test_apic_x86', srcFiles,
     include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
@@ -68,8 +68,8 @@ if Platform == 'pc_x86_32'
     dependencies : [libruntime_dep],
   )
 
-  run_target('run-test-ac_bits', '@0@/tools/qemu-system-i386.runner.sh'.format(meson.source_root()),
-             test_ac_bits)
+  run_target('run-test-apic_x86', '@0@/tools/qemu-system-i386.runner.sh'.format(meson.source_root()),
+             test_apic_x86)
 endif
 
 
@@ -79,8 +79,8 @@ if Platform == 'pc_x86_64'
   linkArgs += ['-Wl,-n,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
-  # Create test_ac_bits executable
-  test_ac_bits = executable( 'test_ac_bits', srcFiles,
+  # Create test_apic_x86 executable
+  test_apic_x86 = executable( 'test_apic_x86', srcFiles,
     include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
@@ -89,17 +89,17 @@ if Platform == 'pc_x86_64'
   )
 
   grub_cfg = '@0@/grub.cfg'.format(meson.current_source_dir())
-  test_ac_bits_exe = '@0@/test_ac_bits'.format(meson.current_build_dir())
+  test_apic_x86_exe = '@0@/test_apic_x86'.format(meson.current_build_dir())
 
-  # Create test_ac_bits.bin suitable for executing with qemu or on hardware
-  test_ac_bits_bin = custom_target( 'test_ac_bits.img',
+  # Create test_apic_x86.bin suitable for executing with qemu or on hardware
+  test_apic_x86_bin = custom_target( 'test_apic_x86.img',
     input : grub_cfg,
-    output : 'test_ac_bits.img',
+    output : 'test_apic_x86.img',
     command : ['@0@/tools/grub-mkrescue.runner.sh'.format(meson.source_root()),
-      test_ac_bits_exe, grub_cfg, '@OUTPUT@'],
-    depends : [test_ac_bits])
+      test_apic_x86_exe, grub_cfg, '@OUTPUT@'],
+    depends : [test_apic_x86])
 
-  run_target('run-test-ac_bits', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              test_ac_bits_bin)
+  run_target('run-test-apic_x86', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
+              test_apic_x86_bin)
 endif
 
