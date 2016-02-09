@@ -1,4 +1,4 @@
-# Copyright 2016 wink saville
+# Copyright 2015 wink saville
 #
 # licensed under the apache license, version 2.0 (the "license");
 # you may not use this file except in compliance with the license.
@@ -11,47 +11,6 @@
 # without warranties or conditions of any kind, either express or implied.
 # see the license for the specific language governing permissions and
 # limitations under the license.
-
-if Platform == 'VersatilePB'
-  srcFiles += ['srcs/test.c']
-  linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
-  linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
-  linkDeps += [linkfile]
-
-  # Create test-ac_string executable
-  test_apic_x86 = executable( 'test_apic_x86', srcFiles,
-    include_directories : runtimeIncDirs,
-    c_args : compilerArgs,
-    link_args : linkArgs,
-    link_depends : linkDeps,
-    dependencies : [libruntime_dep],
-  )
-
-  # Create test.bin suitable for executing with qemu
-  test_apic_x86_bin = custom_target( 'test_apic_x86_bin',
-    output : ['test_apic_x86.bin'],
-    command : ['arm-eabi-objcopy', '-O', 'binary',
-      '@0@/test_apic_x86'.format(meson.current_build_dir()),
-      '@0@/test_apic_x86.bin'.format(meson.current_build_dir())],
-    depends : [test_apic_x86])
-
-  run_target('run-test-apic_x86', '@0@/tools/qemu-system-arm.runner.sh'.format(meson.source_root()),
-              'versatilepb', test_apic_x86_bin)
-endif
-
-
-if Platform == 'Posix'
-  srcFiles += ['srcs/test.c']
-
-  # Create testit executable
-  test_apic_x86 = executable( 'test_apic_x86', srcFiles,
-    include_directories : runtimeIncDirs,
-    c_args : compilerArgs,
-    dependencies : [libruntime_dep],
-  )
-
-  run_target('run-test-apic_x86', test_apic_x86)
-endif
 
 if Platform == 'pc_x86_32'
   srcFiles += ['srcs/test.c']
@@ -100,6 +59,6 @@ if Platform == 'pc_x86_64'
     depends : [test_apic_x86])
 
   run_target('run-test-apic_x86', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              test_apic_x86_bin)
+              test_apic_x86_bin, '-enable-kvm', '-cpu', 'host')
 endif
 
