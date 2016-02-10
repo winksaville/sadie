@@ -23,40 +23,6 @@
 #include <ac_string.h>
 #include <ac_test.h>
 
-ac_bool test_crs(void) {
-  ac_bool error = AC_FALSE;
-  ac_uint cr0 = get_cr0();
-  // cr1 is reserved
-  ac_uint cr2 = get_cr2();
-  ac_uint cr3 = get_cr3();
-  ac_uint cr4 = get_cr4();
-  ac_uint cr8 = get_cr8();
-
-  ac_printf("cr0=%p\n", cr0);
-  ac_printf("cr2=%p\n", cr2);
-  ac_printf("cr3=%p\n", cr3);
-  ac_printf("cr4=%p\n", cr4);
-  ac_printf("cr8=%p\n", cr8);
-
-  set_cr0(cr0);
-  // cr2 is read only
-  set_cr3(cr3);
-  set_cr4(cr4);
-  set_cr8(cr8);
-
-  ac_uint cr0_1 = get_cr0();
-  ac_uint cr3_1 = get_cr3();
-  ac_uint cr4_1 = get_cr4();
-  ac_uint cr8_1 = get_cr8();
-
-  error |= AC_TEST(cr0 == cr0_1);
-  error |= AC_TEST(cr3 == cr3_1);
-  error |= AC_TEST(cr4 == cr4_1);
-  error |= AC_TEST(cr8 == cr8_1);
-
-  return error;
-}
-
 ac_bool test_seg_regs(void) {
   ac_bool error = AC_FALSE;
   ac_u16 seg_reg1;
@@ -142,7 +108,6 @@ ac_bool test_gdt_ldt_idt(void) {
 int main(void) {
   ac_bool error = AC_FALSE;
 
-  error |= test_crs();
   error |= test_seg_regs();
   error |= test_gdt_ldt_idt();
 

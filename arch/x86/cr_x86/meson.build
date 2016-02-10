@@ -12,9 +12,5 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-subdir('../apic_x86/tests')
-subdir('../cpuid_x86/tests')
-subdir('../cr_x86/tests')
-subdir('../interrupts_x86/tests')
-subdir('../native_x86/tests')
-subdir('../msr_x86/tests')
+runtimeIncDirs += [include_directories('incs')]
+
