@@ -19,6 +19,77 @@
 
 #include <ac_inttypes.h>
 
+struct cr0_bits {
+  ac_uint pe:1;
+  ac_uint mp:1;
+  ac_uint em:1;
+  ac_uint ts:1;
+  ac_uint et:1;
+  ac_uint ne:1;
+  ac_uint reserved_0:10;
+  ac_uint wp:1;
+  ac_uint reserved_1:1;
+  ac_uint am:1;
+  ac_uint reserved_2:10;
+  ac_uint nw:1;
+  ac_uint cd:1;
+  ac_uint pg:1;
+} __attribute__((__packed__));
+
+union cr0_u {
+  ac_uint data;
+  struct cr0_bits bits;
+} __attribute__((__packed__));
+
+struct cr3_bits {
+  ac_uint reserved_0:3;
+  ac_uint pwt:1;
+  ac_uint pcd:1;
+  ac_uint reserved_1:7;
+#ifdef CPU_X86_64
+  ac_uint page_directory_base:52;
+#else /* CPU_X86_32 */
+  ac_uint page_directory_base:20;
+#endif
+} __attribute__((__packed__));
+
+union cr3_u {
+  ac_uint data;
+  struct cr3_bits bits;
+} __attribute__((__packed__));
+
+struct cr4_bits {
+  ac_uint vme:1;
+  ac_uint pvi:1;
+  ac_uint tsd:1;
+  ac_uint de:1;
+  ac_uint pse:1;
+  ac_uint pae:1;
+  ac_uint mce:1;
+  ac_uint pge:1;
+  ac_uint pce:1;
+  ac_uint osfxsr:1;
+  ac_uint osxmmexcpt:1;
+  ac_uint reserved_0:2;
+  ac_uint fsgsbase:1;
+  ac_uint pcide:1;
+  ac_uint oxsave:1;
+  ac_uint reserve_1:1;
+  ac_uint smep:1;
+  ac_uint smap:1;
+  ac_uint pke:1;
+#ifdef CPU_X86_64
+  ac_uint reserved_2:41;
+#else /* CPU_X86_32 */
+  ac_uint reserved_2:9;
+#endif
+} __attribute__((__packed__));
+
+union cr4_u {
+  ac_uint data;
+  struct cr4_bits bits;
+} __attribute__((__packed__));
+
 /** get control register 0 (CR0) */
 static __inline__ ac_uint get_cr0(void) {
   ac_uint ret_val;
