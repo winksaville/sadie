@@ -11,6 +11,8 @@
 -I
 /home/wink/prgs/sadie/arch/x86/interrupts_x86/incs
 -I
+/home/wink/prgs/sadie/arch/x86/io_x86/incs
+-I
 /home/wink/prgs/sadie/arch/x86/msr_x86/incs
 -I
 /home/wink/prgs/sadie/arch/x86/native_x86/incs
