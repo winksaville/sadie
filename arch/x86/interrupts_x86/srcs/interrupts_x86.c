@@ -48,9 +48,9 @@ static void intr_undefined(struct intr_frame *frame) {
 }
 
 INTERRUPT_HANDLER
-static void expt_08_undefined(struct intr_frame *frame, ac_uint error_code) {
+static void expt_double_fault(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
-  print_intr_frame("expt_08_undefined", frame);
+  print_intr_frame("expt_double_fault - #DF 8", frame);
   ac_printf(" rsp: %p\n", get_sp());
   ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
@@ -58,9 +58,9 @@ static void expt_08_undefined(struct intr_frame *frame, ac_uint error_code) {
 }
 
 INTERRUPT_HANDLER
-static void expt_10_undefined(struct intr_frame *frame, ac_uint error_code) {
+static void expt_invalid_tss(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
-  print_intr_frame("expt_10_undefined", frame);
+  print_intr_frame("expt_invalid_tss - #TS 10", frame);
   ac_printf(" rsp: %p\n", get_sp());
   ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
@@ -68,9 +68,9 @@ static void expt_10_undefined(struct intr_frame *frame, ac_uint error_code) {
 }
 
 INTERRUPT_HANDLER
-static void expt_11_undefined(struct intr_frame *frame, ac_uint error_code) {
+static void expt_segment_not_present(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
-  print_intr_frame("expt_11_undefined", frame);
+  print_intr_frame("expt_segment_not_present - #NP 11", frame);
   ac_printf(" rsp: %p\n", get_sp());
   ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
@@ -78,9 +78,9 @@ static void expt_11_undefined(struct intr_frame *frame, ac_uint error_code) {
 }
 
 INTERRUPT_HANDLER
-static void expt_12_undefined(struct intr_frame *frame, ac_uint error_code) {
+static void expt_stack_fault(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
-  print_intr_frame("expt_12_undefined", frame);
+  print_intr_frame("expt_stack_fault - #SS 12", frame);
   ac_printf(" rsp: %p\n", get_sp());
   ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
@@ -88,9 +88,9 @@ static void expt_12_undefined(struct intr_frame *frame, ac_uint error_code) {
 }
 
 INTERRUPT_HANDLER
-static void expt_13_undefined(struct intr_frame *frame, ac_uint error_code) {
+static void expt_general_protection(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
-  print_intr_frame("expt_13_undefined", frame);
+  print_intr_frame("expt_general_protection - #GP 13", frame);
   ac_printf(" rsp: %p\n", get_sp());
   ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
@@ -103,9 +103,9 @@ static void expt_13_undefined(struct intr_frame *frame, ac_uint error_code) {
 }
 
 INTERRUPT_HANDLER
-static void expt_14_undefined(struct intr_frame *frame, ac_uint error_code) {
+static void expt_page_fault(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
-  print_intr_frame("expt_14_undefined", frame);
+  print_intr_frame("expt_page_fault - #PF 14", frame);
   ac_printf(" rsp: %p\n", get_sp());
   ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
@@ -113,9 +113,9 @@ static void expt_14_undefined(struct intr_frame *frame, ac_uint error_code) {
 }
 
 INTERRUPT_HANDLER
-static void expt_17_undefined(struct intr_frame *frame, ac_uint error_code) {
+static void expt_alignment_check(struct intr_frame *frame, ac_uint error_code) {
   expt_undefined_counter += 1;
-  print_intr_frame("expt_17_undefined", frame);
+  print_intr_frame("expt_alignment_check - #AC 17", frame);
   ac_printf(" rsp: %p\n", get_sp());
   ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
@@ -125,7 +125,7 @@ static void expt_17_undefined(struct intr_frame *frame, ac_uint error_code) {
 INTERRUPT_HANDLER
 static void intr_invalid_opcode(struct intr_frame *frame) {
   intr_invalid_opcode_counter += 1;
-  print_intr_frame("intr_invalid_opcode", frame);
+  print_intr_frame("intr_invalid_opcode - #UD 6", frame);
   ac_printf(" rsp: %p\n", get_sp());
   ac_printf(" intr_invalid_opcode_counter: %d\n", intr_invalid_opcode_counter);
   reset_x86();
@@ -195,13 +195,13 @@ void initialize_intr_descriptor_table(void) {
   set_intr_gate(&idt[6], intr_invalid_opcode);
 
   // Initialize some exceptions
-  set_expt_gate(&idt[8], expt_08_undefined);
-  set_expt_gate(&idt[10], expt_10_undefined);
-  set_expt_gate(&idt[11], expt_11_undefined);
-  set_expt_gate(&idt[12], expt_12_undefined);
-  set_expt_gate(&idt[13], expt_13_undefined);
-  set_expt_gate(&idt[14], expt_14_undefined);
-  set_expt_gate(&idt[17], expt_17_undefined);
+  set_expt_gate(&idt[8],  expt_double_fault);
+  set_expt_gate(&idt[10], expt_invalid_tss);
+  set_expt_gate(&idt[11], expt_segment_not_present);
+  set_expt_gate(&idt[12], expt_stack_fault);
+  set_expt_gate(&idt[13], expt_general_protection);
+  set_expt_gate(&idt[14], expt_page_fault);
+  set_expt_gate(&idt[17], expt_alignment_check);
 
   // set the idt register to point to idt array
   set_idtr(idt, AC_ARRAY_COUNT(idt));
