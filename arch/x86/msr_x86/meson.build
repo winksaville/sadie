@@ -13,3 +13,8 @@
 # limitations under the license.
 
 runtimeIncDirs += [include_directories('incs')]
+
+runtimeSrcs += [
+  '@0@/srcs/msr_x86_print.c'.format(meson.current_source_dir()),
+]
+

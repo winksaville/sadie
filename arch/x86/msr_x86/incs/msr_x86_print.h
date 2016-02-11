@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Wink Saville
+ * Copyright 2016 Wink Saville
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,32 +14,11 @@
  * limitations under the License.
  */
 
-#include <msr_x86.h>
-#include <msr_x86_print.h>
+#ifndef ARCH_X86_MSR_X86_INCS_MSR_X86_PRINT_H
+#define ARCH_X86_MSR_X86_INCS_MSR_X86_PRINT_H
 
-#include <ac_bits.h>
-#include <ac_printf.h>
-#include <ac_test.h>
+#include <ac_inttypes.h>
 
-ac_bool test_rdwrmsr() {
-  ac_bool error = AC_FALSE;
+void print_msr(ac_u32 reg, ac_u64 value);
 
-  ac_u64 msr_apic_base = get_msr(MSR_IA32_APIC_BASE);
-  print_msr(MSR_IA32_APIC_BASE, msr_apic_base);
-
-  error |= AC_TEST(msr_apic_base != 0);
-
-  return error;
-}
-
-int main(void) {
-  ac_bool error = AC_FALSE;
-
-  error |= test_rdwrmsr();
-
-  if (!error) {
-    ac_printf("OK\n");
-  }
-
-  return error;
-}
+#endif
