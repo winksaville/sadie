@@ -11,8 +11,8 @@ void print_msr(ac_u32 msr, ac_u64 value) {
   union msr_apic_base_u reg = { .raw = value };
 
   switch (msr) {
-    case MSR_IA32_APIC_BASE: {
-      ac_printf("msr_ia32_apic_base 0x%x: 0x%llx\n", MSR_IA32_APIC_BASE, value);
+    case MSR_APIC_BASE: {
+      ac_printf("msr_apic_base 0x%x: 0x%llx\n", MSR_APIC_BASE, value);
       ac_printf(" bsp=%b\n", reg.fields.bsp);
       ac_printf(" extd=%b\n", reg.fields.extd);
       ac_printf(" e=%b\n", reg.fields.e);

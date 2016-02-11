@@ -24,8 +24,8 @@
 ac_bool test_rdwrmsr() {
   ac_bool error = AC_FALSE;
 
-  ac_u64 msr_apic_base = get_msr(MSR_IA32_APIC_BASE);
-  print_msr(MSR_IA32_APIC_BASE, msr_apic_base);
+  ac_u64 msr_apic_base = get_msr(MSR_APIC_BASE);
+  print_msr(MSR_APIC_BASE, msr_apic_base);
 
   error |= AC_TEST(msr_apic_base != 0);
 

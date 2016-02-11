@@ -41,20 +41,19 @@ ac_uint initialize_apic(void) {
 
 ac_uint apic_present(void) {
   ac_u32 out_eax, out_ebx, out_ecx, out_edx;
+
   get_cpuid(1, &out_eax, &out_ebx, &out_ecx, &out_edx);
   return AC_GET_BITS(ac_uint, out_ecx, 9, 1);
 }
 
 ac_u32 apic_get_id(void) {
   ac_u32 out_eax, out_ebx, out_ecx, out_edx;
+
   get_cpuid(1, &out_eax, &out_ebx, &out_ecx, &out_edx);
   return AC_GET_BITS(ac_u32, out_ebx, 24, 8);
 }
 
 
 ac_u64 apic_get_physical_addr(void) {
-  ac_u64 apic_base = get_msr(MSR_IA32_APIC_BASE); 
-  ac_u32 num_apic_base_bits = cpuid_max_physical_address_bits() - 12;
-  ac_u64 phy_addr = AC_GET_BITS(ac_u64, apic_base, 12, num_apic_base_bits) << 12;
-  return phy_addr;
+  return msr_apic_base_physical_addr(get_msr(MSR_APIC_BASE));
 }

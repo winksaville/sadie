@@ -23,7 +23,7 @@
 #include <ac_bits.h>
 
 
-#define MSR_IA32_APIC_BASE   0x1B
+#define MSR_APIC_BASE   0x1B
 
 struct msr_apic_base_fields {
   ac_u64 reserved_0:8;

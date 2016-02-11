@@ -18,6 +18,7 @@
 
 #include <cpuid_x86.h>
 #include <msr_x86.h>
+#include <msr_x86_print.h>
 
 #include <ac_bits.h>
 #include <ac_inttypes.h>
@@ -29,13 +30,10 @@ ac_bool test_apic() {
 
   initialize_apic();
 
-  ac_u64 msr_apic_base = get_msr(MSR_IA32_APIC_BASE);
+  ac_u64 msr_apic_base = get_msr(MSR_APIC_BASE);
   error |= AC_TEST(msr_apic_base != 0);
 
-  ac_printf("msr_apic_base=0x%llx\n",msr_apic_base);
-  ac_printf(" bsp=%d\n", AC_GET_BITS(ac_u32, msr_apic_base, 8, 1));
-  ac_printf(" extd=%d\n", AC_GET_BITS(ac_u32, msr_apic_base, 10, 1));
-  ac_printf(" e=%d\n", AC_GET_BITS(ac_u32, msr_apic_base, 11, 1));
+  print_msr(MSR_APIC_BASE, msr_apic_base);
 
   ac_u64 phy_addr = apic_get_physical_addr();
   ac_printf(" phy_addr=0x%llx\n", phy_addr);
