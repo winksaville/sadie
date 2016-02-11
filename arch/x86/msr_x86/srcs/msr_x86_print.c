@@ -16,7 +16,7 @@ void print_msr(ac_u32 msr, ac_u64 value) {
       ac_printf(" bsp=%b\n", reg.fields.bsp);
       ac_printf(" extd=%b\n", reg.fields.extd);
       ac_printf(" e=%b\n", reg.fields.e);
-      ac_printf(" base=%llx\n", msr_apic_base_physical_addr(reg.raw));
+      ac_printf(" base=0x%llx\n", msr_apic_base_physical_addr(reg.raw));
       break;
     }
 

@@ -25,6 +25,11 @@
 
 #define MSR_APIC_BASE   0x1B
 
+/**
+ * See "Intel 64 and IA-32 Architectures Software Developer's Manual"
+ * Volume 3 chapter 10.12.1 "Detecting and Enabling x2APIC Mode"
+ * Figure 10-26 "IA32_APIC_BASE MSR Supporting x2APIC"
+ */
 struct msr_apic_base_fields {
   ac_u64 reserved_0:8;
   ac_u64 bsp:1;
@@ -34,10 +39,16 @@ struct msr_apic_base_fields {
   ac_u64 base_addr:52;
 } __attribute__((__packed__));
 
+_Static_assert(sizeof(struct msr_apic_base_fields) == sizeof(ac_u64),
+    L"struct msr_apic_base_fields is not 8 bytes");
+
 union msr_apic_base_u {
   ac_u64 raw;
   struct msr_apic_base_fields fields;
 };
+
+_Static_assert(sizeof(union msr_apic_base_u) == sizeof(ac_u64),
+    L"union msr_apic_base_u is not 8 bytes");
 
 /** APIC phyiscal address */
 static __inline__ ac_u64 msr_apic_base_physical_addr(ac_u64 msr_apic_base) {
