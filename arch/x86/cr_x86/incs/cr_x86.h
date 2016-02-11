@@ -19,7 +19,7 @@
 
 #include <ac_inttypes.h>
 
-struct cr0_bits {
+struct cr0_fields {
   ac_uint pe:1;
   ac_uint mp:1;
   ac_uint em:1;
@@ -37,11 +37,11 @@ struct cr0_bits {
 } __attribute__((__packed__));
 
 union cr0_u {
-  ac_uint data;
-  struct cr0_bits bits;
-} __attribute__((__packed__));
+  ac_uint raw;
+  struct cr0_fields fields;
+};
 
-struct cr3_bits {
+struct cr3_fields {
   ac_uint reserved_0:3;
   ac_uint pwt:1;
   ac_uint pcd:1;
@@ -54,11 +54,11 @@ struct cr3_bits {
 } __attribute__((__packed__));
 
 union cr3_u {
-  ac_uint data;
-  struct cr3_bits bits;
-} __attribute__((__packed__));
+  ac_uint raw;
+  struct cr3_fields fields;
+};
 
-struct cr4_bits {
+struct cr4_fields {
   ac_uint vme:1;
   ac_uint pvi:1;
   ac_uint tsd:1;
@@ -86,8 +86,8 @@ struct cr4_bits {
 } __attribute__((__packed__));
 
 union cr4_u {
-  ac_uint data;
-  struct cr4_bits bits;
+  ac_uint raw;
+  struct cr4_fields fields;
 } __attribute__((__packed__));
 
 /** get control register 0 (CR0) */
