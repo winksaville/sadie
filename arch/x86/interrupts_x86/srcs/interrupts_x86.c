@@ -16,10 +16,12 @@
 
 #include <ac_inttypes.h>
 #include <ac_printf.h>
-#include <native_x86.h>
-#include <interrupts_x86.h>
+
 #include <descriptors_x86.h>
 #include <descriptors_x86_print.h>
+#include <interrupts_x86.h>
+#include <native_x86.h>
+#include <reset_x86.h>
 
 #ifdef PRIVILEGE_USER
 // Interrupt attribute not allowed at user privilege.
@@ -42,6 +44,7 @@ static void intr_undefined(struct intr_frame *frame) {
   print_intr_frame("intr_undefined", frame);
   ac_printf(" sp: %p\n", get_sp());
   ac_printf(" intr_undefined_counter: %d\n", intr_undefined_counter);
+  reset_x86();
 }
 
 INTERRUPT_HANDLER
@@ -51,6 +54,7 @@ static void expt_08_undefined(struct intr_frame *frame, ac_uint error_code) {
   ac_printf(" rsp: %p\n", get_sp());
   ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
+  reset_x86();
 }
 
 INTERRUPT_HANDLER
@@ -60,6 +64,7 @@ static void expt_10_undefined(struct intr_frame *frame, ac_uint error_code) {
   ac_printf(" rsp: %p\n", get_sp());
   ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
+  reset_x86();
 }
 
 INTERRUPT_HANDLER
@@ -69,6 +74,7 @@ static void expt_11_undefined(struct intr_frame *frame, ac_uint error_code) {
   ac_printf(" rsp: %p\n", get_sp());
   ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
+  reset_x86();
 }
 
 INTERRUPT_HANDLER
@@ -78,6 +84,7 @@ static void expt_12_undefined(struct intr_frame *frame, ac_uint error_code) {
   ac_printf(" rsp: %p\n", get_sp());
   ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
+  reset_x86();
 }
 
 INTERRUPT_HANDLER
@@ -92,6 +99,7 @@ static void expt_13_undefined(struct intr_frame *frame, ac_uint error_code) {
   get_idt(&dp);
   ac_printf(" idt.limit=%d\n", dp.limit);
   ac_printf(" idt.address=%p\n", dp.address);
+  reset_x86();
 }
 
 INTERRUPT_HANDLER
@@ -101,6 +109,7 @@ static void expt_14_undefined(struct intr_frame *frame, ac_uint error_code) {
   ac_printf(" rsp: %p\n", get_sp());
   ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
+  reset_x86();
 }
 
 INTERRUPT_HANDLER
@@ -110,6 +119,7 @@ static void expt_17_undefined(struct intr_frame *frame, ac_uint error_code) {
   ac_printf(" rsp: %p\n", get_sp());
   ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
+  reset_x86();
 }
 
 INTERRUPT_HANDLER
@@ -118,6 +128,7 @@ static void intr_invalid_opcode(struct intr_frame *frame) {
   print_intr_frame("intr_invalid_opcode", frame);
   ac_printf(" rsp: %p\n", get_sp());
   ac_printf(" intr_invalid_opcode_counter: %d\n", intr_invalid_opcode_counter);
+  reset_x86();
 }
 
 static void set_intr_gate(idt_intr_gate* gate, intr_handler* ih) {
