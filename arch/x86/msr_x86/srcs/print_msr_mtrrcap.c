@@ -14,24 +14,21 @@
  * limitations under the License.
  */
 
-#include <test_msr_x86.h>
-
-#include <interrupts_x86.h>
+#include <msr_mtrrcap_x86.h>
 
 #include <ac_inttypes.h>
 #include <ac_printf.h>
 
-int main(void) {
-  ac_bool error = AC_FALSE;
+void print_msr_mtrrcap(ac_u64 value) {
+  union msr_mtrrcap_u reg = { .raw = value };
 
-  initialize_intr_descriptor_table();
-
-  error |= test_msr_apic_base_fields();
-  error |= test_msr_mtrrcap_fields();
-
-  if (!error) {
-    ac_printf("OK\n");
-  }
-
-  return error;
+  ac_printf("msr_mtrrcap 0x%x: 0x%llx\n", MSR_MTRRCAP, value);
+  ac_printf(" vcnt=%d\n", reg.fields.vcnt);
+  ac_printf(" fix=%d\n", reg.fields.fix);
+  ac_printf(" reserved_0=%d\n", reg.fields.reserved_0);
+  ac_printf(" wc=%d\n", reg.fields.wc);
+  ac_printf(" smrr=%d\n", reg.fields.smrr);
+  ac_printf(" wc=%b\n", reg.fields.wc);
+  ac_printf(" reserved_1=%llx\n", reg.fields.reserved_1);
 }
+

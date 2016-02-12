@@ -17,44 +17,10 @@
 #ifndef ARCH_X86_MSR_X86_INCS_MSR_X86_H
 #define ARCH_X86_MSR_X86_INCS_MSR_X86_H
 
-#include <cpuid_x86.h>
+#include <msr_apic_base_x86.h>
+#include <msr_mtrrcap_x86.h>
 
 #include <ac_inttypes.h>
-#include <ac_bits.h>
-
-
-#define MSR_APIC_BASE   0x1B
-
-/**
- * See "Intel 64 and IA-32 Architectures Software Developer's Manual"
- * Volume 3 chapter 10.12.1 "Detecting and Enabling x2APIC Mode"
- * Figure 10-26 "IA32_APIC_BASE MSR Supporting x2APIC"
- */
-struct msr_apic_base_fields {
-  ac_u64 reserved_0:8;
-  ac_u64 bsp:1;
-  ac_u64 reserved_1:1;
-  ac_u64 extd:1;
-  ac_u64 e:1;
-  ac_u64 base_addr:52;
-} __attribute__((__packed__));
-
-_Static_assert(sizeof(struct msr_apic_base_fields) == sizeof(ac_u64),
-    L"struct msr_apic_base_fields is not 8 bytes");
-
-union msr_apic_base_u {
-  ac_u64 raw;
-  struct msr_apic_base_fields fields;
-};
-
-_Static_assert(sizeof(union msr_apic_base_u) == sizeof(ac_u64),
-    L"union msr_apic_base_u is not 8 bytes");
-
-/** APIC phyiscal address */
-static __inline__ ac_u64 msr_apic_base_physical_addr(ac_u64 msr_apic_base) {
-  return AC_GET_BITS(ac_u64, msr_apic_base, 12,
-            cpuid_max_physical_address_bits() - 12) << 12;
-}
 
 /** Get msr */
 static __inline__ ac_u64 get_msr(ac_u32 msr) {

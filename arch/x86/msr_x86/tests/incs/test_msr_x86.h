@@ -14,24 +14,13 @@
  * limitations under the License.
  */
 
-#include <test_msr_x86.h>
-
-#include <interrupts_x86.h>
+#ifndef ARCH_X86_MSR_X86_TESTS_INCS_TEST_MSR_X86_H
+#define ARCH_X86_MSR_X86_TESTS_INCS_TEST_MSR_X86_H
 
 #include <ac_inttypes.h>
-#include <ac_printf.h>
 
-int main(void) {
-  ac_bool error = AC_FALSE;
+ac_bool test_msr_apic_base_fields();
 
-  initialize_intr_descriptor_table();
+ac_bool test_msr_mtrrcap_fields();
 
-  error |= test_msr_apic_base_fields();
-  error |= test_msr_mtrrcap_fields();
-
-  if (!error) {
-    ac_printf("OK\n");
-  }
-
-  return error;
-}
+#endif

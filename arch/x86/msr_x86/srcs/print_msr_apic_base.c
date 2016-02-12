@@ -14,11 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef ARCH_X86_MSR_X86_INCS_MSR_X86_PRINT_H
-#define ARCH_X86_MSR_X86_INCS_MSR_X86_PRINT_H
+#include <print_msr.h>
+
+#include <msr_x86.h>
 
 #include <ac_inttypes.h>
+#include <ac_printf.h>
 
-void print_msr(ac_u32 reg, ac_u64 value);
+void print_msr_apic_base(ac_u64 value) {
+  union msr_apic_base_u reg = { .raw = value };
 
-#endif
+  ac_printf("msr_apic_base 0x%x: 0x%llx\n", MSR_APIC_BASE, value);
+  ac_printf(" reserved_0=%d\n", reg.fields.reserved_0);
+  ac_printf(" bsp=%b\n", reg.fields.bsp);
+  ac_printf(" reserved_1=%d\n", reg.fields.reserved_1);
+  ac_printf(" extd=%b\n", reg.fields.extd);
+  ac_printf(" e=%b\n", reg.fields.e);
+  ac_printf(" base=0x%llx\n", msr_apic_base_physical_addr(reg.raw));
+}
