@@ -13,7 +13,13 @@
 # limitations under the license.
 
 if Platform == 'pc_x86_32'
-  srcFiles += ['srcs/test.c']
+  runtimeIncDirs += [include_directories('incs')]
+
+  srcFiles = firstSrcFiles + [
+     'srcs/test.c',
+     'srcs/test_msr_apic_base_fields.c',
+     'srcs/test_msr_mtrrcap_fields.c',
+  ]
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
   linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
@@ -27,13 +33,21 @@ if Platform == 'pc_x86_32'
     dependencies : [libruntime_dep],
   )
 
-  run_target('run-test-msr_x86', '@0@/tools/qemu-system-i386.runner.sh'.format(meson.source_root()),
-             test_msr_x86)
+  run_target('run-test-msr_x86',
+        '@0@/tools/qemu-system-i386.runner.sh'.format(meson.source_root()),
+        test_msr_x86)
 endif
 
 
 if Platform == 'pc_x86_64'
-  srcFiles += ['srcs/test.c']
+  runtimeIncDirs += [include_directories('incs')]
+
+  srcFiles = firstSrcFiles + [
+     'srcs/test.c',
+     'srcs/test_msr_apic_base_fields.c',
+     'srcs/test_msr_mtrrcap_fields.c',
+  ]
+
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
   linkArgs += ['-Wl,-n,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]

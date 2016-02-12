@@ -13,7 +13,7 @@
 # limitations under the license.
 
 if Platform == 'VersatilePB'
-  srcFiles += ['srcs/test.c']
+  srcFiles = firstSrcFiles + ['srcs/test.c']
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
   linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
@@ -41,7 +41,7 @@ endif
 
 
 if Platform == 'Posix'
-  srcFiles += ['srcs/test.c']
+  srcFiles = firstSrcFiles + ['srcs/test.c']
 
   # Create testit executable
   test_ac_sysconf = executable( 'test_ac_sysconf', srcFiles,

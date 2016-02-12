@@ -20,9 +20,7 @@ compilerArgs += [
  '-mno-ssse3', '-mno-mmx', '-mno-3dnow', '-mno-avx',
 ]
 
-srcFiles = [
-  '@0@/srcs/mb2.S'.format(meson.current_source_dir()),
-]
+firstSrcFiles = ['@0@/srcs/mb2.S'.format(meson.current_source_dir())]
 
 runtimeSrcs += [
   '@0@/srcs/boot.gas.S'.format(meson.current_source_dir()),

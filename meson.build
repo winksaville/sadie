@@ -22,11 +22,15 @@ pkgg.generate(
   filebase : 'sadie',
   description : 'Runtime for asynchronous components')
 
+# This will be the first files linked and is optional. It is used
+# to to add the multi 2 boot file, m2b.S as the first file when
+# creating grub bootable files.
+firstSrcFiles = []
+
 # Initialize some globals
 compilerArgs = ['-std=c11', '-O2', '-g']
 linkArgs = []
 linkDeps = []
-srcFiles = []
 runtimeSrcs = []
 runtimeIncDirs = []
 libruntime_dep = []

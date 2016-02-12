@@ -13,7 +13,7 @@
 # limitations under the license.
 
 if Platform == 'Posix'
-  srcFiles += ['srcs/test.c']
+  srcFiles = firstSrcFiles + ['srcs/test.c']
 
   # Create testit executable
   test_cpuid_x86 = executable( 'test_cpuid_x86', srcFiles,
@@ -26,7 +26,7 @@ if Platform == 'Posix'
 endif
 
 if Platform == 'pc_x86_32'
-  srcFiles += ['srcs/test.c']
+  srcFiles = firstSrcFiles + ['srcs/test.c']
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
   linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
@@ -46,7 +46,7 @@ endif
 
 
 if Platform == 'pc_x86_64'
-  srcFiles += ['srcs/test.c']
+  srcFiles = firstSrcFiles + ['srcs/test.c']
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
   linkArgs += ['-Wl,-n,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
