@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef ARCH_X86_MSR_X86_TESTS_INCS_TEST_MSR_X86_H
-#define ARCH_X86_MSR_X86_TESTS_INCS_TEST_MSR_X86_H
+#include <multiboot2.h>
 
 #include <ac_inttypes.h>
+#include <ac_printf.h>
 
-ac_bool test_msr_apic_base_fields();
+struct multiboot2_header_tag* print_multiboot2_tag(struct multiboot2_header_tag* tag) {
+  ac_printf("%s: type=%d size=%d\n", tag->type, tag->size);
+}
 
-ac_bool test_msr_mtrrcap_fields();
-
-#endif

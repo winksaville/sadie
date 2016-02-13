@@ -14,15 +14,16 @@
  * limitations under the license.
  */
 
+#include <ac_inttypes.h>
 #include <ac_poweroff.h>
 #include <reset_x86.h>
 
 extern void main(void);
-extern void ac_init(void);
+extern void ac_init(ac_uptr ptr, ac_uint uword);
 
 __attribute__ ((__noreturn__))
-void ac_startup(void) {
-  ac_init();
+void ac_startup(ac_uptr ptr, ac_uint uword) {
+  ac_init(ptr, uword);
   main();
   ac_poweroff();
 

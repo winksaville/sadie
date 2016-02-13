@@ -42,17 +42,20 @@ gdt64_pointer_entry:
   .code32
 _start:
     movl $stack_top, %esp
-    // Move Multiboot info pointer to edi to pass it to the kernel. We must not
-    // modify the `edi` register until the kernel it called.
-    movl %ebx, %edi
+    // Save info passed from multiboot
+    push %eax                   // Save multiboot signature
+    push %ebx                   // Save multiboot pointer, assume u32
 
-    call check_multiboot
+    call check_multiboot        // Expects eax == multiboot signature
     call check_cpuid
     call check_long_mode
 
     call set_up_page_tables
     call enable_paging
     call set_up_SSE
+
+    pop %edi                    // First paramter is u32 pointer to mulitboot info
+    pop %esi                    // Second paramter is signature
 
     // load the 64-bit GDT
     lgdt (gdt64_pointer_entry)
@@ -63,7 +66,6 @@ _start:
     movw %ax, %ds
     movw %ax, %es
 
-    // edi = multiboot info
     ljmp  $gdt64_code_seg, $ac_startup
 
 set_up_page_tables:
