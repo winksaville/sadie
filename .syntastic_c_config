@@ -43,4 +43,6 @@
 -I
 /home/wink/prgs/sadie/libs/ac_printf/incs
 -I
+/home/wink/prgs/sadie/libs/ac_sort/incs
+-I
 /home/wink/prgs/sadie/libs/ac_string/incs
