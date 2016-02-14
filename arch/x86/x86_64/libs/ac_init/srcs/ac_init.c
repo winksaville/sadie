@@ -92,7 +92,7 @@ void ac_init(ac_uptr ptr, ac_uint word) {
           reset_x86();
         }
         ac_uint count = (mm->header.size - sizeof(mm->header)) / mm->entry_size;
-        ac_sort_rand_iter(mm->entries, count, compare_mmap_entires,
+        ac_sort_by_idx(mm->entries, count, compare_mmap_entires,
             swap_mmap_entires);
         for (ac_uint i = 0; i < count; i++) {
           ac_printf("  %d: base_addr=0x%p length=0x%llx type=%d\n", i,

@@ -37,7 +37,7 @@ typedef void (*swap_by_idx_fn)(void* list, const ac_uint idx1,
  * Sort a randomly iterable list in "ascending" order
  * based on compare.
  */
-static __inline__ void ac_sort_rand_iter(void* list, ac_uint count,
+static __inline__ void ac_sort_by_idx(void* list, ac_uint count,
     compare_by_idx_fn compare, swap_by_idx_fn swap) {
   
   // Simple bubble sort for now
