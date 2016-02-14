@@ -87,24 +87,30 @@ void ac_init(ac_uptr ptr, ac_uint word) {
         ac_printf("  entry_size=%d\n", mm->entry_size);
         ac_printf("  entry_version=%d\n", mm->entry_version);
         if (mm->entry_version != 0) {
-          ac_printf("ac_init: Unknown emtry_version %d, expecting 0\n",
-              mm->entry_version);
+          ac_printf("ABORTING: file ac_init; Unknown multiboot2 entry_version"
+             " %d, expecting 0\n", mm->entry_version);
           reset_x86();
         }
         ac_uint count = (mm->header.size - sizeof(mm->header)) / mm->entry_size;
         ac_sort_by_idx(mm->entries, count, compare_mmap_entires,
             swap_mmap_entires);
+        ac_uint total_length = 0;
         for (ac_uint i = 0; i < count; i++) {
-          ac_printf("  %d: base_addr=0x%p length=0x%llx type=%d\n", i,
+          if (mm->entries[i].type == 1) {
+            total_length += mm->entries[i].length;
+          }
+          ac_printf("  %d: base_addr=0x%p length=0x%x type=%d reserved=%x\n", i,
               mm->entries[i].base_addr, mm->entries[i].length,
-              mm->entries[i].type);
+              mm->entries[i].type, mm->entries[i].reserved);
         }
+        ac_printf("total_length=%d(0x%x)\n", total_length, total_length);
       }
       tag = multiboot2_next_tag(tag);
     }
   } else {
     /** reset */
-    ac_printf("ac_init: Unknown parameter ptr=%p, word=0x%x\n", ptr, word);
+    ac_printf("ABORTING: file ac_init; Unknown parameter"
+       " ptr=%p, word=0x%x\n", ptr, word);
     reset_x86();
   }
 
