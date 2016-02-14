@@ -272,6 +272,9 @@ int main(void) {
             &writer, "Unexptected sizeof(ac_uint)=%d", sizeof(ac_uint)));
   }
 
+  if (!failure) {
+    ac_printf("OK\n");
+  }
   return failure;
 }
 
