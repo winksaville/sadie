@@ -47,4 +47,10 @@ typedef ac_u8 ac_bool;
  */
 #define AC_ARRAY_COUNT(__array) (sizeof(__array)/sizeof(__typeof__(__array[0])))
 
+#define AC_UINT(x) ({ ((ac_uint)(x)); })
+
+#define AC_SINT(x) ({ ((ac_sint)(x)); })
+
+#define AC_INT(x) ({ ((ac_int)(x)); })
+
 #endif

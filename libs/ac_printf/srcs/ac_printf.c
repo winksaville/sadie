@@ -57,6 +57,43 @@ static ac_u32 write_str(ac_writer *writer, char *str) {
 }
 
 /**
+ * Output an unsigned int bit value
+ */
+static ac_u32 write_uint(
+        ac_writer* writer, ac_uint val, ac_bool radix16Leading0, ac_uint radix) {
+    static const char val_to_char[] = "0123456789abcdef";
+    ac_u32 count = 0;
+    char result[65];
+
+    // Validate radix
+    if ((radix <= 1) || (radix > sizeof(val_to_char))) {
+        count = write_str(writer, "Bad Radix ");
+        count += write_uint(writer, radix, NO_LEADING_0, 10);
+    } else {
+        ac_sint idx;
+        for (idx = 0; idx < sizeof(result); idx++) {
+            result[idx] = val_to_char[val % radix];
+            val /= radix;
+            if (val == 0) {
+                break;
+            }
+        }
+        count = idx + 1;
+        if ((radix == 16) && radix16Leading0) {
+            ac_sint pad0Count = (sizeof(val) * 2) - count;
+            count += pad0Count;
+            while (pad0Count-- > 0) {
+                writer->write_param(writer, cast_to_write_param('0'));
+            }
+        }
+        for (; idx >= 0; idx--) {
+            writer->write_param(writer, cast_to_write_param(result[idx]));
+        }
+    }
+    return count;
+}
+
+/**
  * Output an unsigned 32 bit value
  */
 static ac_u32 write_u32(
@@ -110,18 +147,17 @@ static ac_u32 write_u64_radix16(
     return count;
 }
 
-
 /**
- * Output a signed 32 bit value
+ * Output a signed int bit value
  */
-static ac_u32 write_s32(ac_writer* writer, ac_s32 val, ac_u32 radix) {
+static ac_u32 write_sint(ac_writer* writer, ac_sint val, ac_u32 radix) {
     ac_u32 count = 0;
     if ((val < 0) && (radix == 10)) {
         writer->write_param(writer, cast_to_write_param('-'));
         count += 1;
         val = -val;
     }
-    return count + write_u32(writer, val, NO_LEADING_0, radix);
+    return count + write_uint(writer, val, NO_LEADING_0, radix);
 }
 
 /**
@@ -175,19 +211,19 @@ static ac_u32 formatter(ac_writer* writer, const char* format, ac_va_list args) 
                     break;
                 }
                 case 'b': {
-                    count += write_u32(writer, ac_va_arg(args, ac_s32), NO_LEADING_0, 2);
+                    count += write_uint(writer, ac_va_arg(args, ac_uint), NO_LEADING_0, 2);
                     break;
                 }
                 case 'd': {
-                    count += write_s32(writer, ac_va_arg(args, ac_s32), 10);
+                    count += write_sint(writer, ac_va_arg(args, ac_sint), 10);
                     break;
                 }
                 case 'u': {
-                    count += write_u32(writer, ac_va_arg(args, ac_u32), NO_LEADING_0, 10);
+                    count += write_uint(writer, ac_va_arg(args, ac_uint), NO_LEADING_0, 10);
                     break;
                 }
                 case 'x': {
-                    count += write_u32(writer, ac_va_arg(args, ac_u32), NO_LEADING_0, 16);
+                    count += write_uint(writer, ac_va_arg(args, ac_uint), NO_LEADING_0, 16);
                     break;
                 }
                 case 'l': {
@@ -201,21 +237,15 @@ static ac_u32 formatter(ac_writer* writer, const char* format, ac_va_list args) 
                 }
                 case 'p': {
                     ac_u32 sz_ptr = sizeof(void *);
-                    switch (sz_ptr) {
-                        case sizeof(ac_u32): {
-                            count += write_u32(writer, ac_va_arg(args, ac_u32), RADIX16_LEADING_0, 16);
-                            break;
-                        }
-                        case sizeof(ac_u64): {
-                            count += write_u64_radix16(writer, ac_va_arg(args, ac_u64), RADIX16_LEADING_0);
-
-                            break;
-                        }
-                        default: {
-                            write_str(writer, "Bad ptr size:");
-                            write_u32(writer, sz_ptr, 10, NO_LEADING_0);
-                            break;
-                        }
+                    if (sz_ptr == sizeof(ac_uint)) {
+                      count += write_uint(writer, ac_va_arg(args, ac_uint), RADIX16_LEADING_0, 16);
+                    } else if (sz_ptr == sizeof(ac_u32)) {
+                      count += write_u32(writer, ac_va_arg(args, ac_u32), RADIX16_LEADING_0, 16);
+                    } else if (sz_ptr == sizeof(ac_u64)) {
+                      count += write_u64_radix16(writer, ac_va_arg(args, ac_u64), RADIX16_LEADING_0);
+                    } else {
+                      write_str(writer, "Bad ptr size, expecting sizeof(ac_uint), 32 or 64 bit pointers:");
+                      write_uint(writer, sz_ptr, 10, NO_LEADING_0);
                     }
                     break;
                 }
