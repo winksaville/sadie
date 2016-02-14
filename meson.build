@@ -60,6 +60,7 @@ subdir('arch/x86/libs/msr_x86/tests')
 
 #subdir('libs/tests')
 subdir('libs/ac_bits/tests')
+subdir('libs/ac_printf/tests')
 
 subdir('platform/tests')
 subdir('tests')
