@@ -57,10 +57,10 @@ ac_bool test_interrupts(void) {
 
   // Test we can set an interrupt handler and invoke it
   set_intr_handler(79, intr_79);
-  print_idt_intr_gate("idt[79]", get_idt_intr_gate(79));
+  print_intr_gate("idt[79]", get_intr_gate(79));
 
-  idt_intr_gate *g = get_idt_intr_gate(79);
-  error |= AC_TEST(GET_IDT_INTR_GATE_OFFSET(*g) == (ac_uptr)intr_79);
+  intr_gate *g = get_intr_gate(79);
+  error |= AC_TEST(GET_INTR_GATE_OFFSET(*g) == (ac_uptr)intr_79);
 
   intr_79_counter = 0;
   ac_printf("invoke intr(79)\n");

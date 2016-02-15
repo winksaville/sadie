@@ -27,16 +27,16 @@
 
 
 #ifdef CPU_X86_64 
-#define IDT_INTR_GATE_OFFSET_HI_MASK  ((ac_uptr)0xFFFFFFFFFFFFLL)
-#define IDT_INTR_GATE_SIZE  16
+#define INTR_GATE_OFFSET_HI_MASK  ((ac_uptr)0xFFFFFFFFFFFFLL)
+#define INTR_GATE_SIZE  16
 #define IDT_PTR_SIZE        16
 #else /* CPU_X86_32 */
-#define IDT_INTR_GATE_OFFSET_HI_MASK  ((ac_uptr)0xFFFF)
-#define IDT_INTR_GATE_SIZE  8
+#define INTR_GATE_OFFSET_HI_MASK  ((ac_uptr)0xFFFF)
+#define INTR_GATE_SIZE  8
 #define IDT_PTR_SIZE        12
 #endif
 
-#define IDT_TASK_GATE_SIZE  8
+#define TASK_GATE_SIZE  8
 
 /**
  * Interrupt Gate, this is the same as a trap gate with a different type.
@@ -50,7 +50,7 @@
  * Volume 3 chapter 6.14.1 "64-Bit Mode IDT"
  * Figure 6-7. 64-Bit IDT Gate Descriptors
  */
-struct idt_intr_gate {
+struct intr_gate {
   ac_uptr offset_lo:16;
   ac_uptr segment:16;
 #ifdef CPU_X86_64
@@ -71,12 +71,15 @@ struct idt_intr_gate {
 #endif
 } __attribute__((__packed__));
 
-_Static_assert(sizeof(struct idt_intr_gate) == IDT_INTR_GATE_SIZE,
-    L"struct idt_intr_gate is not " AC_XSTR(IDT_INTR_GATE_SIZE_STR) " bytes");
+_Static_assert(sizeof(struct intr_gate) == INTR_GATE_SIZE,
+    L"struct intr_gate is not " AC_XSTR(INTR_GATE_SIZE_STR) " bytes");
 
-typedef struct idt_intr_gate idt_intr_gate;
+typedef struct intr_gate intr_gate;
 
-struct idt_task_gate {
+/**
+ * Task gate
+ */
+struct task_gate {
   ac_uptr unused_1:16;
   ac_uptr tss_seg_selector:16;
   ac_uptr unused_2:8;
@@ -87,13 +90,13 @@ struct idt_task_gate {
   ac_uptr unused_4:16;
 } __attribute__((__packed__));
 
-_Static_assert(sizeof(struct idt_task_gate) == IDT_TASK_GATE_SIZE,
+_Static_assert(sizeof(struct task_gate) == TASK_GATE_SIZE,
     L"struct intr_trap_gate is not 16 bytes");
 
-typedef struct idt_task_gate idt_task_gate;
+typedef struct task_gate task_gate;
 
 
-#define IDT_INTR_GATE_COMMON_INITIALIZER \
+#define INTR_GATE_COMMON_INITIALIZER \
    .offset_lo = 0, \
    .segment = 0, \
    .unused_1 = 0, \
@@ -103,35 +106,35 @@ typedef struct idt_task_gate idt_task_gate;
    .p = 0, \
    .offset_hi = 0, \
 
-#define IDT_INTR_GATE_X86_64_EXTRA_INITIALIZER \
+#define INTR_GATE_X86_64_EXTRA_INITIALIZER \
   .ist = 0, \
   .unused_3 = 0,
 
 #ifdef CPU_X86_64
-#define IDT_INTR_GATE_INITIALIZER { \
-   IDT_INTR_GATE_COMMON_INITIALIZER \
-   IDT_INTR_GATE_X86_64_EXTRA_INITIALIZER \
+#define INTR_GATE_INITIALIZER { \
+   INTR_GATE_COMMON_INITIALIZER \
+   INTR_GATE_X86_64_EXTRA_INITIALIZER \
 }
 #else /* CPU_X86_32 */
-#define IDT_INTR_GATE_INITIALIZER { \
-   IDT_INTR_GATE_COMMON_INITIALIZER \
+#define INTR_GATE_INITIALIZER { \
+   INTR_GATE_COMMON_INITIALIZER \
 }
 #endif
 
-/** Return the bits for idt_intr_gate.offset_lo as a ac_uptr */
-#define IDT_INTR_GATE_OFFSET_LO(addr) ({ \
+/** Return the bits for intr_gate.offset_lo as a ac_uptr */
+#define INTR_GATE_OFFSET_LO(addr) ({ \
   ac_uptr r = ((ac_uptr)(addr) >> 0) & 0xFFFF; \
   r; \
 })
 
-/** Return the bits for idt_intr_gate.offset_hi as a ac_uptr */
-#define IDT_INTR_GATE_OFFSET_HI(addr) ({ \
-  ac_uptr r = ((ac_uptr)(addr) >> 16) & IDT_INTR_GATE_OFFSET_HI_MASK; \
+/** Return the bits for intr_gate.offset_hi as a ac_uptr */
+#define INTR_GATE_OFFSET_HI(addr) ({ \
+  ac_uptr r = ((ac_uptr)(addr) >> 16) & INTR_GATE_OFFSET_HI_MASK; \
   r; \
 })
 
-/** Return the idt_intr_gate.offset as an ac_uptr */
-#define GET_IDT_INTR_GATE_OFFSET(gate) ({ \
+/** Return the intr_gate.offset as an ac_uptr */
+#define GET_INTR_GATE_OFFSET(gate) ({ \
   ac_uptr r = (ac_uptr)((((ac_uptr)(gate).offset_hi) << 16) \
       | (ac_uptr)((gate).offset_lo)); \
   r; \
@@ -165,7 +168,7 @@ struct idt_ptr {
                         // Software Developer's Manual" Volume 3 chapter 3.5.1
                         // "Segment Descriptor Tables".
     volatile ac_u16 limit;
-    idt_intr_gate * volatile iig;
+    intr_gate * volatile iig;
 } __attribute__((__packed__));
 
 _Static_assert(sizeof(struct idt_ptr) == IDT_PTR_SIZE,
@@ -225,7 +228,7 @@ void set_intr_handler(ac_u32 intr_num, intr_handler ih);
 
 void set_expt_handler(ac_u32 intr_num, expt_handler eh);
 
-idt_intr_gate* get_idt_intr_gate(ac_u32 intr_num);
+intr_gate* get_intr_gate(ac_u32 intr_num);
 
 void initialize_intr_descriptor_table(void);
 

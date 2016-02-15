@@ -21,6 +21,6 @@
 
 void print_intr_frame(char* str, intr_frame* frame);
 
-void print_idt_intr_gate(char *str, idt_intr_gate* gate);
+void print_intr_gate(char *str, intr_gate* gate);
 
 #endif

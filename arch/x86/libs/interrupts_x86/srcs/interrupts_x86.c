@@ -34,7 +34,7 @@
 #endif
 
 /* Interrupt Descriptor Table */
-static idt_intr_gate idt[256];
+static intr_gate idt[256];
 
 static ac_u32 intr_undefined_counter;
 static ac_u32 expt_undefined_counter;
@@ -133,12 +133,12 @@ static void intr_invalid_opcode(struct intr_frame *frame) {
   reset_x86();
 }
 
-static void set_intr_gate(idt_intr_gate* gate, intr_handler* ih) {
-  static idt_intr_gate g = IDT_INTR_GATE_INITIALIZER;
+static void set_intr_gate(intr_gate* gate, intr_handler* ih) {
+  static intr_gate g = INTR_GATE_INITIALIZER;
   *gate = g;
 
-  gate->offset_lo = IDT_INTR_GATE_OFFSET_LO(ih);
-  gate->offset_hi = IDT_INTR_GATE_OFFSET_HI(ih);
+  gate->offset_lo = INTR_GATE_OFFSET_LO(ih);
+  gate->offset_hi = INTR_GATE_OFFSET_HI(ih);
   gate->segment = 8; // Code Segment TI=0, RPL=0
                      // FIXME: How to know where the Code Segement is
 #ifdef CPU_X86_64
@@ -149,12 +149,12 @@ static void set_intr_gate(idt_intr_gate* gate, intr_handler* ih) {
   gate->p = 1;
 }
 
-static void set_expt_gate(idt_intr_gate* gate, expt_handler* eh) {
-  static idt_intr_gate g = IDT_INTR_GATE_INITIALIZER;
+static void set_expt_gate(intr_gate* gate, expt_handler* eh) {
+  static intr_gate g = INTR_GATE_INITIALIZER;
   *gate = g;
 
-  gate->offset_lo = IDT_INTR_GATE_OFFSET_LO(eh);
-  gate->offset_hi = IDT_INTR_GATE_OFFSET_HI(eh);
+  gate->offset_lo = INTR_GATE_OFFSET_LO(eh);
+  gate->offset_hi = INTR_GATE_OFFSET_HI(eh);
   gate->segment = 8; // Code Segment TI=0, RPL=0
                      // FIXME: How to know where the Code Segement is
 #ifdef CPU_X86_64
@@ -165,7 +165,7 @@ static void set_expt_gate(idt_intr_gate* gate, expt_handler* eh) {
   gate->p = 1;
 }
 
-static void set_idtr(idt_intr_gate idt[], ac_u32 count) {
+static void set_idtr(intr_gate idt[], ac_u32 count) {
   idt_ptr dp;
   dp.limit = (ac_u16)(((ac_uptr)&idt[count] - (ac_uptr)&idt[0] - 1)
       & 0xFFFF);
@@ -181,7 +181,7 @@ void set_expt_handler(ac_u32 intr_num, expt_handler eh) {
   set_expt_gate(&idt[intr_num], eh);
 }
 
-idt_intr_gate* get_idt_intr_gate(ac_u32 intr_num) {
+intr_gate* get_intr_gate(ac_u32 intr_num) {
   return &idt[intr_num];
 }
 

@@ -27,7 +27,7 @@ void print_intr_frame(char* str, intr_frame* frame) {
   ac_printf(" frame->ss: %x\n", frame->ss);
 }
 
-void print_idt_intr_gate(char *str, idt_intr_gate* gate) {
+void print_intr_gate(char *str, intr_gate* gate) {
   ac_printf("%s:\n", str);
   ac_printf(" gate->offset_lo: %p\n", gate->offset_lo);
   ac_printf(" gate->segment: %p\n", gate->segment);
@@ -43,5 +43,5 @@ void print_idt_intr_gate(char *str, idt_intr_gate* gate) {
 #ifdef CPU_X86_64
   ac_printf(" gate->unused_3: %d\n", gate->unused_3);
 #endif
-  ac_printf(" gate->offset: %p\n", GET_IDT_INTR_GATE_OFFSET(*gate));
+  ac_printf(" gate->offset: %p\n", GET_INTR_GATE_OFFSET(*gate));
 }
