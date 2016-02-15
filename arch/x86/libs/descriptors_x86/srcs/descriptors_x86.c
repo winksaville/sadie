@@ -15,44 +15,9 @@
  */
 
 #include <descriptors_x86.h>
-#include <interrupts_x86.h>
 
 #include <ac_inttypes.h>
 #include <ac_memcmp.h>
-
-void set_intr_gate(idt_intr_gate* gate, intr_handler* ih) {
-  static idt_intr_gate g = IDT_INTR_GATE_INITIALIZER;
-  *gate = g;
-
-  // Set other fields
-  gate->offset_lo = IDT_INTR_GATE_OFFSET_LO(ih);
-  gate->offset_hi = IDT_INTR_GATE_OFFSET_HI(ih);
-  gate->segment = 8; // Code Segment TI=0, RPL=0
-                     // FIXME: How to know where the Code Segement is
-#ifdef CPU_X86_64
-  gate->ist = 0; // Modified legacy stack switching mode
-#endif
-  gate->type = DT_64_INTR_GATE;
-  gate->dpl = 0;
-  gate->p = 1;
-}
-
-void set_expt_gate(idt_intr_gate* gate, expt_handler* eh) {
-  static idt_intr_gate g = IDT_INTR_GATE_INITIALIZER;
-  *gate = g;
-
-  // Set other fields
-  gate->offset_lo = IDT_INTR_GATE_OFFSET_LO(eh);
-  gate->offset_hi = IDT_INTR_GATE_OFFSET_HI(eh);
-  gate->segment = 8; // Code Segment TI=0, RPL=0
-                     // FIXME: How to know where the Code Segement is
-#ifdef CPU_X86_64
-  gate->ist = 0; // Modified legacy stack switching mode
-#endif
-  gate->type = DT_64_INTR_GATE;
-  gate->dpl = 0;
-  gate->p = 1;
-}
 
 void set_seg_desc(seg_desc* sd, ac_u32 seg_limit, ac_uptr base_addr, ac_u8 type,
     ac_u8 s, ac_u8 dpl, ac_u8 p, ac_u8 avl, ac_u8 l, ac_u8 d_b, ac_u8 g) {

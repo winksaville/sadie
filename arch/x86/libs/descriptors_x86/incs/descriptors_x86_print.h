@@ -21,10 +21,6 @@
 #include "interrupts_x86.h"
 #include "descriptors_x86.h"
 
-void print_intr_frame(char* str, intr_frame* frame);
-
-void print_idt_intr_gate(char *str, idt_intr_gate* gate);
-
 void print_tss_desc(char *str, tss_desc* desc);
 
 void print_seg_desc(char *str, seg_desc* desc);
