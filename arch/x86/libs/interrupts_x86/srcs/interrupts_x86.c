@@ -20,8 +20,7 @@
 #include <ac_inttypes.h>
 #include <ac_printf.h>
 
-//#include <descriptors_x86.h>
-//#include <descriptors_x86_print.h>
+#include <descriptors_x86.h>
 #include <native_x86.h>
 #include <reset_x86.h>
 

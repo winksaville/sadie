@@ -17,37 +17,7 @@
 #ifndef ARCH_X86_INCS_NATIVE_X86_H
 #define ARCH_X86_INCS_NATIVE_X86_H
 
-#include <cr_x86.h>
-#include <cpuid_x86.h>
-#include <descriptors_x86.h>
-#include <io_x86.h>
-#include <msr_x86.h>
-
 #include <ac_inttypes.h>
-
-/** Set the GDT register from desc_ptr */
-static __inline__ void set_gdt(descriptor_ptr* desc_ptr) {
-  ac_u16* p = (ac_u16*)&desc_ptr->limit;
-  __asm__ volatile("lgdt %0" :: "m" (*p));
-}
-
-/** Get the GDT register to desc_ptr */
-static __inline__ void get_gdt(descriptor_ptr* desc_ptr) {
-  ac_u16* p = (ac_u16*)&desc_ptr->limit;
-  __asm__ volatile("sgdt %0" : "=m" (*p));
-}
-
-/** Set the LDT register from desc_ptr */
-static __inline__ void set_ldt(descriptor_ptr* desc_ptr) {
-  ac_u16* p = (ac_u16*)&desc_ptr->limit;
-  __asm__ volatile("lldt %0" :: "m" (*p));
-}
-
-/** Get the LDT register to desc_ptr */
-static __inline__ void get_ldt(descriptor_ptr* desc_ptr) {
-  ac_u16* p = (ac_u16*)&desc_ptr->limit;
-  __asm__ volatile("sldt %0" : "=m" (*p));
-}
 
 /** Set Task Register which is a 16 bit selector into the GDT */
 static __inline__ void set_tr(ac_u16 selector) {

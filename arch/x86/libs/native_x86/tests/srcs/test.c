@@ -15,13 +15,8 @@
  */
 
 #include <native_x86.h>
-#include <descriptors_x86.h>
-#include <interrupts_x86.h>
 
-#include <ac_architecture.h>
-#include <ac_bits.h>
 #include <ac_printf.h>
-#include <ac_string.h>
 #include <ac_test.h>
 
 ac_bool test_seg_regs(void) {
@@ -64,43 +59,10 @@ ac_bool test_seg_regs(void) {
   return error;
 }
 
-ac_bool test_gdt_ldt(void) {
-  descriptor_ptr dp1;
-  descriptor_ptr dp2;
-  ac_bool error = AC_FALSE;
-
-  // Get current value and verifiy we can write it
-  // and read back the same value. Not a great test
-  // but in the short term anything else would be
-  // fatal.
-  get_gdt(&dp1);
-  set_gdt(&dp1);
-  get_gdt(&dp2);
-
-  error |= AC_TEST_EM(dp1.limit == dp2.limit,
-      "Unable to get/set/get GDT register descriptor_ptr.limit");
-
-  error |= AC_TEST_EM(dp1.address == dp2.address,
-      "Unable to get/set/get GDT register descriptor_ptr.address");
-
-  get_ldt(&dp1);
-  set_ldt(&dp1);
-  get_ldt(&dp2);
-
-  error |= AC_TEST_EM(dp1.limit == dp2.limit,
-      "Unable to get/set/get LDT register descriptor_ptr.limit");
-
-  error |= AC_TEST_EM(dp1.address == dp2.address,
-      "Unable to get/set/get LDT register descriptor_ptr.address");
-
-  return error;
-}
-
 int main(void) {
   ac_bool error = AC_FALSE;
 
   error |= test_seg_regs();
-  error |= test_gdt_ldt();
 
   if (!error) {
     ac_printf("OK\n");

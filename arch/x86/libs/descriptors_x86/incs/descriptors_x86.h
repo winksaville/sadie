@@ -314,4 +314,28 @@ void set_tss_ldt_desc(tss_desc* tld, ac_u32 seg_limit, ac_uptr base_addr,
 
 ac_s32 cmp_tss_ldt_desc(tss_desc* sd1, tss_desc* sd2);
 
+/** Set the GDT register from desc_ptr */
+static __inline__ void set_gdt(descriptor_ptr* desc_ptr) {
+  ac_u16* p = (ac_u16*)&desc_ptr->limit;
+  __asm__ volatile("lgdt %0" :: "m" (*p));
+}
+
+/** Get the GDT register to desc_ptr */
+static __inline__ void get_gdt(descriptor_ptr* desc_ptr) {
+  ac_u16* p = (ac_u16*)&desc_ptr->limit;
+  __asm__ volatile("sgdt %0" : "=m" (*p));
+}
+
+/** Set the LDT register from desc_ptr */
+static __inline__ void set_ldt(descriptor_ptr* desc_ptr) {
+  ac_u16* p = (ac_u16*)&desc_ptr->limit;
+  __asm__ volatile("lldt %0" :: "m" (*p));
+}
+
+/** Get the LDT register to desc_ptr */
+static __inline__ void get_ldt(descriptor_ptr* desc_ptr) {
+  ac_u16* p = (ac_u16*)&desc_ptr->limit;
+  __asm__ volatile("sldt %0" : "=m" (*p));
+}
+
 #endif
