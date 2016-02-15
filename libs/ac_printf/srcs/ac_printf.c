@@ -32,12 +32,11 @@ static const char* ret_empty(ac_writer* this) {
     return "";
 }
 
-
 /**
  * Write a character using seL4_PutChar
  */
 static void write_char(ac_writer* this, void* param) {
-    (void)(this);
+    this->count += 1;
     ac_putchar((ac_u8)(((ac_uptr)param) & 0xff));
 }
 
@@ -59,8 +58,9 @@ static ac_u32 write_str(ac_writer *writer, char *str) {
 /**
  * Output an unsigned int bit value
  */
-static ac_u32 write_uint(
-        ac_writer* writer, ac_uint val, ac_bool radix16Leading0, ac_uint radix) {
+static ac_u32 write_uval(
+        ac_writer* writer, ac_u64 val, ac_uint sz_val_in_bytes,
+        ac_bool radix16Leading0, ac_uint radix) {
     static const char val_to_char[] = "0123456789abcdef";
     ac_u32 count = 0;
     char result[65];
@@ -68,7 +68,7 @@ static ac_u32 write_uint(
     // Validate radix
     if ((radix <= 1) || (radix > sizeof(val_to_char))) {
         count = write_str(writer, "Bad Radix ");
-        count += write_uint(writer, radix, NO_LEADING_0, 10);
+        count += write_uval(writer, sz_val_in_bytes, radix, NO_LEADING_0, 10);
     } else {
         ac_sint idx;
         for (idx = 0; idx < sizeof(result); idx++) {
@@ -80,7 +80,7 @@ static ac_u32 write_uint(
         }
         count = idx + 1;
         if ((radix == 16) && radix16Leading0) {
-            ac_sint pad0Count = (sizeof(val) * 2) - count;
+            ac_sint pad0Count = (sz_val_in_bytes * 2) - count;
             count += pad0Count;
             while (pad0Count-- > 0) {
                 writer->write_param(writer, cast_to_write_param('0'));
@@ -93,83 +93,31 @@ static ac_u32 write_uint(
     return count;
 }
 
-/**
- * Output an unsigned 32 bit value
- */
-static ac_u32 write_u32(
-        ac_writer* writer, ac_u32 val, ac_bool radix16Leading0, ac_u32 radix) {
-    static const char val_to_char[] = "0123456789abcdef";
+static ac_u32 write_sval(
+        ac_writer* writer, ac_s64 val, ac_uint sz_val_in_bytes,
+        ac_bool radix16Leading0, ac_uint radix) {
     ac_u32 count = 0;
-    char result[65];
-
-    // Validate radix
-    if ((radix <= 1) || (radix > sizeof(val_to_char))) {
-        count = write_str(writer, "Bad Radix ");
-        count += write_u32(writer, radix, NO_LEADING_0, 10);
-    } else {
-        ac_s32 idx;
-        for (idx = 0; idx < sizeof(result); idx++) {
-            result[idx] = val_to_char[val % radix];
-            val /= radix;
-            if (val == 0) {
-                break;
-            }
-        }
-        count = idx + 1;
-        if ((radix == 16) && radix16Leading0) {
-            ac_s32 pad0Count = (sizeof(val) * 2) - count;
-            count += pad0Count;
-            while (pad0Count-- > 0) {
-                writer->write_param(writer, cast_to_write_param('0'));
-            }
-        }
-        for (; idx >= 0; idx--) {
-            writer->write_param(writer, cast_to_write_param(result[idx]));
-        }
-    }
-    return count;
-}
-
-/**
- * Output an unsigned 64 bit value
- */
-static ac_u32 write_u64_radix16(
-        ac_writer* writer, ac_u64 val, ac_bool radix16Leading0) {
-    ac_u32 count = 0;
-    ac_u32 upper = (val >> 32) & 0xFFFFFFFF;
-    ac_u32 lower = val & 0xFFFFFFFF;
-    if ((upper != 0) || radix16Leading0) {
-        count = write_u32(writer, upper, radix16Leading0, 16);
-        count += write_u32(writer, lower, RADIX16_LEADING_0, 16);
-    } else {
-        count += write_u32(writer, lower, radix16Leading0, 16);
-    }
-    return count;
-}
-
-/**
- * Output a signed int bit value
- */
-static ac_u32 write_sint(ac_writer* writer, ac_sint val, ac_u32 radix) {
-    ac_u32 count = 0;
-    if ((val < 0) && (radix == 10)) {
+    if (val < 0) {
         writer->write_param(writer, cast_to_write_param('-'));
         count += 1;
         val = -val;
     }
-    return count + write_uint(writer, val, NO_LEADING_0, radix);
+    return count + write_uval(writer, val, sizeof(ac_uint),
+        NO_LEADING_0, 10);
 }
 
 /**
  * Print a formatted string to the writer function. This supports a
  * subset of the typical libc printf:
  *   - %% ::= prints a percent
- *   - %d ::= prints a positive or negative long base 10
- *   - %u ::= prints an ac_u32 base 10
- *   - %x ::= prints a ac_u32 base 16
- *   - %p ::= prints a pointer base 16 with 0x prepended
  *   - %s ::= prints a string
- *   - %llx ::= prints a ac_u64 base 16
+ *   - %p ::= prints a pointer base 16 with leading zero's
+ *   - %b ::= prints a ac_uint base 2
+ *   - %d ::= prints a ac_sint base 10
+ *   - %u ::= prints a ac_uint base 10
+ *   - %x ::= prints a ac_uint base 16
+ *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
+ *   - print a 64 bit value in the requested radix.
  *
  * Returns number of characters consumed
  */
@@ -211,42 +159,60 @@ static ac_u32 formatter(ac_writer* writer, const char* format, ac_va_list args) 
                     break;
                 }
                 case 'b': {
-                    count += write_uint(writer, ac_va_arg(args, ac_uint), NO_LEADING_0, 2);
+                    count += write_uval(writer, ac_va_arg(args, ac_uint),
+                       sizeof(ac_uint), NO_LEADING_0, 2);
                     break;
                 }
                 case 'd': {
-                    count += write_sint(writer, ac_va_arg(args, ac_sint), 10);
+                    count += write_sval(writer, ac_va_arg(args, ac_sint),
+                       sizeof(ac_uint), NO_LEADING_0, 2);
                     break;
                 }
                 case 'u': {
-                    count += write_uint(writer, ac_va_arg(args, ac_uint), NO_LEADING_0, 10);
+                    count += write_uval(writer, ac_va_arg(args, ac_uint),
+                        sizeof(ac_uint), NO_LEADING_0, 10);
                     break;
                 }
                 case 'x': {
-                    count += write_uint(writer, ac_va_arg(args, ac_uint), NO_LEADING_0, 16);
+                    count += write_uval(writer, ac_va_arg(args, ac_uint),
+                        sizeof(ac_uint), NO_LEADING_0, 16);
                     break;
                 }
                 case 'l': {
-                    if (ac_strncmp("lx", format, 2) == 0) {
-                        format += 2;
-                        count += write_u64_radix16(writer, ac_va_arg(args, ac_u64), NO_LEADING_0);
+                    ac_bool longlong = AC_FALSE;
+                    // ll and l will be ac_u64
+                    if (ac_strncmp("l", format, 1) == 0) {
+                      longlong = AC_TRUE;
+                      format += 1;
+                    }
+                    if (ac_strncmp("b", format, 1) == 0) {
+                        format += 1;
+                        count += write_uval(writer, ac_va_arg(args, ac_u64),
+                            sizeof(ac_u64), NO_LEADING_0, 2);
+                    } else if (ac_strncmp("d", format, 1) == 0) {
+                        format += 1;
+                        count += write_sval(writer, ac_va_arg(args, ac_u64),
+                            sizeof(ac_u64), NO_LEADING_0, 10);
+                    } else if (ac_strncmp("u", format, 1) == 0) {
+                        format += 1;
+                        count += write_uval(writer, ac_va_arg(args, ac_u64),
+                            sizeof(ac_u64), NO_LEADING_0, 10);
+                    } else if (ac_strncmp("x", format, 1) == 0) {
+                        format += 1;
+                        count += write_uval(writer, ac_va_arg(args, ac_u64),
+                            sizeof(ac_u64), NO_LEADING_0, 16);
                     } else {
-                        count += write_str(writer, "%l");
+                        if (longlong) {
+                          count += write_str(writer, "%ll");
+                        } else {
+                          count += write_str(writer, "%l");
+                        }
                     }
                     break;
                 }
                 case 'p': {
-                    ac_u32 sz_ptr = sizeof(void *);
-                    if (sz_ptr == sizeof(ac_uint)) {
-                      count += write_uint(writer, ac_va_arg(args, ac_uint), RADIX16_LEADING_0, 16);
-                    } else if (sz_ptr == sizeof(ac_u32)) {
-                      count += write_u32(writer, ac_va_arg(args, ac_u32), RADIX16_LEADING_0, 16);
-                    } else if (sz_ptr == sizeof(ac_u64)) {
-                      count += write_u64_radix16(writer, ac_va_arg(args, ac_u64), RADIX16_LEADING_0);
-                    } else {
-                      write_str(writer, "Bad ptr size, expecting sizeof(ac_uint), 32 or 64 bit pointers:");
-                      write_uint(writer, sz_ptr, 10, NO_LEADING_0);
-                    }
+                    count += write_uval(writer, (ac_u64)(ac_uptr)ac_va_arg(args, void*),
+                        sizeof(void*), RADIX16_LEADING_0, 16);
                     break;
                 }
                 default: {
@@ -277,7 +243,8 @@ done:
  *   - %s ::= prints a string
  *   - %llx ::= prints a ac_u32 long base 16
  *
- * Returns number of characters printed
+ * Returns executes writer->get_buff() which must at least
+ * return an empty string, it will never be AC_NULL.
  */
 const char* ac_formatter(ac_writer* writer, const char *format, ...) {
     ac_va_list args;
@@ -287,52 +254,60 @@ const char* ac_formatter(ac_writer* writer, const char *format, ...) {
     ac_va_end(args);
 
     if (writer->get_buff != AC_NULL) {
-        return writer->get_buff(writer);
+        const char* ptr = writer->get_buff(writer);
+        if (ptr == AC_NULL) {
+          ptr = "";
+        }
+        return ptr;
     } else {
         return "";
     }
 }
 
 /**
- * Print a formatted string to the writer. This supports a
+ * Print a formatted string to the writer function. This supports a
  * subset of the typical libc printf:
  *   - %% ::= prints a percent
- *   - %d ::= prints a positive or negative long base 10
- *   - %u ::= prints an ac_u32 base 10
- *   - %x ::= prints a ac_u32 base 16
- *   - %p ::= prints a ac_u32 assuming its a pointer base 16 with 0x prepended
  *   - %s ::= prints a string
- *   - %llx ::= prints a ac_u32 long base 16
+ *   - %p ::= prints a pointer base 16 with leading zero's
+ *   - %b ::= prints a ac_uint base 2
+ *   - %d ::= prints a ac_sint base 10
+ *   - %u ::= prints a ac_uint base 10
+ *   - %x ::= prints a ac_uint base 16
+ *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
+ *   - print a 64 bit value in the requested radix.
  *
- * Returns number of characters printed
+ * Returns writer->count which should be the number of characters printed
  */
-ac_u32 ac_printfw(ac_writer* writer, const char *format, ...) {
+ac_uint ac_printfw(ac_writer* writer, const char *format, ...) {
     ac_va_list args;
-    ac_u32 count;
 
     ac_va_start(args, format);
-    count = formatter(writer, format, args);
+    formatter(writer, format, args);
     ac_va_end(args);
-    return count;
+    return writer->count;
 }
 
 /**
  * Print a formatted string to seL4_PutChar. This supports a
  * subset of the typical libc printf:
  *   - %% ::= prints a percent
- *   - %d ::= prints a positive or negative long base 10
- *   - %u ::= prints an ac_u32 base 10
- *   - %x ::= prints a ac_u32 base 16
- *   - %p ::= prints a ac_u32 assuming its a pointer base 16 with 0x prepended
  *   - %s ::= prints a string
- *   - %llx ::= prints a ac_u32 long base 16
+ *   - %p ::= prints a pointer base 16 with leading zero's
+ *   - %b ::= prints a ac_uint base 2
+ *   - %d ::= prints a ac_sint base 10
+ *   - %u ::= prints a ac_uint base 10
+ *   - %x ::= prints a ac_uint base 16
+ *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
+ *   - print a 64 bit value in the requested radix.
  *
  * Returns number of characters printed
  */
-ac_u32 ac_printf(const char *format, ...) {
+ac_uint ac_printf(const char *format, ...) {
     ac_va_list args;
-    ac_u32 count;
+
     ac_writer writer = {
+            .count = 0,
             .get_buff = ret_empty,
             .write_beg = AC_NULL,
             .write_param = write_char,
@@ -341,8 +316,7 @@ ac_u32 ac_printf(const char *format, ...) {
     };
 
     ac_va_start(args, format);
-    count = formatter(&writer, format, args);
+    formatter(&writer, format, args);
     ac_va_end(args);
-    return count;
+    return writer.count;
 }
-

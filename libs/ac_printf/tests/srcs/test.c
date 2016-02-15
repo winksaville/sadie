@@ -17,6 +17,7 @@
 #include <ac_string.h>
 #include <ac_printf.h>
 #include <ac_debug_printf.h>
+#include <ac_test.h>
 
 typedef struct {
     int idx;
@@ -64,6 +65,7 @@ static const char* get_buff(ac_writer* this) {
  * write_beg called before first write_char_to_buff
  */
 static void write_beg(ac_writer* this) {
+  this->count = 0;
   Buffer *pBuffer = (Buffer*)this->data;
   pBuffer->idx = 0;
 }
@@ -86,6 +88,7 @@ static void write_char_to_buff(ac_writer* this, void* param) {
   if (pBuffer->idx >= sizeof(pBuffer->buff)) {
     pBuffer->idx = 0;
   }
+  this->count += 1;
 }
 
 static inline ac_bool test_printing_result(
@@ -125,11 +128,47 @@ static inline ac_bool test_printing_result(
 
 int main(void) {
   ac_bool failure = AC_FALSE;
-  ac_printf("Hello, World\n");
+  ac_uint count;
+
+  count = ac_printf("Hello, World\n");
+  failure |= AC_TEST(count == 13);
   ac_debug_printf("Hello, World: via ac_debug_printf\n");
 
-  // Define a buffer and a writer for testing printf
   Buffer buffer;
+
+  // A very simple writer, all uninitialized fields will be 0
+  // and for this code specifically simple_writer.count is 0.
+  // Note since no write_beg it can be only used once and we
+  // have to manully initialize buffer.idx. Also, since there
+  // is no write_end there will be no terminating 0 of the buffer,
+  // so this is BAD and only for testing that we can leave all
+  // funtions empty except write_param.
+  ac_writer simple_writer = {
+          .write_param = write_char_to_buff,
+          .data = &buffer,
+  };
+  buffer.idx = 0;
+  count = ac_printfw(&simple_writer, "hi");
+  failure |= AC_TEST(count == 2);
+  failure |= AC_TEST(ac_strncmp(buffer.buff, "hi", 2) == 0);  
+
+  // Test that with no get_buff an empty string is returned.
+  // The wirter will be properly initialized and we'll have
+  // a 0 at the end of the buffer so lie about the length
+  // in the strncmp.
+  ac_writer better_writer = {
+          .write_beg = write_beg,
+          .write_param = write_char_to_buff,
+          .write_end = write_end,
+          .data = &buffer,
+  };
+  const char* chars = ac_formatter(&better_writer, "bye");
+  failure |= AC_TEST(better_writer.count == 3);
+  failure |= AC_TEST(ac_strncmp(buffer.buff, "bye", 10) == 0);  
+  failure |= AC_TEST(ac_strncmp(chars, "", 10) == 0);  
+
+
+  // Define a buffer and a writer for testing printf
   ac_writer writer = {
           .write_beg = write_beg,
           .write_param = write_char_to_buff,
@@ -173,6 +212,60 @@ int main(void) {
   failure |= TEST_PRINTING("%x", 16, "10");
   failure |= TEST_PRINTING("0x%x", 0x12345678, "0x12345678");
   failure |= TEST_PRINTING("0x%x", 0x9abcdef0, "0x9abcdef0");
+
+  // Test "l" and "ll" both are ac_u64/ll
+  failure |= TEST_PRINTING("%lb", -1ll,
+      "1111111111111111111111111111111111111111111111111111111111111111");
+  failure |= TEST_PRINTING("%llb", 0ll, "0");
+  failure |= TEST_PRINTING("%lb", 0x8765432187654321,
+      "1000011101100101010000110010000110000111011001010100001100100001");
+  failure |= TEST_PRINTING("%llb", (ac_u64)0x8765432187654321,
+      "1000011101100101010000110010000110000111011001010100001100100001");
+  failure |= TEST_PRINTING("%lb", (ac_u64)0xFFFFFFFFFFFFFFFF,
+      "1111111111111111111111111111111111111111111111111111111111111111");
+
+  failure |= TEST_PRINTING("%ld", -1ll, "-1");
+  failure |= TEST_PRINTING("%lld", 0ll, "0");
+  failure |= TEST_PRINTING("%ld",
+      (ac_s64)0x7FFFFFFFFFFFFFFF, "9223372036854775807");
+  failure |= TEST_PRINTING("%lld",
+      0x7FFFFFFFFFFFFFFFll, "9223372036854775807");
+  failure |= TEST_PRINTING("%ld",
+      (ac_s64)0x8000000000000000, "-9223372036854775808");
+  failure |= TEST_PRINTING("%ld",
+      0x7FFFFFFFFFFFFFFF, "9223372036854775807");
+  failure |= TEST_PRINTING("%ld",
+      0x8000000000000000, "-9223372036854775808");
+
+  failure |= TEST_PRINTING("%lu", -1ll, "18446744073709551615");
+  failure |= TEST_PRINTING("%llu", 0ll, "0");
+  failure |= TEST_PRINTING("%lu",
+      (ac_u64)0x7FFFFFFFFFFFFFFF, "9223372036854775807");
+  failure |= TEST_PRINTING("%lu",
+      0x8000000000000000ll, "9223372036854775808");
+  failure |= TEST_PRINTING("%llu",
+      0xFFFFFFFFFFFFFFFF, "18446744073709551615");
+  failure |= TEST_PRINTING("%lu",
+      0x7FFFFFFFFFFFFFFF, "9223372036854775807");
+  failure |= TEST_PRINTING("%llu",
+      0x8000000000000000, "9223372036854775808");
+  failure |= TEST_PRINTING("%lu",
+      0xFFFFFFFFFFFFFFFF, "18446744073709551615");
+
+  failure |= TEST_PRINTING("%lu", (ac_u64)-1, "18446744073709551615");
+  failure |= TEST_PRINTING("%lu", -1ll, "18446744073709551615");
+  failure |= TEST_PRINTING("%lx",
+      (ac_u64)0x7FFFFFFFFFFFFFFF, "7fffffffffffffff");
+  failure |= TEST_PRINTING("%llx",
+      (ac_u64)0x8000000000000000, "8000000000000000");
+  failure |= TEST_PRINTING("%lx",
+      0xFFFFFFFFFFFFFFFFll, "ffffffffffffffff");
+  failure |= TEST_PRINTING("%lx",
+      0x7FFFFFFFFFFFFFFF, "7fffffffffffffff");
+  failure |= TEST_PRINTING("%lx",
+      0x8000000000000000, "8000000000000000");
+  failure |= TEST_PRINTING("%lx",
+      0xFFFFFFFFFFFFFFFF, "ffffffffffffffff");
 
   if (sizeof(ac_uint) == sizeof(ac_u64)) {
     // Test big positive and negative numbers on 64 bit systems

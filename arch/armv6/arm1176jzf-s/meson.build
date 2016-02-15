@@ -35,8 +35,13 @@ compilerArgs += [
   '-march=@0@'.format('armv6zk'),
   '-mcpu=@0@'.format(Cpu),
   '-mtune=@0@'.format(Cpu),
-  '-m@0@-float'.format(Float),
-  '-mfloat-abi=@0@'.format(Float),
 ]
+
+if Float != 'NONE'
+  compilerArgs += [
+    '-m@0@-float'.format(Float),
+    '-mfloat-abi=@0@'.format(Float),
+  ]
+endif
 
 subdir('libs')

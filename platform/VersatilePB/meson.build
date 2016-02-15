@@ -24,8 +24,10 @@ Arch = 'armv6'
 # The name of a subdirecotry under arch/$Arch so arch/armv6/arm1176jzf-s
 Cpu = 'arm1176jzf-s'
 
-# Can be 'hard' or 'soft;
-Float = 'hard'
+# Possible values are 'hard', 'soft' or 'NONE'.
+# 'soft' and 'NONE' "work" but 'hard' gives an
+# error.
+Float = 'NONE'
 
 # The compiler arguments
 compilerArgs += [

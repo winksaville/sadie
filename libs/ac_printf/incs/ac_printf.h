@@ -40,11 +40,12 @@ typedef void (*ac_write_end_fn)(ac_writer* this);
 typedef const char* (*ac_get_buff_fn)(ac_writer* this);
 
 /**
- * An ac_Writer which has a function that processes the parameter
- * using any information needed in the ac_Writer.
+ * An ac_writer which is used by ac_printf to print
  */
 typedef struct _ac_writer {
-    ac_get_buff_fn get_buff;        // Called at anytime and must return an empty string
+    ac_uint count;                  // Number of character written since last write_beg call
+    ac_get_buff_fn get_buff;        // Called at anytime and the contents of the buffer
+                                    // or an empty string.
     ac_write_end_fn write_beg;      // Called before first writeParam, optional maybe ac_Null
     ac_write_param_fn write_param;  // Called to write the parameter
     ac_write_end_fn write_end;      // Called after last writeParam, optional maybe ac_Null
@@ -62,38 +63,44 @@ typedef struct _ac_writer {
  *   - %s ::= prints a string
  *   - %llx ::= prints a ac_u32 long base 16
  *
- * Returns a pointer to the buffer or pointer to an empty string "".
+ * Returns returns what writer->get_buff() returns if it exists and doesn't
+ * return AC_NULL. If get_buff doesn't exists or does return AC_NULL at least
+ * and enpty string is returned. So AC_NULL is NEVER returned.
  */
 const char* ac_formatter(ac_writer* writer, const char *format, ...);
 
 /**
- * Print a formatted string to the writer. This supports a
+ * Print a formatted string to the writer function. This supports a
  * subset of the typical libc printf:
  *   - %% ::= prints a percent
- *   - %d ::= prints a positive or negative long base 10
- *   - %u ::= prints an ac_Uint32 base 10
- *   - %x ::= prints a ac_Uint32 base 16
- *   - %p ::= prints a ac_Uint32 assuming its a pointer base 16 with 0x prepended
  *   - %s ::= prints a string
- *   - %llx ::= prints a ac_Uint32 long base 16
+ *   - %p ::= prints a pointer base 16 with leading zero's
+ *   - %b ::= prints a ac_uint base 2
+ *   - %d ::= prints a ac_sint base 10
+ *   - %u ::= prints a ac_uint base 10
+ *   - %x ::= prints a ac_uint base 16
+ *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
+ *   - print a 64 bit value in the requested radix.
  *
- * Returns number of characters printed
+ * Returns writer->count which should be the number of characters printed
  */
-ac_u32 ac_printfw(ac_writer* writer, const char *format, ...);
+ac_uint ac_printfw(ac_writer* writer, const char *format, ...);
 
 /**
- * Print a formatted string to ac_putchar. This supports a
+ * Print a formatted string to seL4_PutChar. This supports a
  * subset of the typical libc printf:
  *   - %% ::= prints a percent
- *   - %d ::= prints a positive or negative long base 10
- *   - %u ::= prints an ac_Uint32 base 10
- *   - %x ::= prints a ac_Uint32 base 16
- *   - %p ::= prints a ac_Uint32 assuming its a pointer base 16 with 0x prepended
  *   - %s ::= prints a string
- *   - %llx ::= prints a ac_Uint32 long base 16
+ *   - %p ::= prints a pointer base 16 with leading zero's
+ *   - %b ::= prints a ac_uint base 2
+ *   - %d ::= prints a ac_sint base 10
+ *   - %u ::= prints a ac_uint base 10
+ *   - %x ::= prints a ac_uint base 16
+ *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
+ *   - print a 64 bit value in the requested radix.
  *
  * Returns number of characters printed
  */
-ac_u32 ac_printf(const char *format, ...);
+ac_uint ac_printf(const char *format, ...);
 
 #endif
