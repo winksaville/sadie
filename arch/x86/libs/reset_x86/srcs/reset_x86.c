@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include <ac_inttypes.h>
-#include <descriptors_x86.h>
+#include <interrupts_x86.h>
 #include <native_x86.h>
 
+#include <ac_inttypes.h>
 #include <ac_printf.h>
 
+#if 0
 typedef unsigned short uint16_t;
 typedef unsigned long long uint64_t;
 
-#if 0
 // This does not work and is the original code from
 // [The easiest way to reset i386/x86_64 system]
 // (http://www.pagetable.com/?p=140). The reson it
@@ -45,6 +45,9 @@ void reset_x86(void) {
 #endif
 
 #if 0
+typedef unsigned short uint16_t;
+typedef unsigned long long uint64_t;
+
 // This does work and is what I posted as the solution
 // to the above code on [The easiest way to reset i386/x86_64 system]
 // (http://www.pagetable.com/?p=140).
@@ -77,10 +80,10 @@ void reset_x86(void) {
   // caused an GP fault (exception 13), but this code
   // works.
 
-  descriptor_ptr null_idtr;
+  idt_ptr null_idtr;
 
   null_idtr.limit = 0;
-  null_idtr.address = 0;
+  null_idtr.iig = 0;
 
   cli();
   set_idt(&null_idtr);

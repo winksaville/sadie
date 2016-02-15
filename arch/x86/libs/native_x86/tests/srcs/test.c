@@ -16,6 +16,7 @@
 
 #include <native_x86.h>
 #include <descriptors_x86.h>
+#include <interrupts_x86.h>
 
 #include <ac_architecture.h>
 #include <ac_bits.h>
@@ -63,7 +64,7 @@ ac_bool test_seg_regs(void) {
   return error;
 }
 
-ac_bool test_gdt_ldt_idt(void) {
+ac_bool test_gdt_ldt(void) {
   descriptor_ptr dp1;
   descriptor_ptr dp2;
   ac_bool error = AC_FALSE;
@@ -92,16 +93,6 @@ ac_bool test_gdt_ldt_idt(void) {
   error |= AC_TEST_EM(dp1.address == dp2.address,
       "Unable to get/set/get LDT register descriptor_ptr.address");
 
-  get_idt(&dp1);
-  set_idt(&dp1);
-  get_idt(&dp2);
-
-  error |= AC_TEST_EM(dp1.limit == dp2.limit,
-      "Unable to get/set/get IDT register descriptor_ptr.limit");
-
-  error |= AC_TEST_EM(dp1.address == dp2.address,
-      "Unable to get/set/get IDT register descriptor_ptr.address");
-
   return error;
 }
 
@@ -109,7 +100,7 @@ int main(void) {
   ac_bool error = AC_FALSE;
 
   error |= test_seg_regs();
-  error |= test_gdt_ldt_idt();
+  error |= test_gdt_ldt();
 
   if (!error) {
     ac_printf("OK\n");

@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+#include <interrupts_x86.h>
+#include <interrupts_x86_print.h>
+
 #include <ac_inttypes.h>
 #include <ac_printf.h>
 
-#include <descriptors_x86.h>
-#include <descriptors_x86_print.h>
-#include <interrupts_x86.h>
+//#include <descriptors_x86.h>
+//#include <descriptors_x86_print.h>
 #include <native_x86.h>
 #include <reset_x86.h>
 
@@ -95,10 +97,10 @@ static void expt_general_protection(struct intr_frame *frame, ac_uint error_code
   ac_printf(" error_code: %u\n", error_code);
   ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
 
-  descriptor_ptr dp;
-  get_idt(&dp);
-  ac_printf(" idt.limit=%d\n", dp.limit);
-  ac_printf(" idt.address=%p\n", dp.address);
+  idt_ptr idtp;
+  get_idt(&idtp);
+  ac_printf(" idt.limit=%d\n", idtp.limit);
+  ac_printf(" idt.iig=%p\n", idtp.iig);
   reset_x86();
 }
 
@@ -164,7 +166,7 @@ static void set_expt_gate(idt_intr_gate* gate, expt_handler* eh) {
 }
 
 static void set_idtr(idt_intr_gate idt[], ac_u32 count) {
-  descriptor_ptr dp;
+  idt_ptr dp;
   dp.limit = (ac_u16)(((ac_uptr)&idt[count] - (ac_uptr)&idt[0] - 1)
       & 0xFFFF);
   dp.iig = &idt[0];

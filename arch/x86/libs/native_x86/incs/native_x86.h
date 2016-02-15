@@ -49,18 +49,6 @@ static __inline__ void get_ldt(descriptor_ptr* desc_ptr) {
   __asm__ volatile("sldt %0" : "=m" (*p));
 }
 
-/** Set the IDT register from desc_ptr */
-static __inline__ void set_idt(descriptor_ptr* desc_ptr) {
-  ac_u16* p = (ac_u16*)&desc_ptr->limit;
-  __asm__ volatile("lidt %0" :: "m" (*p));
-}
-
-/** Get the IDT register to desc_ptr */
-static __inline__ void get_idt(descriptor_ptr* desc_ptr) {
-  ac_u16* p = (ac_u16*)&desc_ptr->limit;
-  __asm__ volatile("sidt %0" : "=m" (*p));
-}
-
 /** Set Task Register which is a 16 bit selector into the GDT */
 static __inline__ void set_tr(ac_u16 selector) {
   __asm__ volatile("ltr %0;" :: "r" (selector));
@@ -120,40 +108,9 @@ static __inline__ ac_uptr get_sp(void) {
   return sp;
 }
 
-/** interrupt instruction */
-#if 0
-//This inline doesn't work if optimization is -O0
-static __inline__ void intr(const ac_u8 num) {
-  __asm__ volatile("int %0" :: "i"(num));
-}
-#else
-#define intr(num) ({ \
-  __asm__ volatile("int %0" :: "i"(num)); \
-  })
-#endif
-
-/** interrupt return instruction */
-static __inline__ void iret(void) {
-#ifdef CPU_X86_64
-  __asm__ volatile("iretq");
-#else /* CPU_X86_32 */
-  __asm__ volatile("iret");
-#endif
-}
-
 /** hlt, halt instruction */
 static __inline void hlt(void) {
   __asm__ volatile("hlt");
-}
-
-/** cli, disable interrupts */
-static __inline void cli(void) {
-  __asm__ volatile("cli");
-}
-
-/** sti, enable interrupts */
-static __inline void sti(void) {
-  __asm__ volatile("sti");
 }
 
 #endif

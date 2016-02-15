@@ -15,8 +15,7 @@
  */
 
 #include <interrupts_x86.h>
-#include <descriptors_x86.h>
-#include <descriptors_x86_print.h>
+#include <interrupts_x86_print.h>
 #include <native_x86.h>
 
 #include <ac_inttypes.h>
@@ -38,16 +37,27 @@ static void intr_79(struct intr_frame *frame) {
 
 ac_bool test_interrupts(void) {
   ac_bool error = AC_FALSE;
-  descriptor_ptr idtr;
+  idt_ptr idtp1;
+  idt_ptr idtp2;
 
-  get_idt(&idtr);
+  // Verify we can read the interrupt descriptor table
+  get_idt(&idtp1);
+  error |= AC_TEST(idtp1.limit != 0);
+  error |= AC_TEST(idtp1.iig != 0);
+  ac_printf("idtp1.limit=%d iig=%p\n", idtp1.limit, idtp1.iig);
 
-  error |= AC_TEST(idtr.limit != 0);
-  error |= AC_TEST(idtr.iig != 0);
+  // Verify we can set it and re-reading has had the same result.
+  set_idt(&idtp1);
+  get_idt(&idtp2);
+
+  error |= AC_TEST(idtp1.limit == idtp2.limit);
+  error |= AC_TEST(idtp1.iig == idtp2.iig);
+  ac_printf("idtp2.limit=%d iig=%p\n", idtp2.limit, idtp2.iig);
+
 
   // Test we can set an interrupt handler and invoke it
   set_intr_handler(79, intr_79);
-  print_idt_intr_gate("idt[79]:", get_idt_intr_gate(79));
+  print_idt_intr_gate("idt[79]", get_idt_intr_gate(79));
 
   idt_intr_gate *g = get_idt_intr_gate(79);
   error |= AC_TEST(GET_IDT_INTR_GATE_OFFSET(*g) == (ac_uptr)intr_79);

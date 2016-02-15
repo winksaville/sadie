@@ -17,131 +17,25 @@
 #ifndef ARCH_X86_INCS_DESCRIPTORS_X86_64_h
 #define ARCH_X86_INCS_DESCRIPTORS_X86_64_h
 
-#include <ac_inttypes.h>
+//#include <interrupts_x86.h>
+
 #include <ac_architecture.h>
+#include <ac_inttypes.h>
+#include <ac_xstr.h>
 
 #if !defined(ARCH_X86) && (!defined(CPU_X86_32) || !defined(CPU_X86_64))
 #error  "Expecting ARCH_X86 && (CPU_X86_32 || CPU_X86_64)"
 #endif
 
 #ifdef CPU_X86_64 
-#define IDT_INTR_GATE_OFFSET_HI_MASK  ((ac_uptr)0xFFFFFFFFFFFFLL)
-#define IDT_INTR_GATE_SIZE  16
 #define TSS_DESC_BASE_ADDR_HI_MASK  ((ac_uptr)0xFFFFFFFFFFFFLL)
 #define TSS_DESC_SIZE  16
 #define SEG_DESC_SIZE  16
 #else /* CPU_X86_32 */
-#define IDT_INTR_GATE_OFFSET_HI_MASK  ((ac_uptr)0xFFFF)
-#define IDT_INTR_GATE_SIZE  8
 #define TSS_DESC_BASE_ADDR_HI_MASK  ((ac_uptr)0xFFFF)
 #define TSS_DESC_SIZE  8
 #define SEG_DESC_SIZE  12
 #endif
-
-#define IDT_TASK_GATE_SIZE  8
-
-/**
- * Interrupt Gate, this is the same as a trap gate with a different type.
- *
- * See "Intel 64 and IA-32 Architectures Software Developer's Manual"
- * Volume 3 chapter 6.11 "IDT Descriptors"
- * Figure 6-2. IDT Gate Descriptors
- *
- * and
- *
- * Volume 3 chapter 6.14.1 "64-Bit Mode IDT"
- * Figure 6-7. 64-Bit IDT Gate Descriptors
- */
-struct idt_intr_gate {
-  ac_uptr offset_lo:16;
-  ac_uptr segment:16;
-#ifdef CPU_X86_64
-  ac_uptr ist:3;
-  ac_uptr unused_1:5;
-#else /* CPU_X86_32 */
-  ac_uptr unused_1:8;
-#endif
-  ac_uptr type:4;
-  ac_uptr unused_2:1;
-  ac_uptr dpl:2;
-  ac_uptr p:1;
-#ifdef CPU_X86_64
-  ac_uptr offset_hi:48;
-  ac_uptr unused_3:32;
-#else /* CPU_X86_32 */
-  ac_uptr offset_hi:16;
-#endif
-} __attribute__((__packed__));
-
-#define xstr(s) str(s)
-#define str(s) #s
-
-_Static_assert(sizeof(struct idt_intr_gate) == IDT_INTR_GATE_SIZE,
-    L"struct idt_intr_gate is not " xstr(IDT_INTR_GATE_SIZE_STR) " bytes");
-
-typedef struct idt_intr_gate idt_intr_gate;
-
-struct idt_task_gate {
-  ac_uptr unused_1:16;
-  ac_uptr tss_seg_selector:16;
-  ac_uptr unused_2:8;
-  ac_uptr type:4;
-  ac_uptr unused_3:1;
-  ac_uptr dpl:2;
-  ac_uptr p:1;
-  ac_uptr unused_4:16;
-} __attribute__((__packed__));
-
-_Static_assert(sizeof(struct idt_task_gate) == IDT_TASK_GATE_SIZE,
-    L"struct intr_trap_gate is not 16 bytes");
-
-typedef struct idt_task_gate idt_task_gate;
-
-
-#define IDT_INTR_GATE_COMMON_INITIALIZER \
-   .offset_lo = 0, \
-   .segment = 0, \
-   .unused_1 = 0, \
-   .type = 0, \
-   .unused_2 = 0, \
-   .dpl = 0, \
-   .p = 0, \
-   .offset_hi = 0, \
-
-#define IDT_INTR_GATE_X86_64_EXTRA_INITIALIZER \
-  .ist = 0, \
-  .unused_3 = 0,
-
-#ifdef CPU_X86_64
-#define IDT_INTR_GATE_INITIALIZER { \
-   IDT_INTR_GATE_COMMON_INITIALIZER \
-   IDT_INTR_GATE_X86_64_EXTRA_INITIALIZER \
-}
-#else /* CPU_X86_32 */
-#define IDT_INTR_GATE_INITIALIZER { \
-   IDT_INTR_GATE_COMMON_INITIALIZER \
-}
-#endif
-
-/** Return the bits for idt_intr_gate.offset_lo as a ac_uptr */
-#define IDT_INTR_GATE_OFFSET_LO(addr) ({ \
-  ac_uptr r = ((ac_uptr)(addr) >> 0) & 0xFFFF; \
-  r; \
-})
-
-/** Return the bits for idt_intr_gate.offset_hi as a ac_uptr */
-#define IDT_INTR_GATE_OFFSET_HI(addr) ({ \
-  ac_uptr r = ((ac_uptr)(addr) >> 16) & IDT_INTR_GATE_OFFSET_HI_MASK; \
-  r; \
-})
-
-/** Return the idt_intr_gate.offset as an ac_uptr */
-#define GET_IDT_INTR_GATE_OFFSET(gate) ({ \
-  ac_uptr r = (ac_uptr)((((ac_uptr)(gate).offset_hi) << 16) \
-      | (ac_uptr)((gate).offset_lo)); \
-  r; \
-})
-
 
 /**
  * TSS Descriptor, this is the same as an LDT Descriptor with a different type.
@@ -175,7 +69,7 @@ struct tss_desc {
 } __attribute__((__packed__));
 
 _Static_assert(sizeof(struct tss_desc) == TSS_DESC_SIZE,
-    L"TSS/LDT segment_descriptor is not " xstr(TSS_DESC_SIZE) " bytes");
+    L"TSS/LDT segment_descriptor is not " AC_XSTR(TSS_DESC_SIZE) " bytes");
 
 typedef struct tss_desc tss_desc;
 
@@ -394,13 +288,12 @@ struct descriptor_ptr {
     volatile ac_u16 limit;
     volatile union {    // Volatile so compiler stores the address in set_idt.
       ac_uptr address;
-      idt_intr_gate* iig;
       seg_desc* sd;
     };
 } __attribute__((__packed__));
 
 _Static_assert(sizeof(struct descriptor_ptr) == SEG_DESC_SIZE,
-    L"struct descriptor_ptr != " xstr(SEG_DESC_SIZE) " bytes");
+    L"struct descriptor_ptr != " AC_XSTR(SEG_DESC_SIZE) " bytes");
 
 /** Descriptor Pointer typedef */
 typedef struct descriptor_ptr descriptor_ptr;
