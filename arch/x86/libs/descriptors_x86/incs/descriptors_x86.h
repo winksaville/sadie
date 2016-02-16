@@ -143,24 +143,34 @@ typedef struct tss_desc tss_desc;
  * Figure 3-8. Segment Descriptor
  */
 struct seg_desc {
-  ac_u32 seg_limit_lo:16;
-  ac_u32 base_addr_lo:24;
-  ac_u32 type:4;
-  ac_u32 s:1;
-  ac_u32 dpl:2;
-  ac_u32 p:1;
-  ac_u32 seg_limit_hi:4;
-  ac_u32 avl:1;
-  ac_u32 l:1;
-  ac_u32 d_b:1;
-  ac_u32 g:1;
-  ac_u32 base_addr_hi:8;
+  ac_u64 seg_limit_lo:16;
+  ac_u64 base_addr_lo:24;
+  ac_u64 type:4;
+  ac_u64 s:1;
+  ac_u64 dpl:2;
+  ac_u64 p:1;
+  ac_u64 seg_limit_hi:4;
+  ac_u64 avl:1;
+  ac_u64 l:1;
+  ac_u64 d_b:1;
+  ac_u64 g:1;
+  ac_u64 base_addr_hi:8;
 } __attribute__((__packed__));
 
 _Static_assert(sizeof(struct seg_desc) == 8,
     L"segment_descriptor is not 8 bytes");
 
 typedef struct seg_desc seg_desc;
+
+union seg_desc_u {
+  ac_u64 raw;
+  struct seg_desc fields;
+};
+
+_Static_assert(sizeof(union seg_desc_u) == sizeof(ac_u64),
+    L"union seg_desc_u is not 8 bytes");
+
+
 
 #define SEG_DESC_INITIALIZER { \
   .seg_limit_lo = 0, \
