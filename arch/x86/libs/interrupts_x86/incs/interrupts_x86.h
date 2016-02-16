@@ -167,8 +167,8 @@ struct idt_ptr {
                         // paragraph of "Intel 64 and IA-32 Architectures
                         // Software Developer's Manual" Volume 3 chapter 3.5.1
                         // "Segment Descriptor Tables".
-    volatile ac_u16 limit;
-    intr_gate * volatile iig;
+    volatile ac_u16 limit;    // Volatile so limit is stored when in set_gdt/ldt
+    intr_gate * volatile iig; // Volatile so sd is stored when calling set_gdt/ldt
 } __attribute__((__packed__));
 
 _Static_assert(sizeof(struct idt_ptr) == IDT_PTR_SIZE,
