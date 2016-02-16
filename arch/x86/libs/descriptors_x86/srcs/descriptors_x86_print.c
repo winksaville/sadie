@@ -63,10 +63,9 @@ void print_seg_desc(char *str, seg_desc* desc) {
 
 void print_desc_table(char *str, desc_ptr dp) {
   ac_uint count = (dp.limit + 1) / sizeof(seg_desc);
-  ac_printf("%s: count=%d dp.limit=%d address=%p\n", str, count, dp.limit, dp.address);
+  ac_printf("%s: count=%d dp.limit=%d sd=%p\n", str, count, dp.limit, dp.sd);
   for (ac_uint i = 0; i < count; i++) {
     ac_printf("seg_desc[%d]:\n", i);
     print_seg_desc(AC_NULL, &dp.sd[i]);
   }
 }
-

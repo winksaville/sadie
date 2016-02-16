@@ -36,8 +36,8 @@ ac_bool test_gdt_ldt(void) {
   error |= AC_TEST_EM(dp1.limit == dp2.limit,
       "Unable to get/set/get GDT register desc_ptr.limit");
 
-  error |= AC_TEST_EM(dp1.address == dp2.address,
-      "Unable to get/set/get GDT register desc_ptr.address");
+  error |= AC_TEST_EM(dp1.sd == dp2.sd,
+      "Unable to get/set/get GDT register desc_ptr.sd");
 
   // Get current LDT and verifiy we can write it
   // and read back the same value. Not a great test
@@ -50,8 +50,8 @@ ac_bool test_gdt_ldt(void) {
   error |= AC_TEST_EM(dp1.limit == dp2.limit,
       "Unable to get/set/get LDT register desc_ptr.limit");
 
-  error |= AC_TEST_EM(dp1.address == dp2.address,
-      "Unable to get/set/get LDT register desc_ptr.address");
+  error |= AC_TEST_EM(dp1.sd == dp2.sd,
+      "Unable to get/set/get LDT register desc_ptr.sd");
 
   return error;
 }

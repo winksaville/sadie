@@ -285,11 +285,8 @@ struct desc_ptr {
                         // paragraph of "Intel 64 and IA-32 Architectures
                         // Software Developer's Manual" Volume 3 chapter 3.5.1
                         // "Segment Descriptor Tables".
-    volatile ac_u16 limit;
-    volatile union {    // Volatile so compiler stores the address in set_idt.
-      ac_uptr address;
-      seg_desc* sd;
-    };
+    volatile ac_u16 limit;  // Volatile so limit is stored when in set_gdt/ldt
+    seg_desc * volatile sd; // Volatile so sd is stored when calling set_gdt/ldt
 } __attribute__((__packed__));
 
 _Static_assert(sizeof(struct desc_ptr) == SEG_DESC_SIZE,
