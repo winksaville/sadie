@@ -15,13 +15,14 @@
  */
 
 #include <descriptors_x86.h>
+#include <descriptors_x86_print.h>
 
 #include <ac_printf.h>
 #include <ac_test.h>
 
 ac_bool test_gdt_ldt(void) {
-  descriptor_ptr dp1;
-  descriptor_ptr dp2;
+  desc_ptr dp1;
+  desc_ptr dp2;
   ac_bool error = AC_FALSE;
 
   // Get current GDT and verifiy we can write it
@@ -33,10 +34,10 @@ ac_bool test_gdt_ldt(void) {
   get_gdt(&dp2);
 
   error |= AC_TEST_EM(dp1.limit == dp2.limit,
-      "Unable to get/set/get GDT register descriptor_ptr.limit");
+      "Unable to get/set/get GDT register desc_ptr.limit");
 
   error |= AC_TEST_EM(dp1.address == dp2.address,
-      "Unable to get/set/get GDT register descriptor_ptr.address");
+      "Unable to get/set/get GDT register desc_ptr.address");
 
   // Get current LDT and verifiy we can write it
   // and read back the same value. Not a great test
@@ -47,16 +48,20 @@ ac_bool test_gdt_ldt(void) {
   get_ldt(&dp2);
 
   error |= AC_TEST_EM(dp1.limit == dp2.limit,
-      "Unable to get/set/get LDT register descriptor_ptr.limit");
+      "Unable to get/set/get LDT register desc_ptr.limit");
 
   error |= AC_TEST_EM(dp1.address == dp2.address,
-      "Unable to get/set/get LDT register descriptor_ptr.address");
+      "Unable to get/set/get LDT register desc_ptr.address");
 
   return error;
 }
 
 int main(void) {
   ac_bool error = AC_FALSE;
+
+  desc_ptr dp;
+  get_gdt(&dp);
+  print_desc_table("gdt", dp);
 
   error |= test_gdt_ldt();
 

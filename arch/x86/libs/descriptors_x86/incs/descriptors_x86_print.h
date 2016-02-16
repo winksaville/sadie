@@ -25,4 +25,6 @@ void print_tss_desc(char *str, tss_desc* desc);
 
 void print_seg_desc(char *str, seg_desc* desc);
 
+void print_desc_table(char *str, desc_ptr dp);
+
 #endif

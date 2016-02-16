@@ -275,11 +275,11 @@ _Static_assert(sizeof(union seg_type_u) == 1,
     L"sizeof seg_type_u must be one byte");
 
 /**
- * Pointer to Global Descriptor Table and Interrupt Descriptor Table
+ * Pointer to segment descriptor
  */
-struct descriptor_ptr {
-    ac_u16 unused[3];   // Align descriptor_ptr.limit to an odd ac_u16 boundary
-                        // so descriptor_ptr.address is on a ac_uptr boundary.
+struct desc_ptr {
+    ac_u16 unused[3];   // Align desc_ptr.limit to an odd ac_u16 boundary
+                        // so desc_ptr.address is on a ac_uptr boundary.
                         // This is for better performance and for user mode
                         // it avoids an alignment check fault. See the last
                         // paragraph of "Intel 64 and IA-32 Architectures
@@ -292,11 +292,11 @@ struct descriptor_ptr {
     };
 } __attribute__((__packed__));
 
-_Static_assert(sizeof(struct descriptor_ptr) == SEG_DESC_SIZE,
-    L"struct descriptor_ptr != " AC_XSTR(SEG_DESC_SIZE) " bytes");
+_Static_assert(sizeof(struct desc_ptr) == SEG_DESC_SIZE,
+    L"struct desc_ptr != " AC_XSTR(SEG_DESC_SIZE) " bytes");
 
 /** Descriptor Pointer typedef */
-typedef struct descriptor_ptr descriptor_ptr;
+typedef struct desc_ptr desc_ptr;
 
 void set_seg_desc(seg_desc* sd, ac_u32 seg_limit, ac_uptr base_addr, ac_u8 type,
     ac_u8 s, ac_u8 dpl, ac_u8 p, ac_u8 avl, ac_u8 l, ac_u8 d_b, ac_u8 g);
@@ -315,25 +315,25 @@ void set_tss_ldt_desc(tss_desc* tld, ac_u32 seg_limit, ac_uptr base_addr,
 ac_s32 cmp_tss_ldt_desc(tss_desc* sd1, tss_desc* sd2);
 
 /** Set the GDT register from desc_ptr */
-static __inline__ void set_gdt(descriptor_ptr* desc_ptr) {
+static __inline__ void set_gdt(desc_ptr* desc_ptr) {
   ac_u16* p = (ac_u16*)&desc_ptr->limit;
   __asm__ volatile("lgdt %0" :: "m" (*p));
 }
 
 /** Get the GDT register to desc_ptr */
-static __inline__ void get_gdt(descriptor_ptr* desc_ptr) {
+static __inline__ void get_gdt(desc_ptr* desc_ptr) {
   ac_u16* p = (ac_u16*)&desc_ptr->limit;
   __asm__ volatile("sgdt %0" : "=m" (*p));
 }
 
 /** Set the LDT register from desc_ptr */
-static __inline__ void set_ldt(descriptor_ptr* desc_ptr) {
+static __inline__ void set_ldt(desc_ptr* desc_ptr) {
   ac_u16* p = (ac_u16*)&desc_ptr->limit;
   __asm__ volatile("lldt %0" :: "m" (*p));
 }
 
 /** Get the LDT register to desc_ptr */
-static __inline__ void get_ldt(descriptor_ptr* desc_ptr) {
+static __inline__ void get_ldt(desc_ptr* desc_ptr) {
   ac_u16* p = (ac_u16*)&desc_ptr->limit;
   __asm__ volatile("sldt %0" : "=m" (*p));
 }

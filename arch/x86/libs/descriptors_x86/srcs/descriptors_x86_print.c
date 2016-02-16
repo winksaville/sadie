@@ -20,7 +20,9 @@
 #include "descriptors_x86_print.h"
 
 void print_tss_desc(char *str, tss_desc* desc) {
-  ac_printf("%s:\n", str);
+  if (str != AC_NULL) {
+    ac_printf("%s:\n", str);
+  }
   ac_printf(" desc->seg_limit_lo: %p\n", desc->seg_limit_lo);
   ac_printf(" desc->base_addr_lo: %p\n", desc->base_addr_lo);
   ac_printf(" desc->type: %d\n", desc->type);
@@ -40,7 +42,9 @@ void print_tss_desc(char *str, tss_desc* desc) {
 }
 
 void print_seg_desc(char *str, seg_desc* desc) {
-  ac_printf("%s:\n", str);
+  if (str != AC_NULL) {
+    ac_printf("%s:\n", str);
+  }
   ac_printf(" desc->seg_limit_lo: %p\n", desc->seg_limit_lo);
   ac_printf(" desc->base_addr_lo: %p\n", desc->base_addr_lo);
   ac_printf(" desc->type: %d\n", desc->type);
@@ -56,3 +60,13 @@ void print_seg_desc(char *str, seg_desc* desc) {
   ac_printf(" desc->seg_limit: %p\n", GET_SEG_DESC_SEG_LIMIT(*desc));
   ac_printf(" desc->base_addr: %p\n", GET_SEG_DESC_BASE_ADDR(*desc));
 }
+
+void print_desc_table(char *str, desc_ptr dp) {
+  ac_uint count = (dp.limit + 1) / sizeof(seg_desc);
+  ac_printf("%s: count=%d dp.limit=%d address=%p\n", str, count, dp.limit, dp.address);
+  for (ac_uint i = 0; i < count; i++) {
+    ac_printf("seg_desc[%d]:\n", i);
+    print_seg_desc(AC_NULL, &dp.sd[i]);
+  }
+}
+
