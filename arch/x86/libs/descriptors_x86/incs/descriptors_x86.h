@@ -73,6 +73,14 @@ _Static_assert(sizeof(struct tss_desc) == TSS_DESC_SIZE,
 
 typedef struct tss_desc tss_desc;
 
+union tss_desc_u {
+  ac_u64 raw;
+  struct tss_desc fields;
+};
+
+_Static_assert(sizeof(union tss_desc_u) == TSS_DESC_SIZE,
+    L"TSS/LDT segment_descriptor union is not " AC_XSTR(TSS_DESC_SIZE) " bytes");
+
 #define TSS_DESC_COMMON_INITIALIZER \
    .seg_limit_lo = 0, \
    .base_addr_lo = 0, \

@@ -20,6 +20,82 @@
 #include <ac_printf.h>
 #include <ac_test.h>
 
+/**
+ * Test case array filled with the val followed
+ * by the expected field values. The array initialization
+ * fields that are NOT explicitly initialized are zeros.
+ *
+ * This is a shortened walking 1 bit test.
+ */
+struct test_case {
+  union seg_desc_u val;
+  ac_u64 seg_limit_lo;
+  ac_u64 base_addr_lo;
+  ac_u64 type;
+  ac_u64 s;
+  ac_u64 dpl;
+  ac_u64 p;
+  ac_u64 seg_limit_hi;
+  ac_u64 avl;
+  ac_u64 l;
+  ac_u64 d_b;
+  ac_u64 g;
+  ac_u64 base_addr_hi;
+};
+
+static struct test_case test_case_array[] = {
+  { .val.raw=0x1, .seg_limit_lo=0x1, },
+  { .val.raw=0x8000, .seg_limit_lo=0x8000, },
+  { .val.raw=0x10000, .base_addr_lo=0x1, },
+  { .val.raw=0x8000000000, .base_addr_lo=0x800000, },
+  { .val.raw=0x10000000000, .type=0x1, },
+  { .val.raw=0x80000000000, .type=0x8, },
+  { .val.raw=0x100000000000, .s=0x1, },
+  { .val.raw=0x200000000000, .dpl=0x1, },
+  { .val.raw=0x400000000000, .dpl=0x2, },
+  { .val.raw=0x800000000000, .p=0x1, },
+  { .val.raw=0x1000000000000, .seg_limit_hi=0x1, },
+  { .val.raw=0x8000000000000, .seg_limit_hi=0x8, },
+  { .val.raw=0x10000000000000, .avl=0x1, },
+  { .val.raw=0x20000000000000, .l=0x1, },
+  { .val.raw=0x40000000000000, .d_b=0x1, },
+  { .val.raw=0x80000000000000, .g=0x1, },
+  { .val.raw=0x100000000000000, .base_addr_hi=0x1, },
+  { .val.raw=0x8000000000000000, .base_addr_hi=0x80, },
+};
+
+static ac_bool test_seg_desc(struct test_case* test) {
+  ac_bool error = AC_FALSE;
+
+  print_seg_desc("seg_desc", &test->val.fields);
+
+  error |= AC_TEST(test->val.fields.seg_limit_lo == test->seg_limit_lo);
+  error |= AC_TEST(test->val.fields.base_addr_lo == test->base_addr_lo);
+  error |= AC_TEST(test->val.fields.type == test->type);
+  error |= AC_TEST(test->val.fields.s == test->s);
+  error |= AC_TEST(test->val.fields.dpl == test->dpl);
+  error |= AC_TEST(test->val.fields.p == test->p);
+  error |= AC_TEST(test->val.fields.seg_limit_hi == test->seg_limit_hi);
+  error |= AC_TEST(test->val.fields.avl == test->avl);
+  error |= AC_TEST(test->val.fields.l == test->l);
+  error |= AC_TEST(test->val.fields.d_b == test->d_b);
+  error |= AC_TEST(test->val.fields.g == test->g);
+  error |= AC_TEST(test->val.fields.base_addr_hi == test->base_addr_hi);
+
+  return error;
+}
+
+ac_bool test_seg_desc_fields() {
+  ac_bool error = AC_FALSE;
+
+  // Execute the test cases
+  for (ac_uint i = 0; i < AC_ARRAY_COUNT(test_case_array); i++) {
+    test_seg_desc(&test_case_array[i]);
+  }
+
+  return error;
+}
+
 ac_bool test_gdt_ldt(void) {
   desc_ptr dp1;
   desc_ptr dp2;
@@ -63,6 +139,7 @@ int main(void) {
   get_gdt(&dp);
   print_desc_table("gdt", dp);
 
+  error |= test_seg_desc_fields();
   error |= test_gdt_ldt();
 
   if (!error) {
