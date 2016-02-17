@@ -1,4 +1,4 @@
-# Copyright 2015 wink saville
+# Copyright 2016 wink saville
 #
 # licensed under the apache license, version 2.0 (the "license");
 # you may not use this file except in compliance with the license.
@@ -12,17 +12,10 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-if (Platform == 'pc_x86_32') or (Platform == 'pc_x86_64') or (Platform == 'Posix')
+runtimeIncDirs += [include_directories('incs')]
 
-  subdir('apic_x86')
-  subdir('cpuid_x86')
-  subdir('cr_x86')
-  subdir('descriptors_x86')
-  subdir('interrupts_x86')
-  subdir('io_x86')
-  subdir('msr_x86')
-  subdir('native_x86')
-  subdir('reset_x86')
-  subdir('page_table_x86')
+runtimeSrcs += [
+  '@0@/srcs/page_table_x86.c'.format(meson.current_source_dir()),
+  '@0@/srcs/print_page_table.c'.format(meson.current_source_dir()),
+]
 
-endif
