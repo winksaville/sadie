@@ -90,7 +90,7 @@ ac_bool test_seg_desc_fields() {
 
   // Execute the test cases
   for (ac_uint i = 0; i < AC_ARRAY_COUNT(test_case_array); i++) {
-    test_seg_desc(&test_case_array[i]);
+    error |= test_seg_desc(&test_case_array[i]);
   }
 
   return error;

@@ -70,7 +70,7 @@ ac_bool test_msr_mtrrcap_fields() {
 
   // Execute the test cases
   for (ac_uint i = 0; i < AC_ARRAY_COUNT(test_case_array); i++) {
-    test_msr_mtrrcap_field(&test_case_array[i]);
+    error |= test_msr_mtrrcap_field(&test_case_array[i]);
   }
 
   // Verify we can read the MSR_APIC_BASE and expect it to be non-zero
