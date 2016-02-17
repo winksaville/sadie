@@ -17,7 +17,19 @@
 #ifndef ARCH_X86_CR_X86_INCS_CR_X86_H
 #define ARCH_X86_CR_X86_INCS_CR_X86_H
 
+#include <ac_architecture.h>
 #include <ac_inttypes.h>
+#include <ac_xstr.h>
+
+#ifdef CPU_X86_64
+#define CR0_FIELDS_SIZE 8
+#define CR3_FIELDS_SIZE 8
+#define CR4_FIELDS_SIZE 8
+#else
+#define CR0_FIELDS_SIZE 4
+#define CR3_FIELDS_SIZE 4
+#define CR4_FIELDS_SIZE 4
+#endif
 
 struct cr0_fields {
   ac_uint pe:1;
@@ -34,13 +46,26 @@ struct cr0_fields {
   ac_uint nw:1;
   ac_uint cd:1;
   ac_uint pg:1;
+#ifdef CPU_X86_64
+  ac_uint reserved_3:32;
+#endif
 } __attribute__((__packed__));
+
+_Static_assert(sizeof(struct cr0_fields) == CR0_FIELDS_SIZE,
+    L"cr0_fields is not " AC_XSTR(CR0_FIELDS_SIZE) " bytes");
 
 union cr0_u {
   ac_uint raw;
   struct cr0_fields fields;
 };
 
+_Static_assert(sizeof(union cr0_u) == CR0_FIELDS_SIZE,
+    L"cr0_u is not " AC_XSTR(CR0_FIELDS_SIZE) " bytes");
+
+/**
+ * CR3 page directory address and some flags.
+ * See page_table_x86 directory for more info.
+ */
 struct cr3_fields {
   ac_uint reserved_0:3;
   ac_uint pwt:1;
@@ -53,10 +78,17 @@ struct cr3_fields {
 #endif
 } __attribute__((__packed__));
 
+_Static_assert(sizeof(struct cr3_fields) == CR3_FIELDS_SIZE,
+    L"cr3_fields is not " AC_XSTR(CR3_FIELDS_SIZE) " bytes");
+
 union cr3_u {
   ac_uint raw;
   struct cr3_fields fields;
 };
+
+_Static_assert(sizeof(union cr3_u) == CR3_FIELDS_SIZE,
+    L"cr3_u is not " AC_XSTR(CR3_FIELDS_SIZE) " bytes");
+
 
 struct cr4_fields {
   ac_uint vme:1;
@@ -85,10 +117,16 @@ struct cr4_fields {
 #endif
 } __attribute__((__packed__));
 
+_Static_assert(sizeof(struct cr4_fields) == CR4_FIELDS_SIZE,
+    L"cr4_fields is not " AC_XSTR(CR4_FIELDS_SIZE) " bytes");
+
 union cr4_u {
   ac_uint raw;
   struct cr4_fields fields;
 } __attribute__((__packed__));
+
+_Static_assert(sizeof(union cr4_u) == CR4_FIELDS_SIZE,
+    L"cr4_u is not " AC_XSTR(CR4_FIELDS_SIZE) " bytes");
 
 /** get control register 0 (CR0) */
 static __inline__ ac_uint get_cr0(void) {
