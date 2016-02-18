@@ -39,10 +39,8 @@ void print_cr0(char* str, ac_uint cr0) {
 void print_cr3(char* str, ac_uint cr3) {
   union cr3_u reg = { .raw = cr3 };
 
-  ac_printf("%s: 0x%p\n", str, reg.raw);
-  ac_printf(" pwt=%d\n", reg.fields.pwt);
-  ac_printf(" pcd=%d\n", reg.fields.pcd);
-  ac_printf(" page_directory_base=0x%x\n", reg.fields.page_directory_base);
+  ac_printf("%s: 0x%x\n", str, reg.raw);
+  ac_printf(" val=%x\n", reg.fields.val);
 }
 
 void print_cr4(char* str, ac_uint cr4) {

@@ -23,6 +23,10 @@
 
 #include <ac_inttypes.h>
 
-void print_page_table(union cr3_u cr3u, enum page_mode mode);
+void print_cr3_nrml_paging_fields(char* str, ac_uint cr3);
+void print_cr3_pae_paging_fields(char* str, ac_uint cr3);
+void print_cr3_pcide_paging_fields(char* str, ac_uint cr3);
+
+void print_page_table(union cr3_paging_fields_u cr3u, enum page_mode mode);
 
 #endif

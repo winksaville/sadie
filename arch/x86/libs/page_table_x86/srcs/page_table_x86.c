@@ -33,11 +33,15 @@ enum page_mode get_page_mode(void) {
 
   if (cr0u.fields.pg == 1) {
     if ((cr4u.fields.pae == 0) && (eferu.fields.lme == 0)) {
-      pm = PAGE_MODE_32BIT;
+      pm = PAGE_MODE_NRML_32BIT;
     } else if ((cr4u.fields.pae == 1) && (eferu.fields.lme == 0)) {
-      pm = PAGE_MODE_PAE;
+      pm = PAGE_MODE_PAE_32BIT;
     } else if ((cr4u.fields.pae == 1) && (eferu.fields.lme == 1)) {
-      pm = PAGE_MODE_64BIT;
+      if (cr4u.fields.pcide == 0) {
+        pm = PAGE_MODE_NRML_64BIT;
+      } else {
+        pm = PAGE_MODE_PCIDE_64BIT;
+      }
     } else {
       pm = PAGE_MODE_UNKNOWN;
     }

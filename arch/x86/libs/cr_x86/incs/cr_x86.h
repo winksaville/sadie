@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
+/**
+ * Control Registers
+ *
+ * See "Intel 64 and IA-32 Architectures Software Developer's Manual"
+ * Volume 3 chapter 2.5 "Control Registers"
+ * Figure 2-7 "Control Registers"
+ */
+
 #ifndef ARCH_X86_CR_X86_INCS_CR_X86_H
 #define ARCH_X86_CR_X86_INCS_CR_X86_H
 
@@ -31,6 +39,13 @@
 #define CR4_FIELDS_SIZE 4
 #endif
 
+/**
+ * CR0
+ *
+ * See "Intel 64 and IA-32 Architectures Software Developer's Manual"
+ * Volume 3 chapter 2.5 "Control Registers"
+ * Figure 2-7 "Control Registers"
+ */
 struct cr0_fields {
   ac_uint pe:1;
   ac_uint mp:1;
@@ -63,20 +78,14 @@ _Static_assert(sizeof(union cr0_u) == CR0_FIELDS_SIZE,
     L"cr0_u is not " AC_XSTR(CR0_FIELDS_SIZE) " bytes");
 
 /**
- * CR3 page directory address and some flags.
- * See page_table_x86 directory for more info.
+ * Do not use these CR3 definitions, use the page_table_x86 module.
+ *
+ * See "Intel 64 and IA-32 Architectures Software Developer's Manual"
+ * Volume 3 chapter 4 "Paging"
  */
 struct cr3_fields {
-  ac_uint reserved_0:3;
-  ac_uint pwt:1;
-  ac_uint pcd:1;
-  ac_uint reserved_1:7;
-#ifdef CPU_X86_64
-  ac_uint page_directory_base:52;
-#else /* CPU_X86_32 */
-  ac_uint page_directory_base:20;
-#endif
-} __attribute__((__packed__));
+  ac_uint val;
+};
 
 _Static_assert(sizeof(struct cr3_fields) == CR3_FIELDS_SIZE,
     L"cr3_fields is not " AC_XSTR(CR3_FIELDS_SIZE) " bytes");
@@ -86,10 +95,16 @@ union cr3_u {
   struct cr3_fields fields;
 };
 
-_Static_assert(sizeof(union cr3_u) == CR3_FIELDS_SIZE,
-    L"cr3_u is not " AC_XSTR(CR3_FIELDS_SIZE) " bytes");
+_Static_assert(sizeof(struct cr3_fields) == CR3_FIELDS_SIZE,
+    L"cr3_fields is not " AC_XSTR(CR3_FIELDS_SIZE) " bytes");
 
-
+/**
+ * CR4
+ *
+ * See "Intel 64 and IA-32 Architectures Software Developer's Manual"
+ * Volume 3 chapter 2.5 "Control Registers"
+ * Figure 2-7 "Control Registers"
+ */
 struct cr4_fields {
   ac_uint vme:1;
   ac_uint pvi:1;

@@ -15,17 +15,40 @@
  */
 
 #include <print_page_table_x86.h>
-//#include <cr_x86.h>
 
 #include <ac_inttypes.h>
 #include <ac_printf.h>
+
+void print_cr3_nrml_paging_fields(char* str, ac_uint cr3) {
+  union cr3_paging_fields_u reg = { .raw = cr3 };
+
+  ac_printf("%s: 0x%p\n", str, reg.raw);
+  ac_printf(" pwt=%d\n", reg.nrml_paging_fields.pwt);
+  ac_printf(" pcd=%d\n", reg.nrml_paging_fields.pcd);
+  ac_printf(" page_directory_base=0x%x\n", reg.nrml_paging_fields.page_directory_base);
+}
+
+void print_cr3_pae_paging_fields(char* str, ac_uint cr3) {
+  union cr3_paging_fields_u reg = { .raw = cr3 };
+
+  ac_printf("%s: 0x%p\n", str, reg.raw);
+  ac_printf(" page_directory_base=0x%x\n", reg.pae_paging_fields.page_directory_base);
+}
+
+void print_cr3_pcide_paging_fields(char* str, ac_uint cr3) {
+  union cr3_paging_fields_u reg = { .raw = cr3 };
+
+  ac_printf("%s: 0x%p\n", str, reg.raw);
+  ac_printf(" page_directory_base=0x%x\n", reg.pae_paging_fields.page_directory_base);
+}
 
 /**
  * Print the page table whose top most directory is
  * table and the mode is one of the three modes supported
  * by x86 cpus.
  */
-void print_page_table(union cr3_u cr3u, enum page_mode mode) {
+void print_page_table(union cr3_paging_fields_u cr3u, enum page_mode mode) {
   ac_printf("page directory addr=%p mode=%d\n",
-      get_page_directory_addr(cr3u), mode);
+      get_page_directory_addr(cr3u, mode), mode);
+
 }
