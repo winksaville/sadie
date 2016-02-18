@@ -33,16 +33,14 @@
  *
  * This is a shortened walking 1 bit test.
  */
-struct test_case {
+static struct test_case {
   union cr3_u val;
   ac_uint reserved_0;
   ac_uint pwt;
   ac_uint pcd;
   ac_uint reserved_1;
   ac_uint page_directory_base;
-};
-
-static struct test_case test_case_array[] = {
+} test_case_array[] = {
   { .val.raw=0x1, .reserved_0=0x1, },
   { .val.raw=0x4, .reserved_0=0x4, },
   { .val.raw=0x8, .pwt=0x1, },
