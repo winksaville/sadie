@@ -17,9 +17,12 @@
 #ifndef ARCH_X86_PAGE_TABLE_X86_INCS_PAGE_TABLE_X86_H
 #define ARCH_X86_PAGE_TABLE_X86_INCS_PAGE_TABLE_X86_H
 
+#include <cr_x86.h>
+
 #include <ac_inttypes.h>
 
 enum page_mode {
+  PAGE_MODE_UNKNOWN,
   PAGE_MODE_32BIT,
   PAGE_MODE_PAE,
   PAGE_MODE_64BIT,
@@ -31,10 +34,18 @@ enum page_mode {
 enum page_mode get_page_mode(void);
 
 /**
- * Returns the address of the table and the associated flags
- * and in 
+ * Return the current cpu page table
  */
-union cr3_u get_page_table(void);
+static inline union cr3_u get_page_table(void) {
+  union cr3_u val = { .raw=get_cr3() };
+  return val;
+}
 
+/**
+ * Return the current cpu page table
+ */
+static inline void* get_page_directory_addr(union cr3_u cr3u) {
+  return (void*)((ac_uptr)cr3u.fields.page_directory_base << 12);
+}
 
 #endif

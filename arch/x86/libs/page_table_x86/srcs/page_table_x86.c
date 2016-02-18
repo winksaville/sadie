@@ -17,6 +17,7 @@
 #include <page_table_x86.h>
 
 #include <cr_x86.h>
+#include <msr_x86.h>
 
 #include <ac_inttypes.h>
 
@@ -24,13 +25,25 @@
  * Return the current cpu page_mode
  */
 enum page_mode get_page_mode(void) {
-  return PAGE_MODE_64BIT;
-}
+  enum page_mode pm;
 
-/**
- * Return the current cpu page table
- */
-union cr3_u get_page_table(void) {
-  union cr3_u val = { .raw=get_cr3() };
-  return val;
+  union cr0_u cr0u = { .raw = get_cr0() };
+  union cr4_u cr4u = { .raw = get_cr4() };
+  union msr_efer_u eferu = { .raw = get_msr(MSR_EFER) };
+
+  if (cr0u.fields.pg == 1) {
+    if ((cr4u.fields.pae == 0) && (eferu.fields.lme == 0)) {
+      pm = PAGE_MODE_32BIT;
+    } else if ((cr4u.fields.pae == 1) && (eferu.fields.lme == 0)) {
+      pm = PAGE_MODE_PAE;
+    } else if ((cr4u.fields.pae == 1) && (eferu.fields.lme == 1)) {
+      pm = PAGE_MODE_64BIT;
+    } else {
+      pm = PAGE_MODE_UNKNOWN;
+    }
+  } else {
+    pm = PAGE_MODE_UNKNOWN;
+  }
+
+  return pm;
 }

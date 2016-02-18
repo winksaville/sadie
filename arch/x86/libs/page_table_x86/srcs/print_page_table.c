@@ -26,6 +26,6 @@
  * by x86 cpus.
  */
 void print_page_table(union cr3_u cr3u, enum page_mode mode) {
-  ac_printf("page_directory_base=%p mode=%d\n",
-      cr3u.fields.page_directory_base << 12, mode);
+  ac_printf("page directory addr=%p mode=%d\n",
+      get_page_directory_addr(cr3u), mode);
 }
