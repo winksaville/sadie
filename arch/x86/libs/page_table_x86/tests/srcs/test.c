@@ -15,7 +15,7 @@
  */
 
 #include <page_table_x86.h>
-#include <print_page_table_x86.h>
+#include <page_table_x86_print.h>
 #include <cr_x86.h>
 #include <cr_x86_print.h>
 
@@ -153,7 +153,7 @@ static struct test_case_cr3_pcide_paging_fields {
 static ac_bool test_cr3_pcide_paging_fields(struct test_case_cr3_pcide_paging_fields* test) {
   ac_bool error = AC_FALSE;
 
-  print_cr3_pcide_paging_fields("cr3", test->val.raw);
+  print_cr3_pcide_paging_fields("cr3_pcide_paging", test->val.raw);
 
   error |= AC_TEST(test->val.pcide_paging_fields.pcid == test->pcid);
   error |= AC_TEST(test->val.pcide_paging_fields.page_directory_base == test->page_directory_base);

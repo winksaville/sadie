@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <print_page_table_x86.h>
+#include <page_table_x86_print.h>
 
 #include <ac_inttypes.h>
 #include <ac_printf.h>
@@ -22,7 +22,7 @@
 void print_cr3_nrml_paging_fields(char* str, ac_uint cr3) {
   union cr3_paging_fields_u reg = { .raw = cr3 };
 
-  ac_printf("%s: 0x%p\n", str, reg.raw);
+  ac_printf("%s: 0x%x\n", str, reg.raw);
   ac_printf(" pwt=%d\n", reg.nrml_paging_fields.pwt);
   ac_printf(" pcd=%d\n", reg.nrml_paging_fields.pcd);
   ac_printf(" page_directory_base=0x%x\n", reg.nrml_paging_fields.page_directory_base);
@@ -48,7 +48,7 @@ void print_cr3_pcide_paging_fields(char* str, ac_uint cr3) {
  * by x86 cpus.
  */
 void print_page_table(union cr3_paging_fields_u cr3u, enum page_mode mode) {
-  ac_printf("page directory addr=%p mode=%d\n",
+  ac_printf("page directory addr=0x%p mode=%d\n",
       get_page_directory_addr(cr3u, mode), mode);
 
 }

@@ -16,6 +16,6 @@ runtimeIncDirs += [include_directories('incs')]
 
 runtimeSrcs += [
   '@0@/srcs/page_table_x86.c'.format(meson.current_source_dir()),
-  '@0@/srcs/print_page_table.c'.format(meson.current_source_dir()),
+  '@0@/srcs/page_table_x86_print.c'.format(meson.current_source_dir()),
 ]
 
