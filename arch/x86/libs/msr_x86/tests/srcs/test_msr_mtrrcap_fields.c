@@ -31,7 +31,7 @@
  *
  * This is a shortened walking 1 bit test.
  */
-struct test_case {
+static struct test_case {
   union msr_mtrrcap_u val;
   ac_u64 vcnt;
   ac_u64 fix;

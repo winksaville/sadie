@@ -24,6 +24,7 @@
 void print_msr(ac_u32 msr, ac_u64 value) {
   switch (msr) {
     case MSR_APIC_BASE: print_msr_apic_base(value); break;
+    case MSR_EFER: print_msr_efer(value); break;
     case MSR_MTRRCAP: print_msr_mtrrcap(value); break;
     default: ac_printf("unknown msr 0x%x: 0x%llx\n", msr, value);
   }

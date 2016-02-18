@@ -27,6 +27,7 @@ int main(void) {
   initialize_intr_descriptor_table();
 
   error |= test_msr_apic_base_fields();
+  error |= test_msr_efer_fields();
   error |= test_msr_mtrrcap_fields();
 
   if (!error) {

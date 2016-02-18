@@ -18,6 +18,7 @@
 #define ARCH_X86_MSR_X86_INCS_MSR_X86_H
 
 #include <msr_apic_base_x86.h>
+#include <msr_efer_x86.h>
 #include <msr_mtrrcap_x86.h>
 
 #include <ac_inttypes.h>

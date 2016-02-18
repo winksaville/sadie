@@ -18,6 +18,7 @@ if Platform == 'pc_x86_32'
   srcFiles = firstSrcFiles + [
      'srcs/test.c',
      'srcs/test_msr_apic_base_fields.c',
+     'srcs/test_msr_efer_fields.c',
      'srcs/test_msr_mtrrcap_fields.c',
   ]
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
@@ -45,6 +46,7 @@ if Platform == 'pc_x86_64'
   srcFiles = firstSrcFiles + [
      'srcs/test.c',
      'srcs/test_msr_apic_base_fields.c',
+     'srcs/test_msr_efer_fields.c',
      'srcs/test_msr_mtrrcap_fields.c',
   ]
 

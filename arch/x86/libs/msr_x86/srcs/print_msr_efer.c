@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef ARCH_X86_MSR_X86_TESTS_INCS_TEST_MSR_X86_H
-#define ARCH_X86_MSR_X86_TESTS_INCS_TEST_MSR_X86_H
+#include <print_msr.h>
+
+#include <msr_x86.h>
 
 #include <ac_inttypes.h>
+#include <ac_printf.h>
 
-ac_bool test_msr_apic_base_fields();
+void print_msr_efer(ac_u64 value) {
+  union msr_efer_u reg = { .raw = value };
 
-ac_bool test_msr_efer_fields();
-
-ac_bool test_msr_mtrrcap_fields();
-
-#endif
+  ac_printf("msr_efer 0x%x: 0x%lx\n", MSR_EFER, value);
+  ac_printf(" sce=%d\n", reg.fields.sce);
+  ac_printf(" reserved_0=%d\n", reg.fields.reserved_0);
+  ac_printf(" lme=%d\n", reg.fields.lme);
+  ac_printf(" reserved_1=%d\n", reg.fields.reserved_1);
+  ac_printf(" lma=%b\n", reg.fields.lma);
+  ac_printf(" nxe=%b\n", reg.fields.nxe);
+  ac_printf(" reserved_2=0x%lx\n", reg.fields.reserved_2);
+}

@@ -22,5 +22,6 @@
 void print_msr(ac_u32 reg, ac_u64 value);
 void print_msr_apic_base(ac_u64 value);
 void print_msr_mtrrcap(ac_u64 value);
+void print_msr_efer(ac_u64 value);
 
 #endif
