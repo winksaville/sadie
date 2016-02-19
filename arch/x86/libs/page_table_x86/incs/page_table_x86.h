@@ -144,7 +144,7 @@ struct pml4e_fields {
   ac_u64 p:1;                   // Present
   ac_u64 rw:1;                  // Read write
   ac_u64 us:1;                  // User/Supervisor
-  ac_u64 pwt:1;                 // Page-level write-throug
+  ac_u64 pwt:1;                 // Page-level write-through
   ac_u64 pcd:1;                 // Page-level cache disable
   ac_u64 a:1;                   // Accessed
   ac_u64 reserved_0:6;
@@ -156,7 +156,7 @@ _Static_assert(sizeof(struct pml4e_fields) == PML4E_FIELDS_SIZE,
     L"pml4e_fields is not " AC_XSTR(PML4E_FIELDS_SIZE) " bytes");
 
 union pml4e_fields_u {
-  ac_uint raw;
+  ac_u64 raw;
   struct pml4e_fields fields;
 };
 
@@ -175,7 +175,7 @@ struct pdpte_1g_fields {
   ac_u64 p:1;                   // Present
   ac_u64 rw:1;                  // Read write
   ac_u64 us:1;                  // User/Supervisor
-  ac_u64 pwt:1;                 // Page-level write-throug
+  ac_u64 pwt:1;                 // Page-level write-through
   ac_u64 pcd:1;                 // Page-level cache disable
   ac_u64 a:1;                   // Accessed
   ac_u64 d:1;                   // Dirty
@@ -204,7 +204,7 @@ struct pdpte_fields {
   ac_u64 p:1;                   // Present
   ac_u64 rw:1;                  // Read write
   ac_u64 us:1;                  // User/Supervisor
-  ac_u64 pwt:1;                 // Page-level write-throug
+  ac_u64 pwt:1;                 // Page-level write-through
   ac_u64 pcd:1;                 // Page-level cache disable
   ac_u64 a:1;                   // Accessed
   ac_u64 reserved_0:6;
@@ -236,7 +236,7 @@ struct pde_2m_fields {
   ac_u64 p:1;                   // Present
   ac_u64 rw:1;                  // Read write
   ac_u64 us:1;                  // User/Supervisor
-  ac_u64 pwt:1;                 // Page-level write-throug
+  ac_u64 pwt:1;                 // Page-level write-through
   ac_u64 pcd:1;                 // Page-level cache disable
   ac_u64 a:1;                   // Accessed
   ac_u64 d:1;                   // Dirty
@@ -265,7 +265,7 @@ struct pde_fields {
   ac_u64 p:1;                   // Present
   ac_u64 rw:1;                  // Read write
   ac_u64 us:1;                  // User/Supervisor
-  ac_u64 pwt:1;                 // Page-level write-throug
+  ac_u64 pwt:1;                 // Page-level write-through
   ac_u64 pcd:1;                 // Page-level cache disable
   ac_u64 a:1;                   // Accessed
   ac_u64 reserved_0:6;
@@ -297,7 +297,7 @@ struct pte_fields {
   ac_u64 p:1;                   // Present
   ac_u64 rw:1;                  // Read write
   ac_u64 us:1;                  // User/Supervisor
-  ac_u64 pwt:1;                 // Page-level write-throug
+  ac_u64 pwt:1;                 // Page-level write-through
   ac_u64 pcd:1;                 // Page-level cache disable
   ac_u64 a:1;                   // Accessed
   ac_u64 d:1;                   // Dirty
