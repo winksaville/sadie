@@ -42,6 +42,21 @@ void print_cr3_pcide_paging_fields(char* str, ac_uint cr3) {
   ac_printf(" page_directory_base=0x%x\n", reg.pae_paging_fields.page_directory_base);
 }
 
+void print_pml4e_fields(char* str, ac_u64 val) {
+  union pml4e_fields_u reg = { .raw = val };
+
+  ac_printf("%s: 0x%llx\n", str, reg.raw);
+  ac_printf(" p=%d\n", reg.fields.p);
+  ac_printf(" rw=%d\n", reg.fields.rw);
+  ac_printf(" us=%d\n", reg.fields.us);
+  ac_printf(" pwt=%d\n", reg.fields.pwt);
+  ac_printf(" pcd=%d\n", reg.fields.pcd);
+  ac_printf(" a=%d\n", reg.fields.a);
+  ac_printf(" reserved_0=0x%llx\n", reg.fields.reserved_0);
+  ac_printf(" phy_addr=0x%llx\n", reg.fields.phy_addr);
+  ac_printf(" xd=%d\n", reg.fields.xd);
+}
+
 /**
  * Print the page table whose top most directory is
  * table and the mode is one of the three modes supported
