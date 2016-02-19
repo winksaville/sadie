@@ -32,6 +32,34 @@ void print_cr3_pcide_paging_fields(char* str, ac_uint cr3);
  */
 void print_pml4e_fields(char* str, ac_u64 val);
 
+/**
+ * print pdpte_1g_fields
+ */
+void print_pdpte_1g_fields(char* str, ac_u64 val);
+
+/**
+ * print pdpte_fields
+ */
+void print_pdpte_fields(char* str, ac_u64 val);
+
+/**
+ * print pde_2m_fields
+ */
+void print_pde_2m_fields(char* str, ac_u64 val);
+
+/**
+ * print pde_fields
+ */
+void print_pde_fields(char* str, ac_u64 val);
+
+/**
+ * print pte_fields
+ */
+void print_pte_fields(char* str, ac_u64 val);
+
+/**
+ * Print a page table.
+ */
 void print_page_table(union cr3_paging_fields_u cr3u, enum page_mode mode);
 
 #endif

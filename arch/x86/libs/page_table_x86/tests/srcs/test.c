@@ -60,7 +60,7 @@ static struct test_case_cr3_nrml_paging_fields {
 static ac_bool test_cr3_nrml_paging_fields(struct test_case_cr3_nrml_paging_fields* test) {
   ac_bool error = AC_FALSE;
 
-  print_cr3_nrml_paging_fields("cr3_nrml_paging", test->val.raw);
+  print_cr3_nrml_paging_fields("", test->val.raw);
 
   error |= AC_TEST(test->val.nrml_paging_fields.reserved_0 == test->reserved_0);
   error |= AC_TEST(test->val.nrml_paging_fields.pwt == test->pwt);
@@ -108,7 +108,7 @@ static struct test_case_cr3_pae_paging_fields {
 static ac_bool test_cr3_pae_paging_fields(struct test_case_cr3_pae_paging_fields* test) {
   ac_bool error = AC_FALSE;
 
-  print_cr3_pae_paging_fields("cr3_pae_paging", test->val.raw);
+  print_cr3_pae_paging_fields("", test->val.raw);
 
   error |= AC_TEST(test->val.pae_paging_fields.reserved_0 == test->reserved_0);
   error |= AC_TEST(test->val.pae_paging_fields.page_directory_base == test->page_directory_base);
@@ -153,7 +153,7 @@ static struct test_case_cr3_pcide_paging_fields {
 static ac_bool test_cr3_pcide_paging_fields(struct test_case_cr3_pcide_paging_fields* test) {
   ac_bool error = AC_FALSE;
 
-  print_cr3_pcide_paging_fields("cr3_pcide_paging", test->val.raw);
+  print_cr3_pcide_paging_fields("", test->val.raw);
 
   error |= AC_TEST(test->val.pcide_paging_fields.pcid == test->pcid);
   error |= AC_TEST(test->val.pcide_paging_fields.page_directory_base == test->page_directory_base);
@@ -206,7 +206,7 @@ static struct test_case_pml4e_fields {
 static ac_bool test_pml4e_fields(struct test_case_pml4e_fields* test) {
   ac_bool error = AC_FALSE;
 
-  print_pml4e_fields("pml4e", test->val.raw);
+  print_pml4e_fields("", test->val.raw);
 
   error |= AC_TEST(test->val.fields.p == test->p);
   error |= AC_TEST(test->val.fields.rw == test->rw);
