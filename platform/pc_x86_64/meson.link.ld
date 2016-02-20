@@ -26,13 +26,9 @@ SECTIONS {
   /* Start at image 1 meg */
   . = 1M;
 
-  /* multiboot section must be first then text */
-  .boot BLOCK(4K) : ALIGN(4K) {
-    KEEP(*(.multiboot))
-  }
-
-  /* multiboot section must be first then text */
+  /* multiboot section must be first */
   .text BLOCK(4K) : ALIGN(4K) {
+    *(.multiboot)
     *(.text)
   }
 
