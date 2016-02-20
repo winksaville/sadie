@@ -216,7 +216,7 @@ _Static_assert(sizeof(struct pdpte_fields) == PDPTE_FIELDS_SIZE,
     L"pdpte_fields is not " AC_XSTR(PDPTE_FIELDS_SIZE) " bytes");
 
 union pdpte_fields_u {
-  ac_uint raw;
+  ac_u64 raw;
   struct pdpte_1g_fields g_fields;
   struct pdpte_fields fields;
 };
@@ -277,7 +277,7 @@ _Static_assert(sizeof(struct pdpte_fields) == PDE_FIELDS_SIZE,
     L"pdpte_fields is not " AC_XSTR(PDE_FIELDS_SIZE) " bytes");
 
 union pde_fields_u {
-  ac_uint raw;
+  ac_u64 raw;
   struct pde_2m_fields m_fields;
   struct pde_fields fields;
 };
@@ -314,7 +314,7 @@ _Static_assert(sizeof(struct pte_fields) == PTE_FIELDS_SIZE,
 
 
 union pte_fields_u {
-  ac_uint raw;
+  ac_u64 raw;
   struct pte_fields fields;
 };
 
@@ -335,7 +335,8 @@ static inline union cr3_paging_fields_u get_page_table(void) {
 /**
  * Return the physical address of the current cpu page table
  */
-static inline void* get_page_directory_addr(union cr3_paging_fields_u cr3u, enum page_mode mode) {
+static inline void* get_page_directory_addr(union cr3_paging_fields_u cr3u,
+    enum page_mode mode) {
   ac_uptr addr;
   switch (mode) {
     case PAGE_MODE_NRML_32BIT:{
