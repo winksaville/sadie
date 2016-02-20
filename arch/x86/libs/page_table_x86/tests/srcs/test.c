@@ -57,7 +57,8 @@ static struct test_case_cr3_nrml_paging_fields {
 #endif
 };
 
-static ac_bool test_cr3_nrml_paging_fields(struct test_case_cr3_nrml_paging_fields* test) {
+static ac_bool test_cr3_nrml_paging_fields(
+    struct test_case_cr3_nrml_paging_fields* test) {
   ac_bool error = AC_FALSE;
 
   print_cr3_nrml_paging_fields("", test->val.raw);
@@ -66,7 +67,8 @@ static ac_bool test_cr3_nrml_paging_fields(struct test_case_cr3_nrml_paging_fiel
   error |= AC_TEST(test->val.nrml_paging_fields.pwt == test->pwt);
   error |= AC_TEST(test->val.nrml_paging_fields.pcd == test->pcd);
   error |= AC_TEST(test->val.nrml_paging_fields.reserved_1 == test->reserved_1);
-  error |= AC_TEST(test->val.nrml_paging_fields.page_directory_base == test->page_directory_base);
+  error |= AC_TEST(test->val.nrml_paging_fields.page_directory_base
+      == test->page_directory_base);
 
   return error;
 }
@@ -74,8 +76,10 @@ static ac_bool test_cr3_nrml_paging_fields(struct test_case_cr3_nrml_paging_fiel
 static ac_bool test_cr3_nrml_paging_fields_array(void) {
   ac_bool error = AC_FALSE;
 
-  for (ac_uint i = 0; i < AC_ARRAY_COUNT(test_case_cr3_nrml_paging_fields_array); i++) {
-    error |= test_cr3_nrml_paging_fields(&test_case_cr3_nrml_paging_fields_array[i]);
+  for (ac_uint i = 0;
+      i < AC_ARRAY_COUNT(test_case_cr3_nrml_paging_fields_array); i++) {
+    error |= test_cr3_nrml_paging_fields(
+        &test_case_cr3_nrml_paging_fields_array[i]);
   }
 
   return error;
@@ -105,13 +109,15 @@ static struct test_case_cr3_pae_paging_fields {
 #endif
 };
 
-static ac_bool test_cr3_pae_paging_fields(struct test_case_cr3_pae_paging_fields* test) {
+static ac_bool test_cr3_pae_paging_fields(
+    struct test_case_cr3_pae_paging_fields* test) {
   ac_bool error = AC_FALSE;
 
   print_cr3_pae_paging_fields("", test->val.raw);
 
   error |= AC_TEST(test->val.pae_paging_fields.reserved_0 == test->reserved_0);
-  error |= AC_TEST(test->val.pae_paging_fields.page_directory_base == test->page_directory_base);
+  error |= AC_TEST(test->val.pae_paging_fields.page_directory_base
+      == test->page_directory_base);
 
   return error;
 }
@@ -119,8 +125,10 @@ static ac_bool test_cr3_pae_paging_fields(struct test_case_cr3_pae_paging_fields
 static ac_bool test_cr3_pae_paging_fields_array(void) {
   ac_bool error = AC_FALSE;
 
-  for (ac_uint i = 0; i < AC_ARRAY_COUNT(test_case_cr3_pae_paging_fields_array); i++) {
-    error |= test_cr3_pae_paging_fields(&test_case_cr3_pae_paging_fields_array[i]);
+  for (ac_uint i = 0;
+      i < AC_ARRAY_COUNT(test_case_cr3_pae_paging_fields_array); i++) {
+    error |= test_cr3_pae_paging_fields(
+        &test_case_cr3_pae_paging_fields_array[i]);
   }
 
   return error;
@@ -150,13 +158,15 @@ static struct test_case_cr3_pcide_paging_fields {
 #endif
 };
 
-static ac_bool test_cr3_pcide_paging_fields(struct test_case_cr3_pcide_paging_fields* test) {
+static ac_bool test_cr3_pcide_paging_fields(
+    struct test_case_cr3_pcide_paging_fields* test) {
   ac_bool error = AC_FALSE;
 
   print_cr3_pcide_paging_fields("", test->val.raw);
 
   error |= AC_TEST(test->val.pcide_paging_fields.pcid == test->pcid);
-  error |= AC_TEST(test->val.pcide_paging_fields.page_directory_base == test->page_directory_base);
+  error |= AC_TEST(test->val.pcide_paging_fields.page_directory_base
+      == test->page_directory_base);
 
   return error;
 }
@@ -164,8 +174,10 @@ static ac_bool test_cr3_pcide_paging_fields(struct test_case_cr3_pcide_paging_fi
 static ac_bool test_cr3_pcide_paging_fields_array(void) {
   ac_bool error = AC_FALSE;
 
-  for (ac_uint i = 0; i < AC_ARRAY_COUNT(test_case_cr3_pcide_paging_fields_array); i++) {
-    error |= test_cr3_pcide_paging_fields(&test_case_cr3_pcide_paging_fields_array[i]);
+  for (ac_uint i = 0;
+      i < AC_ARRAY_COUNT(test_case_cr3_pcide_paging_fields_array); i++) {
+    error |= test_cr3_pcide_paging_fields(
+        &test_case_cr3_pcide_paging_fields_array[i]);
   }
 
   return error;
@@ -303,7 +315,8 @@ static ac_bool test_pdpte_1g_fields(struct test_case_pdpte_1g_fields* test) {
 static ac_bool test_pdpte_1g_fields_array(void) {
   ac_bool error = AC_FALSE;
 
-  for (ac_uint i = 0; i < AC_ARRAY_COUNT(test_case_pdpte_1g_fields_array); i++) {
+  for (ac_uint i = 0;
+      i < AC_ARRAY_COUNT(test_case_pdpte_1g_fields_array); i++) {
     error |= test_pdpte_1g_fields(&test_case_pdpte_1g_fields_array[i]);
   }
 
