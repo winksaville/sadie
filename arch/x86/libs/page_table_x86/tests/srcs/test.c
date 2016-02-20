@@ -348,31 +348,28 @@ static ac_bool test_pdpte_fields(struct test_case_pdpte_fields* test) {
 
   print_pdpte_fields("", test->val.raw);
 
-  // Uncommenting any of these causes the multiboot loader be invalid.
-  // Something has grown to large, but sure what limit we're hitting.
-
-  //error |= AC_TEST(test->val.fields.p == test->p);
-  //error |= AC_TEST(test->val.fields.rw == test->rw);
-  //error |= AC_TEST(test->val.fields.us == test->us);
-  //error |= AC_TEST(test->val.fields.pwt == test->pwt);
-  //error |= AC_TEST(test->val.fields.pcd == test->pcd);
-  //error |= AC_TEST(test->val.fields.a == test->a);
-  //error |= AC_TEST(test->val.fields.reserved_0 == test->reserved_0);
-  //error |= AC_TEST(test->val.fields.phy_addr == test->phy_addr);
-  //error |= AC_TEST(test->val.fields.xd == test->xd);
+  error |= AC_TEST(test->val.fields.p == test->p);
+  error |= AC_TEST(test->val.fields.rw == test->rw);
+  error |= AC_TEST(test->val.fields.us == test->us);
+  error |= AC_TEST(test->val.fields.pwt == test->pwt);
+  error |= AC_TEST(test->val.fields.pcd == test->pcd);
+  error |= AC_TEST(test->val.fields.a == test->a);
+  error |= AC_TEST(test->val.fields.reserved_0 == test->reserved_0);
+  error |= AC_TEST(test->val.fields.phy_addr == test->phy_addr);
+  error |= AC_TEST(test->val.fields.xd == test->xd);
 
   return error;
 }
 
-//static ac_bool test_pdpte_fields_array(void) {
-//  ac_bool error = AC_FALSE;
-//
-//  for (ac_uint i = 0; i < AC_ARRAY_COUNT(test_case_pdpte_fields_array); i++) {
-//    error |= test_pdpte_fields(&test_case_pdpte_fields_array[i]);
-//  }
-//
-//  return error;
-//}
+static ac_bool test_pdpte_fields_array(void) {
+  ac_bool error = AC_FALSE;
+
+  for (ac_uint i = 0; i < AC_ARRAY_COUNT(test_case_pdpte_fields_array); i++) {
+    error |= test_pdpte_fields(&test_case_pdpte_fields_array[i]);
+  }
+
+  return error;
+}
 
 int main(void) {
   ac_bool error = AC_FALSE;
@@ -387,8 +384,7 @@ int main(void) {
 
   error |= test_pml4e_fields_array();
   error |= test_pdpte_1g_fields_array();
-  error |= test_pdpte_fields(&test_case_pdpte_fields_array[0]);
-  //error |= test_pdpte_fields_array();
+  error |= test_pdpte_fields_array();
 
   if (!error) {
     ac_printf("OK\n");
