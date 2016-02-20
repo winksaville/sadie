@@ -19,8 +19,8 @@ if Platform == 'pc_x86_32'
      'srcs/test.c',
   ]
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
-  linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
-  linkDeps += [linkfile]
+  linkArgs = ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
+  linkDeps = [linkfile]
 
   # Create test_page_table_x86 executable
   test_page_table_x86 = executable( 'test_page_table_x86', srcFiles,
@@ -45,8 +45,8 @@ if Platform == 'pc_x86_64'
   ]
 
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
-  linkArgs += ['-Wl,-n,-lgcc,-T,@0@'.format(linkfile)]
-  linkDeps += [linkfile]
+  linkArgs = ['-Wl,-n,-s,-lgcc,-T,@0@'.format(linkfile)]
+  linkDeps = [linkfile]
 
   # Create test_page_table_x86 executable
   test_page_table_x86 = executable( 'test_page_table_x86', srcFiles,
