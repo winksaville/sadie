@@ -685,8 +685,6 @@ int main(void) {
 
   initialize_intr_descriptor_table();
 
-  print_page_table(get_page_table(), get_page_mode());
-
   error |= test_cr3_nrml_paging_fields_array();
   error |= test_cr3_pae_paging_fields_array();
   error |= test_cr3_pcide_paging_fields_array();
@@ -695,9 +693,12 @@ int main(void) {
   error |= test_pdpte_1g_fields_array();
   error |= test_pdpte_fields_array();
   error |= test_pde_2m_fields_array();
+
   error |= test_pde_fields_array();
   error |= test_pte_small_fields_array();
   error |= test_pte_huge_fields_array();
+
+  print_page_table(get_page_table(), get_page_mode());
 
   if (!error) {
     ac_printf("OK\n");
