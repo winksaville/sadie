@@ -25,7 +25,7 @@
 /**
  * Boolean
  */
-typedef ac_u8 ac_bool;
+typedef _Bool ac_bool;
 
 /**
  * Boolean false is 0
