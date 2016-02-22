@@ -67,8 +67,8 @@ enum page_mode {
  */
 struct cr3_nrml_paging_fields {
   ac_uint reserved_0:3;
-  ac_uint pwt:1;
-  ac_uint pcd:1;
+  ac_bool pwt:1;
+  ac_bool pcd:1;
   ac_uint reserved_1:7;
 #ifdef CPU_X86_64
   ac_uint page_directory_base:52;
@@ -141,15 +141,15 @@ _Static_assert(sizeof(union cr3_paging_fields_u) == CR3_FIELDS_SIZE,
  */
 
 struct pml4e_fields {
-  ac_u64 p:1;                   // Present
-  ac_u64 rw:1;                  // Read write
-  ac_u64 us:1;                  // User/Supervisor
-  ac_u64 pwt:1;                 // Page-level write-through
-  ac_u64 pcd:1;                 // Page-level cache disable
-  ac_u64 a:1;                   // Accessed
+  ac_bool p:1;                  // Present
+  ac_bool rw:1;                 // Read write
+  ac_bool us:1;                 // User/Supervisor
+  ac_bool pwt:1;                // Page-level write-through
+  ac_bool pcd:1;                // Page-level cache disable
+  ac_bool a:1;                  // Accessed
   ac_u64 reserved_0:6;
   ac_u64 phy_addr:51;           // Physical address of 4K aligned PDPE
-  ac_u64 xd:1;                  // Execute disable
+  ac_bool xd:1;                 // Execute disable
 } __attribute__((__packed__));
 
 _Static_assert(sizeof(struct pml4e_fields) == PML4E_FIELDS_SIZE,
@@ -172,21 +172,21 @@ _Static_assert(sizeof(union pml4e_fields_u) == PML4E_FIELDS_SIZE,
  * (PDPTE) that Maps a 1-GByte page"
  */
 struct pdpte_1g_fields {
-  ac_u64 p:1;                   // Present
-  ac_u64 rw:1;                  // Read write
-  ac_u64 us:1;                  // User/Supervisor
-  ac_u64 pwt:1;                 // Page-level write-through
-  ac_u64 pcd:1;                 // Page-level cache disable
-  ac_u64 a:1;                   // Accessed
-  ac_u64 d:1;                   // Dirty
-  ac_u64 ps:1;                  // Page size, 1 for 1GBE, 0 for other sizes
-  ac_u64 g:1;                   // Global; if CR4.PGE = 1
+  ac_bool p:1;                  // Present
+  ac_bool rw:1;                 // Read write
+  ac_bool us:1;                 // User/Supervisor
+  ac_bool pwt:1;                // Page-level write-through
+  ac_bool pcd:1;                // Page-level cache disable
+  ac_bool a:1;                  // Accessed
+  ac_bool d:1;                  // Dirty
+  ac_bool ps:1;                 // Page size, 1 for 1GBE, 0 for other sizes
+  ac_bool g:1;                  // Global; if CR4.PGE = 1
   ac_u64 reserved_0:3;
-  ac_u64 pat:1;                 // Memory type (see 11.12.3)
+  ac_bool pat:1;                // Memory type (see 11.12.3)
   ac_u64 reserved_1:17;
   ac_u64 phy_addr:29;           // Physical address of 1-GByte page
   ac_u64 pke:4;                 // Protection key if CR4.PKE == 1
-  ac_u64 xd:1;                  // Execute disable if IA32_EFER.NXE = 1
+  ac_bool xd:1;                 // Execute disable if IA32_EFER.NXE = 1
 } __attribute__((__packed__));
 
 _Static_assert(sizeof(struct pdpte_1g_fields) == PDPTE_FIELDS_SIZE,
@@ -201,15 +201,15 @@ _Static_assert(sizeof(struct pdpte_1g_fields) == PDPTE_FIELDS_SIZE,
  * (PDPTE) that References a Page Directory"
  */
 struct pdpte_fields {
-  ac_u64 p:1;                   // Present
-  ac_u64 rw:1;                  // Read write
-  ac_u64 us:1;                  // User/Supervisor
-  ac_u64 pwt:1;                 // Page-level write-through
-  ac_u64 pcd:1;                 // Page-level cache disable
-  ac_u64 a:1;                   // Accessed
+  ac_bool p:1;                  // Present
+  ac_bool rw:1;                 // Read write
+  ac_bool us:1;                 // User/Supervisor
+  ac_bool pwt:1;                // Page-level write-through
+  ac_bool pcd:1;                // Page-level cache disable
+  ac_bool a:1;                  // Accessed
   ac_u64 reserved_0:6;
   ac_u64 phy_addr:51;           // Physical address of Page Directory
-  ac_u64 xd:1;                  // Execute disable if IA32_EFER.NXE = 1
+  ac_bool xd:1;                 // Execute disable if IA32_EFER.NXE = 1
 } __attribute__((__packed__));
 
 _Static_assert(sizeof(struct pdpte_fields) == PDPTE_FIELDS_SIZE,
@@ -233,21 +233,21 @@ _Static_assert(sizeof(union pdpte_fields_u) == PDPTE_FIELDS_SIZE,
  * that References a 2-MByte Page"
  */
 struct pde_2m_fields {
-  ac_u64 p:1;                   // Present
-  ac_u64 rw:1;                  // Read write
-  ac_u64 us:1;                  // User/Supervisor
-  ac_u64 pwt:1;                 // Page-level write-through
-  ac_u64 pcd:1;                 // Page-level cache disable
-  ac_u64 a:1;                   // Accessed
-  ac_u64 d:1;                   // Dirty
-  ac_u64 ps:1;                  // Page size, must be 1 for 2M pages
-  ac_u64 g:1;                   // Global; if CR4.PGE = 1
+  ac_bool p:1;                  // Present
+  ac_bool rw:1;                 // Read write
+  ac_bool us:1;                 // User/Supervisor
+  ac_bool pwt:1;                // Page-level write-through
+  ac_bool pcd:1;                // Page-level cache disable
+  ac_bool a:1;                  // Accessed
+  ac_bool d:1;                  // Dirty
+  ac_bool ps:1;                 // Page size, must be 1 for 2M pages
+  ac_bool g:1;                  // Global; if CR4.PGE = 1
   ac_u64 reserved_0:3;
-  ac_u64 pat:1;                 // Memory type (see 11.12.3)
+  ac_bool pat:1;                // Memory type (see 11.12.3)
   ac_u64 reserved_1:8;
   ac_u64 phy_addr:38;           // Physical address of 2-MByte page
   ac_u64 pke:4;                 // Protection key if CR4.PKE == 1
-  ac_u64 xd:1;                  // Execute disable if IA32_EFER.NXE = 1
+  ac_bool xd:1;                 // Execute disable if IA32_EFER.NXE = 1
 } __attribute__((__packed__));
 
 _Static_assert(sizeof(struct pdpte_fields) == PDPTE_FIELDS_SIZE,
@@ -262,15 +262,15 @@ _Static_assert(sizeof(struct pdpte_fields) == PDPTE_FIELDS_SIZE,
  * that References a Page Table"
  */
 struct pde_fields {
-  ac_u64 p:1;                   // Present
-  ac_u64 rw:1;                  // Read write
-  ac_u64 us:1;                  // User/Supervisor
-  ac_u64 pwt:1;                 // Page-level write-through
-  ac_u64 pcd:1;                 // Page-level cache disable
-  ac_u64 a:1;                   // Accessed
+  ac_bool p:1;                  // Present
+  ac_bool rw:1;                 // Read write
+  ac_bool us:1;                 // User/Supervisor
+  ac_bool pwt:1;                // Page-level write-through
+  ac_bool pcd:1;                // Page-level cache disable
+  ac_bool a:1;                  // Accessed
   ac_u64 reserved_0:6;
   ac_u64 phy_addr:51;           // Physical address of Page Directory
-  ac_u64 xd:1;                  // Execute disable if IA32_EFER.NXE = 1
+  ac_bool xd:1;                 // Execute disable if IA32_EFER.NXE = 1
 } __attribute__((__packed__));
 
 _Static_assert(sizeof(struct pdpte_fields) == PDE_FIELDS_SIZE,
@@ -294,19 +294,19 @@ _Static_assert(sizeof(union pde_fields_u) == PDE_FIELDS_SIZE,
  * that References a 4-KByte Page"
  */
 struct pte_fields {
-  ac_u64 p:1;                   // Present
-  ac_u64 rw:1;                  // Read write
-  ac_u64 us:1;                  // User/Supervisor
-  ac_u64 pwt:1;                 // Page-level write-through
-  ac_u64 pcd:1;                 // Page-level cache disable
-  ac_u64 a:1;                   // Accessed
-  ac_u64 d:1;                   // Dirty
-  ac_u64 pat:1;                 // Memory type (see 11.12.3)
-  ac_u64 g:1;                   // Global; if CR4.PGE = 1
+  ac_bool p:1;                  // Present
+  ac_bool rw:1;                 // Read write
+  ac_bool us:1;                 // User/Supervisor
+  ac_bool pwt:1;                // Page-level write-through
+  ac_bool pcd:1;                // Page-level cache disable
+  ac_bool a:1;                  // Accessed
+  ac_bool d:1;                  // Dirty
+  ac_bool pat:1;                // Memory type (see 11.12.3)
+  ac_bool g:1;                  // Global; if CR4.PGE = 1
   ac_u64 reserved_0:3;
   ac_u64 phy_addr:47;           // Physical address of 4-KByte page
   ac_u64 pke:4;                 // Protection key if CR4.PKE == 1
-  ac_u64 xd:1;                  // Execute disable if IA32_EFER.NXE = 1
+  ac_bool xd:1;                 // Execute disable if IA32_EFER.NXE = 1
 } __attribute__((__packed__));
 
 _Static_assert(sizeof(struct pte_fields) == PTE_FIELDS_SIZE,
