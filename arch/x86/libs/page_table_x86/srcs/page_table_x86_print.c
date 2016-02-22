@@ -215,7 +215,23 @@ void print_pte_huge_fields(char* str, ac_u64 val) {
  * by x86 cpus.
  */
 void print_page_table(union cr3_paging_fields_u cr3u, enum page_mode mode) {
-  ac_printf("page directory addr=0x%p mode=%d\n",
-      get_page_directory_addr(cr3u, mode), mode);
+  ac_u64 base_phy_addr_field = get_pde_phy_addr_field(cr3u, mode);
+  ac_u64* p_pde = get_pde_linear_addr(cr3u, mode);
 
+  ac_printf("page directory addr=0x%p mode=%d\n", p_pde, mode);
+
+  for (ac_uint i = 0; i < 512; i++) {
+    if (*p_pde != 0) {
+      union pde_fields_u pdeu = { .raw = *p_pde };
+      char* str;
+
+      if (pdeu.fields.phy_addr == base_phy_addr_field) {
+        str = "recursive";
+      } else {
+        str = "";
+      }
+      print_pde_fields(str, *p_pde);
+    }
+    p_pde += 1;
+  }
 }

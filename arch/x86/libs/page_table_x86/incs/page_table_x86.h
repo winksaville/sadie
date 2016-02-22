@@ -366,11 +366,54 @@ static inline union cr3_paging_fields_u get_page_table(void) {
 }
 
 /**
- * Return the physical address of the current cpu page table
+ * For the moment assume linear == physical
  */
-static inline void* get_page_directory_addr(union cr3_paging_fields_u cr3u,
-    enum page_mode mode) {
+static inline void* physical_to_linear_addr(ac_uptr addr) {
+  return (void*)addr;
+}
+
+/**
+ * Return the physical field of the current cpu page table
+ */
+static inline ac_u64 get_pde_phy_addr_field(
+    union cr3_paging_fields_u cr3u, enum page_mode mode) {
+  ac_u64 addr;
+
+  switch (mode) {
+    case PAGE_MODE_NRML_32BIT:{
+      addr = (ac_uptr)cr3u.nrml_paging_fields.page_directory_base;
+      break;
+    }
+    case PAGE_MODE_PAE_32BIT:{
+      addr = (ac_uptr)cr3u.pae_paging_fields.page_directory_base;
+      break;
+    }
+    case PAGE_MODE_NRML_64BIT:{
+      addr = (ac_uptr)cr3u.nrml_paging_fields.page_directory_base;
+      break;
+    }
+    case PAGE_MODE_PCIDE_64BIT:{
+      addr = (ac_uptr)cr3u.pcide_paging_fields.page_directory_base;
+      break;
+    }
+    case PAGE_MODE_UNKNOWN:
+    default: {
+      addr = 0;
+      break;
+    }
+  };
+
+  return addr;
+}
+
+/**
+ * Return the linear address of the current cpu page table
+ */
+static inline void* get_pde_linear_addr(
+    union cr3_paging_fields_u cr3u, enum page_mode mode) {
+
   ac_uptr addr;
+
   switch (mode) {
     case PAGE_MODE_NRML_32BIT:{
       addr = (ac_uptr)cr3u.nrml_paging_fields.page_directory_base << 12;
@@ -394,7 +437,8 @@ static inline void* get_page_directory_addr(union cr3_paging_fields_u cr3u,
       break;
     }
   };
-  return (void*)addr;
+
+  return physical_to_linear_addr(addr);
 }
 
 #endif
