@@ -286,14 +286,46 @@ _Static_assert(sizeof(union pde_fields_u) == PDE_FIELDS_SIZE,
     L"pde_fields_u is not " AC_XSTR(PDE_FIELDS_SIZE) " bytes");
 
 /**
- * PTE that references Page Table Entry that maps a 4-KByte page
+ * Page Table Entry that maps for huge pages depending on the PS field.
+ * ps == 1 for 1GByte pages and ps == 0 for 2MByte pages.
+ *
+ * See "Intel 64 and IA-32 Architectures Software Developer's Manual"
+ * Volume 3 chapter 4.5 "IA-32e Paging"
+ * Table 4-15. "Format of an IA-32 Page-Direcotry-Pointer-Table
+ * (PDPTE) that Maps a 1-GByte page"
+ * Table 4-17. "Format of an IA-32 Page-Direcotry-Pointer-Table
+ * (PDPTE) that Maps a 2-MByte page"
+ */
+struct pte_huge_fields {
+  ac_bool p:1;                  // Present
+  ac_bool rw:1;                 // Read write
+  ac_bool us:1;                 // User/Supervisor
+  ac_bool pwt:1;                // Page-level write-through
+  ac_bool pcd:1;                // Page-level cache disable
+  ac_bool a:1;                  // Accessed
+  ac_bool d:1;                  // Dirty
+  ac_bool ps:1;                 // Page size, 1 for 1G 0 for 2M
+  ac_bool g:1;                  // Global; if CR4.PGE = 1
+  ac_u64 reserved_0:3;
+  ac_bool pat:1;                // Memory type (see 11.12.3)
+  ac_u64 reserved_1:17;
+  ac_u64 phy_addr:29;           // Physical address of 1-GByte page
+  ac_u64 pke:4;                 // Protection key if CR4.PKE == 1
+  ac_bool xd:1;                 // Execute disable if IA32_EFER.NXE = 1
+} __attribute__((__packed__));
+
+_Static_assert(sizeof(struct pdpte_1g_fields) == PDPTE_FIELDS_SIZE,
+    L"pdpte_1g_fields is not " AC_XSTR(PDPTE_FIELDS_SIZE) " bytes");
+
+/**
+ * Page Table Entry that maps a 4-KByte page
  *
  * See "Intel 64 and IA-32 Architectures Software Developer's Manual"
  * Volume 3 chapter 4.5 "IA-32e Paging"
  * Table 4-19. "Format of an IA-32 Page-Table Entry (PTE)
  * that References a 4-KByte Page"
  */
-struct pte_fields {
+struct pte_small_fields {
   ac_bool p:1;                  // Present
   ac_bool rw:1;                 // Read write
   ac_bool us:1;                 // User/Supervisor
@@ -309,13 +341,14 @@ struct pte_fields {
   ac_bool xd:1;                 // Execute disable if IA32_EFER.NXE = 1
 } __attribute__((__packed__));
 
-_Static_assert(sizeof(struct pte_fields) == PTE_FIELDS_SIZE,
-    L"pte_fields is not " AC_XSTR(PTE_FIELDS_SIZE) " bytes");
+_Static_assert(sizeof(struct pte_small_fields) == PTE_FIELDS_SIZE,
+    L"pte_4k_fields is not " AC_XSTR(PTE_FIELDS_SIZE) " bytes");
 
 
 union pte_fields_u {
   ac_u64 raw;
-  struct pte_fields fields;
+  struct pte_small_fields small;
+  struct pte_huge_fields huge;
 };
 
 

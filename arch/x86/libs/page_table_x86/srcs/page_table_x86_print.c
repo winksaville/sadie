@@ -162,27 +162,52 @@ void print_pde_fields(char* str, ac_u64 val) {
 }
 
 /**
- * print pte_fields
+ * print pte_small_fields
  */
-void print_pte_fields(char* str, ac_u64 val) {
+void print_pte_small_fields(char* str, ac_u64 val) {
   union pte_fields_u reg = { .raw = val };
 
   print_leader(str);
-  ac_printf("pte_fields: 0x%llx\n", reg.raw);
-  ac_printf(" p=%d\n", reg.fields.p);
-  ac_printf(" rw=%d\n", reg.fields.rw);
-  ac_printf(" us=%d\n", reg.fields.us);
-  ac_printf(" pwt=%d\n", reg.fields.pwt);
-  ac_printf(" pcd=%d\n", reg.fields.pcd);
-  ac_printf(" a=%d\n", reg.fields.a);
-  ac_printf(" d=%d\n", reg.fields.d);
-  ac_printf(" pat=%d\n", reg.fields.pat);
-  ac_printf(" g=%d\n", reg.fields.g);
-  ac_printf(" reserved_0=0x%llx\n", reg.fields.reserved_0);
-  ac_printf(" phy_addr=0x%llx\n", reg.fields.phy_addr);
-  ac_printf(" pke=%d\n", reg.fields.pke);
-  ac_printf(" xd=%d\n", reg.fields.xd);
+  ac_printf("pte_small_fields: 0x%llx\n", reg.raw);
+  ac_printf(" p=%d\n", reg.small.p);
+  ac_printf(" rw=%d\n", reg.small.rw);
+  ac_printf(" us=%d\n", reg.small.us);
+  ac_printf(" pwt=%d\n", reg.small.pwt);
+  ac_printf(" pcd=%d\n", reg.small.pcd);
+  ac_printf(" a=%d\n", reg.small.a);
+  ac_printf(" d=%d\n", reg.small.d);
+  ac_printf(" pat=%d\n", reg.small.pat);
+  ac_printf(" g=%d\n", reg.small.g);
+  ac_printf(" reserved_0=0x%llx\n", reg.small.reserved_0);
+  ac_printf(" phy_addr=0x%llx\n", reg.small.phy_addr);
+  ac_printf(" pke=%d\n", reg.small.pke);
+  ac_printf(" xd=%d\n", reg.small.xd);
 }
+
+/**
+ * print pdpte_1g_fields
+ */
+void print_pte_huge_fields(char* str, ac_u64 val) {
+  union pte_fields_u reg = { .raw = val };
+
+  ac_printf("pdpte_huge_fields: 0x%llx\n", reg.raw);
+  ac_printf(" p=%d\n", reg.huge.p);
+  ac_printf(" rw=%d\n", reg.huge.rw);
+  ac_printf(" us=%d\n", reg.huge.us);
+  ac_printf(" pwt=%d\n", reg.huge.pwt);
+  ac_printf(" pcd=%d\n", reg.huge.pcd);
+  ac_printf(" a=%d\n", reg.huge.a);
+  ac_printf(" d=%d\n", reg.huge.d);
+  ac_printf(" ps=%d\n", reg.huge.ps); // should be 1
+  ac_printf(" g=%d\n", reg.huge.g);
+  ac_printf(" reserved_0=0x%llx\n", reg.huge.reserved_0);
+  ac_printf(" pat=%d\n", reg.huge.pat);
+  ac_printf(" reserved_1=0x%llx\n", reg.huge.reserved_1);
+  ac_printf(" phy_addr=0x%llx\n", reg.huge.phy_addr);
+  ac_printf(" pke=%d\n", reg.huge.pke);
+  ac_printf(" xd=%d\n", reg.huge.xd);
+}
+
 
 /**
  * Print the page table whose top most directory is

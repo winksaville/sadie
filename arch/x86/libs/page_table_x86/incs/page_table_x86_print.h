@@ -53,9 +53,15 @@ void print_pde_2m_fields(char* str, ac_u64 val);
 void print_pde_fields(char* str, ac_u64 val);
 
 /**
- * print pte_fields
+ * print pte_small_fields
  */
-void print_pte_fields(char* str, ac_u64 val);
+void print_pte_small_fields(char* str, ac_u64 val);
+
+/**
+ * print pte_huge_fields
+ */
+void print_pte_huge_fields(char* str, ac_u64 val);
+
 
 /**
  * Print a page table.

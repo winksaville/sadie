@@ -464,6 +464,221 @@ static ac_bool test_pde_2m_fields_array(void) {
   return error;
 }
 
+/**
+ * Test case array filled with the val followed
+ * by the expected field values. The array initialization
+ * fields that are NOT explicitly initialized are zeros.
+ *
+ * This is a shortened walking 1 bit test.
+ */
+static struct test_case_pde_fields {
+  union pde_fields_u val;
+  ac_u64 p;
+  ac_u64 rw;
+  ac_u64 us;
+  ac_u64 pwt;
+  ac_u64 pcd;
+  ac_u64 a;
+  ac_u64 reserved_0;
+  ac_u64 phy_addr;
+  ac_u64 xd;
+} test_case_pde_fields_array[] = {
+  { .val.raw=0x1, .p=0x1, },
+  { .val.raw=0x2, .rw=0x1, },
+  { .val.raw=0x4, .us=0x1, },
+  { .val.raw=0x8, .pwt=0x1, },
+  { .val.raw=0x10, .pcd=0x1, },
+  { .val.raw=0x20, .a=0x1, },
+  { .val.raw=0x40, .reserved_0=0x1, },
+  { .val.raw=0x800, .reserved_0=0x20, },
+  { .val.raw=0x1000, .phy_addr=0x1, },
+  { .val.raw=0x4000000000000000, .phy_addr=0x4000000000000, },
+  { .val.raw=0x8000000000000000, .xd=0x1, },
+};
+
+static ac_bool test_pde_fields(struct test_case_pde_fields* test) {
+  ac_bool error = AC_FALSE;
+
+  print_pde_fields("", test->val.raw);
+
+  error |= AC_TEST(test->val.fields.p == test->p);
+  error |= AC_TEST(test->val.fields.rw == test->rw);
+  error |= AC_TEST(test->val.fields.us == test->us);
+  error |= AC_TEST(test->val.fields.pwt == test->pwt);
+  error |= AC_TEST(test->val.fields.pcd == test->pcd);
+  error |= AC_TEST(test->val.fields.a == test->a);
+  error |= AC_TEST(test->val.fields.reserved_0 == test->reserved_0);
+  error |= AC_TEST(test->val.fields.phy_addr == test->phy_addr);
+  error |= AC_TEST(test->val.fields.xd == test->xd);
+
+  return error;
+}
+
+static ac_bool test_pde_fields_array(void) {
+  ac_bool error = AC_FALSE;
+
+  for (ac_uint i = 0; i < AC_ARRAY_COUNT(test_case_pde_fields_array); i++) {
+    error |= test_pde_fields(&test_case_pde_fields_array[i]);
+  }
+
+  return error;
+}
+
+/**
+ * Test case array filled with the val followed
+ * by the expected field values. The array initialization
+ * fields that are NOT explicitly initialized are zeros.
+ *
+ * This is a shortened walking 1 bit test.
+ */
+static struct test_case_pte_small_fields {
+  union pte_fields_u val;
+  ac_u64 p;
+  ac_u64 rw;
+  ac_u64 us;
+  ac_u64 pwt;
+  ac_u64 pcd;
+  ac_u64 a;
+  ac_u64 d;
+  ac_u64 pat;
+  ac_u64 g;
+  ac_u64 reserved_0;
+  ac_u64 phy_addr;
+  ac_u64 pke;
+  ac_u64 xd;
+} test_case_pte_fields_array[] = {
+  { .val.raw=0x1, .p=0x1, },
+  { .val.raw=0x2, .rw=0x1, },
+  { .val.raw=0x4, .us=0x1, },
+  { .val.raw=0x8, .pwt=0x1, },
+  { .val.raw=0x10, .pcd=0x1, },
+  { .val.raw=0x20, .a=0x1, },
+  { .val.raw=0x40, .d=0x1, },
+  { .val.raw=0x80, .pat=0x1, },
+  { .val.raw=0x100, .g=0x1, },
+  { .val.raw=0x200, .reserved_0=0x1, },
+  { .val.raw=0x800, .reserved_0=0x4, },
+  { .val.raw=0x1000, .phy_addr=0x1, },
+  { .val.raw=0x0400000000000000, .phy_addr=0x400000000000, },
+  { .val.raw=0x0800000000000000, .pke=0x1, },
+  { .val.raw=0x4000000000000000, .pke=0x8, },
+  { .val.raw=0x8000000000000000, .xd=0x1, },
+};
+
+static ac_bool test_pte_small_fields(
+    struct test_case_pte_small_fields* test) {
+  ac_bool error = AC_FALSE;
+
+  print_pte_small_fields("", test->val.raw);
+
+  error |= AC_TEST(test->val.small.p == test->p);
+  error |= AC_TEST(test->val.small.rw == test->rw);
+  error |= AC_TEST(test->val.small.us == test->us);
+  error |= AC_TEST(test->val.small.pwt == test->pwt);
+  error |= AC_TEST(test->val.small.pcd == test->pcd);
+  error |= AC_TEST(test->val.small.a == test->a);
+  error |= AC_TEST(test->val.small.d == test->d);
+  error |= AC_TEST(test->val.small.pat == test->pat);
+  error |= AC_TEST(test->val.small.g == test->g);
+  error |= AC_TEST(test->val.small.reserved_0 == test->reserved_0);
+  error |= AC_TEST(test->val.small.phy_addr == test->phy_addr);
+  error |= AC_TEST(test->val.small.xd == test->xd);
+
+  return error;
+}
+
+static ac_bool test_pte_small_fields_array(void) {
+  ac_bool error = AC_FALSE;
+
+  for (ac_uint i = 0;
+      i < AC_ARRAY_COUNT(test_case_pte_fields_array); i++) {
+    error |= test_pte_small_fields(&test_case_pte_fields_array[i]);
+  }
+
+  return error;
+}
+
+/**
+ * Test case array filled with the val followed
+ * by the expected field values. The array initialization
+ * fields that are NOT explicitly initialized are zeros.
+ *
+ * This is a shortened walking 1 bit test.
+ */
+static struct test_case_pte_huge_fields {
+  union pdpte_fields_u val;
+  ac_u64 p;
+  ac_u64 rw;
+  ac_u64 us;
+  ac_u64 pwt;
+  ac_u64 pcd;
+  ac_u64 a;
+  ac_u64 d;
+  ac_u64 ps;
+  ac_u64 g;
+  ac_u64 reserved_0;
+  ac_u64 pat;
+  ac_u64 reserved_1;
+  ac_u64 phy_addr;
+  ac_u64 pke;
+  ac_u64 xd;
+} test_case_pte_huge_fields_array[] = {
+  { .val.raw=0x1, .p=0x1, },
+  { .val.raw=0x2, .rw=0x1, },
+  { .val.raw=0x4, .us=0x1, },
+  { .val.raw=0x8, .pwt=0x1, },
+  { .val.raw=0x10, .pcd=0x1, },
+  { .val.raw=0x20, .a=0x1, },
+  { .val.raw=0x40, .d=0x1, },
+  { .val.raw=0x80, .ps=0x1, },
+  { .val.raw=0x100, .g=0x1, },
+  { .val.raw=0x200, .reserved_0=0x1, },
+  { .val.raw=0x800, .reserved_0=0x4, },
+  { .val.raw=0x1000, .pat=0x1, },
+  { .val.raw=0x2000, .reserved_1=0x1, },
+  { .val.raw=0x20000000, .reserved_1=0x10000, },
+  { .val.raw=0x40000000, .phy_addr=0x1, },
+  { .val.raw=0x0400000000000000, .phy_addr=0x10000000, },
+  { .val.raw=0x0800000000000000, .pke=0x1, },
+  { .val.raw=0x4000000000000000, .pke=0x8, },
+  { .val.raw=0x8000000000000000, .xd=0x1, },
+};
+
+static ac_bool test_pte_huge_fields(struct test_case_pte_huge_fields* test) {
+  ac_bool error = AC_FALSE;
+
+  print_pte_huge_fields("", test->val.raw);
+
+  error |= AC_TEST(test->val.g_fields.p == test->p);
+  error |= AC_TEST(test->val.g_fields.rw == test->rw);
+  error |= AC_TEST(test->val.g_fields.us == test->us);
+  error |= AC_TEST(test->val.g_fields.pwt == test->pwt);
+  error |= AC_TEST(test->val.g_fields.pcd == test->pcd);
+  error |= AC_TEST(test->val.g_fields.a == test->a);
+  error |= AC_TEST(test->val.g_fields.d == test->d);
+  error |= AC_TEST(test->val.g_fields.ps == test->ps);
+  error |= AC_TEST(test->val.g_fields.g == test->g);
+  error |= AC_TEST(test->val.g_fields.reserved_0 == test->reserved_0);
+  error |= AC_TEST(test->val.g_fields.pat == test->pat);
+  error |= AC_TEST(test->val.g_fields.reserved_1 == test->reserved_1);
+  error |= AC_TEST(test->val.g_fields.phy_addr == test->phy_addr);
+  error |= AC_TEST(test->val.g_fields.xd == test->xd);
+
+  return error;
+}
+
+static ac_bool test_pte_huge_fields_array(void) {
+  ac_bool error = AC_FALSE;
+
+  for (ac_uint i = 0;
+      i < AC_ARRAY_COUNT(test_case_pte_huge_fields_array); i++) {
+    error |= test_pte_huge_fields(&test_case_pte_huge_fields_array[i]);
+  }
+
+  return error;
+}
+
+
 
 int main(void) {
   ac_bool error = AC_FALSE;
@@ -480,6 +695,9 @@ int main(void) {
   error |= test_pdpte_1g_fields_array();
   error |= test_pdpte_fields_array();
   error |= test_pde_2m_fields_array();
+  error |= test_pde_fields_array();
+  error |= test_pte_small_fields_array();
+  error |= test_pte_huge_fields_array();
 
   if (!error) {
     ac_printf("OK\n");
