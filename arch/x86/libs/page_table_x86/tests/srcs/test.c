@@ -480,6 +480,8 @@ static struct test_case_pde_fields {
   ac_u64 pcd;
   ac_u64 a;
   ac_u64 reserved_0;
+  ac_u64 pte;
+  ac_u64 reserved_1;
   ac_u64 phy_addr;
   ac_u64 xd;
 } test_case_pde_fields_array[] = {
@@ -490,7 +492,9 @@ static struct test_case_pde_fields {
   { .val.raw=0x10, .pcd=0x1, },
   { .val.raw=0x20, .a=0x1, },
   { .val.raw=0x40, .reserved_0=0x1, },
-  { .val.raw=0x800, .reserved_0=0x20, },
+  { .val.raw=0x80, .pte=0x1, },
+  { .val.raw=0x100, .reserved_1=0x1, },
+  { .val.raw=0x800, .reserved_1=0x8, },
   { .val.raw=0x1000, .phy_addr=0x1, },
   { .val.raw=0x4000000000000000, .phy_addr=0x4000000000000, },
   { .val.raw=0x8000000000000000, .xd=0x1, },
@@ -508,6 +512,8 @@ static ac_bool test_pde_fields(struct test_case_pde_fields* test) {
   error |= AC_TEST(test->val.fields.pcd == test->pcd);
   error |= AC_TEST(test->val.fields.a == test->a);
   error |= AC_TEST(test->val.fields.reserved_0 == test->reserved_0);
+  error |= AC_TEST(test->val.fields.pte == test->pte);
+  error |= AC_TEST(test->val.fields.reserved_1 == test->reserved_1);
   error |= AC_TEST(test->val.fields.phy_addr == test->phy_addr);
   error |= AC_TEST(test->val.fields.xd == test->xd);
 
@@ -606,7 +612,7 @@ static ac_bool test_pte_small_fields_array(void) {
  * This is a shortened walking 1 bit test.
  */
 static struct test_case_pte_huge_fields {
-  union pdpte_fields_u val;
+  union pte_fields_u val;
   ac_u64 p;
   ac_u64 rw;
   ac_u64 us;
@@ -618,7 +624,6 @@ static struct test_case_pte_huge_fields {
   ac_u64 g;
   ac_u64 reserved_0;
   ac_u64 pat;
-  ac_u64 reserved_1;
   ac_u64 phy_addr;
   ac_u64 pke;
   ac_u64 xd;
@@ -635,10 +640,8 @@ static struct test_case_pte_huge_fields {
   { .val.raw=0x200, .reserved_0=0x1, },
   { .val.raw=0x800, .reserved_0=0x4, },
   { .val.raw=0x1000, .pat=0x1, },
-  { .val.raw=0x2000, .reserved_1=0x1, },
-  { .val.raw=0x20000000, .reserved_1=0x10000, },
-  { .val.raw=0x40000000, .phy_addr=0x1, },
-  { .val.raw=0x0400000000000000, .phy_addr=0x10000000, },
+  { .val.raw=0x2000, .phy_addr=0x1, },
+  { .val.raw=0x0400000000000000, .phy_addr=0x200000000000, },
   { .val.raw=0x0800000000000000, .pke=0x1, },
   { .val.raw=0x4000000000000000, .pke=0x8, },
   { .val.raw=0x8000000000000000, .xd=0x1, },
@@ -649,20 +652,20 @@ static ac_bool test_pte_huge_fields(struct test_case_pte_huge_fields* test) {
 
   print_pte_huge_fields("", test->val.raw);
 
-  error |= AC_TEST(test->val.g_fields.p == test->p);
-  error |= AC_TEST(test->val.g_fields.rw == test->rw);
-  error |= AC_TEST(test->val.g_fields.us == test->us);
-  error |= AC_TEST(test->val.g_fields.pwt == test->pwt);
-  error |= AC_TEST(test->val.g_fields.pcd == test->pcd);
-  error |= AC_TEST(test->val.g_fields.a == test->a);
-  error |= AC_TEST(test->val.g_fields.d == test->d);
-  error |= AC_TEST(test->val.g_fields.ps == test->ps);
-  error |= AC_TEST(test->val.g_fields.g == test->g);
-  error |= AC_TEST(test->val.g_fields.reserved_0 == test->reserved_0);
-  error |= AC_TEST(test->val.g_fields.pat == test->pat);
-  error |= AC_TEST(test->val.g_fields.reserved_1 == test->reserved_1);
-  error |= AC_TEST(test->val.g_fields.phy_addr == test->phy_addr);
-  error |= AC_TEST(test->val.g_fields.xd == test->xd);
+  error |= AC_TEST(test->val.huge.p == test->p);
+  error |= AC_TEST(test->val.huge.rw == test->rw);
+  error |= AC_TEST(test->val.huge.us == test->us);
+  error |= AC_TEST(test->val.huge.pwt == test->pwt);
+  error |= AC_TEST(test->val.huge.pcd == test->pcd);
+  error |= AC_TEST(test->val.huge.a == test->a);
+  error |= AC_TEST(test->val.huge.d == test->d);
+  error |= AC_TEST(test->val.huge.ps == test->ps);
+  error |= AC_TEST(test->val.huge.g == test->g);
+  error |= AC_TEST(test->val.huge.reserved_0 == test->reserved_0);
+  error |= AC_TEST(test->val.huge.pat == test->pat);
+  error |= AC_TEST(test->val.huge.phy_addr == test->phy_addr);
+  error |= AC_TEST(test->val.huge.pke == test->pke);
+  error |= AC_TEST(test->val.huge.xd == test->xd);
 
   return error;
 }
@@ -698,6 +701,8 @@ int main(void) {
   error |= test_pte_small_fields_array();
   error |= test_pte_huge_fields_array();
 
+  ac_printf("\n");
+  ac_printf("****** Current Page Table:\n");
   print_page_table(get_page_table(), get_page_mode());
 
   if (!error) {

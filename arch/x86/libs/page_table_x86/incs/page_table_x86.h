@@ -268,7 +268,9 @@ struct pde_fields {
   ac_bool pwt:1;                // Page-level write-through
   ac_bool pcd:1;                // Page-level cache disable
   ac_bool a:1;                  // Accessed
-  ac_u64 reserved_0:6;
+  ac_bool reserved_0:1;
+  ac_bool pte:1;                // 0 == pde, 1 = pte
+  ac_u64 reserved_1:4;
   ac_u64 phy_addr:51;           // Physical address of Page Directory
   ac_bool xd:1;                 // Execute disable if IA32_EFER.NXE = 1
 } __attribute__((__packed__));
@@ -308,8 +310,7 @@ struct pte_huge_fields {
   ac_bool g:1;                  // Global; if CR4.PGE = 1
   ac_u64 reserved_0:3;
   ac_bool pat:1;                // Memory type (see 11.12.3)
-  ac_u64 reserved_1:17;
-  ac_u64 phy_addr:29;           // Physical address of 1-GByte page
+  ac_u64 phy_addr:46;           // Physical address of huge page
   ac_u64 pke:4;                 // Protection key if CR4.PKE == 1
   ac_bool xd:1;                 // Execute disable if IA32_EFER.NXE = 1
 } __attribute__((__packed__));

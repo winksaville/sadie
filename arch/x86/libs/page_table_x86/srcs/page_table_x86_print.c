@@ -157,7 +157,10 @@ void print_pde_fields(char* str, ac_u64 val) {
   ac_printf(" pcd=%d\n", reg.fields.pcd);
   ac_printf(" a=%d\n", reg.fields.a);
   ac_printf(" reserved_0=0x%llx\n", reg.fields.reserved_0);
-  ac_printf(" phy_addr=0x%llx\n", reg.fields.phy_addr);
+  ac_printf(" pte=%d\n", reg.fields.pte);
+  ac_printf(" reserved_1=0x%llx\n", reg.fields.reserved_1);
+  ac_printf(" phy_addr=0x%llx 0x%llx\n", reg.fields.phy_addr,
+      (ac_uptr)reg.fields.phy_addr << 12);
   ac_printf(" xd=%d\n", reg.fields.xd);
 }
 
@@ -179,18 +182,19 @@ void print_pte_small_fields(char* str, ac_u64 val) {
   ac_printf(" pat=%d\n", reg.small.pat);
   ac_printf(" g=%d\n", reg.small.g);
   ac_printf(" reserved_0=0x%llx\n", reg.small.reserved_0);
-  ac_printf(" phy_addr=0x%llx\n", reg.small.phy_addr);
+  ac_printf(" phy_addr=0x%llx 0x%llx\n", reg.small.phy_addr,
+      (ac_uptr)reg.small.phy_addr << 12);
   ac_printf(" pke=%d\n", reg.small.pke);
   ac_printf(" xd=%d\n", reg.small.xd);
 }
 
 /**
- * print pdpte_1g_fields
+ * print pte_huge_fields, 1g, 2m
  */
 void print_pte_huge_fields(char* str, ac_u64 val) {
   union pte_fields_u reg = { .raw = val };
 
-  ac_printf("pdpte_huge_fields: 0x%llx\n", reg.raw);
+  ac_printf("pte_huge_fields: 0x%llx\n", reg.raw);
   ac_printf(" p=%d\n", reg.huge.p);
   ac_printf(" rw=%d\n", reg.huge.rw);
   ac_printf(" us=%d\n", reg.huge.us);
@@ -202,36 +206,97 @@ void print_pte_huge_fields(char* str, ac_u64 val) {
   ac_printf(" g=%d\n", reg.huge.g);
   ac_printf(" reserved_0=0x%llx\n", reg.huge.reserved_0);
   ac_printf(" pat=%d\n", reg.huge.pat);
-  ac_printf(" reserved_1=0x%llx\n", reg.huge.reserved_1);
-  ac_printf(" phy_addr=0x%llx\n", reg.huge.phy_addr);
+  ac_printf(" phy_addr=0x%llx 0x%llx\n", reg.huge.phy_addr,
+      (ac_uptr)reg.huge.phy_addr << 13);
   ac_printf(" pke=%d\n", reg.huge.pke);
   ac_printf(" xd=%d\n", reg.huge.xd);
 }
 
+/**
+ * Recursive algorithm to print either
+ * page directory entires (pde) or page table entries (pte)
+ */
+static void print_pde_pte(ac_uint level, ac_u64* p_base) {
+  union pde_fields_u pdeu = { .raw = *p_base };
+  ac_u64* p_entry;
+
+  ac_printf("first pass level=%d base=0x%p\n", level, p_base);
+  if ((level > 1) && (pdeu.fields.pte == 0)) {
+    // This is a pde entry, print all entries that are present
+    p_entry = p_base;
+    for (ac_uint i = 0; i < 512; i++) {
+      pdeu.raw = *p_entry;
+      if (pdeu.fields.p == 1) {
+        char* str;
+
+        ac_printf("level=%d i=%d\n", level, i);
+        if (((ac_u64)pdeu.fields.phy_addr << 12) == (ac_u64)p_base) {
+          ac_printf("pdeu.fields.phy_addr=%llx p_base=0x%llx\n",
+              pdeu.fields.phy_addr, p_base);
+          str = "recursive";
+        } else {
+          str = "";
+        }
+        print_pde_fields(str, *p_entry);
+      }
+      p_entry += 1;
+    }
+  }
+
+  ac_printf("\nsecond pass level=%d base=0x%p\n", level, p_base);
+  p_entry = p_base;
+  for (ac_uint i = 0; i < 512; i++) {
+    pdeu.raw = *p_entry;
+
+    if (pdeu.fields.p == 1) {
+      if (level == 1) {
+        // Is a small pte, print its fields
+        print_pte_small_fields("Small page", *p_entry);
+      } else if ((level > 1) && (pdeu.fields.pte == 1)) {
+        // Is a huge pte, print its fields
+        print_pte_huge_fields("Huge page", *p_entry);
+      } else {
+        // Is a pde
+        if (((ac_u64)pdeu.fields.phy_addr << 12) != (ac_u64)p_base) {
+          // A non-recrusive entry so recurse into it
+          print_pde_pte(level - 1, (ac_u64*)((ac_u64)pdeu.fields.phy_addr << 12));
+        } else {
+          // Is a recursive entry so skip
+          ac_printf("Skipping recursive entry level=%d i=%d\n", level, i);
+        }
+      }
+    }
+    p_entry += 1;
+  }
+  ac_printf("leaving level=%d base=0x%p\n", level, p_base);
+}
 
 /**
- * Print the page table whose top most directory is
- * table and the mode is one of the three modes supported
- * by x86 cpus.
+ * Print the page table pointed to by cr3u and one of the modes.
  */
 void print_page_table(union cr3_paging_fields_u cr3u, enum page_mode mode) {
-  ac_u64 base_phy_addr_field = get_pde_phy_addr_field(cr3u, mode);
-  ac_u64* p_pde = get_pde_linear_addr(cr3u, mode);
+  ac_u64* p_pde_base = get_pde_linear_addr(cr3u, mode);
 
-  ac_printf("page directory addr=0x%p mode=%d\n", p_pde, mode);
+  ac_printf("page directory addr=0x%p mode=%d\n", p_pde_base, mode);
 
-  for (ac_uint i = 0; i < 512; i++) {
-    if (*p_pde != 0) {
-      union pde_fields_u pdeu = { .raw = *p_pde };
-      char* str;
-
-      if (pdeu.fields.phy_addr == base_phy_addr_field) {
-        str = "recursive";
-      } else {
-        str = "";
-      }
-      print_pde_fields(str, *p_pde);
+  switch(mode) {
+    case PAGE_MODE_NRML_32BIT: {
+      ac_printf("PAGE_MODE_NRML_32BIT Unsupported  addr=0x%p mode=%d\n",
+          p_pde_base, mode);
+      break;
     }
-    p_pde += 1;
+    case PAGE_MODE_PAE_32BIT: {
+      ac_printf("PAGE_MODE_PAE_32BIT Unsupported  addr=0x%p mode=%d\n",
+          p_pde_base, mode);
+      break;
+    }
+    case PAGE_MODE_NRML_64BIT:
+    case PAGE_MODE_PCIDE_64BIT: {
+      print_pde_pte(4, p_pde_base);
+      break;
+    }
+    default: {
+      ac_printf("Unknown page directory addr=0x%p mode=%d\n", p_pde_base, mode);
+    }
   }
 }
