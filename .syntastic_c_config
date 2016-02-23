@@ -41,6 +41,8 @@
 -I
 /home/wink/prgs/sadie/libs/ac_memcmp/incs
 -I
+/home/wink/prgs/sadie/libs/ac_memset/incs
+-I
 /home/wink/prgs/sadie/libs/ac_mpscfifo/incs
 -I
 /home/wink/prgs/sadie/libs/ac_printf/incs
