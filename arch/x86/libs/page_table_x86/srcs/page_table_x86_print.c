@@ -274,8 +274,8 @@ static void print_pde_pte(ac_uint level, ac_u64* p_base) {
 /**
  * Print the page table pointed to by cr3u and one of the modes.
  */
-void print_page_table(union cr3_paging_fields_u cr3u, enum page_mode mode) {
-  ac_u64* p_pde_base = get_pde_linear_addr(cr3u, mode);
+void print_page_table_linear(void* linear_base_addr, enum page_mode mode) {
+  ac_u64* p_pde_base = (ac_u64*)linear_base_addr;
 
   ac_printf("page directory addr=0x%p mode=%d\n", p_pde_base, mode);
 
@@ -299,4 +299,11 @@ void print_page_table(union cr3_paging_fields_u cr3u, enum page_mode mode) {
       ac_printf("Unknown page directory addr=0x%p mode=%d\n", p_pde_base, mode);
     }
   }
+}
+
+/**
+ * Print the page table pointed to by cr3u and one of the modes.
+ */
+void print_page_table(union cr3_paging_fields_u cr3u, enum page_mode mode) {
+  print_page_table_linear(get_cr3_pde_linear_addr(cr3u, mode), mode);
 }

@@ -68,4 +68,9 @@ void print_pte_huge_fields(char* str, ac_u64 val);
  */
 void print_page_table(union cr3_paging_fields_u cr3u, enum page_mode mode);
 
+/**
+ * Print a page table at the linear base address.
+ */
+void print_page_table_linear(void* linear_base_addr, enum page_mode mode);
+
 #endif

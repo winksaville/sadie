@@ -275,7 +275,7 @@ struct pde_fields {
   ac_bool xd:1;                 // Execute disable if IA32_EFER.NXE = 1
 } __attribute__((__packed__));
 
-_Static_assert(sizeof(struct pdpte_fields) == PDE_FIELDS_SIZE,
+_Static_assert(sizeof(struct pde_fields) == PDE_FIELDS_SIZE,
     L"pdpte_fields is not " AC_XSTR(PDE_FIELDS_SIZE) " bytes");
 
 union pde_fields_u {
@@ -374,6 +374,13 @@ static inline void* physical_to_linear_addr(ac_uptr addr) {
 }
 
 /**
+ * For the moment assume linear == physical
+ */
+static inline ac_uptr linear_to_physical_addr(void* addr) {
+  return (ac_uptr)addr;
+}
+
+/**
  * Return the physical field of the current cpu page table
  */
 static inline ac_u64 get_pde_phy_addr_field(
@@ -410,7 +417,7 @@ static inline ac_u64 get_pde_phy_addr_field(
 /**
  * Return the linear address of the current cpu page table
  */
-static inline void* get_pde_linear_addr(
+static inline void* get_cr3_pde_linear_addr(
     union cr3_paging_fields_u cr3u, enum page_mode mode) {
 
   ac_uptr addr;
