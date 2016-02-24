@@ -231,7 +231,7 @@ union pte_fields_u {
   struct pte_huge_fields huge;
 };
 
-_Static_assert(sizeof(struct pte_fields_u) == PTE_FIELDS_SIZE,
+_Static_assert(sizeof(union pte_fields_u) == PTE_FIELDS_SIZE,
     L"pte_fields_u is not " AC_XSTR(PTE_FIELDS_SIZE) " bytes");
 
 /**
