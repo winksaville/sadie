@@ -45,7 +45,7 @@ if Platform == 'pc_x86_64'
   ]
 
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
-  linkArgs = ['-Wl,-n,-s,-lgcc,-T,@0@'.format(linkfile)]
+  linkArgs = ['-Wl,-n,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps = [linkfile]
 
   # Create test_page_table_x86 executable
