@@ -415,10 +415,26 @@ int main(void) {
   error |= test_pte_small_fields_array();
   error |= test_pte_huge_fields_array();
 
-  ac_printf("\n");
-  ac_printf("****** Current Page Table:\n");
+  ac_printf("\n****** Current Page Table:\n");
   print_page_table(get_page_table(), get_page_mode());
 
+  ac_printf("\n****** Create new Test Page Table with no entries:\n");
+  struct pde_fields* test_pt = page_table_map_physical_to_linear(
+      AC_NULL, 0, AC_NULL, 0, PAGE_CACHING_UNKNOWN);
+  print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
+
+  ac_printf("\n****** Create new Test Page Table:\n");
+  test_pt = page_table_map_physical_to_linear(
+      AC_NULL, 0x2000, (void*)0x42000, FOUR_K_PAGE_SIZE,
+      PAGE_CACHING_STRONG_UNCACHEABLE);
+  print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
+
+  ac_printf("\n****** Add pages to existing Test Page Table:\n");
+  page_table_map_physical_to_linear(
+      test_pt, 0x3000, (void*)0x43000, 2 * FOUR_K_PAGE_SIZE,
+      PAGE_CACHING_STRONG_UNCACHEABLE);
+  print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
+  
   if (!error) {
     ac_printf("OK\n");
   }

@@ -86,18 +86,24 @@ void init_phylin_4k_pages(void) {
  * return a phylin address of a cleared 4k page.
  */
 void* calloc_phylin_4k_page() {
+  ac_debug_printf("calloc_phylin_4k_page:+ top=%d\n", top);
   if (top >= AC_ARRAY_COUNT(phylin_4k_stack)) {
     return 0;
   }
   ac_u8 *p = phylin_4k_stack[top++];
-  ac_memset(p, 0, 4096);
-  ac_debug_printf("calloc_phylin_4k_page:+- p=0x%p\n", p);
+  ac_memset(p, 0, FOUR_K_PAGE_SIZE);
+  ac_debug_printf("calloc_phylin_4k_page:- p=0x%p top=%d\n", p, top);
   return p;
 }
 
 void free_phylin_4k_page(void* page) {
+  ac_debug_printf("free_phylin_4k_page:+ page=0x%p top=%d\n", page, top);
   if ((top > 0) && (top >= AC_ARRAY_COUNT(phylin_4k_stack))) {
     phylin_4k_stack[--top] = page;
+    ac_debug_printf("free_phylin_4k_page:+ page=0x%p top=%d\n", page, top);
+  } else {
+    ac_debug_printf("free_phylin_4k_page:- ignore page=0x%p stack is full\n",
+        page);
   }
 }
 
@@ -111,8 +117,6 @@ struct pde_fields* alloc_pde() {
     ac_printf("No phy_4k_pages\n");
     reset_x86();
   }
-  entry->p = 1;
-  entry->rw = 1;
 
   ac_debug_printf("alloc_pde:+- entry=0x%p\n", entry);
   return entry;
@@ -122,14 +126,20 @@ struct pde_fields* alloc_pde() {
  * Get a pde or allocate it if it doesn't exist
  */
 struct pde_fields* get_or_alloc_pde(struct pde_fields *base, ac_uint idx) {
-  struct pde_fields* entry = &base[idx];
-  ac_debug_printf("get_or_alloc_pde:+ base=0x%lx idx=0x%x\n", base, idx);
-  if (!entry->p) {
-    entry->phy_addr = (ac_u64)alloc_pde() >> 12;
+  union pde_fields_u* entry = (union pde_fields_u*)&base[idx];
+  ac_debug_printf("get_or_alloc_pde:+ base=0x%p idx=0x%x entry=%p raw=0x%lx entry.p=%d\n",
+      base, idx, entry, entry->raw, entry->fields.p);
+  if (!entry->fields.p) {
+    entry->fields.phy_addr = (ac_u64)alloc_pde() >> 12;
+    entry->fields.p = 1;
+    entry->fields.rw = 1;
+  } else {
+    ac_debug_printf("get_or_alloc_pde: present entry=%p entry.p=%d\n",
+      entry, entry->fields.p);
   }
 
-  ac_debug_printf("get_or_alloc_pde:+- entry=0x%p\n", entry);
-  return entry;
+  ac_debug_printf("get_or_alloc_pde:- entry=0x%p\n", entry);
+  return (struct pde_fields*)entry;
 }
 
 /**
@@ -189,13 +199,20 @@ struct pde_fields* page_table_map_physical_to_linear(
     ac_uptr size, enum page_caching caching) {
 
   ac_bool pat, pcd, pwt;
-  ac_debug_printf("page_table_map_physical_to_linear:+ page_table_base=0x%lx\n",
+  ac_debug_printf("page_table_map_physical_to_linear:+ page_table_base=0x%p\n",
       page_table_base);
   ac_debug_printf("  phy_addr=0x%p lin_addr=0x%p\n", phy_addr, lin_addr);
   ac_debug_printf("  size=0x%p caching=0x%x\n", size, caching);
 
   if (page_table_base == AC_NULL) {
     page_table_base = alloc_pde();
+
+    // Add recursive entry
+    page_table_base[511].p = 1;
+    page_table_base[511].rw = 1;
+    page_table_base[511].phy_addr = linear_to_physical_addr(&page_table_base[0]) >> 12;
+
+    ac_debug_printf("page_table_map_physical_to_linear: allocate page_table base=0x%p\n", page_table_base);
   }
 
 #ifdef CPU_X86_64
@@ -213,34 +230,47 @@ struct pde_fields* page_table_map_physical_to_linear(
 
   struct pde_fields* pml4 = page_table_base;
   while (size > 0) {
+    ac_debug_printf("\npage_table_map_physical_to_linear: 4K loop phy_addr=0x%p lin_addr=0x%p size=%x\n",
+        phy_addr, laddr.raw, size);
+
+    ac_debug_printf("page_table_map_physical_to_linear: pml4=0x%p idx=%x\n", pml4, laddr.indexes.pml4);
     struct pde_fields* pml4_entry = get_or_alloc_pde(pml4, laddr.indexes.pml4);
+    ac_debug_printf("page_table_map_physical_to_linear: pml4_entry=0x%p\n", pml4_entry);
 
     struct pde_fields* pml3 =
       physical_to_linear_addr(pml4_entry->phy_addr << 12);
+    ac_debug_printf("page_table_map_physical_to_linear: pml3=0x%p idx=%x\n", pml3, laddr.indexes.pml3);
     struct pde_fields* pml3_entry = get_or_alloc_pde(pml3, laddr.indexes.pml4);
+    ac_debug_printf("page_table_map_physical_to_linear: pml3_entry=0x%p\n", pml3_entry);
 
     struct pde_fields* pml2 =
       physical_to_linear_addr(pml3_entry->phy_addr << 12);
+    ac_debug_printf("page_table_map_physical_to_linear: pml2=0x%p idx=%x\n", pml2, laddr.indexes.pml2);
     struct pde_fields* pml2_entry = get_or_alloc_pde(pml2, laddr.indexes.pml4);
+    ac_debug_printf("page_table_map_physical_to_linear: pml2_entry=0x%p\n", pml2_entry);
 
     union pte_fields_u* pml1 =
       physical_to_linear_addr(pml2_entry->phy_addr << 12);
+    ac_debug_printf("page_table_map_physical_to_linear: pml1=0x%p idx=%x\n", pml1, laddr.indexes.pml1);
     union pte_fields_u* pml1_entry = &pml1[laddr.indexes.pml1];
+    ac_debug_printf("page_table_map_physical_to_linear: pml1_entry=0x%p\n", pml1_entry);
 
     if (pml1_entry->small.p) {
-      ac_printf("ABORTING: page_table_map_physical_to_linear 4K page ate 0x%lx is already present\n");
+      ac_printf("ABORTING: page_table_map_physical_to_linear 4K page at 0x%lx is already present\n");
       reset_x86();
     }
 
-    // Make it present and rw
-    pml1_entry->small.phy_addr = linear_to_physical_addr(lin_addr) >> 12;
+    // Get the caching bits and initialize the entry
+    get_caching_bits(caching, &pat, &pcd, &pwt);
+    pml1_entry->small.phy_addr = linear_to_physical_addr((void*)laddr.raw) >> 12;
     pml1_entry->small.p = 1;
     pml1_entry->small.rw = 1;
-    get_caching_bits(caching, &pat, &pcd, &pwt);
     pml1_entry->small.pat = pat;
     pml1_entry->small.pcd = pcd;
     pml1_entry->small.pwt = pwt;
 
+    laddr.raw += FOUR_K_PAGE_SIZE;
+    phy_addr += FOUR_K_PAGE_SIZE;
     size -= FOUR_K_PAGE_SIZE;
   }
 
