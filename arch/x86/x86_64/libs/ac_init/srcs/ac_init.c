@@ -88,7 +88,7 @@ void init_page_tables(struct multiboot2_memory_map_tag* mm, ac_uint count) {
 
   ac_printf("CR3 is now 0x%x\n", get_cr3());
   set_cr3((ac_uint)pml4);
-  ac_printf("init_page_tabels:- Changed to our page tables, CR3=0x%x\n",
+  ac_printf("init_page_tables:- Changed to our page tables, CR3=0x%x\n",
       get_cr3());
 }
 
