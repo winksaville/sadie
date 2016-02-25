@@ -199,7 +199,7 @@ static struct test_case_pde_fields {
   ac_u64 pcd;
   ac_u64 a;
   ac_u64 reserved_0;
-  ac_u64 pte;
+  ac_u64 ps_pte;
   ac_u64 reserved_1;
   ac_u64 phy_addr;
   ac_u64 xd;
@@ -211,7 +211,7 @@ static struct test_case_pde_fields {
   { .val.raw=0x10, .pcd=0x1, },
   { .val.raw=0x20, .a=0x1, },
   { .val.raw=0x40, .reserved_0=0x1, },
-  { .val.raw=0x80, .pte=0x1, },
+  { .val.raw=0x80, .ps_pte=0x1, },
   { .val.raw=0x100, .reserved_1=0x1, },
   { .val.raw=0x800, .reserved_1=0x8, },
   { .val.raw=0x1000, .phy_addr=0x1, },
@@ -231,7 +231,7 @@ static ac_bool test_pde_fields(struct test_case_pde_fields* test) {
   error |= AC_TEST(test->val.fields.pcd == test->pcd);
   error |= AC_TEST(test->val.fields.a == test->a);
   error |= AC_TEST(test->val.fields.reserved_0 == test->reserved_0);
-  error |= AC_TEST(test->val.fields.pte == test->pte);
+  error |= AC_TEST(test->val.fields.ps_pte == test->ps_pte);
   error |= AC_TEST(test->val.fields.reserved_1 == test->reserved_1);
   error |= AC_TEST(test->val.fields.phy_addr == test->phy_addr);
   error |= AC_TEST(test->val.fields.xd == test->xd);
@@ -339,7 +339,7 @@ static struct test_case_pte_huge_fields {
   ac_u64 pcd;
   ac_u64 a;
   ac_u64 d;
-  ac_u64 ps;
+  ac_u64 ps_pte;
   ac_u64 g;
   ac_u64 reserved_0;
   ac_u64 pat;
@@ -354,7 +354,7 @@ static struct test_case_pte_huge_fields {
   { .val.raw=0x10, .pcd=0x1, },
   { .val.raw=0x20, .a=0x1, },
   { .val.raw=0x40, .d=0x1, },
-  { .val.raw=0x80, .ps=0x1, },
+  { .val.raw=0x80, .ps_pte=0x1, },
   { .val.raw=0x100, .g=0x1, },
   { .val.raw=0x200, .reserved_0=0x1, },
   { .val.raw=0x800, .reserved_0=0x4, },
@@ -378,7 +378,7 @@ static ac_bool test_pte_huge_fields(struct test_case_pte_huge_fields* test) {
   error |= AC_TEST(test->val.huge.pcd == test->pcd);
   error |= AC_TEST(test->val.huge.a == test->a);
   error |= AC_TEST(test->val.huge.d == test->d);
-  error |= AC_TEST(test->val.huge.ps == test->ps);
+  error |= AC_TEST(test->val.huge.ps_pte == test->ps_pte);
   error |= AC_TEST(test->val.huge.g == test->g);
   error |= AC_TEST(test->val.huge.reserved_0 == test->reserved_0);
   error |= AC_TEST(test->val.huge.pat == test->pat);
@@ -415,23 +415,55 @@ int main(void) {
   error |= test_pte_small_fields_array();
   error |= test_pte_huge_fields_array();
 
-  ac_printf("\n****** Current Page Table:\n");
-  print_page_table(get_page_table(), get_page_mode());
+  //ac_printf("\n****** Current Page Table:\n");
+  //print_page_table(get_page_table(), get_page_mode());
 
-  ac_printf("\n****** Create new Test Page Table with no entries:\n");
+  // Test we can create an empty page table with only the
+  // recursive level 4 entry. This isn't useful but the
+  // algoritm must work this way.
   struct pde_fields* test_pt = page_table_map_physical_to_linear(
       AC_NULL, 0, AC_NULL, 0, PAGE_CACHING_UNKNOWN);
+  for (ac_uint i = 0; i < 511; i++) {
+    error |= AC_TEST(test_pt[i].p == 0);
+  }
+  error |= AC_TEST(test_pt[511].p == 1);
+  error |= AC_TEST(test_pt[511].rw == 1);
+  error |= AC_TEST(test_pt[511].phy_addr == ((ac_uptr)&test_pt[0] >> 12));
   print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
 
-  ac_printf("\n****** Create new Test Page Table:\n");
+  ac_printf("\n****** Create a new Test Page Table with ONE_GIG_PAGE_SIZE:\n");
+  test_pt = page_table_map_physical_to_linear(
+      AC_NULL, 0x0, (void*)0x0, ONE_GIG_PAGE_SIZE,
+      PAGE_CACHING_STRONG_UNCACHEABLE);
+  print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
+
+  ac_printf("\n****** Add 3 pages Test Page Table with ONE_GIG_PAGE_SIZE:\n");
+  page_table_map_physical_to_linear(
+      test_pt, ONE_GIG_PAGE_SIZE, (void*)ONE_GIG_PAGE_SIZE, 3 * ONE_GIG_PAGE_SIZE,
+      PAGE_CACHING_STRONG_UNCACHEABLE);
+  print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
+
+  ac_printf("\n****** Create a new Test Page Table with TWO_MEG_PAGE_SIZE:\n");
+  test_pt = page_table_map_physical_to_linear(
+      AC_NULL, 0x0, (void*)0x0, TWO_MEG_PAGE_SIZE,
+      PAGE_CACHING_STRONG_UNCACHEABLE);
+  print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
+
+  ac_printf("\n****** Add 5 pages to Test Page Table with TWO_MEG_PAGE_SIZE:\n");
+  page_table_map_physical_to_linear(
+      test_pt, TWO_MEG_PAGE_SIZE, (void*)TWO_MEG_PAGE_SIZE, 5 * TWO_MEG_PAGE_SIZE,
+      PAGE_CACHING_STRONG_UNCACHEABLE);
+  print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
+
+  ac_printf("\n****** Create new Test Page Table with FOUR_K_PAGE_SIZE:\n");
   test_pt = page_table_map_physical_to_linear(
       AC_NULL, 0x2000, (void*)0x42000, FOUR_K_PAGE_SIZE,
       PAGE_CACHING_STRONG_UNCACHEABLE);
   print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
 
-  ac_printf("\n****** Add pages to existing Test Page Table:\n");
+  ac_printf("\n****** Add 2 pages to Test Page Table with FOUR_K_PAGE_SIZE:\n");
   page_table_map_physical_to_linear(
-      test_pt, 0x3000, (void*)0x43000, 2 * FOUR_K_PAGE_SIZE,
+      test_pt, 0x3000, (void*)(511 * FOUR_K_PAGE_SIZE), 2 * FOUR_K_PAGE_SIZE,
       PAGE_CACHING_STRONG_UNCACHEABLE);
   print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
   

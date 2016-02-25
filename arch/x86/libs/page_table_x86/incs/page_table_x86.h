@@ -72,9 +72,9 @@ enum page_caching {
 /**
  * PAGE SIZES
  */
-#define ONE_GIG_PAGE_SIZE (1 * 1024 * 1024 * 1024)
-#define TWO_MEG_PAGE_SIZE (2 * 1024 * 1024)
-#define FOUR_K_PAGE_SIZE  (4 * 1024)
+#define ONE_GIG_PAGE_SIZE (1 * (ac_uptr)1024 * (ac_uptr)1024 * (ac_uptr)1024)
+#define TWO_MEG_PAGE_SIZE (2 * (ac_uptr)1024 * (ac_uptr)1024)
+#define FOUR_K_PAGE_SIZE  (4 * (ac_uptr)1024)
 
 /**
  * Size of the Page Directory Entries
@@ -180,7 +180,7 @@ struct pde_fields {
   ac_bool pcd:1;                // Page-level cache disable
   ac_bool a:1;                  // Accessed
   ac_bool reserved_0:1;
-  ac_bool pte:1;                // 0 == pde, 1 = pte
+  ac_bool ps_pte:1;             // 0 == pde, 1 = pte
   ac_u64 reserved_1:4;
   ac_u64 phy_addr:51;           // Physical address of Page Directory
   ac_bool xd:1;                 // Execute disable if IA32_EFER.NXE = 1
@@ -216,7 +216,7 @@ struct pte_huge_fields {
   ac_bool pcd:1;                // Page-level cache disable
   ac_bool a:1;                  // Accessed
   ac_bool d:1;                  // Dirty
-  ac_bool ps:1;                 // Page size, 1 for 1G 0 for 2M
+  ac_bool ps_pte:1;             // Page size/PTE, must be 1 to signify pte_huge
   ac_bool g:1;                  // Global; if CR4.PGE = 1
   ac_u64 reserved_0:3;
   ac_bool pat:1;                // Memory type (see 11.12.3)
@@ -399,7 +399,7 @@ static inline void* get_cr3_pde_linear_addr(
  */
 struct pde_fields* page_table_map_physical_to_linear(
     struct pde_fields* page_table_base, ac_uptr phy_addr, void* linear_addr,
-    ac_uptr size, enum page_caching caching);
+    ac_u64 size, enum page_caching caching);
 
 /**
  * Initialize page tables from multiboot2 memory map information.

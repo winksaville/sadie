@@ -73,7 +73,7 @@ void print_pde_fields(char* str, ac_u64 val) {
   ac_printf(" pcd=%d\n", reg.fields.pcd);
   ac_printf(" a=%d\n", reg.fields.a);
   ac_printf(" reserved_0=0x%llx\n", reg.fields.reserved_0);
-  ac_printf(" pte=%d\n", reg.fields.pte);
+  ac_printf(" ps_pte=%d\n", reg.fields.ps_pte); // 0 if pde 1 if pte
   ac_printf(" reserved_1=0x%llx\n", reg.fields.reserved_1);
   ac_printf(" phy_addr=0x%llx 0x%llx\n", reg.fields.phy_addr,
       (ac_uptr)reg.fields.phy_addr << 12);
@@ -118,7 +118,7 @@ void print_pte_huge_fields(char* str, ac_u64 val) {
   ac_printf(" pcd=%d\n", reg.huge.pcd);
   ac_printf(" a=%d\n", reg.huge.a);
   ac_printf(" d=%d\n", reg.huge.d);
-  ac_printf(" ps=%d\n", reg.huge.ps); // should be 1
+  ac_printf(" ps_pte=%d\n", reg.huge.ps_pte); // Must be 1 for pte_huge
   ac_printf(" g=%d\n", reg.huge.g);
   ac_printf(" reserved_0=0x%llx\n", reg.huge.reserved_0);
   ac_printf(" pat=%d\n", reg.huge.pat);
@@ -137,7 +137,7 @@ static void print_pde_pte(ac_uint level, ac_u64* p_base) {
   ac_u64* p_entry;
 
   ac_printf("first pass level=%d base=0x%p\n", level, p_base);
-  if ((level > 1) && (pdeu.fields.pte == 0)) {
+  if ((level > 1) && (pdeu.fields.ps_pte == 0)) {
     // This is a pde entry, print all entries that are present
     p_entry = p_base;
     for (ac_uint i = 0; i < 512; i++) {
@@ -168,7 +168,7 @@ static void print_pde_pte(ac_uint level, ac_u64* p_base) {
       if (level == 1) {
         // Is a small pte, print its fields
         print_pte_small_fields("Small page", *p_entry);
-      } else if ((level > 1) && (pdeu.fields.pte == 1)) {
+      } else if ((level > 1) && (pdeu.fields.ps_pte == 1)) {
         // Is a huge pte, print its fields
         print_pte_huge_fields("Huge page", *p_entry);
       } else {
