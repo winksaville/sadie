@@ -28,6 +28,8 @@
 
 #include <ac_inttypes.h>
 
+#include <multiboot2.h>
+
 /**
  * Page mode
  *
@@ -51,6 +53,30 @@ enum page_mode {
 };
 
 /**
+ * Page chaching methods
+ *
+ * Caching styles available on X86
+ *
+ * See "Intel 64 and IA-32 Architectures Software Developer's Manual"
+ * Volume 3 chapter 11 "Methods of Caching Available"
+ * Table 11-2. "Memory Types and Their Properites"
+ */
+enum page_caching {
+  PAGE_CACHING_UNKNOWN = 0,
+  PAGE_CACHING_WRITE_BACK = 1,
+  PAGE_CACHING_WRITE_THROUGH = 2,
+  PAGE_CACHING_UNCACHEABLE = 3,
+  PAGE_CACHING_STRONG_UNCACHEABLE = 4,
+};
+
+/**
+ * PAGE SIZES
+ */
+#define ONE_GIG_PAGE_SIZE (1 * 1024 * 1024 * 1024)
+#define TWO_MEG_PAGE_SIZE (2 * 1024 * 1024)
+#define FOUR_K_PAGE_SIZE  (4 * 1024)
+
+/**
  * Size of the Page Directory Entries
  */
 #define PDE_FIELDS_SIZE 8
@@ -59,6 +85,11 @@ enum page_mode {
  * Size of the Page Table Entries
  */
 #define PTE_FIELDS_SIZE 8
+
+/**
+ * Size of linear addresses
+ */
+#define LINEAR_ADDRESS_SIZE 8
 
 /**
  * CR3 normal paging fields
@@ -195,7 +226,7 @@ struct pte_huge_fields {
 } __attribute__((__packed__));
 
 _Static_assert(sizeof(struct pte_huge_fields) == PTE_FIELDS_SIZE,
-    L"pdpte_1g_fields is not " AC_XSTR(PTE_FIELDS_SIZE) " bytes");
+    L"pdpte_huge_fields is not " AC_XSTR(PTE_FIELDS_SIZE) " bytes");
 
 /**
  * Page Table Entry that maps a 4-KByte page
@@ -222,7 +253,7 @@ struct pte_small_fields {
 } __attribute__((__packed__));
 
 _Static_assert(sizeof(struct pte_small_fields) == PTE_FIELDS_SIZE,
-    L"pte_fields is not " AC_XSTR(PTE_FIELDS_SIZE) " bytes");
+    L"pte_small_fields is not " AC_XSTR(PTE_FIELDS_SIZE) " bytes");
 
 
 union pte_fields_u {
@@ -233,6 +264,29 @@ union pte_fields_u {
 
 _Static_assert(sizeof(union pte_fields_u) == PTE_FIELDS_SIZE,
     L"pte_fields_u is not " AC_XSTR(PTE_FIELDS_SIZE) " bytes");
+
+/**
+ * Decode linear address
+ */
+struct linear_address_pml_indexes {
+  ac_u64 :12;
+  ac_u64 pml1:9;
+  ac_u64 pml2:9;
+  ac_u64 pml3:9;
+  ac_u64 pml4:9;
+};
+
+_Static_assert(sizeof(struct linear_address_pml_indexes) == LINEAR_ADDRESS_SIZE,
+    L"linear_address_pml_indexes is not " AC_XSTR(LINEAR_ADDRESS_SIZE) " bytes");
+
+union linear_address_pml_indexes_u {
+ ac_u64 raw;
+ struct linear_address_pml_indexes indexes;
+};
+
+
+_Static_assert(sizeof(union linear_address_pml_indexes_u) == LINEAR_ADDRESS_SIZE,
+    L"linear_address_pml_indexes_u is not " AC_XSTR(LINEAR_ADDRESS_SIZE) " bytes");
 
 /**
  * Return the current cpu page_mode
@@ -250,7 +304,7 @@ static inline union cr3_paging_fields_u get_page_table(void) {
 /**
  * For the moment assume linear == physical
  */
-static inline void* physical_to_linear_addr(ac_uptr addr) {
+inline void* physical_to_linear_addr(ac_uptr addr) {
   return (void*)addr;
 }
 
@@ -329,5 +383,27 @@ static inline void* get_cr3_pde_linear_addr(
 
   return physical_to_linear_addr(addr);
 }
+
+
+/**
+ * Create a page table entries for the physical/linear address
+ *
+ * param: page_table_base is a phylin_addr of the base of the page table
+ *        if its AC_NULL it will be allocated.
+ * param: phy_addr is the physical address to map to lin_addr
+ * param: lin_addr is the linear address the phy_addr is mapped to
+ * param: size is the number of bytes in the phy_addr must be multiple of 4K
+ * param: caching is the caching strategy to use.
+ *
+ * returns AC_NULL on failure else page_table_base
+ */
+struct pde_fields* page_table_map_physical_to_linear(
+    struct pde_fields* page_table_base, ac_uptr phy_addr, void* linear_addr,
+    ac_uptr size, enum page_caching caching);
+
+/**
+ * Initialize page tables from multiboot2 memory map information.
+ */
+void init_page_tables(struct multiboot2_memory_map_tag* mm, ac_uint count);
 
 #endif
