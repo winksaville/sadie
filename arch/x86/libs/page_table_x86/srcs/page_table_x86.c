@@ -236,7 +236,7 @@ struct pde_fields* page_table_map_physical_to_linear(
 
     // Get the caching bits and initialize the entry
     get_caching_bits(caching, &pat, &pcd, &pwt);
-    pml3_pte_entry->huge.phy_addr = linear_to_physical_addr((void*)laddr.raw) >> 12;
+    pml3_pte_entry->huge.phy_addr = linear_to_physical_addr((void*)laddr.raw) >> 13;
     pml3_pte_entry->huge.p = 1;
     pml3_pte_entry->huge.rw = 1;
     pml3_pte_entry->huge.ps_pte = 1;
@@ -270,7 +270,7 @@ struct pde_fields* page_table_map_physical_to_linear(
 
     // Get the caching bits and initialize the entry
     get_caching_bits(caching, &pat, &pcd, &pwt);
-    pml2_pte_entry->huge.phy_addr = linear_to_physical_addr((void*)laddr.raw) >> 12;
+    pml2_pte_entry->huge.phy_addr = linear_to_physical_addr((void*)laddr.raw) >> 13;
     pml2_pte_entry->huge.p = 1;
     pml2_pte_entry->huge.rw = 1;
     pml2_pte_entry->huge.ps_pte = 1;

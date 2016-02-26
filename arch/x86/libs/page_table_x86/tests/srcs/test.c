@@ -466,7 +466,7 @@ int main(void) {
     error |= AC_TEST(pml3_pte[i].p == 1);
     error |= AC_TEST(pml3_pte[i].rw == 1);
     error |= AC_TEST(pml3_pte[i].ps_pte == 1);
-    error |= AC_TEST(pml3_pte[i].phy_addr == ((i * ONE_GIG_PAGE_SIZE) >> 12));
+    error |= AC_TEST(pml3_pte[i].phy_addr == ((i * ONE_GIG_PAGE_SIZE) >> 13));
   }
   //print_page_table_linear_addr(pml4, PAGE_MODE_NRML_64BIT);
 
@@ -490,7 +490,7 @@ int main(void) {
   error |= AC_TEST(pml2_pte[0].p == 1);
   error |= AC_TEST(pml2_pte[0].rw == 1);
   error |= AC_TEST(pml2_pte[0].ps_pte == 1);
-  error |= AC_TEST(pml2_pte[0].phy_addr == 0 >> 12);
+  error |= AC_TEST(pml2_pte[0].phy_addr == 0 >> 13);
   //print_page_table_linear_addr(pml4, PAGE_MODE_NRML_64BIT);
 
   // Test we can add 2M pages starting with an existing page table
@@ -502,7 +502,7 @@ int main(void) {
     error |= AC_TEST(pml2_pte[i].p == 1);
     error |= AC_TEST(pml2_pte[i].rw == 1);
     error |= AC_TEST(pml2_pte[i].ps_pte == 1);
-    error |= AC_TEST(pml2_pte[i].phy_addr == ((i * TWO_MEG_PAGE_SIZE) >> 12));
+    error |= AC_TEST(pml2_pte[i].phy_addr == ((i * TWO_MEG_PAGE_SIZE) >> 13));
   }
   //print_page_table_linear_addr(pml4, PAGE_MODE_NRML_64BIT);
 
