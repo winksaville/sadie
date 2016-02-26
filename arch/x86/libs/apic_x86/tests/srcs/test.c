@@ -23,6 +23,7 @@
 
 #include <ac_bits.h>
 #include <ac_inttypes.h>
+#include <ac_memset.h>
 #include <ac_printf.h>
 #include <ac_test.h>
 
@@ -57,7 +58,13 @@ ac_bool test_apic_version() {
 #ifdef CPU_X86_64
   // Not sure if this is always true will probably
   // need to be altered in the future.
-  error |= AC_TEST(*ver_reg == 0x01050014);
+  ac_u32 ver_reg_values[32];
+  ac_memset(ver_reg_values, 0, sizeof(ver_reg_values));
+  ver_reg_values[0x14] = 0x1050014;
+  ver_reg_values[0x15] = 0x1060015;
+
+  error |= AC_TEST(*ver_reg == ver_reg_values[*ver_reg & 0xFF]);
+
 #else
   // Not sure what X86_32 should be
 #endif
