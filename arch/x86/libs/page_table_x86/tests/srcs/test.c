@@ -403,6 +403,12 @@ static ac_bool test_pte_huge_fields_array(void) {
 
 
 int main(void) {
+  struct pde_fields* pml4;
+  struct pde_fields* pml3_pde;
+  struct pte_huge_fields* pml3_pte;
+  struct pde_fields* pml2_pde;
+  struct pte_huge_fields* pml2_pte;
+  struct pte_small_fields* pml1_pte;
   ac_bool error = AC_FALSE;
 
   initialize_intr_descriptor_table();
@@ -416,56 +422,134 @@ int main(void) {
   error |= test_pte_huge_fields_array();
 
   //ac_printf("\n****** Current Page Table:\n");
-  //print_page_table(get_page_table(), get_page_mode());
+  //print_page_table_linear_addr(get_page_table_linear_addr(), get_page_mode());
 
   // Test we can create an empty page table with only the
   // recursive level 4 entry. This isn't useful but the
   // algoritm must work this way.
-  struct pde_fields* test_pt = page_table_map_physical_to_linear(
+  pml4 = page_table_map_physical_to_linear(
       AC_NULL, 0, AC_NULL, 0, PAGE_CACHING_UNKNOWN);
   for (ac_uint i = 0; i < 511; i++) {
-    error |= AC_TEST(test_pt[i].p == 0);
+    error |= AC_TEST(pml4[i].p == 0);
   }
-  error |= AC_TEST(test_pt[511].p == 1);
-  error |= AC_TEST(test_pt[511].rw == 1);
-  error |= AC_TEST(test_pt[511].phy_addr == ((ac_uptr)&test_pt[0] >> 12));
-  print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
+  error |= AC_TEST(pml4[511].p == 1);
+  error |= AC_TEST(pml4[511].rw == 1);
+  error |= AC_TEST(pml4[511].ps_pte == 0);
+  error |= AC_TEST(pml4[511].phy_addr == ((ac_uptr)&pml4[0] >> 12));
+  //print_page_table_linear_addr(pml4, PAGE_MODE_NRML_64BIT);
 
-  ac_printf("\n****** Create a new Test Page Table with ONE_GIG_PAGE_SIZE:\n");
-  test_pt = page_table_map_physical_to_linear(
+  // Test we can create a 1G page starting from nothing
+  ac_printf("****** Create a new Test Page Table with ONE_GIG_PAGE_SIZE:\n");
+  pml4 = page_table_map_physical_to_linear(
       AC_NULL, 0x0, (void*)0x0, ONE_GIG_PAGE_SIZE,
       PAGE_CACHING_STRONG_UNCACHEABLE);
-  print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
+  error |= AC_TEST(pml4[0].p == 1);
+  error |= AC_TEST(pml4[0].rw == 1);
+  error |= AC_TEST(pml4[0].ps_pte == 0);
+  error |= AC_TEST(pml4[511].p == 1);
+  error |= AC_TEST(pml4[511].rw == 1);
+  error |= AC_TEST(pml4[511].ps_pte == 0);
+  error |= AC_TEST(pml4[511].phy_addr == ((ac_uptr)&pml4[0] >> 12));
+  pml3_pte = physical_to_linear_addr(pml4[0].phy_addr << 12);
+  error |= AC_TEST(pml3_pte[0].p == 1);
+  error |= AC_TEST(pml3_pte[0].rw == 1);
+  error |= AC_TEST(pml3_pte[0].ps_pte == 1);
+  error |= AC_TEST(pml3_pte[0].phy_addr == 0 >> 12);
+  //print_page_table_linear_addr(pml4, PAGE_MODE_NRML_64BIT);
 
-  ac_printf("\n****** Add 3 pages Test Page Table with ONE_GIG_PAGE_SIZE:\n");
+  // Test we can add 1G pages starting with an existing page table
+  ac_printf("****** Add 3 pages Test Page Table with ONE_GIG_PAGE_SIZE:\n");
   page_table_map_physical_to_linear(
-      test_pt, ONE_GIG_PAGE_SIZE, (void*)ONE_GIG_PAGE_SIZE, 3 * ONE_GIG_PAGE_SIZE,
+      pml4, ONE_GIG_PAGE_SIZE, (void*)ONE_GIG_PAGE_SIZE, 3 * ONE_GIG_PAGE_SIZE,
       PAGE_CACHING_STRONG_UNCACHEABLE);
-  print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
+  for (ac_uptr i = 0; i < 4; i++) {
+    error |= AC_TEST(pml3_pte[i].p == 1);
+    error |= AC_TEST(pml3_pte[i].rw == 1);
+    error |= AC_TEST(pml3_pte[i].ps_pte == 1);
+    error |= AC_TEST(pml3_pte[i].phy_addr == ((i * ONE_GIG_PAGE_SIZE) >> 12));
+  }
+  //print_page_table_linear_addr(pml4, PAGE_MODE_NRML_64BIT);
 
-  ac_printf("\n****** Create a new Test Page Table with TWO_MEG_PAGE_SIZE:\n");
-  test_pt = page_table_map_physical_to_linear(
+  // Test we can create a 2M page starting from nothing
+  ac_printf("****** Create a new Test Page Table with TWO_MEG_PAGE_SIZE:\n");
+  pml4 = page_table_map_physical_to_linear(
       AC_NULL, 0x0, (void*)0x0, TWO_MEG_PAGE_SIZE,
       PAGE_CACHING_STRONG_UNCACHEABLE);
-  print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
+  error |= AC_TEST(pml4[0].p == 1);
+  error |= AC_TEST(pml4[0].rw == 1);
+  error |= AC_TEST(pml4[0].ps_pte == 0);
+  error |= AC_TEST(pml4[511].p == 1);
+  error |= AC_TEST(pml4[511].rw == 1);
+  error |= AC_TEST(pml4[511].ps_pte == 0);
+  error |= AC_TEST(pml4[511].phy_addr == ((ac_uptr)&pml4[0] >> 12));
+  pml3_pde = physical_to_linear_addr(pml4[0].phy_addr << 12);
+  error |= AC_TEST(pml3_pde[0].p == 1);
+  error |= AC_TEST(pml3_pde[0].rw == 1);
+  error |= AC_TEST(pml3_pde[0].ps_pte == 0);
+  pml2_pte = physical_to_linear_addr(pml3_pde[0].phy_addr << 12);
+  error |= AC_TEST(pml2_pte[0].p == 1);
+  error |= AC_TEST(pml2_pte[0].rw == 1);
+  error |= AC_TEST(pml2_pte[0].ps_pte == 1);
+  error |= AC_TEST(pml2_pte[0].phy_addr == 0 >> 12);
+  //print_page_table_linear_addr(pml4, PAGE_MODE_NRML_64BIT);
 
-  ac_printf("\n****** Add 5 pages to Test Page Table with TWO_MEG_PAGE_SIZE:\n");
+  // Test we can add 2M pages starting with an existing page table
+  ac_printf("****** Add 5 pages to Test Page Table with TWO_MEG_PAGE_SIZE:\n");
   page_table_map_physical_to_linear(
-      test_pt, TWO_MEG_PAGE_SIZE, (void*)TWO_MEG_PAGE_SIZE, 5 * TWO_MEG_PAGE_SIZE,
+      pml4, TWO_MEG_PAGE_SIZE, (void*)TWO_MEG_PAGE_SIZE, 5 * TWO_MEG_PAGE_SIZE,
       PAGE_CACHING_STRONG_UNCACHEABLE);
-  print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
+  for (ac_uptr i = 0; i < 5; i++) {
+    error |= AC_TEST(pml2_pte[i].p == 1);
+    error |= AC_TEST(pml2_pte[i].rw == 1);
+    error |= AC_TEST(pml2_pte[i].ps_pte == 1);
+    error |= AC_TEST(pml2_pte[i].phy_addr == ((i * TWO_MEG_PAGE_SIZE) >> 12));
+  }
+  //print_page_table_linear_addr(pml4, PAGE_MODE_NRML_64BIT);
 
-  ac_printf("\n****** Create new Test Page Table with FOUR_K_PAGE_SIZE:\n");
-  test_pt = page_table_map_physical_to_linear(
-      AC_NULL, 0x2000, (void*)0x42000, FOUR_K_PAGE_SIZE,
+  // Test we can create a 4K page starting from nothing
+  ac_printf("****** Create new Test Page Table with FOUR_K_PAGE_SIZE:\n");
+  pml4 = page_table_map_physical_to_linear(
+      AC_NULL, 0x0, (void*)0x0, FOUR_K_PAGE_SIZE,
       PAGE_CACHING_STRONG_UNCACHEABLE);
-  print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
+  error |= AC_TEST(pml4[0].p == 1);
+  error |= AC_TEST(pml4[0].rw == 1);
+  error |= AC_TEST(pml4[0].ps_pte == 0);
+  error |= AC_TEST(pml4[511].p == 1);
+  error |= AC_TEST(pml4[511].rw == 1);
+  error |= AC_TEST(pml4[511].ps_pte == 0);
+  error |= AC_TEST(pml4[511].phy_addr == ((ac_uptr)&pml4[0] >> 12));
+  pml3_pde = physical_to_linear_addr(pml4[0].phy_addr << 12);
+  error |= AC_TEST(pml3_pde[0].p == 1);
+  error |= AC_TEST(pml3_pde[0].rw == 1);
+  error |= AC_TEST(pml3_pde[0].ps_pte == 0);
+  pml2_pde = physical_to_linear_addr(pml3_pde[0].phy_addr << 12);
+  error |= AC_TEST(pml2_pde[0].p == 1);
+  error |= AC_TEST(pml2_pde[0].rw == 1);
+  error |= AC_TEST(pml2_pde[0].ps_pte == 0);
+  pml1_pte = physical_to_linear_addr(pml2_pde[0].phy_addr << 12);
+  error |= AC_TEST(pml1_pte[0].p == 1);
+  error |= AC_TEST(pml1_pte[0].rw == 1);
+  error |= AC_TEST(pml1_pte[0].phy_addr == 0 >> 12);
+  //print_page_table_linear_addr(pml4, PAGE_MODE_NRML_64BIT);
 
-  ac_printf("\n****** Add 2 pages to Test Page Table with FOUR_K_PAGE_SIZE:\n");
+  // Test we can add 2M pages starting with an existing page table
+  // And that will be split across two pml2_pde's
+  ac_printf("****** Add 2 pages to Test Page Table with FOUR_K_PAGE_SIZE:\n");
   page_table_map_physical_to_linear(
-      test_pt, 0x3000, (void*)(511 * FOUR_K_PAGE_SIZE), 2 * FOUR_K_PAGE_SIZE,
+      pml4, FOUR_K_PAGE_SIZE, (void*)(511 * FOUR_K_PAGE_SIZE), 2 * FOUR_K_PAGE_SIZE,
       PAGE_CACHING_STRONG_UNCACHEABLE);
-  print_page_table_linear(test_pt, PAGE_MODE_NRML_64BIT);
+  error |= AC_TEST(pml2_pde[1].p == 1);
+  error |= AC_TEST(pml2_pde[1].rw == 1);
+  error |= AC_TEST(pml2_pde[1].ps_pte == 0);
+
+  error |= AC_TEST(pml1_pte[511].p == 1);
+  error |= AC_TEST(pml1_pte[511].rw == 1);
+  error |= AC_TEST(pml1_pte[511].phy_addr == (511 * FOUR_K_PAGE_SIZE) >> 12);
+  pml1_pte = physical_to_linear_addr(pml2_pde[1].phy_addr << 12);
+  error |= AC_TEST(pml1_pte[0].p == 1);
+  error |= AC_TEST(pml1_pte[0].rw == 1);
+  error |= AC_TEST(pml1_pte[0].phy_addr == (512 * FOUR_K_PAGE_SIZE) >> 12);
+  //print_page_table_linear_addr(pml4, PAGE_MODE_NRML_64BIT);
   
   if (!error) {
     ac_printf("OK\n");

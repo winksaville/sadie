@@ -294,14 +294,6 @@ _Static_assert(sizeof(union linear_address_pml_indexes_u) == LINEAR_ADDRESS_SIZE
 enum page_mode get_page_mode(void);
 
 /**
- * Return the current cpu page table
- */
-static inline union cr3_paging_fields_u get_page_table(void) {
-  union cr3_paging_fields_u val = { .raw=get_cr3() };
-  return val;
-}
-
-/**
  * For the moment assume linear == physical
  */
 inline void* physical_to_linear_addr(ac_uptr addr) {
@@ -384,6 +376,20 @@ static inline void* get_cr3_pde_linear_addr(
   return physical_to_linear_addr(addr);
 }
 
+/**
+ * Return the current cpu page table
+ */
+static inline union cr3_paging_fields_u get_page_table(void) {
+  union cr3_paging_fields_u val = { .raw=get_cr3() };
+  return val;
+}
+
+/**
+ * Return the current cpu page table as a linear address
+ */
+static inline void* get_page_table_linear_addr(void) {
+  return get_cr3_pde_linear_addr(get_page_table(), get_page_mode());
+}
 
 /**
  * Create a page table entries for the physical/linear address
