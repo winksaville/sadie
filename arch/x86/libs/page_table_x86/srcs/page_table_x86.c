@@ -204,6 +204,7 @@ struct pde_fields* page_table_map_physical_to_linear(
   ac_debug_printf("  phy_addr=0x%p lin_addr=0x%p\n", phy_addr, lin_addr);
   ac_debug_printf("  size=0x%p caching=0x%x\n", size, caching);
 
+#ifdef CPU_X86_64
   if (page_table_base == AC_NULL) {
     page_table_base = alloc_pde();
 
@@ -215,7 +216,6 @@ struct pde_fields* page_table_map_physical_to_linear(
     ac_debug_printf("page_table_map_physical_to_linear: allocate page_table base=0x%p\n", page_table_base);
   }
 
-#ifdef CPU_X86_64
   struct pde_fields* pml4 = page_table_base;
   union linear_address_pml_indexes_u laddr = { .raw = (ac_uptr)lin_addr };
 
@@ -330,9 +330,7 @@ struct pde_fields* page_table_map_physical_to_linear(
   return page_table_base;
 }
 
-struct pde_fields pml4[512] __attribute__((__aligned__(0x2000)));
-struct pde_fields pml3[512] __attribute__((__aligned__(0x2000)));
-struct pte_huge_fields pte2m[512] __attribute__((__aligned__(0x2000)));
+struct pde_fields* pml4;
 
 /**
  * Initialize page tables from multiboot2 memory map information.
@@ -341,35 +339,20 @@ void init_page_tables(struct multiboot2_memory_map_tag* mm, ac_uint count) {
   AC_UNUSED(mm);
   AC_UNUSED(count);
 
-  ac_printf("init_page_tables+:\n");
+  ac_printf("init_page_tables:+\n");
 
   init_phylin_4k_pages();
 
-  ac_memset(pml4, 0, sizeof(pml4));
-  pml4[0].p = 1;
-  pml4[0].rw = 1;
-  pml4[0].phy_addr = linear_to_physical_addr(&pml3[0]) >> 12;
-
-  // Recursive entry
-  pml4[511].p = 1;
-  pml4[511].rw = 1;
-  pml4[511].phy_addr = linear_to_physical_addr(&pml4[0]) >> 12;
-
-  ac_memset(pml3, 0, sizeof(pml3));
-  pml3[0].p = 1;
-  pml3[0].rw = 1;
-  pml3[0].phy_addr = linear_to_physical_addr(&pte2m[0]) >> 12;
-
-  ac_memset(pte2m, 0, sizeof(pte2m));
-  ac_u8* phy_addr = 0;
-  for (ac_uint i = 0; i < AC_ARRAY_COUNT(pte2m); i++) {
-    pte2m[i].p = 1;
-    pte2m[i].rw = 1;
-    pte2m[i].ps_pte = 1;
-    pte2m[i].phy_addr = linear_to_physical_addr(phy_addr) >> 13;
-    phy_addr += 1024 * 1024 * 2;
+  // Map the first gig as 512 2M pages
+  pml4 = page_table_map_physical_to_linear(
+      AC_NULL, 0, (void*)0, TWO_MEG_PAGE_SIZE,
+      PAGE_CACHING_WRITE_BACK);
+  for (ac_uint i = 1; i < 512; i++) {
+    page_table_map_physical_to_linear(
+        pml4, i * TWO_MEG_PAGE_SIZE, (void*)(i * TWO_MEG_PAGE_SIZE),
+        TWO_MEG_PAGE_SIZE,
+        PAGE_CACHING_WRITE_BACK);
   }
-  //print_page_table_linear(pml4, PAGE_MODE_NRML_64BIT);
 
   ac_printf("CR3 is now 0x%x\n", get_cr3());
   set_cr3((ac_uint)pml4);
