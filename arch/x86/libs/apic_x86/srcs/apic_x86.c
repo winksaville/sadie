@@ -16,10 +16,13 @@
 
 #include <apic_x86.h>
 
+#include <page_table_x86.h>
+#include <page_table_x86_print.h>
+#include <msr_x86.h>
+
 #include <ac_inttypes.h>
 #include <ac_bits.h>
 #include <cpuid_x86.h>
-#include <msr_x86.h>
 
 #include <ac_printf.h>
 
@@ -29,7 +32,13 @@ ac_uint initialize_apic(void) {
 
   // Get Processor info cpuid
   if (apic_present()) {
-    // Apic is present
+    // Apic is present, map its phusical page as uncachable.
+    ac_uptr apic_phy_addr = apic_get_physical_addr();
+
+    page_table_map_physical_to_linear(get_page_table_linear_addr(),
+        apic_phy_addr, (void*)apic_phy_addr, FOUR_K_PAGE_SIZE,
+        PAGE_CACHING_STRONG_UNCACHEABLE);
+
     ret_val = 0;
   } else {
     // No apic

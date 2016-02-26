@@ -29,8 +29,6 @@
 ac_bool test_apic() {
   ac_bool error = AC_FALSE;
 
-  initialize_apic();
-
   ac_u64 msr_apic_base = get_msr(MSR_APIC_BASE);
   error |= AC_TEST(msr_apic_base != 0);
 
@@ -52,10 +50,17 @@ ac_bool test_apic_version() {
   ac_printf("test_apic_version\n");
   ac_u64 msr_apic_base = get_msr(MSR_APIC_BASE);
   print_msr(MSR_APIC_BASE, msr_apic_base);
-  ac_u32* ver_reg = (ac_u32*)(ac_uptr)msr_apic_base_physical_addr(msr_apic_base);
+  ac_u32* ver_reg = (ac_u32*)((ac_uptr)msr_apic_base_physical_addr(msr_apic_base) + 0x30);
   ac_printf("ver_reg=0x%p\n", ver_reg);
   ac_printf("*ver_reg=0x%x\n", *ver_reg);
 
+#ifdef CPU_X86_64
+  // Not sure if this is always true will probably
+  // need to be altered in the future.
+  error |= AC_TEST(*ver_reg == 0x01050014);
+#else
+  // Not sure what X86_32 should be
+#endif
 
   return error;
 }
@@ -66,6 +71,8 @@ int main(void) {
   // Initialize interrupt dt for now since its not done by default yet
   // as this test suite has failed :)
   initialize_intr_descriptor_table();
+
+  initialize_apic();
 
   error |= test_apic();
   error |= test_apic_version();
