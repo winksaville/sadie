@@ -506,6 +506,26 @@ int main(void) {
   }
   //print_page_table_linear_addr(pml4, PAGE_MODE_NRML_64BIT);
 
+  // Test we can mix 2M and 4K pages, 0xfee00000 happens
+  // to be the default address of the APIC. Which is what
+  // I need to do to use the APIC
+  page_table_map_physical_to_linear(pml4,
+      0xfee00000, (void*)0xfee00000, FOUR_K_PAGE_SIZE,
+      PAGE_CACHING_STRONG_UNCACHEABLE);
+  pml3_pde = physical_to_linear_addr(pml4[0].phy_addr << 12);
+  error |= AC_TEST(pml3_pde[3].p == 1);
+  error |= AC_TEST(pml3_pde[3].rw == 1);
+  error |= AC_TEST(pml3_pde[3].ps_pte == 0);
+  pml2_pde = physical_to_linear_addr(pml3_pde[3].phy_addr << 12);
+  error |= AC_TEST(pml2_pde[503].p == 1);
+  error |= AC_TEST(pml2_pde[503].rw == 1);
+  error |= AC_TEST(pml2_pde[503].ps_pte == 0);
+  pml1_pte = physical_to_linear_addr(pml2_pde[503].phy_addr << 12);
+  error |= AC_TEST(pml1_pte[0].p == 1);
+  error |= AC_TEST(pml1_pte[0].rw == 1);
+  error |= AC_TEST(pml1_pte[0].phy_addr == (0xfee00000 >> 12));
+  //print_page_table_linear_addr(pml4, PAGE_MODE_NRML_64BIT);
+
   // Test we can create a 4K page starting from nothing
   ac_printf("****** Create new Test Page Table with FOUR_K_PAGE_SIZE:\n");
   pml4 = page_table_map_physical_to_linear(

@@ -165,6 +165,7 @@ static void print_pde_pte(ac_uint level, ac_u64* p_base) {
     pdeu.raw = *p_entry;
 
     if (pdeu.fields.p == 1) {
+      ac_printf("level=%d i=%d\n", level, i);
       if (level == 1) {
         // Is a small pte, print its fields
         print_pte_small_fields("Small page", *p_entry);
