@@ -269,7 +269,7 @@ _Static_assert(sizeof(union pte_fields_u) == PTE_FIELDS_SIZE,
  * Decode linear address
  */
 struct linear_address_pml_indexes {
-  ac_u64 :12;
+  ac_u64 offset:12;
   ac_u64 pml1:9;
   ac_u64 pml2:9;
   ac_u64 pml3:9;
@@ -404,7 +404,7 @@ static inline void* get_page_table_linear_addr(void) {
  * returns AC_NULL on failure else page_table_base
  */
 struct pde_fields* page_table_map_physical_to_linear(
-    struct pde_fields* page_table_base, ac_uptr phy_addr, void* linear_addr,
+    struct pde_fields* page_table_base, ac_u64 phy_addr, void* linear_addr,
     ac_u64 size, enum page_caching caching);
 
 /**
