@@ -39,6 +39,10 @@ ac_bool test_apic() {
   ac_printf(" phy_addr=0x%llx\n", phy_addr);
   error |= AC_TEST(phy_addr != 0);
 
+  void* lin_addr = apic_get_linear_addr();
+  ac_printf(" lin_addr=0x%llx\n", lin_addr);
+  error |= AC_TEST(lin_addr != 0);
+
   ac_u32 local_id = apic_get_id();
   ac_printf(" local_id=0x%x\n", local_id);
 
@@ -51,7 +55,7 @@ ac_bool test_apic_version() {
   ac_printf("test_apic_version\n");
   ac_u64 msr_apic_base = get_msr(MSR_APIC_BASE);
   print_msr(MSR_APIC_BASE, msr_apic_base);
-  ac_u32* ver_reg = (ac_u32*)((ac_uptr)msr_apic_base_physical_addr(msr_apic_base) + 0x30);
+  ac_u32* ver_reg = (ac_u32*)((ac_uptr)apic_get_linear_addr() + 0x30);
   ac_printf("ver_reg=0x%p\n", ver_reg);
   ac_printf("*ver_reg=0x%x\n", *ver_reg);
 

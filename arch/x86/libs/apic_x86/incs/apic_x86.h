@@ -41,4 +41,10 @@ ac_u32 apic_get_id(void);
  */
 ac_u64 apic_get_physical_addr(void);
 
+/**
+ * @return linear address of local apic
+ */
+void* apic_get_linear_addr(void);
+
+
 #endif

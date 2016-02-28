@@ -27,16 +27,19 @@
 #include <ac_printf.h>
 
 
+void* apic_lin_addr;
+
 ac_uint initialize_apic(void) {
   ac_uint ret_val;
 
   // Get Processor info cpuid
   if (apic_present()) {
     // Apic is present, map its phusical page as uncachable.
-    ac_uptr apic_phy_addr = apic_get_physical_addr();
+    ac_u64 apic_phy_addr = apic_get_physical_addr();
+    apic_lin_addr = (void*)apic_phy_addr; //0x00000001ffee00000;
 
     page_table_map_physical_to_linear(get_page_table_linear_addr(),
-        apic_phy_addr, (void*)apic_phy_addr, FOUR_K_PAGE_SIZE,
+        apic_phy_addr, apic_lin_addr, FOUR_K_PAGE_SIZE,
         PAGE_CACHING_STRONG_UNCACHEABLE);
 
     ret_val = 0;
@@ -62,6 +65,10 @@ ac_u32 apic_get_id(void) {
   return AC_GET_BITS(ac_u32, out_ebx, 24, 8);
 }
 
+
+void* apic_get_linear_addr(void) {
+  return apic_lin_addr;
+}
 
 ac_u64 apic_get_physical_addr(void) {
   return msr_apic_base_physical_addr(get_msr(MSR_APIC_BASE));
