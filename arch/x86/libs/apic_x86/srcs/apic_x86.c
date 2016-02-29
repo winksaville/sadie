@@ -38,8 +38,8 @@ ac_uint initialize_apic(void) {
     ac_u64 apic_phy_addr = apic_get_physical_addr();
     apic_lin_addr = (void*)apic_phy_addr; //0x00000001ffee00000;
 
-    page_table_map_physical_to_linear(get_page_table_linear_addr(),
-        apic_phy_addr, apic_lin_addr, FOUR_K_PAGE_SIZE,
+    page_table_map_lin_to_phy(get_page_table_linear_addr(),
+        apic_lin_addr, apic_phy_addr, FOUR_K_PAGE_SIZE,
         PAGE_CACHING_STRONG_UNCACHEABLE);
 
     ret_val = 0;

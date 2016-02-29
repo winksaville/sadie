@@ -65,6 +65,6 @@ void print_pte_huge_fields(char* str, ac_u64 val);
 /**
  * Print a page table at the linear base address.
  */
-void print_page_table_linear_addr(void* linear_base_addr, enum page_mode mode);
+void print_page_table(void* linear_base_addr, enum page_mode mode);
 
 #endif

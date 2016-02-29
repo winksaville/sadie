@@ -188,19 +188,19 @@ void get_caching_bits(enum page_caching caching, ac_bool* pat, ac_bool* pcd,
  *
  * param: page_table_base is a phylin_addr of the base of the page table
  *        if its AC_NULL it will be allocated.
- * param: phy_addr is the physical address to map to lin_addr
  * param: lin_addr is the linear address the phy_addr is mapped to
+ * param: phy_addr is the physical address to map to lin_addr
  * param: size is the number of bytes in the phy_addr must be multiple of 4K
  * param: caching is the caching strategy to use.
  *
  * returns AC_NULL on failure else page_table_base
  */
-struct pde_fields* page_table_map_physical_to_linear(
-    struct pde_fields* page_table_base, ac_u64 physical_addr, void* linear_addr,
+struct pde_fields* page_table_map_lin_to_phy(
+    struct pde_fields* page_table_base, void* linear_addr, ac_u64 physical_addr,
     ac_u64 size, enum page_caching caching) {
 
   ac_bool pat, pcd, pwt;
-  ac_debug_printf("page_table_map_physical_to_linear:+ page_table_base=0x%p\n",
+  ac_debug_printf("page_table_map_lin_to_phy:+ page_table_base=0x%p\n",
       page_table_base);
   ac_debug_printf("  phy_addr=0x%p lin_addr=0x%p\n", physical_addr, linear_addr);
   ac_debug_printf("  size=0x%p caching=0x%x\n", size, caching);
@@ -213,19 +213,19 @@ struct pde_fields* page_table_map_physical_to_linear(
   // The size and address parameters must be at least on 4K boundaries
   union linear_address_pml_indexes_u s = { .raw = (ac_u64)size };
   if (s.indexes.offset != 0) {
-    ac_printf("page_table_map_physical_to_linear: size not a multiple of 4K boundary\n");
+    ac_printf("page_table_map_lin_to_phy: size not a multiple of 4K boundary\n");
     return AC_NULL;
   }
 
   union linear_address_pml_indexes_u paddr = { .raw = (ac_u64)physical_addr };
   if (paddr.indexes.offset != 0) {
-    ac_printf("page_table_map_physical_to_linear: paddr not on 4K boundary\n");
+    ac_printf("page_table_map_lin_to_phy: paddr not on 4K boundary\n");
     return AC_NULL;
   }
 
   union linear_address_pml_indexes_u laddr = { .raw = (ac_u64)linear_addr };
   if (laddr.indexes.offset != 0) {
-    ac_printf("page_table_map_physical_to_linear: laddr not on 4K boundary\n");
+    ac_printf("page_table_map_lin_to_phy: laddr not on 4K boundary\n");
     return AC_NULL;
   }
 
@@ -239,7 +239,7 @@ struct pde_fields* page_table_map_physical_to_linear(
     page_table_base[511].rw = 1;
     page_table_base[511].phy_addr = linear_to_physical_addr(&page_table_base[0]) >> 12;
 
-    ac_debug_printf("page_table_map_physical_to_linear: allocate page_table base=0x%p\n", page_table_base);
+    ac_debug_printf("page_table_map_lin_to_phy: allocate page_table base=0x%p\n", page_table_base);
   }
 
   struct pde_fields* pml4 = page_table_base;
@@ -250,7 +250,7 @@ struct pde_fields* page_table_map_physical_to_linear(
     // Check if linear and physical addresses are on 1G Boundaries
     if (((paddr.indexes.pml2 == 0) && (paddr.indexes.pml1 == 0)) &&
         ((laddr.indexes.pml2 == 0) && (laddr.indexes.pml1 == 0))) {
-      //ac_debug_printf("\npage_table_map_physical_to_linear: 1G loop phy_addr=0x%p lin_addr=0x%p size=%x\n",
+      //ac_debug_printf("\npage_table_map_lin_to_phy: 1G loop phy_addr=0x%p lin_addr=0x%p size=%x\n",
       //    paddr.raw, laddr.raw, size);
       ac_u64 count = 0;
 #if !defined(NDEBUG)
@@ -265,7 +265,7 @@ struct pde_fields* page_table_map_physical_to_linear(
         union pte_fields_u* pml3_pte_entry = &pml3_pte[laddr.indexes.pml3];
 
         if (pml3_pte_entry->huge.p) {
-          ac_printf("ABORTING: page_table_map_physical_to_linear 1G page at 0x%lx is already present\n");
+          ac_printf("ABORTING: page_table_map_lin_to_phy 1G page at 0x%lx is already present\n");
           reset_x86();
         }
 
@@ -285,7 +285,7 @@ struct pde_fields* page_table_map_physical_to_linear(
         count += 1;
       }
       if (count > 0) {
-        ac_debug_printf("page_table_map_physical_to_linear: %ld 1G pages at phy_addr=0x%p to lin_addr=0x%p\n",
+        ac_debug_printf("page_table_map_lin_to_phy: %ld 1G pages at phy_addr=0x%p to lin_addr=0x%p\n",
             count, start_paddr, start_laddr);
         count_1g_pages += count;
         continue;
@@ -301,7 +301,7 @@ struct pde_fields* page_table_map_physical_to_linear(
       ac_u64 start_laddr = laddr.raw;
 #endif
       if (size >= TWO_MEG_PAGE_SIZE) {
-        //ac_debug_printf("\npage_table_map_physical_to_linear: 2M loop phy_addr=0x%p lin_addr=0x%p size=%x\n",
+        //ac_debug_printf("\npage_table_map_lin_to_phy: 2M loop phy_addr=0x%p lin_addr=0x%p size=%x\n",
         //    paddr.raw, laddr.raw, size);
         struct pde_fields* pml4_entry = get_or_alloc_pde(pml4, laddr.indexes.pml4);
 
@@ -314,7 +314,7 @@ struct pde_fields* page_table_map_physical_to_linear(
         union pte_fields_u* pml2_pte_entry = &pml2_pte[laddr.indexes.pml2];
 
         if (pml2_pte_entry->huge.p) {
-          ac_printf("ABORTING: page_table_map_physical_to_linear 2M page at 0x%lx is already present\n");
+          ac_printf("ABORTING: page_table_map_lin_to_phy 2M page at 0x%lx is already present\n");
           reset_x86();
         }
 
@@ -334,7 +334,7 @@ struct pde_fields* page_table_map_physical_to_linear(
         count += 1;
       }
       if (count > 0) {
-        ac_debug_printf("page_table_map_physical_to_linear: %ld 2M pages at phy_addr=0x%p to lin_addr=0x%p\n",
+        ac_debug_printf("page_table_map_lin_to_phy: %ld 2M pages at phy_addr=0x%p to lin_addr=0x%p\n",
             count, start_paddr, start_laddr);
         count_2m_pages += count;
         continue;
@@ -345,7 +345,7 @@ struct pde_fields* page_table_map_physical_to_linear(
     // Create a 4K page if possible, again we don't loop
     // So we hopefully run into a 2M or 1G boundry.
     if (size >= FOUR_K_PAGE_SIZE) {
-      //ac_debug_printf("\npage_table_map_physical_to_linear: 4K phy_addr=0x%p lin_addr=0x%p size=%x\n",
+      //ac_debug_printf("\npage_table_map_lin_to_phy: 4K phy_addr=0x%p lin_addr=0x%p size=%x\n",
       //    paddr.raw, laddr.raw, size);
       struct pde_fields* pml4_entry = get_or_alloc_pde(pml4, laddr.indexes.pml4);
 
@@ -362,7 +362,7 @@ struct pde_fields* page_table_map_physical_to_linear(
       union pte_fields_u* pml1_pte_entry = &pml1_pte[laddr.indexes.pml1];
 
       if (pml1_pte_entry->small.p) {
-        ac_printf("ABORTING: page_table_map_physical_to_linear 4K page at 0x%lx is already present\n");
+        ac_printf("ABORTING: page_table_map_lin_to_phy 4K page at 0x%lx is already present\n");
         reset_x86();
       }
 
@@ -382,10 +382,10 @@ struct pde_fields* page_table_map_physical_to_linear(
     }
   }
 
-  ac_printf("page_table_map_physical_to_linear:- page_table_base=0x%lx 1g=%ld, 2m=%ld 4k=%ld\n",
+  ac_printf("page_table_map_lin_to_phy:- page_table_base=0x%lx 1g=%ld, 2m=%ld 4k=%ld\n",
       page_table_base, count_1g_pages, count_2m_pages, count_4k_pages);
 #else /* CPU_X86_32 */
-  ac_printf("ABORTING: page_table_map_physical_to_linear CPU_X86_32 not supported\n");
+  ac_printf("ABORTING: page_table_map_lin_to_phy CPU_X86_32 not supported\n");
   reset_x86();
   page_table_base = ac_null;
 #endif
@@ -414,8 +414,8 @@ void init_page_tables(struct multiboot2_memory_map_tag* mm, ac_uint count) {
       ac_printf("RAM: base_addr=0x%lx length=0x%lx type=%d reserved=%x\n",
           mm->entries[i].base_addr, mm->entries[i].length,
           mm->entries[i].type, mm->entries[i].reserved);
-      pml4 = page_table_map_physical_to_linear(
-          pml4, mm->entries[i].base_addr, (void*)mm->entries[i].base_addr,
+      pml4 = page_table_map_lin_to_phy(
+          pml4, (void*)mm->entries[i].base_addr, mm->entries[i].base_addr,
           mm->entries[i].length & ~(FOUR_K_PAGE_SIZE - 1), PAGE_CACHING_WRITE_BACK);
       if (pml4 == AC_NULL) {
         ac_printf("ABORTING: Couldn't allocate page from multiboot2 mmap\n");
@@ -429,11 +429,11 @@ void init_page_tables(struct multiboot2_memory_map_tag* mm, ac_uint count) {
 
 #else
   // Map the first gig as 512 2M pages
-  pml4 = page_table_map_physical_to_linear(
+  pml4 = page_table_map_lin_to_phy(
       AC_NULL, 0, (void*)0, TWO_MEG_PAGE_SIZE,
       PAGE_CACHING_WRITE_BACK);
   for (ac_uint i = 1; i < 512; i++) {
-    page_table_map_physical_to_linear(
+    page_table_map_lin_to_phy(
         pml4, i * TWO_MEG_PAGE_SIZE, (void*)(i * TWO_MEG_PAGE_SIZE),
         TWO_MEG_PAGE_SIZE,
         PAGE_CACHING_WRITE_BACK);

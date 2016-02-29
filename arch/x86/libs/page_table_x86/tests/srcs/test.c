@@ -427,8 +427,8 @@ int main(void) {
   // Test we can create an empty page table with only the
   // recursive level 4 entry. This isn't useful but the
   // algoritm must work this way.
-  pml4 = page_table_map_physical_to_linear(
-      AC_NULL, 0, AC_NULL, 0, PAGE_CACHING_UNKNOWN);
+  pml4 = page_table_map_lin_to_phy(
+      AC_NULL, AC_NULL, 0, 0, PAGE_CACHING_UNKNOWN);
   for (ac_uint i = 0; i < 511; i++) {
     error |= AC_TEST(pml4[i].p == 0);
   }
@@ -440,8 +440,8 @@ int main(void) {
 
   // Test we can create a 1G page starting from nothing
   ac_printf("****** Create a new Test Page Table with ONE_GIG_PAGE_SIZE:\n");
-  pml4 = page_table_map_physical_to_linear(
-      AC_NULL, 0x0, (void*)0x0, ONE_GIG_PAGE_SIZE,
+  pml4 = page_table_map_lin_to_phy(
+      AC_NULL, (void*)0, 0x0, ONE_GIG_PAGE_SIZE,
       PAGE_CACHING_STRONG_UNCACHEABLE);
   error |= AC_TEST(pml4[0].p == 1);
   error |= AC_TEST(pml4[0].rw == 1);
@@ -459,8 +459,8 @@ int main(void) {
 
   // Test we can add 1G pages starting with an existing page table
   ac_printf("****** Add 3 pages Test Page Table with ONE_GIG_PAGE_SIZE:\n");
-  page_table_map_physical_to_linear(
-      pml4, ONE_GIG_PAGE_SIZE, (void*)ONE_GIG_PAGE_SIZE, 3 * ONE_GIG_PAGE_SIZE,
+  page_table_map_lin_to_phy(
+      pml4, (void*)ONE_GIG_PAGE_SIZE, ONE_GIG_PAGE_SIZE, 3 * ONE_GIG_PAGE_SIZE,
       PAGE_CACHING_STRONG_UNCACHEABLE);
   for (ac_uptr i = 0; i < 4; i++) {
     error |= AC_TEST(pml3_pte[i].p == 1);
@@ -472,8 +472,8 @@ int main(void) {
 
   // Test we can create a 2M page starting from nothing
   ac_printf("****** Create a new Test Page Table with TWO_MEG_PAGE_SIZE:\n");
-  pml4 = page_table_map_physical_to_linear(
-      AC_NULL, 0x0, (void*)0x0, TWO_MEG_PAGE_SIZE,
+  pml4 = page_table_map_lin_to_phy(
+      AC_NULL, (void*)0x0, 0x0, TWO_MEG_PAGE_SIZE,
       PAGE_CACHING_STRONG_UNCACHEABLE);
   error |= AC_TEST(pml4[0].p == 1);
   error |= AC_TEST(pml4[0].rw == 1);
@@ -495,8 +495,8 @@ int main(void) {
 
   // Test we can add 2M pages starting with an existing page table
   ac_printf("****** Add 5 pages to Test Page Table with TWO_MEG_PAGE_SIZE:\n");
-  page_table_map_physical_to_linear(
-      pml4, TWO_MEG_PAGE_SIZE, (void*)TWO_MEG_PAGE_SIZE, 5 * TWO_MEG_PAGE_SIZE,
+  page_table_map_lin_to_phy(
+      pml4, (void*)TWO_MEG_PAGE_SIZE, TWO_MEG_PAGE_SIZE, 5 * TWO_MEG_PAGE_SIZE,
       PAGE_CACHING_STRONG_UNCACHEABLE);
   for (ac_uptr i = 0; i < 5; i++) {
     error |= AC_TEST(pml2_pte[i].p == 1);
@@ -509,8 +509,8 @@ int main(void) {
   // Test we can mix 2M and 4K pages, 0xfee00000 happens
   // to be the default address of the APIC. Which is what
   // I need to do to use the APIC
-  page_table_map_physical_to_linear(pml4,
-      0xfee00000, (void*)0xfee00000, FOUR_K_PAGE_SIZE,
+  page_table_map_lin_to_phy(pml4,
+      (void*)0xfee00000, 0xfee00000, FOUR_K_PAGE_SIZE,
       PAGE_CACHING_STRONG_UNCACHEABLE);
   pml3_pde = physical_to_linear_addr(pml4[0].phy_addr << 12);
   error |= AC_TEST(pml3_pde[3].p == 1);
@@ -528,8 +528,8 @@ int main(void) {
 
   // Test we can create a 4K page starting from nothing
   ac_printf("****** Create new Test Page Table with FOUR_K_PAGE_SIZE:\n");
-  pml4 = page_table_map_physical_to_linear(
-      AC_NULL, 0x0, (void*)0x0, FOUR_K_PAGE_SIZE,
+  pml4 = page_table_map_lin_to_phy(
+      AC_NULL, (void*)0x0, 0x0, FOUR_K_PAGE_SIZE,
       PAGE_CACHING_STRONG_UNCACHEABLE);
   error |= AC_TEST(pml4[0].p == 1);
   error |= AC_TEST(pml4[0].rw == 1);
@@ -555,8 +555,8 @@ int main(void) {
   // Test we can add 2M pages starting with an existing page table
   // And that will be split across two pml2_pde's
   ac_printf("****** Add 2 pages to Test Page Table with FOUR_K_PAGE_SIZE:\n");
-  page_table_map_physical_to_linear(
-      pml4, FOUR_K_PAGE_SIZE, (void*)(511 * FOUR_K_PAGE_SIZE), 2 * FOUR_K_PAGE_SIZE,
+  page_table_map_lin_to_phy(
+      pml4, (void*)(511 * FOUR_K_PAGE_SIZE), FOUR_K_PAGE_SIZE, 2 * FOUR_K_PAGE_SIZE,
       PAGE_CACHING_STRONG_UNCACHEABLE);
   error |= AC_TEST(pml2_pde[1].p == 1);
   error |= AC_TEST(pml2_pde[1].rw == 1);

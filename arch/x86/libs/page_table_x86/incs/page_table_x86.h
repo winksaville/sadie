@@ -392,19 +392,19 @@ static inline void* get_page_table_linear_addr(void) {
 }
 
 /**
- * Create a page table entries for the physical/linear address
+ * Create page table entries for the linear to physical address range
  *
  * param: page_table_base is a phylin_addr of the base of the page table
  *        if its AC_NULL it will be allocated.
- * param: phy_addr is the physical address to map to lin_addr
  * param: lin_addr is the linear address the phy_addr is mapped to
+ * param: phy_addr is the physical address to map to lin_addr
  * param: size is the number of bytes in the phy_addr must be multiple of 4K
  * param: caching is the caching strategy to use.
  *
  * returns AC_NULL on failure else page_table_base
  */
-struct pde_fields* page_table_map_physical_to_linear(
-    struct pde_fields* page_table_base, ac_u64 phy_addr, void* linear_addr,
+struct pde_fields* page_table_map_lin_to_phy(
+    struct pde_fields* page_table_base, void* linear_addr, ac_u64 phyiscal_addr,
     ac_u64 size, enum page_caching caching);
 
 /**
