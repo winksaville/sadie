@@ -63,7 +63,7 @@ ac_uint initialize_apic();
 /**
  * @return 0 if present, !0 if not
  */
-ac_uint apic_present(void);
+ac_bool apic_present(void);
 
 /**
  * @return id of the local apic
@@ -139,7 +139,8 @@ static __inline__ void apic_timer_set_divide_config(ac_u32 val) {
  * Figure 10-10. "Divide Configuration Register"
  */
 static __inline__ ac_u32 apic_timer_get_divide_config(void) {
-  return *(ac_u32*)(apic_lin_addr + 0x3E0);
+  ac_u32 val = *(ac_u32*)(apic_lin_addr + 0x3E0);
+  return (val & 0x3) | ((val & 0x8) >> 1);
 }
 
 /**

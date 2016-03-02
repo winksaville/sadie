@@ -39,6 +39,7 @@ ac_uint initialize_apic(void) {
 
   // Get Processor info cpuid
   if (apic_present()) {
+    ac_printf("APIC present\n");
     // Apic is present, map its phusical page as uncachable.
     ac_u64 apic_phy_addr = apic_get_physical_addr();
     apic_lin_addr = (void*)apic_phy_addr; //0x00000001ffee00000;
@@ -50,6 +51,7 @@ ac_uint initialize_apic(void) {
     ret_val = 0;
   } else {
     // No apic
+    ac_printf("APIC NOT present\n");
     ret_val = 1;
   }
 
@@ -59,11 +61,11 @@ ac_uint initialize_apic(void) {
 /**
  * @return 0 if present, !0 if not
  */
-ac_uint apic_present(void) {
+ac_bool apic_present(void) {
   ac_u32 out_eax, out_ebx, out_ecx, out_edx;
 
   get_cpuid(1, &out_eax, &out_ebx, &out_ecx, &out_edx);
-  return AC_GET_BITS(ac_uint, out_ecx, 9, 1);
+  return AC_GET_BITS(ac_uint, out_edx, 9, 1) == 1;
 }
 
 /**
