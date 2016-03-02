@@ -33,6 +33,8 @@
 ac_bool test_apic() {
   ac_bool error = AC_FALSE;
 
+  error |= AC_TEST(apic_present());
+
   ac_u64 msr_apic_base = get_msr(MSR_APIC_BASE);
   error |= AC_TEST(msr_apic_base != 0);
 
@@ -67,10 +69,10 @@ ac_bool test_apic_version() {
   // need to be altered in the future.
   ac_u32 ver_reg_values[32];
   ac_memset(ver_reg_values, 0, sizeof(ver_reg_values));
-  ver_reg_values[0x14] = 0x1050014;
-  ver_reg_values[0x15] = 0x1060015;
+  ver_reg_values[0x14] = 0x50014;
+  ver_reg_values[0x15] = 0x60015;
 
-  error |= AC_TEST(*ver_reg == ver_reg_values[*ver_reg & 0xFF]);
+  error |= AC_TEST((*ver_reg & 0xFF00FF) == ver_reg_values[*ver_reg & 0xFF]);
 
 #else
   // Not sure what X86_32 should be
@@ -101,7 +103,7 @@ static void apic_timer_df(struct intr_frame *frame) {
   ac_printf(" lvtu.fields.status=%d\n", lvtu.fields.status);
   ac_printf(" lvtu.fields.disable=%d\n", lvtu.fields.disable);
   ac_printf(" lvtu.fields.mode=%d\n", lvtu.fields.mode);
-  reset_x86();
+  //reset_x86();
 }
 
 __attribute__ ((__interrupt__))
@@ -171,11 +173,12 @@ ac_bool test_apic_timer() {
   // or we have waited long enough without one.
   apic_timer_loops = 0;
   apic_timer_initial_count = 1;
-  ac_printf("test_apic_timer: sti apic_timer_initial_count=%d\n", apic_timer_initial_count);
-  apic_timer_set_divide_config(7); // DIVIDE by 1
+  apic_timer_set_divide_config(6); // DIVIDE by 128
+  ac_printf("test_apic_timer: sti divisor=%d apic_timer_initial_count=%d\n",
+      apic_timer_get_divide_config(), apic_timer_initial_count);
   apic_timer_set_initial_count(apic_timer_initial_count);
   sti();
-  for (ac_u64 i = 0; (i < 1000000000) && (apic_timer_isr_counter < 1); i++) {
+  for (ac_u64 i = 0; (i < 1000000000) && (apic_timer_isr_counter < 2); i++) {
     apic_timer_loops += 1;
   }
   cli();
@@ -204,11 +207,15 @@ int main(void) {
   // Initialize interrupt descriptor table since its not done by default, yet.
   initialize_intr_descriptor_table();
 
-  initialize_apic();
+  error =  AC_TEST(initialize_apic() == 0);
 
-  error |= test_apic();
-  error |= test_apic_version();
-  error |= test_apic_timer();
+  if (!error) {
+    error |= test_apic();
+    error |= test_apic_version();
+    error |= test_apic_timer();
+  } else {
+    ac_printf("test APIC: NO APIC\n");
+  }
 
   if (!error) {
     ac_printf("OK\n");
