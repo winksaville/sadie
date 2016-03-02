@@ -193,9 +193,9 @@ ac_bool test_apic_timer() {
   ac_printf("  lvtu3.fields.disable=%d\n", lvtu3.fields.disable);
   ac_printf("  lvtu3.fields.mode=%d\n", lvtu3.fields.mode);
 
-  // Expect that the counter fired one or more times.
-  // FIXME: When we get things working this should be a precise number.
-  error |= AC_TEST(apic_timer_isr_counter >= 1);
+  // Expect that the counter fired two or more times.
+  // FIXME: Currently its only firing once so this always fails
+  error |= AC_TEST(apic_timer_isr_counter >= 2);
 
   return error;
 }
