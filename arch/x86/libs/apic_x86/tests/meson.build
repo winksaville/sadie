@@ -60,5 +60,8 @@ if Platform == 'pc_x86_64'
 
   run_target('run-test-apic_x86', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
               test_apic_x86_bin, '-enable-kvm', '-cpu', 'host')
+
+  run_target('run-test-apic_x86-intdbg', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
+              test_apic_x86_bin, '-d', 'int')
 endif
 
