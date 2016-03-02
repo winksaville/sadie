@@ -172,7 +172,7 @@ ac_bool test_apic_timer() {
   // Enable interrupts start the timer and wait until we get a timer interrupt
   // or we have waited long enough without one.
   apic_timer_loops = 0;
-  apic_timer_initial_count = 1;
+  apic_timer_initial_count = 0;
   apic_timer_set_divide_config(6); // DIVIDE by 128
   ac_printf("test_apic_timer: sti divisor=%d apic_timer_initial_count=%d\n",
       apic_timer_get_divide_config(), apic_timer_initial_count);
