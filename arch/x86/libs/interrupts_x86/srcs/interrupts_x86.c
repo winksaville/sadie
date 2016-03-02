@@ -37,6 +37,13 @@ static intr_gate idt[256];
 
 static ac_u32 intr_undefined_counter;
 static ac_u32 expt_undefined_counter;
+static ac_u32 expt_double_fault_counter;
+static ac_u32 expt_invalid_tss_counter;
+static ac_u32 expt_segment_not_present_counter;
+static ac_u32 expt_stack_fault_counter;
+static ac_u32 expt_general_protection_counter;
+static ac_u32 expt_page_fault_counter;
+static ac_u32 expt_alignment_check_counter;
 static ac_u32 intr_invalid_opcode_counter;
 
 INTERRUPT_HANDLER
@@ -50,51 +57,51 @@ static void intr_undefined(struct intr_frame *frame) {
 
 INTERRUPT_HANDLER
 static void expt_double_fault(struct intr_frame *frame, ac_uint error_code) {
-  expt_undefined_counter += 1;
+  expt_double_fault_counter += 1;
   print_intr_frame("expt_double_fault - #DF 8", frame);
   ac_printf(" rsp: %p\n", get_sp());
-  ac_printf(" error_code: %u\n", error_code);
-  ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
+  ac_printf(" error_code: 0x%x\n", error_code);
+  ac_printf(" expt_double_fault_counter: %d\n", expt_double_fault_counter);
   reset_x86();
 }
 
 INTERRUPT_HANDLER
 static void expt_invalid_tss(struct intr_frame *frame, ac_uint error_code) {
-  expt_undefined_counter += 1;
+  expt_invalid_tss_counter += 1;
   print_intr_frame("expt_invalid_tss - #TS 10", frame);
   ac_printf(" rsp: %p\n", get_sp());
-  ac_printf(" error_code: %u\n", error_code);
-  ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
+  ac_printf(" error_code: 0x%x\n", error_code);
+  ac_printf(" expt_invalid_tss_counter: %d\n", expt_invalid_tss_counter);
   reset_x86();
 }
 
 INTERRUPT_HANDLER
 static void expt_segment_not_present(struct intr_frame *frame, ac_uint error_code) {
-  expt_undefined_counter += 1;
+  expt_segment_not_present_counter += 1;
   print_intr_frame("expt_segment_not_present - #NP 11", frame);
   ac_printf(" rsp: %p\n", get_sp());
-  ac_printf(" error_code: %u\n", error_code);
-  ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
+  ac_printf(" error_code: 0x%x\n", error_code);
+  ac_printf(" expt_segment_not_present_counter: %d\n", expt_segment_not_present_counter);
   reset_x86();
 }
 
 INTERRUPT_HANDLER
 static void expt_stack_fault(struct intr_frame *frame, ac_uint error_code) {
-  expt_undefined_counter += 1;
+  expt_stack_fault_counter += 1;
   print_intr_frame("expt_stack_fault - #SS 12", frame);
   ac_printf(" rsp: %p\n", get_sp());
-  ac_printf(" error_code: %u\n", error_code);
-  ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
+  ac_printf(" error_code: 0x%x\n", error_code);
+  ac_printf(" expt_stack_fault_counter: %d\n", expt_stack_fault_counter);
   reset_x86();
 }
 
 INTERRUPT_HANDLER
 static void expt_general_protection(struct intr_frame *frame, ac_uint error_code) {
-  expt_undefined_counter += 1;
+  expt_general_protection_counter += 1;
   print_intr_frame("expt_general_protection - #GP 13", frame);
   ac_printf(" rsp: %p\n", get_sp());
-  ac_printf(" error_code: %u\n", error_code);
-  ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
+  ac_printf(" error_code: 0x%x\n", error_code);
+  ac_printf(" expt_general_protection_counter: %d\n", expt_general_protection_counter);
 
   idt_ptr idtp;
   get_idt(&idtp);
@@ -105,21 +112,21 @@ static void expt_general_protection(struct intr_frame *frame, ac_uint error_code
 
 INTERRUPT_HANDLER
 static void expt_page_fault(struct intr_frame *frame, ac_uint error_code) {
-  expt_undefined_counter += 1;
+  expt_page_fault_counter += 1;
   print_intr_frame("expt_page_fault - #PF 14", frame);
   ac_printf(" rsp: %p\n", get_sp());
-  ac_printf(" error_code: %u\n", error_code);
-  ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
+  ac_printf(" error_code: 0x%x\n", error_code);
+  ac_printf(" expt_page_fault_counter: %d\n", expt_page_fault_counter);
   reset_x86();
 }
 
 INTERRUPT_HANDLER
 static void expt_alignment_check(struct intr_frame *frame, ac_uint error_code) {
-  expt_undefined_counter += 1;
+  expt_alignment_check_counter += 1;
   print_intr_frame("expt_alignment_check - #AC 17", frame);
   ac_printf(" rsp: %p\n", get_sp());
-  ac_printf(" error_code: %u\n", error_code);
-  ac_printf(" expt_undefined_counter: %d\n", expt_undefined_counter);
+  ac_printf(" error_code: 0x%x\n", error_code);
+  ac_printf(" expt_alignment_check_counter: %d\n", expt_alignment_check_counter);
   reset_x86();
 }
 
@@ -187,6 +194,13 @@ intr_gate* get_intr_gate(ac_u32 intr_num) {
 void initialize_intr_descriptor_table(void) {
   intr_undefined_counter = 0;
   expt_undefined_counter = 0;
+  expt_double_fault_counter = 0;
+  expt_invalid_tss_counter = 0;
+  expt_segment_not_present_counter = 0;
+  expt_stack_fault_counter = 0;
+  expt_general_protection_counter = 0;
+  expt_page_fault_counter = 0;
+  expt_alignment_check_counter = 0;
   intr_invalid_opcode_counter = 0;
 
   // Initialize all of the entires to intr_undefined
