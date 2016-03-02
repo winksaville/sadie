@@ -29,6 +29,11 @@
 
 void* apic_lin_addr;
 
+/**
+ * Initialize APIC
+ *
+ * @return 0 if initialized, !0 if an error
+ */
 ac_uint initialize_apic(void) {
   ac_uint ret_val;
 
@@ -51,6 +56,9 @@ ac_uint initialize_apic(void) {
   return ret_val;
 }
 
+/**
+ * @return 0 if present, !0 if not
+ */
 ac_uint apic_present(void) {
   ac_u32 out_eax, out_ebx, out_ecx, out_edx;
 
@@ -58,6 +66,9 @@ ac_uint apic_present(void) {
   return AC_GET_BITS(ac_uint, out_ecx, 9, 1);
 }
 
+/**
+ * @return id of the local apic
+ */
 ac_u32 apic_get_id(void) {
   ac_u32 out_eax, out_ebx, out_ecx, out_edx;
 
@@ -65,11 +76,9 @@ ac_u32 apic_get_id(void) {
   return AC_GET_BITS(ac_u32, out_ebx, 24, 8);
 }
 
-
-void* apic_get_linear_addr(void) {
-  return apic_lin_addr;
-}
-
+/**
+ * @return physical address of local apic
+ */
 ac_u64 apic_get_physical_addr(void) {
   return msr_apic_base_physical_addr(get_msr(MSR_APIC_BASE));
 }
