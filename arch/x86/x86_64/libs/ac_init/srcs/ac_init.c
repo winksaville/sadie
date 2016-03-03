@@ -20,10 +20,12 @@
 #include <page_table_x86_print.h>
 #include <reset_x86.h>
 
+#include <ac_bits.h>
 #include <ac_inttypes.h>
 #include <ac_memset.h>
 #include <ac_printf.h>
 #include <ac_sort.h>
+#include <ac_string.h>
 
 void print_multiboot2_tag(struct multiboot2_header_tag* tag) {
   ac_printf("type=%d size=%d\n", tag->type, tag->size);
@@ -53,6 +55,16 @@ void swap_mmap_entires(void* entries, const ac_uint idx1, const ac_uint idx2) {
 void ac_init(ac_uptr ptr, ac_uint word) {
   // Check if we have a multiboot signature
   ac_printf("ac_init addr=%p\n", ac_init);
+
+  // BIOS Data Area (BDA) is at 0x400 and at 0x40E
+  // maybe the Extended BIOS Data Area (EBDA)
+  ac_u16* bda = (ac_u16*)0x0400;
+  for (ac_uint i = 0; i < 9; i++) {
+    ac_printf("bda[%d]=0x%x\n", i, bda[i]);
+  }
+  ac_u64 ebda = bda[7] << 4;
+  ac_printf("EBDA=0x%x\n", ebda);
+
   if (word == 0x36d76289) {
     /** Mulitboot header **/
     ac_u32 total_size = *(ac_u32*)ptr;
@@ -73,43 +85,113 @@ void ac_init(ac_uptr ptr, ac_uint word) {
         && (tag->size != 8)) {
       print_multiboot2_tag(tag);
 
-      if (tag->type == 1) {
-        char* cmdline = (char*)tag + 8;
-        ac_printf(" cmd_line=%s\n", cmdline);
-      }
-
-      if (tag->type == 4) {
-        struct multiboot2_basic_memory_tag* bm =
-          (struct multiboot2_basic_memory_tag*)tag;
-        ac_printf(" basic memory info:\n");
-        ac_printf("  mem_lower=%dk\n", bm->mem_lower);
-        ac_printf("  mem_upper=%dk\n", bm->mem_upper);
-      }
-      if (tag->type == 6) {
-        struct multiboot2_memory_map_tag* mm =
-          (struct multiboot2_memory_map_tag*)tag;
-        ac_printf(" memory map:\n");
-        ac_printf("  entry_size=%d\n", mm->entry_size);
-        ac_printf("  entry_version=%d\n", mm->entry_version);
-        if (mm->entry_version != 0) {
-          ac_printf("ABORTING: file ac_init; Unknown multiboot2 entry_version"
-             " %d, expecting 0\n", mm->entry_version);
-          reset_x86();
+      switch (tag->type) {
+        case 1: {
+          char* cmdline = (char*)tag + 8;
+          ac_printf(" cmd_line=%s\n", cmdline);
+          break;
         }
-        ac_uint count = (mm->header.size - sizeof(mm->header)) / mm->entry_size;
-        ac_sort_by_idx(mm->entries, count, compare_mmap_entires,
-            swap_mmap_entires);
-        ac_uint total_length = 0;
-        for (ac_uint i = 0; i < count; i++) {
-          if (mm->entries[i].type == 1) {
-            total_length += mm->entries[i].length;
+        case 2: {
+          char* blname = (char*)tag + 8;
+          ac_printf(" boot loader name=%s\n", blname);
+          break;
+        }
+        case 3: {
+          ac_printf(" Modules\n");
+          break;
+        }
+        case 4: {
+          struct multiboot2_basic_memory_tag* bm =
+            (struct multiboot2_basic_memory_tag*)tag;
+          ac_printf(" basic memory info:\n");
+          ac_printf("  mem_lower=%dK(0x%x)\n", bm->mem_lower, bm->mem_lower * 1024);
+          ac_printf("  mem_upper=%dK(0x%x)\n", bm->mem_upper, bm->mem_upper * 1024);
+          break;
+        }
+        case 5: {
+          ac_printf(" bios boot device\n");
+          break;
+        }
+        case 6: {
+          struct multiboot2_memory_map_tag* mm =
+            (struct multiboot2_memory_map_tag*)tag;
+          ac_printf(" memory map:\n");
+          ac_printf("  entry_size=%d\n", mm->entry_size);
+          ac_printf("  entry_version=%d\n", mm->entry_version);
+          if (mm->entry_version != 0) {
+            ac_printf("ABORTING: file ac_init; Unknown multiboot2 entry_version"
+               " %d, expecting 0\n", mm->entry_version);
+            reset_x86();
           }
-          ac_printf("  %d: base_addr=0x%p length=0x%x type=%d reserved=%x\n", i,
-              mm->entries[i].base_addr, mm->entries[i].length,
-              mm->entries[i].type, mm->entries[i].reserved);
+
+          // Sort the enteries and create the initial a page_table
+          ac_uint count = (mm->header.size - sizeof(mm->header)) / mm->entry_size;
+          ac_sort_by_idx(mm->entries, count, compare_mmap_entires,
+              swap_mmap_entires);
+
+          init_page_tables(mm, count);
+
+          // Map the possible ebda page so we can search it, I'm
+          // assuming its part of a reserved type 2 memory and
+          // wasn't mapped above
+          ac_u64 ebda_page_addr = ebda & ~AC_BIT_MASK(ac_u64, 12);
+          ac_printf("ebda_page_addr=0x%p\n", ebda_page_addr);
+          page_table_map_lin_to_phy(get_page_table_linear_addr(),
+              (void*)ebda_page_addr, ebda_page_addr, FOUR_K_PAGE_SIZE,
+              PAGE_CACHING_WRITE_BACK);
+
+          // Display the types and while doing so search for
+          // the MP Floaing Point structure from the Intel
+          // MultiProcessor Specification v1.4.
+          ac_uint total_length = 0;
+          for (ac_uint i = 0; i < count; i++) {
+            if (mm->entries[i].type == 1) {
+              total_length += mm->entries[i].length;
+            }
+            ac_printf("  %d: base_addr=0x%p length=0x%x type=%d reserved=%x\n", i,
+                mm->entries[i].base_addr, mm->entries[i].length,
+                mm->entries[i].type, mm->entries[i].reserved);
+            // Search for _MP_ in EBDA
+            if ((mm->entries[i].type == 1) ||
+                ((mm->entries[i].type == 2)
+                  && (mm->entries[i].base_addr == ebda))) {
+              // RAM or Probable ebda
+              ac_printf("  Look for MP Floating Point Structure\n");
+              ac_u8* p = (ac_u8*)mm->entries[i].base_addr;
+              //char* nl = "";
+              for(ac_uint j = 0; j < 1024; j++) {
+                //if ((j % 8) == 0) ac_printf("%s0x%p:", nl, &p[j]);
+                //nl = "\n";
+                //ac_printf(" %x", p[j]);
+                if (ac_strncmp((char*)&p[j], "_MP_", 4) == 0) {
+                  ac_printf("\nFound _MP_ at &mp[%d]=0x%p\n", j, &p[j]);
+                }
+              }
+              ac_printf("\n");
+            }
+          }
+          ac_printf("  total_length=%d(0x%x)\n", total_length, total_length);
+          break;
         }
-        ac_printf("total_length=%d(0x%x)\n", total_length, total_length);
-        init_page_tables(mm, count);
+        case 7: {
+          ac_printf(" VBE info\n");
+          break;
+        }
+        case 8: {
+          ac_printf(" Framebuffer info\n");
+          break;
+        }
+        case 9: {
+          ac_printf(" Elf symbols\n");
+          break;
+        }
+        case 10: {
+          ac_printf(" APM table\n");
+          break;
+        }
+        default: {
+          break;
+        }
       }
       tag = multiboot2_next_tag(tag);
     }
