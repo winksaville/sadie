@@ -17,6 +17,7 @@
 #include <apic_x86.h>
 
 #include <interrupts_x86.h>
+#include <io_x86.h>
 #include <msr_x86.h>
 #include <page_table_x86.h>
 #include <page_table_x86_print.h>
@@ -29,6 +30,72 @@
 
 
 void* apic_lin_addr;
+
+/* From OSDev.org http://wiki.osdev.org/PIC */
+
+#define PIC1            0x20      // IO base address for master PIC
+#define PIC2            0xA0      // IO base address for slave PIC
+#define PIC1_COMMAND    PIC1
+#define PIC1_DATA       (PIC1+1)
+#define PIC2_COMMAND    PIC2
+#define PIC2_DATA       (PIC2+1)
+
+#define ICW1_ICW4	0x01	  // ICW4 (not) needed
+#define ICW1_SINGLE	0x02	  // Single (cascade) mode
+#define ICW1_INTERVAL4	0x04	  // Call address interval 4 (8)
+#define ICW1_LEVEL	0x08	  // Level triggered (edge) mode
+#define ICW1_INIT	0x10	  // Initialization - required!
+
+#define ICW4_8086	0x01	  // 8086/88 (MCS-80/85) mode
+#define ICW4_AUTO	0x02	  // Auto (normal) EOI
+#define ICW4_BUF_SLAVE	0x08	  // Buffered mode/slave
+#define ICW4_BUF_MASTER	0x0C	  // Buffered mode/master
+#define ICW4_SFNM	0x10	  // Special fully nested (not)
+
+/**
+ * Remap pic irq's.
+ *
+ * param: master_vector_base is the master pic's base interrupt vector
+ * param: slave_vector_base is the slave pic's base interrupt vector
+*/
+static void remap_pic_vectors(ac_u8 master_vector_base, ac_u8 slave_vector_base) {
+  unsigned char a1, a2;
+
+  // Save masks
+  a1 = inb_port(PIC1_DATA);
+  a2 = inb_port(PIC2_DATA);
+
+  // Starts the initialization sequence (in cascade mode)
+  outb_port_value(PIC1_COMMAND, ICW1_INIT+ICW1_ICW4);
+  io_wait();
+  outb_port_value(PIC2_COMMAND, ICW1_INIT+ICW1_ICW4);
+  io_wait();
+
+  // Set Master PIC vector base
+  outb_port_value(PIC1_DATA, master_vector_base);
+  io_wait();
+
+  // Set Slave PIC vector offset
+  outb_port_value(PIC2_DATA, slave_vector_base);
+  io_wait();
+
+  // ICW3: tell Master PIC that there is a slave PIC at IRQ2 (0000 0100)
+  outb_port_value(PIC1_DATA, 4);
+  io_wait();
+
+  // ICW3: tell Slave PIC its cascade identity (0000 0010)
+  outb_port_value(PIC2_DATA, 2);
+  io_wait();
+
+  outb_port_value(PIC1_DATA, ICW4_8086);
+  io_wait();
+  outb_port_value(PIC2_DATA, ICW4_8086);
+  io_wait();
+
+  // restore saved masks.
+  outb_port_value(PIC1_DATA, a1);   // restore saved masks.
+  outb_port_value(PIC2_DATA, a2);
+}
 
 /**
  * Handle spurious interrupts
@@ -56,6 +123,13 @@ ac_uint initialize_apic(void) {
   // Get Processor info cpuid
   if (apic_present()) {
     ac_printf("APIC present\n");
+
+    // Remap the PIC vectors to 0x20 .. 0x2F
+    remap_pic_vectors(0x20, 0x28);
+
+    // Disable PIC
+    outb_port_value(0xa1, 0xff);
+    outb_port_value(0x21, 0xff);
 
     // Apic is present, map its phusical page as uncachable.
     ac_u64 apic_phy_addr = get_apic_physical_addr();

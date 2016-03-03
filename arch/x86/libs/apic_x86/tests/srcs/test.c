@@ -135,7 +135,7 @@ ac_bool test_apic_timer() {
   set_intr_handler(80, apic_timer_isr);
 
   pit_isr_counter = 0;
-  set_intr_handler(8, pit_isr);
+  set_intr_handler(0x20, pit_isr);
 
   lvtu.fields.vector = 80; // interrupt vector
   lvtu.fields.disable = AC_FALSE; // interrupt enabled
@@ -164,7 +164,7 @@ ac_bool test_apic_timer() {
       get_apic_timer_divide_config(), apic_timer_initial_count);
   set_apic_timer_initial_count(apic_timer_initial_count);
   sti();
-  for (ac_u64 i = 0; (i < 1000000000) && (apic_timer_isr_counter < 2); i++) {
+  for (ac_u64 i = 0; (i < 1000000000) && (apic_timer_isr_counter < 100); i++) {
     apic_timer_loops += 1;
   }
   cli();
@@ -180,7 +180,7 @@ ac_bool test_apic_timer() {
   ac_printf("  lvtu3.fields.mode=%d\n", lvtu3.fields.mode);
 
   // Expect that the counter fired Between two or three
-  error |= AC_TEST((apic_timer_isr_counter >= 2) && (apic_timer_isr_counter <= 3));
+  error |= AC_TEST((apic_timer_isr_counter >= 100) && (apic_timer_isr_counter <= 101));
 
   return error;
 }
