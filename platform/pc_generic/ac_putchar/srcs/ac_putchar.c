@@ -56,10 +56,10 @@
 #define COM_LSR ((ac_u16)(COM1_BASE + LSR))
 
 static void xmit_char(ac_u8 ch) {
-  while ((inb(COM_LSR) & LSR_TX_EMPTY) == 0) {
+  while ((inb_port(COM_LSR) & LSR_TX_EMPTY) == 0) {
     // Waiting for LSR_TX_EMPTY to be 1
   }
-  outb(ch, COM_TX_FIFO);
+  outb_port_value(COM_TX_FIFO, ch);
 }
 
 void ac_putchar(ac_u8 ch)  {

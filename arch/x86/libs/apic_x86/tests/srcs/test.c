@@ -99,7 +99,7 @@ static void pit_isr(struct intr_frame *frame) {
   pit_isr_counter += 1;
 
   // Send EOI to PIT
-  outb(0x20, 0x20);
+  outb_port_value(0x20, 0x20);
 }
 
 __attribute__ ((__interrupt__))

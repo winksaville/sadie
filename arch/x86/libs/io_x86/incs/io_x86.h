@@ -19,24 +19,31 @@
 
 #include <ac_inttypes.h>
 
-static inline ac_u8 inb(ac_u16 port) {
+#define AC_IO_WAIT_UNUSED_PORT (0x80)
+
+static inline ac_u8 inb_port(ac_u16 port) {
   ac_u8 val;
   __asm volatile ( "inb %[port], %[val]" : [val]"=a"(val) : [port] "d"(port));
   return val;
 }
 
-static inline ac_u16 inw(ac_u16 port) {
+static inline ac_u16 inw_port(ac_u16 port) {
   ac_u16 val;
   __asm volatile ( "inw %[port], %[val]" : [val]"=a"(val) : [port] "d"(port));
   return val;
 }
 
-static inline void outb(ac_u8 val, ac_u16 port) {
+static inline void outb_port_value(ac_u16 port, ac_u8 val) {
     __asm volatile ( "outb %[val], %[port]" : : [val] "a"(val), [port] "d"(port) );
 }
 
-static inline void outw(ac_u16 val, ac_u16 port) {
+static inline void outw_port_value(ac_u16 port, ac_u16 val) {
     __asm volatile ( "outw %[val], %[port]" : : [val] "a"(val), [port] "d"(port) );
+}
+
+static inline void io_wait(void) {
+  // See http://wiki.osdev.org/Inline_Assembly/Examples#IO_WAIT0
+  outb_port_value(AC_IO_WAIT_UNUSED_PORT, 0);
 }
 
 #endif
