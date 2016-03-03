@@ -19,6 +19,7 @@
 #include <cpuid_x86.h>
 #include <interrupts_x86.h>
 #include <interrupts_x86_print.h>
+#include <io_x86.h>
 #include <msr_x86.h>
 #include <reset_x86.h>
 #include <print_msr.h>
@@ -40,15 +41,15 @@ ac_bool test_apic() {
 
   print_msr(MSR_APIC_BASE, msr_apic_base);
 
-  ac_u64 phy_addr = apic_get_physical_addr();
+  ac_u64 phy_addr = get_apic_physical_addr();
   ac_printf(" phy_addr=0x%llx\n", phy_addr);
   error |= AC_TEST(phy_addr != 0);
 
-  void* lin_addr = apic_get_linear_addr();
+  void* lin_addr = get_apic_linear_addr();
   ac_printf(" lin_addr=0x%llx\n", lin_addr);
   error |= AC_TEST(lin_addr != 0);
 
-  ac_u32 local_id = apic_get_id();
+  ac_u32 local_id = get_apic_id();
   ac_printf(" local_id=0x%x\n", local_id);
 
   return error;
@@ -60,7 +61,7 @@ ac_bool test_apic_version() {
   ac_printf("test_apic_version\n");
   ac_u64 msr_apic_base = get_msr(MSR_APIC_BASE);
   print_msr(MSR_APIC_BASE, msr_apic_base);
-  ac_u32* ver_reg = (ac_u32*)((ac_uptr)apic_get_linear_addr() + 0x30);
+  ac_u32* ver_reg = (ac_u32*)((ac_uptr)get_apic_linear_addr() + 0x30);
   ac_printf("ver_reg=0x%p\n", ver_reg);
   ac_printf("*ver_reg=0x%x\n", *ver_reg);
 
@@ -82,55 +83,41 @@ ac_bool test_apic_version() {
 }
 
 volatile ac_u64 apic_timer_isr_counter;
-volatile ac_u64 apic_timer_df_counter;
+volatile ac_u64 pit_isr_counter;
 volatile ac_u64 apic_timer_loops;
 volatile ac_u32 apic_timer_initial_count;
 
+/**
+ * The Programmable Interrupt Timer (PIT) interrupt.
+ * FIXME: The PIT needs to be disabled.
+ */
 __attribute__ ((__interrupt__))
-//static void apic_timer_df(struct intr_frame *frame, ac_uint error_code) {
-static void apic_timer_df(struct intr_frame *frame) {
-  (void)frame;
-  union apic_timer_lvt_fields_u lvtu = { .fields = apic_timer_get_lvt() };
-  apic_timer_df_counter += 1;
+static void pit_isr(struct intr_frame *frame) {
+  AC_UNUSED(frame);
 
-  // print the frame
-  print_intr_frame("apic_timer_df", frame);
-  ac_printf(" apic_timer_df_counter =%ld\n", apic_timer_df_counter);
-  ac_printf(" apic_timer_isr_counter=%ld\n", apic_timer_isr_counter);
-  ac_printf(" apic_timer_loops=%ld\n", apic_timer_loops);
-  ac_printf(" lvtu.raw=0x%x\n", lvtu.raw);
-  ac_printf(" lvtu.fields.vector=%d\n", lvtu.fields.vector);
-  ac_printf(" lvtu.fields.status=%d\n", lvtu.fields.status);
-  ac_printf(" lvtu.fields.disable=%d\n", lvtu.fields.disable);
-  ac_printf(" lvtu.fields.mode=%d\n", lvtu.fields.mode);
-  //reset_x86();
+  // Increment counter
+  pit_isr_counter += 1;
+
+  // Send EOI to PIT
+  outb(0x20, 0x20);
 }
 
 __attribute__ ((__interrupt__))
 static void apic_timer_isr(struct intr_frame *frame) {
-  (void)frame;
-  // Reset the count so it might go again
-  union apic_timer_lvt_fields_u lvtu = { .fields = apic_timer_get_lvt() };
-  apic_timer_isr_counter += 1;
-  apic_timer_set_initial_count(apic_timer_initial_count);
+  AC_UNUSED(frame);
 
-  // print the frame
-  print_intr_frame("apic_timer_isr", frame);
-  ac_printf(" apic_timer_df_counter =%ld\n", apic_timer_df_counter);
-  ac_printf(" apic_timer_isr_counter=%ld\n", apic_timer_isr_counter);
-  ac_printf(" apic_timer_loops=%ld\n", apic_timer_loops);
-  ac_printf(" lvtu.raw=0x%x\n", lvtu.raw);
-  ac_printf(" lvtu.fields.vector=%d\n", lvtu.fields.vector);
-  ac_printf(" lvtu.fields.status=%d\n", lvtu.fields.status);
-  ac_printf(" lvtu.fields.disable=%d\n", lvtu.fields.disable);
-  ac_printf(" lvtu.fields.mode=%d\n", lvtu.fields.mode);
+  // Increment counter and reset initial count to make it periodic.
+  apic_timer_isr_counter += 1;
+  set_apic_timer_initial_count(apic_timer_initial_count);
+
+  send_apic_eoi();
 }
 
 ac_bool test_apic_timer() {
   ac_bool error = AC_FALSE;
 
   ac_printf("test_apic_timer\n");
-  union apic_timer_lvt_fields_u lvtu = { .fields = apic_timer_get_lvt() };
+  union apic_timer_lvt_fields_u lvtu = { .fields = get_apic_timer_lvt() };
   union apic_timer_lvt_fields_u lvtu2;
   union apic_timer_lvt_fields_u lvtu3;
 
@@ -147,16 +134,15 @@ ac_bool test_apic_timer() {
   apic_timer_isr_counter = 0;
   set_intr_handler(80, apic_timer_isr);
 
-  apic_timer_df_counter = 0;
-  //set_expt_handler(8, apic_timer_df);
-  set_intr_handler(8, apic_timer_df);
+  pit_isr_counter = 0;
+  set_intr_handler(8, pit_isr);
 
   lvtu.fields.vector = 80; // interrupt vector
   lvtu.fields.disable = AC_FALSE; // interrupt enabled
   lvtu.fields.mode = 0;     // one shot
-  apic_timer_set_lvt(lvtu.fields);
+  set_apic_timer_lvt(lvtu.fields);
 
-  lvtu2.fields = apic_timer_get_lvt();
+  lvtu2.fields = get_apic_timer_lvt();
   ac_printf("test_apic_timer: lvtu2.raw=0x%x\n", lvtu2.raw);
   ac_printf("test_apic_timer: lvtu2.fields.vector=%d\n", lvtu2.fields.vector);
   ac_printf("test_apic_timer: lvtu2fields.status=%d\n", lvtu2.fields.status);
@@ -172,30 +158,29 @@ ac_bool test_apic_timer() {
   // Enable interrupts start the timer and wait until we get a timer interrupt
   // or we have waited long enough without one.
   apic_timer_loops = 0;
-  apic_timer_initial_count = 0;
-  apic_timer_set_divide_config(6); // DIVIDE by 128
+  apic_timer_initial_count = 10000;
+  set_apic_timer_divider(6); // DIVIDE by 128
   ac_printf("test_apic_timer: sti divisor=%d apic_timer_initial_count=%d\n",
-      apic_timer_get_divide_config(), apic_timer_initial_count);
-  apic_timer_set_initial_count(apic_timer_initial_count);
+      get_apic_timer_divide_config(), apic_timer_initial_count);
+  set_apic_timer_initial_count(apic_timer_initial_count);
   sti();
   for (ac_u64 i = 0; (i < 1000000000) && (apic_timer_isr_counter < 2); i++) {
     apic_timer_loops += 1;
   }
   cli();
   ac_printf("test_apic_timer: cli apic_timer_initial_count=%d\n", apic_timer_initial_count);
-  ac_printf("  apic_timer_df_counter =%ld\n", apic_timer_df_counter);
+  ac_printf("  pit_isr_counter =%ld\n", pit_isr_counter);
   ac_printf("  apic_timer_isr_counter=%ld\n", apic_timer_isr_counter);
   ac_printf("  apic_timer_loops=%ld\n", apic_timer_loops);
-  lvtu3.fields = apic_timer_get_lvt();
+  lvtu3.fields = get_apic_timer_lvt();
   ac_printf("  lvtu3.raw=0x%x\n", lvtu3.raw);
   ac_printf("  lvtu3.fields.vector=%d\n", lvtu3.fields.vector);
   ac_printf("  lvtu3fields.status=%d\n", lvtu3.fields.status);
   ac_printf("  lvtu3.fields.disable=%d\n", lvtu3.fields.disable);
   ac_printf("  lvtu3.fields.mode=%d\n", lvtu3.fields.mode);
 
-  // Expect that the counter fired two or more times.
-  // FIXME: Currently its only firing once so this always fails
-  error |= AC_TEST(apic_timer_isr_counter >= 2);
+  // Expect that the counter fired Between two or three
+  error |= AC_TEST((apic_timer_isr_counter >= 2) && (apic_timer_isr_counter <= 3));
 
   return error;
 }

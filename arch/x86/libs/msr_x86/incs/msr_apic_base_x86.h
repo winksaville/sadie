@@ -18,6 +18,7 @@
 #define ARCH_X86_MSR_X86_INCS_MSR_APIC_BASE_X86_H
 
 #include <cpuid_x86.h>
+#include <msr_x86.h>
 
 #include <ac_inttypes.h>
 #include <ac_bits.h>
@@ -56,10 +57,19 @@ _Static_assert(sizeof(union msr_apic_base_u) == sizeof(ac_u64),
     L"union msr_apic_base_u is not 8 bytes");
 
 
+static __inline__ struct msr_apic_base_fields msr_get_apic_base(void) {
+    union msr_apic_base_u abu = { .raw = get_msr(MSR_APIC_BASE) };
+    return abu.fields;
+}
+
+static __inline__ void msr_set_apic_base(struct msr_apic_base_fields abf) {
+    union msr_apic_base_u abu = { .fields = abf };
+    return set_msr(MSR_APIC_BASE, abu.raw);
+}
+
 /** APIC phyiscal address */
-static __inline__ ac_u64 msr_apic_base_physical_addr(ac_u64 msr_apic_base) {
-  return AC_GET_BITS(ac_u64, msr_apic_base, 12,
-            cpuid_max_physical_address_bits() - 12) << 12;
+static __inline__ ac_u64 msr_get_apic_base_physical_addr(struct msr_apic_base_fields abf) {
+  return abf.base_addr << 12 & AC_BIT_MASK(ac_u64, cpuid_max_physical_address_bits());
 }
 
 #endif

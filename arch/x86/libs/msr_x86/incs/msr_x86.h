@@ -17,10 +17,6 @@
 #ifndef ARCH_X86_MSR_X86_INCS_MSR_X86_H
 #define ARCH_X86_MSR_X86_INCS_MSR_X86_H
 
-#include <msr_apic_base_x86.h>
-#include <msr_efer_x86.h>
-#include <msr_mtrrcap_x86.h>
-
 #include <ac_inttypes.h>
 
 /** Get msr */
@@ -40,5 +36,10 @@ static __inline__ void set_msr(ac_u32 msr, ac_u64 value) {
   __asm__ volatile("wrmsr"
       :: "a"(eax), "d"(edx));
 }
+
+// Other includes need get_msr and set_msr defined so they are here.
+#include <msr_apic_base_x86.h>
+#include <msr_efer_x86.h>
+#include <msr_mtrrcap_x86.h>
 
 #endif

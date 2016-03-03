@@ -24,11 +24,11 @@
 void print_msr_apic_base(ac_u64 value) {
   union msr_apic_base_u reg = { .raw = value };
 
-  ac_printf("msr_apic_base 0x%x: 0x%llx\n", MSR_APIC_BASE, value);
+  ac_printf("msr_apic_base 0x%x: 0x%lx\n", MSR_APIC_BASE, value);
   ac_printf(" reserved_0=%d\n", reg.fields.reserved_0);
   ac_printf(" bsp=%b\n", reg.fields.bsp);
   ac_printf(" reserved_1=%d\n", reg.fields.reserved_1);
   ac_printf(" extd=%b\n", reg.fields.extd);
   ac_printf(" e=%b\n", reg.fields.e);
-  ac_printf(" base=0x%llx\n", msr_apic_base_physical_addr(reg.raw));
+  ac_printf(" base=0x%lx\n", msr_get_apic_base_physical_addr(reg.fields));
 }
