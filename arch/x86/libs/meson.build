@@ -14,15 +14,18 @@
 
 if (Platform == 'pc_x86_32') or (Platform == 'pc_x86_64') or (Platform == 'Posix')
 
-  subdir('apic_x86')
-  subdir('cpuid_x86')
-  subdir('cr_x86')
-  subdir('descriptors_x86')
-  subdir('interrupts_x86')
-  subdir('io_x86')
-  subdir('msr_x86')
   subdir('native_x86')
-  subdir('reset_x86')
-  subdir('page_table_x86')
+  subdir('cpuid_x86')
+
+  if (Platform == 'pc_x86_32') or (Platform == 'pc_x86_64')
+    subdir('apic_x86')
+    subdir('cr_x86')
+    subdir('descriptors_x86')
+    subdir('interrupts_x86')
+    subdir('io_x86')
+    subdir('msr_x86')
+    subdir('reset_x86')
+    subdir('page_table_x86')
+  endif
 
 endif

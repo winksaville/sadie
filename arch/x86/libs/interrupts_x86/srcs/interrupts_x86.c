@@ -24,14 +24,6 @@
 #include <native_x86.h>
 #include <reset_x86.h>
 
-#ifdef PRIVILEGE_USER
-// Interrupt attribute not allowed at user privilege.
-// This allows these to be compiled without warnings.
-#define INTERRUPT_HANDLER
-#else
-#define INTERRUPT_HANDLER __attribute__ ((__interrupt__))
-#endif
-
 /* Interrupt Descriptor Table */
 static intr_gate idt[256];
 

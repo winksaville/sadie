@@ -25,6 +25,7 @@
 #error  "Expecting ARCH_X86 && (CPU_X86_32 || CPU_X86_64)"
 #endif
 
+#define INTERRUPT_HANDLER __attribute__ ((__interrupt__))
 
 #ifdef CPU_X86_64 
 #define INTR_GATE_OFFSET_HI_MASK  ((ac_uptr)0xFFFFFFFFFFFFLL)

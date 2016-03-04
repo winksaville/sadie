@@ -106,7 +106,7 @@ static void remap_pic_vectors(ac_u8 master_vector_base, ac_u8 slave_vector_base)
  * Volume 3 chapter 10.9 "Spurious Interrupt"
  * Figure 10-23. "Spurious-Interrupt vector Register"
  */
-__attribute__ ((__interrupt__))
+INTERRUPT_HANDLER
 static void apic_spurious_interrupt_isr(struct intr_frame *frame) {
   (void)frame;
   // TODO: Maybe add a counter.

@@ -22,7 +22,6 @@ Cpu = 'x86_32'
 
 # The compiler arguments
 compilerArgs += [
-  '-DPRIVILEGE_SYSTEM',
   '-D@0@'.format(Platform),
   '-D@0@'.format(Arch),
   '-static',
