@@ -51,6 +51,7 @@ subdir('platform')
 #   subdir('arch/x86/tests/test-native_x86')
 
 #subdir('arch/tests')
+subdir('arch/x86/libs/thread_x86/tests')
 subdir('arch/x86/libs/apic_x86/tests')
 subdir('arch/x86/libs/cpuid_x86/tests')
 subdir('arch/x86/libs/cr_x86/tests')
