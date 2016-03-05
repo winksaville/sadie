@@ -36,6 +36,9 @@ ac_bool test_x() {
 int main(void) {
   ac_bool error = AC_FALSE;
 
+  ac_thread_early_init();
+  ac_thread_init(32);
+
   // Initialize interrupt descriptor table and apic since
   // they are not done by default, yet.
   initialize_intr_descriptor_table();

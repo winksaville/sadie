@@ -21,4 +21,15 @@
 
 #include <ac_inttypes.h>
 
+/**
+ * Initialize this module early phase, must be
+ * called before ac_thread_init
+ */
+void ac_thread_early_init();
+
+/**
+ * Initialize this module
+ */
+void ac_thread_init(ac_u32 max_threads);
+
 #endif
