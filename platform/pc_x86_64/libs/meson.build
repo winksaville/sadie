@@ -18,8 +18,9 @@
 subdir('@0@/libs'.format(meson.source_root()))
 
 # Add our platform specific libs
-#subdir('ac_memmgr')
+subdir('@0@/platform/generic/libs/ac_memmgr'.format(meson.source_root()))
 subdir('@0@/platform/pc_generic/ac_putchar'.format(meson.source_root()))
+subdir('@0@/platform/pc_generic/ac_stop'.format(meson.source_root()))
 
 libruntime = static_library('runtime', runtimeSrcs,
   c_args : compilerArgs,
