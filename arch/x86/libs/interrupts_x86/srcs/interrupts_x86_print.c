@@ -19,7 +19,9 @@
 #include "interrupts_x86.h"
 
 void print_intr_frame(char* str, intr_frame* frame) {
-  ac_printf("%s:\n", str);
+  if (str != AC_NULL) {
+    ac_printf("%s:\n", str);
+  }
   ac_printf(" frame->ip: %p\n", frame->ip);
   ac_printf(" frame->cs: %p\n", frame->cs);
   ac_printf(" frame->flags: %p\n", frame->flags);
@@ -28,7 +30,9 @@ void print_intr_frame(char* str, intr_frame* frame) {
 }
 
 void print_intr_gate(char *str, intr_gate* gate) {
-  ac_printf("%s:\n", str);
+  if (str != AC_NULL) {
+    ac_printf("%s:\n", str);
+  }
   ac_printf(" gate->offset_lo: %p\n", gate->offset_lo);
   ac_printf(" gate->segment: %p\n", gate->segment);
 #ifdef CPU_X86_64
