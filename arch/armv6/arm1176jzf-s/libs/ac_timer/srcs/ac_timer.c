@@ -179,7 +179,7 @@ void ac_timer_free_running(ac_u32 timer) {
 }
 
 /**
- * Cause the IRQ to fire periodically
+ * Read current value of the timer
  *
  * Return 0 if successful, !0 if error
  */
