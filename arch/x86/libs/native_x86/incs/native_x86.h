@@ -67,6 +67,15 @@ static __inline__ ac_u16 get_es(void) {
   return es;
 }
 
+/** set stack pointer */
+static __inline__ void set_sp(void* sp) {
+#ifdef CPU_X86_64
+  __asm__ volatile("movq %0, %%rsp;" :: "r" (sp));
+#else /* CPU_X86_32 */
+  __asm__ volatile("movl %0, %%rsp;" :: "r" (sp));
+#endif
+}
+
 /** get stack pointer */
 static __inline__ ac_uptr get_sp(void) {
   ac_uptr sp;
@@ -76,6 +85,43 @@ static __inline__ ac_uptr get_sp(void) {
   __asm__ volatile("movl %%esp, %0;" : "=r" (sp));
 #endif
   return sp;
+}
+
+/** set base pointer */
+static __inline__ void set_bp(void* bp) {
+#ifdef CPU_X86_64
+  __asm__ volatile("movq %0, %%rbp;" :: "r" (bp));
+#else /* CPU_X86_32 */
+  __asm__ volatile("movl %0, %%rbp;" :: "r" (bp));
+#endif
+}
+
+/** get base pointer */
+static __inline__ ac_uptr get_bp(void) {
+  ac_uptr bp;
+#ifdef CPU_X86_64
+  __asm__ volatile("movq %%rbp, %0;" : "=r" (bp));
+#else /* CPU_X86_32 */
+  __asm__ volatile("movl %%ebp, %0;" : "=r" (bp));
+#endif
+  return bp;
+}
+
+/** get flags */
+static __inline__ ac_uptr get_flags(void) {
+  ac_uptr flags;
+#ifdef CPU_X86_64
+  __asm__ volatile(
+      "pushfq;"
+      "pop %0l;" : "=r" (flags)
+  );
+#else /* CPU_X86_32 */
+  __asm__ volatile(
+      "pushfd;"
+      "pop %0l;" : "=r" (flags)
+  );
+#endif
+  return flags;
 }
 
 /** hlt, halt instruction */
