@@ -25,18 +25,20 @@
 #include <ac_memmgr.h>
 #include <ac_putchar.h>
 
-//#define NDEBUG
+#include <ac_printf.h>
+
+#define NDEBUG
 #include <ac_debug_printf.h>
 
 #define RESCHEDULE_ISR 0xfe
 
-#define STATIC
+#define STATIC static
 
 // Forward declaractions
 typedef struct tcb_x86 tcb_x86;
 STATIC void* entry_trampoline(void* param) __attribute__ ((noreturn));
 STATIC tcb_x86* next_tcb(tcb_x86* pcur_tcb);
-tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss, ac_u8* bp);
+STATIC tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss);
 
 typedef struct tcb_x86 {
   ac_u32 thread_id;
@@ -46,7 +48,6 @@ typedef struct tcb_x86 {
   ac_u8* pstack;
   ac_u8* sp;
   ac_u16 ss;
-  ac_u8* bp;
 } tcb_x86;
 
 typedef struct {
@@ -92,31 +93,27 @@ struct saved_regs {
   ac_u64 rax;
   ac_u64 rdx;
   ac_u64 rcx;
-  ac_u64 rbx;
   ac_u64 rsi;
   ac_u64 rdi;
   ac_u64 r8;
   ac_u64 r9;
   ac_u64 r10;
   ac_u64 r11;
-  ac_u64 r12;
-  ac_u64 r13;
-  //ac_u64 r14;
-  ac_u64 rbp;
 };
 
 struct full_stack_frame {
   union {
     struct saved_regs regs;
-    ac_u64 regs_array[13];
+    ac_u64 regs_array[9];
   };
   struct intr_frame iret_frame;
 } __attribute__ ((__packed__));
 
-#define FULL_STACK_FRAME_SIZE 18 * sizeof(ac_u64)
+#define FULL_STACK_FRAME_SIZE 14 * sizeof(ac_u64)
 ac_static_assert(sizeof(struct full_stack_frame) == FULL_STACK_FRAME_SIZE,
     "inital_stack_frame is not " AC_XSTR(FULL_STACK_FRAME_SIZE) " bytes in size");
 
+#ifndef NDEBUG
 /**
  * Print full stack frame
  */
@@ -126,65 +123,42 @@ STATIC void print_full_stack_frame(char* str, struct full_stack_frame* fsf) {
   }
   ac_printf(" rax=0x%lx\n", fsf->regs.rax);
   ac_printf(" rdx=0x%lx\n", fsf->regs.rdx);
-  ac_printf(" rcx=0x%lx\n", fsf->regs.rcx);
-  ac_printf(" rbx=0x%lx\n", fsf->regs.rbx);
   ac_printf(" rsi=0x%lx\n", fsf->regs.rsi);
-  ac_printf(" rdi=0x%lx\n", fsf->regs.rdi);
-  ac_printf(" r8=0x%lx\n", fsf->regs.r8);
-  ac_printf(" r9=0x%lx\n", fsf->regs.r9);
-  ac_printf(" r10=0x%lx\n", fsf->regs.r10);
-  ac_printf(" r11=0x%lx\n", fsf->regs.r11);
-  ac_printf(" r12=0x%lx\n", fsf->regs.r12);
-  ac_printf(" r13=0x%lx\n", fsf->regs.r13);
-  //ac_printf(" r14=0x%lx\n", fsf->regs.r14);
-  ac_printf(" rbp=0x%lx\n", fsf->regs.rbp);
   print_intr_frame(AC_NULL, &fsf->iret_frame);
+}
+#endif
+
+/**
+ * Thread scheduler, for internal only, ASSUMES interrupts are DISABLED!
+ *
+ * @param pcur_sp is the stack of the current thread
+ * @return the stack of the next thread to run
+ */
+__attribute__ ((__noinline__))
+STATIC tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss) {
+  // Save the current thread stack pointer
+  pready->sp = sp;
+  pready->ss = ss;
+
+  // Get the next tcb
+  pready = next_tcb(pready);
+  if (pready == &idle_tcb) {
+    // Skip idle once, if idle is the only thread
+    // then we'll it will become pready and we'll
+    // execute this time.
+    pready = next_tcb(pready);
+  }
+
+  return pready;
 }
 
 /**
- * Initialize the stack frame assuming no stack switching
+ * The current thread yeilds the CPU to the next
+ * ready thread.
  */
-STATIC void init_stack_frame(ac_u8* pstack, ac_uptr stack_size, ac_uptr flags,
-    void* (*entry)(void*), void* entry_arg, ac_u8** psp, ac_u16 *pss, ac_u8** pbp) {
-  ac_u8* tos = pstack + stack_size;
-  struct full_stack_frame* sf =
-    (struct full_stack_frame*)(tos - sizeof(struct full_stack_frame));
-
-  ac_printf("thread_x86 init_stack_frame: pstack=0x%p stack_size=0x%x, sf=0x%p flags=0x%x entry=0x%p entry_arg=0x%p\n",
-     pstack, stack_size, sf, flags, entry, entry_arg);
-
-  ac_static_assert(sizeof(void*) == sizeof(ac_uptr),
-      "Assumption that void* is sizeof ac_uptr is false");
-
-  // Be sure stack is on a 16 byte boundry
-  ac_assert(((ac_uptr)pstack & 0xf) == 0);
-  ac_assert(((ac_uptr)stack_size & 0xf) == 0);
-
-  // fill the stack with its address for debugging
-  ac_uptr* pfill = (ac_uptr*)pstack;
-  for (ac_uint i = 0; i < stack_size / sizeof(ac_uptr); i++) {
-    pfill[i] = (ac_uptr)&pfill[i];
-  }
-
-  print_full_stack_frame("thread_x86 init_stack_frame before init", sf);
-
-  for (ac_uint i = 0; i < AC_ARRAY_COUNT(sf->regs_array); i++) {
-    sf->regs_array[i] = i;
-  }
-  sf->regs.rbp = (ac_u64)&sf->regs.rbp;
-  sf->regs.rdi = (ac_u64)entry_arg;
-  sf->iret_frame.ip = (ac_uptr)entry;
-  sf->iret_frame.cs = 0x8;
-  sf->iret_frame.flags = flags;
-
-  sf->iret_frame.sp = (ac_uptr)(tos);
-  sf->iret_frame.ss = 0x10;
-
-  print_full_stack_frame("thread_x86 init_stack_frame after init", sf);
-
-  *psp = (ac_u8*)sf;
-  *pss = sf->iret_frame.ss;
-  *pbp = (ac_u8*)&sf->regs.rbp;
+void ac_thread_yield(void) {
+  // Invoke the rescheduler
+  intr(RESCHEDULE_ISR);
 }
 
 /**
@@ -196,43 +170,10 @@ STATIC void init_stack_frame(ac_u8* pstack, ac_uptr stack_size, ac_uptr flags,
  */
 INTERRUPT_HANDLER
 void reschedule_isr(struct intr_frame* frame) {
-  struct intr_frame* isf;
-  struct full_stack_frame* fsf;
-  ac_u8* new_bp;
-  ac_u8* new_sp;
+  tcb_x86 *ptcb = thread_scheduler((ac_u8*)get_sp(), get_ss());
 
-  isf = (struct intr_frame*)((ac_u8*)get_bp() + 8);
-  fsf = (struct full_stack_frame*)((ac_u8*)get_bp() - (sizeof(struct saved_regs) - 8));
-
-  ac_debug_printf("thread_x86 reschedule_isr:+cur pready=%p thread_id=%d size_sr=%d(0x%x)\n",
-      pready, pready->thread_id, sizeof(struct saved_regs), sizeof(struct saved_regs));
-
-  ac_debug_printf("thread_x86 reschedule_isr: sp=%p bp=%p &bp=%p &rax=%p isf=%p fsf=%p\n",
-      get_sp(), get_bp(), &fsf->regs.rbp, &fsf->regs.rax, isf, fsf);
-  print_full_stack_frame("thread_x86 reschedule_isr", fsf);
-
-  tcb_x86 *ptcb = thread_scheduler((ac_u8*)get_sp(), get_ss(), (ac_u8*)get_bp());
-  new_sp = ptcb->sp;
-  new_bp = ptcb->bp;
-
-  ac_debug_printf("thread_x86 reschedule_isr: new_sp=%p new_bp=%p\n", new_sp, new_bp);
-
-  ac_debug_printf("thread_x86 reschedule_isr: new pready=%p thread_id=%d entry=%p entry_arg=%p\n",
-      pready, pready->thread_id, pready->entry, pready->entry_arg);
-
-  //set_sp(new_sp); // This is effectively a NOP because bp is used to reset the stack
-  set_bp(new_bp); // Switching stacks in an ISR seems to cause an #GP 13 (general protection fault)
-
-  //fsf->iret_frame.ip = (ac_uptr)entry_trampoline; //pready->entry;
-  //fsf->iret_frame.ip = (ac_uptr)pready->entry;
-  //fsf->regs.rdi = (ac_uptr)pready;
-
-  isf = (struct intr_frame*)((ac_u8*)get_bp() + 8);
-  fsf = (struct full_stack_frame*)((ac_u8*)get_bp() - (sizeof(struct saved_regs) - 8));
-
-  ac_debug_printf("thread_x86 reschedule_isr: sp=%p bp=%p &bp=%p &rax=%p isf=%p fsf=%p\n",
-      get_sp(), get_bp(), &fsf->regs.rbp, &fsf->regs.rax, isf, fsf);
-  print_full_stack_frame("thread_x86 reschedule_isr", fsf);
+  set_sp(ptcb->sp);
+  set_ss(ptcb->ss);
 }
 
 
@@ -247,15 +188,17 @@ void reschedule_isr(struct intr_frame* frame) {
 STATIC void* entry_trampoline(void* param) {
   // Invoke the entry point
   tcb_x86* ptcb = (tcb_x86*)param;
-  ac_printf("ptcb=%p\n", ptcb);
   ptcb->entry(ptcb->entry_arg);
 
   // Mark as zombie
   ac_u32* pthread_id = &ptcb->thread_id;
   __atomic_store_n(pthread_id, AC_THREAD_ID_ZOMBIE, __ATOMIC_RELEASE);
 
+  // Reschedule
   intr(RESCHEDULE_ISR);
 
+  // Never gets here because the code is ZOMBIE
+  // But we need to prove it to the compiler
   while (AC_TRUE);
 }
 
@@ -321,8 +264,6 @@ STATIC void* idle(void* param) {
   return AC_NULL;
 }
 
-#define STATIC
-
 /**
  * Initialize tcb it with the entry and entry_arg.
  *
@@ -372,6 +313,70 @@ STATIC tcb_x86* get_tcb(void*(*entry)(void*), void* entry_arg) {
   return ptcb;
 }
 
+/**
+ * Next tcb
+ */
+STATIC __inline__ tcb_x86* next_tcb(tcb_x86* pcur_tcb) {
+  // Next thread
+  tcb_x86* pnext = pcur_tcb->pnext_tcb;
+
+  // Skip any ZOMBIE threads it is ASSUMED the list
+  // has at least one non ZOMBIE thread, the idle thread,
+  // so this is guarranteed not to be an endless loop.
+  ac_u32* pthread_id = &pnext->thread_id;
+  ac_u32 thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
+  while(thread_id == AC_THREAD_ID_ZOMBIE) {
+    // Skip the ZOMBIE
+    pnext = pnext->pnext_tcb;
+    pthread_id = &pnext->thread_id;
+    thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
+  }
+
+  return pnext;
+}
+
+/**
+ * Initialize the stack frame assuming no stack switching
+ */
+STATIC void init_stack_frame(ac_u8* pstack, ac_uptr stack_size, ac_uptr flags,
+    void* (*entry)(void*), void* entry_arg, ac_u8** psp, ac_u16 *pss) {
+  ac_u8* tos = pstack + stack_size;
+  struct full_stack_frame* sf =
+    (struct full_stack_frame*)(tos - sizeof(struct full_stack_frame));
+
+  ac_static_assert(sizeof(void*) == sizeof(ac_uptr),
+      "Assumption that void* is sizeof ac_uptr is false");
+
+  // Be sure stack is on a 16 byte boundry
+  ac_assert(((ac_uptr)pstack & 0xf) == 0);
+  ac_assert(((ac_uptr)stack_size & 0xf) == 0);
+
+  // fill the stack with its address for debugging
+  //ac_uptr* pfill = (ac_uptr*)pstack;
+  //for (ac_uint i = 0; i < stack_size / sizeof(ac_uptr); i++) {
+  //  pfill[i] = (ac_uptr)&pfill[i];
+  //}
+
+  //print_full_stack_frame("thread_x86 init_stack_frame before init", sf);
+
+  //for (ac_uint i = 0; i < AC_ARRAY_COUNT(sf->regs_array); i++) {
+  //  sf->regs_array[i] = i;
+  //}
+
+  sf->regs.rdi = (ac_u64)entry_arg;
+  sf->iret_frame.ip = (ac_uptr)entry;
+  sf->iret_frame.cs = 0x8;
+  sf->iret_frame.flags = flags;
+
+  sf->iret_frame.sp = (ac_uptr)(tos);
+  sf->iret_frame.ss = 0x10;
+
+  // print_full_stack_frame("thread_x86 init_stack_frame after init", sf);
+
+  *psp = (ac_u8*)sf;
+  *pss = sf->iret_frame.ss;
+  //*pbp = (ac_u8*)&sf->regs.rbp;
+}
 
 /**
  * Create a thread with a stack, and the initial flags
@@ -414,7 +419,7 @@ STATIC tcb_x86* thread_create(ac_size_t stack_size, ac_uptr flags,
   }
   ptcb->pstack = pstack;
   init_stack_frame(pstack, stack_size, flags, entry_trampoline, ptcb,
-      &ptcb->sp, &ptcb->ss, &ptcb->bp);
+      &ptcb->sp, &ptcb->ss); //, &ptcb->bp);
 
   // Add this after pready
   add_after(pready, ptcb);
@@ -435,60 +440,6 @@ done:
 }
 
 /**
- * Next tcb
- */
-STATIC tcb_x86* next_tcb(tcb_x86* pcur_tcb) {
-  // Next thread
-  tcb_x86* pnext = pcur_tcb->pnext_tcb;
-
-  // Skip any ZOMBIE threads it is ASSUMED the list
-  // has at least one non ZOMBIE thread, the idle thread,
-  // so this is guarranteed to not be an endless loop.
-  ac_u32* pthread_id = &pnext->thread_id;
-  ac_u32 thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
-  while(thread_id == AC_THREAD_ID_ZOMBIE) {
-    // Skip the ZOMBIE
-    pnext = pnext->pnext_tcb;
-    pthread_id = &pnext->thread_id;
-    thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
-  }
-
-  return pnext;
-}
-
-/**
- * Thread scheduler, for internal only, ASSUMES interrupts are DISABLED!
- *
- * @param pcur_sp is the stack of the current thread
- * @return the stack of the next thread to run
- */
-tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss, ac_u8* bp) {
-  // Save the current thread stack pointer
-  pready->sp = sp;
-  pready->ss = ss;
-  pready->bp = bp;
-
-  // Get the next tcb
-  pready = next_tcb(pready);
-  if (pready == &idle_tcb) {
-    // Skip idle once, if idle is the only thread
-    // then we'll execute this time.
-    pready = next_tcb(pready);
-  }
-
-  return pready;
-}
-
-/**
- * The current thread yeilds the CPU to the next
- * ready thread.
- */
-void ac_thread_yield(void) {
-  // Invoke the rescheduler
-  intr(RESCHEDULE_ISR);
-}
-
-/**
  * Early initialization of this module
  */
 void ac_thread_early_init() {
@@ -498,7 +449,7 @@ void ac_thread_early_init() {
   // Initialize the idle_stack
   ac_uptr idle_flags = DEFAULT_FLAGS;
   init_stack_frame(idle_stack, sizeof(idle_stack), idle_flags, idle, AC_NULL,
-      &idle_tcb.sp, &idle_tcb.ss, &idle_tcb.bp);
+      &idle_tcb.sp, &idle_tcb.ss); //, &idle_tcb.bp);
 
   // Get the main tcb, no stack is needed because its
   // the one currently being used.
