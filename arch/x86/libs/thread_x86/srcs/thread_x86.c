@@ -174,11 +174,11 @@ STATIC void init_stack_frame(ac_u8* pstack, ac_uptr stack_size, ac_uptr flags,
   sf->regs.rbp = (ac_u64)&sf->regs.rbp;
   sf->regs.rdi = (ac_u64)entry_arg;
   sf->iret_frame.ip = (ac_uptr)entry;
-  sf->iret_frame.cs = 0;
+  sf->iret_frame.cs = 0x8;
   sf->iret_frame.flags = flags;
 
   sf->iret_frame.sp = (ac_uptr)(tos);
-  sf->iret_frame.ss = 0;
+  sf->iret_frame.ss = 0x10;
 
   print_full_stack_frame("thread_x86 init_stack_frame after init", sf);
 
@@ -221,18 +221,18 @@ void reschedule_isr(struct intr_frame* frame) {
       pready, pready->thread_id, pready->entry, pready->entry_arg);
 
   //set_sp(new_sp); // This is effectively a NOP because bp is used to reset the stack
-  //set_bp(new_bp); // Switching stacks in an ISR seems to cause an #GP 13 (general protection fault)
+  set_bp(new_bp); // Switching stacks in an ISR seems to cause an #GP 13 (general protection fault)
 
   //fsf->iret_frame.ip = (ac_uptr)entry_trampoline; //pready->entry;
   //fsf->iret_frame.ip = (ac_uptr)pready->entry;
   //fsf->regs.rdi = (ac_uptr)pready;
 
-  //isf = (struct intr_frame*)((ac_u8*)get_bp() + 8);
-  //fsf = (struct full_stack_frame*)((ac_u8*)get_bp() - (sizeof(struct saved_regs) - 8));
+  isf = (struct intr_frame*)((ac_u8*)get_bp() + 8);
+  fsf = (struct full_stack_frame*)((ac_u8*)get_bp() - (sizeof(struct saved_regs) - 8));
 
-  //ac_debug_printf("thread_x86 reschedule_isr: sp=%p bp=%p &bp=%p &rax=%p isf=%p fsf=%p\n",
-  //    get_sp(), get_bp(), &fsf->regs.rbp, &fsf->regs.rax, isf, fsf);
-  //print_full_stack_frame("thread_x86 reschedule_isr", fsf);
+  ac_debug_printf("thread_x86 reschedule_isr: sp=%p bp=%p &bp=%p &rax=%p isf=%p fsf=%p\n",
+      get_sp(), get_bp(), &fsf->regs.rbp, &fsf->regs.rax, isf, fsf);
+  print_full_stack_frame("thread_x86 reschedule_isr", fsf);
 }
 
 
@@ -484,15 +484,7 @@ tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss, ac_u8* bp) {
  * ready thread.
  */
 void ac_thread_yield(void) {
-  // Setup the stack frame exected by ac_reschedule
-  // and branch to ac_reschedule
-  __asm__ volatile(
-      "mov $1, %rax;\n"
-      "mov $2, %rbx;\n"
-      "mov $3, %rsi;\n"
-      "mov $4, %rdi;\n"
-      "mov $5, %rbp;\n"
-  );
+  // Invoke the rescheduler
   intr(RESCHEDULE_ISR);
 }
 
