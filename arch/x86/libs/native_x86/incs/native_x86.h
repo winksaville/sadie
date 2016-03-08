@@ -108,17 +108,17 @@ static __inline__ ac_uptr get_bp(void) {
 }
 
 /** get flags */
-static __inline__ ac_uptr get_flags(void) {
-  ac_uptr flags;
+static __inline__ ac_uint get_flags(void) {
+  ac_uint flags;
 #ifdef CPU_X86_64
   __asm__ volatile(
       "pushfq;"
-      "pop %0l;" : "=r" (flags)
+      "pop %0;" : "=r" (flags)
   );
 #else /* CPU_X86_32 */
   __asm__ volatile(
       "pushfd;"
-      "pop %0l;" : "=r" (flags)
+      "pop %0;" : "=r" (flags)
   );
 #endif
   return flags;
