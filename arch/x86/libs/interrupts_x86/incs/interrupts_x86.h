@@ -220,6 +220,55 @@ static __inline void sti(void) {
   __asm__ volatile("sti");
 }
 
+/** Disable interrupts, and return current flags */
+static __inline ac_uint disable_intr(void) {
+ac_uint flags;
+#ifdef CPU_X86_64
+
+  __asm__ volatile(
+      "pushfq;"
+      "pop %0;"
+      "cli" : "=rm" (flags) ::"memory");
+#else /* CPU_X86_32 */
+  __asm__ volatile(
+      "pushfd;"
+      "pop %0;"
+      "cli" : "=rm" (flags) ::"memory");
+#endif
+  return flags;
+}
+
+/** Enable interrupts, and return current flags */
+static __inline ac_uint enable_intr(void) {
+  ac_uint flags;
+#ifdef CPU_X86_64
+
+  __asm__ volatile(
+      "pushfq;"
+      "pop %0;"
+      "sti" : "=rm" (flags) ::"memory");
+#else /* CPU_X86_32 */
+  __asm__ volatile(
+      "pushfd;"
+      "pop %0;"
+      "sti" : "=rm" (flags) ::"memory");
+#endif
+  return flags;
+}
+
+/** Restore interrupts to previous mode as retunred by disable_intr */
+static __inline void restore_intr(ac_uint flags) {
+#ifdef CPU_X86_64
+  __asm__ volatile(
+      "push %0;"
+      "popfq;" : : "g" (flags) :"memory", "cc");
+#else /* CPU_X86_32 */
+  __asm__ volatile(
+      "push %0;"
+      "popfq;" : : "g" (flags) :"memory", "cc");
+#endif
+}
+
 
 typedef void (intr_handler)(struct intr_frame* frame);
 
