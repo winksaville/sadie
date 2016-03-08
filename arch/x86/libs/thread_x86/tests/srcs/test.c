@@ -66,7 +66,7 @@ ac_uint test_ac_thread_create() {
   ac_u64 i = 0;
   ac_u64 ic = 0;
   ac_u64 tc = __atomic_load_n(&t1_counter, __ATOMIC_ACQUIRE);
-  sti();
+  ac_uint flags = enable_intr();
   for (i = 0; i < 0x0000010000000000; i++) {
     tc = __atomic_load_n(&t1_counter, __ATOMIC_ACQUIRE);
     if (tc >= expected_t1_counter) {
@@ -74,7 +74,7 @@ ac_uint test_ac_thread_create() {
     }
     //ac_thread_yield();
   }
-  cli();
+  restore_intr(flags);
   ic = get_timer_reschedule_isr_counter();
 
   ac_printf("test_ac_thread_create: t1_counter=%ld exptected_t1_counter=%ld ic=%ld\n",
@@ -107,13 +107,13 @@ ac_uint test_timer() {
   ac_u64 isr_counter = 0;
   ac_u64 expected_isr_count = 20;
   ac_u64 test_timer_loops = 0;
-  sti();
+  ac_uint flags = enable_intr();
   for (ac_u64 i = 0; (i < 1000000000) &&
       (get_timer_reschedule_isr_counter() < expected_isr_count); i++) {
     test_timer_loops += 1;
   }
   isr_counter = get_timer_reschedule_isr_counter();
-  cli();
+  restore_intr(flags);
 
   ac_printf("test_timer: isr_counter=%ld test_timer_loops=%ld\n",
      isr_counter, test_timer_loops);
@@ -131,13 +131,6 @@ ac_uint test_timer() {
 int main(void) {
   ac_uint error = AC_FALSE;
 
-
-  // Initialize interrupt descriptor table and apic since
-  // they are not done by default, yet.
-  initialize_intr_descriptor_table();
-  error =  AC_TEST(initialize_apic() == 0);
-
-  ac_thread_early_init();
   ac_thread_init(32);
 
   if (!error) {

@@ -14,11 +14,16 @@
  * limitations under the license.
  */
 
+#include <apic_x86.h>
 #include <cr_x86.h>
-#include <multiboot2.h>
+#include <interrupts_x86.h>
+#include <native_x86.h>
 #include <page_table_x86.h>
 #include <page_table_x86_print.h>
 #include <reset_x86.h>
+#include <thread_x86.h>
+
+#include <multiboot2.h>
 
 #include <ac_bits.h>
 #include <ac_inttypes.h>
@@ -202,6 +207,24 @@ static void initial_page_table(ac_uptr ptr, ac_uint word) {
 }
 
 void ac_init(ac_uptr ptr, ac_uint word) {
+  ac_printf("ac_init: flags=0x%x\n", get_flags());
+
   // Create initial page table
   initial_page_table(ptr, word);
+
+  // Initialize interrupt descriptor table and apic since
+  // they are not done by default, yet.
+  initialize_intr_descriptor_table();
+
+  // Initialize Advanced Programmable Interrupt Controller
+  if (initialize_apic() != 0) {
+    /** reset */
+    ac_printf("ABORTING: file ac_init; initialize_apic failed\n");
+    reset_x86();
+  }
+
+  // Initialize threading module
+  ac_thread_early_init();
+
+  ac_printf("ac_init:-flags=0x%x\n", get_flags());
 }

@@ -315,7 +315,7 @@ STATIC void remove_zombies(void) {
   tcb_x86* ptail = &idle_tcb;
   tcb_x86* phead = idle_tcb.pnext_tcb;
   while (phead != &idle_tcb) {
-    cli();
+    ac_uptr flags = disable_intr();
     if (phead->thread_id == AC_THREAD_ID_ZOMBIE) {
       // phead is a ZOMBIE, remove it from the
       // list advancing the head past it.
@@ -327,7 +327,7 @@ STATIC void remove_zombies(void) {
       ptail = phead;
       phead = phead->pnext_tcb;
     }
-    sti();
+    restore_intr(flags);
 
     if (pzombie != AC_NULL) {
       // Remove the ZOMBIE
@@ -345,10 +345,10 @@ STATIC void remove_zombies(void) {
  * Add an initialized tcb following pcur
  * * @param tcb to add to the ready list */
 STATIC void add_after(tcb_x86* pcur, tcb_x86* pnew) {
-  cli();
+  ac_uint flags = disable_intr();
   pnew->pnext_tcb = pcur->pnext_tcb;
   pcur->pnext_tcb = pnew;
-  sti();
+  restore_intr(flags);
 }
 
 /**

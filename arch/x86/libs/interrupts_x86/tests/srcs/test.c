@@ -75,8 +75,6 @@ ac_bool test_interrupts(void) {
 int main(void) {
   ac_bool error = AC_FALSE;
 
-  initialize_intr_descriptor_table();
-
   error |= test_interrupts();
 
   if (!error) {

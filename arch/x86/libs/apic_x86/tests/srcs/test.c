@@ -122,19 +122,23 @@ ac_bool test_apic_timer() {
   ac_bool error = AC_FALSE;
 
   ac_printf("test_apic_timer\n");
-  union apic_timer_lvt_fields_u lvtu = { .fields = get_apic_timer_lvt() };
+
+  // Save initial conditions
+  ac_u64 flags = disable_intr();
+  ac_printf("flags=0x%lx\n", flags);
+
+  union apic_timer_lvt_fields_u ilvtu = { .fields = get_apic_timer_lvt() };
+  intr_gate saved_iapic_gate = *get_intr_gate(80);
+
+  ac_printf("test_apic_timer: ilvtu.raw=0x%x\n", ilvtu.raw);
+  ac_printf("test_apic_timer: ilvtu.fields.vector=%d\n", ilvtu.fields.vector);
+  ac_printf("test_apic_timer: ilvtu.fields.status=%d\n", ilvtu.fields.status);
+  ac_printf("test_apic_timer: ilvtu.fields.disable=%d\n", ilvtu.fields.disable);
+  ac_printf("test_apic_timer: ilvtu.fields.mode=%d\n", ilvtu.fields.mode);
+
+  union apic_timer_lvt_fields_u lvtu;
   union apic_timer_lvt_fields_u lvtu2;
   union apic_timer_lvt_fields_u lvtu3;
-
-  ac_printf("test_apic_timer: lvtu.raw=0x%x\n", lvtu.raw);
-  ac_printf("test_apic_timer: lvtu.fields.vector=%d\n", lvtu.fields.vector);
-  ac_printf("test_apic_timer: lvtu.fields.status=%d\n", lvtu.fields.status);
-  ac_printf("test_apic_timer: lvtu.fields.disable=%d\n", lvtu.fields.disable);
-  ac_printf("test_apic_timer: lvtu.fields.mode=%d\n", lvtu.fields.mode);
-  error |= AC_TEST(lvtu.raw == 0x10000);
-  error |= AC_TEST(lvtu.fields.vector == 0);
-  error |= AC_TEST(lvtu.fields.disable == AC_TRUE);
-  error |= AC_TEST(lvtu.fields.mode == 0);
 
   apic_timer_isr_counter = 0;
   set_intr_handler(80, apic_timer_isr);
@@ -168,12 +172,12 @@ ac_bool test_apic_timer() {
   ac_printf("test_apic_timer: sti divisor=%d apic_timer_initial_count=%d\n",
       get_apic_timer_divide_config(), apic_timer_initial_count);
   set_apic_timer_initial_count(apic_timer_initial_count);
-  sti();
+  ac_u64 lflags = enable_intr();
   for (ac_u64 i = 0; (i < 1000000000) && (apic_timer_isr_counter < 100); i++) {
     apic_timer_loops += 1;
   }
-  cli();
-  ac_printf("test_apic_timer: cli apic_timer_initial_count=%d\n", apic_timer_initial_count);
+  restore_intr(lflags);
+  ac_printf("test_apic_timer: apic_timer_initial_count=%d\n", apic_timer_initial_count);
   ac_printf("  pit_isr_counter =%ld\n", pit_isr_counter);
   ac_printf("  apic_timer_isr_counter=%ld\n", apic_timer_isr_counter);
   ac_printf("  apic_timer_loops=%ld\n", apic_timer_loops);
@@ -187,17 +191,17 @@ ac_bool test_apic_timer() {
   // Expect that the counter fired Between two or three
   error |= AC_TEST((apic_timer_isr_counter >= 100) && (apic_timer_isr_counter <= 101));
 
+  // Restore initial conditions
+  set_apic_timer_lvt(ilvtu.fields);
+  *get_intr_gate(80) = saved_iapic_gate;
+  ac_printf("flags=0x%lx\n", flags);
+  restore_intr(flags);
   return error;
 }
 
 
 int main(void) {
   ac_bool error = AC_FALSE;
-
-  // Initialize interrupt descriptor table since its not done by default, yet.
-  initialize_intr_descriptor_table();
-
-  error =  AC_TEST(initialize_apic() == 0);
 
   if (!error) {
     error |= test_apic();
