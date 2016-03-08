@@ -27,11 +27,11 @@
 #include <ac_sort.h>
 #include <ac_string.h>
 
-void print_multiboot2_tag(struct multiboot2_header_tag* tag) {
+static void print_multiboot2_tag(struct multiboot2_header_tag* tag) {
   ac_printf("type=%d size=%d\n", tag->type, tag->size);
 }
 
-ac_sint compare_mmap_entires(const void* entries, ac_uint idx1, ac_uint idx2) {
+static ac_sint compare_mmap_entires(const void* entries, ac_uint idx1, ac_uint idx2) {
   const struct multiboot2_mmap* mmap = (const struct multiboot2_mmap*)entries;
 
   if (mmap[idx1].base_addr < mmap[idx2].base_addr) {
@@ -43,7 +43,7 @@ ac_sint compare_mmap_entires(const void* entries, ac_uint idx1, ac_uint idx2) {
   }
 }
 
-void swap_mmap_entires(void* entries, const ac_uint idx1, const ac_uint idx2) {
+static void swap_mmap_entires(void* entries, const ac_uint idx1, const ac_uint idx2) {
   struct multiboot2_mmap* mmap = (struct multiboot2_mmap*)entries;
   struct multiboot2_mmap tmp;
 
@@ -52,10 +52,7 @@ void swap_mmap_entires(void* entries, const ac_uint idx1, const ac_uint idx2) {
   mmap[idx2] = tmp;
 }
 
-void ac_init(ac_uptr ptr, ac_uint word) {
-  // Check if we have a multiboot signature
-  ac_printf("ac_init addr=%p\n", ac_init);
-
+static void initial_page_table(ac_uptr ptr, ac_uint word) {
   // BIOS Data Area (BDA) is at 0x400 and at 0x40E
   // maybe the Extended BIOS Data Area (EBDA)
   ac_u16* bda = (ac_u16*)0x0400;
@@ -202,5 +199,9 @@ void ac_init(ac_uptr ptr, ac_uint word) {
        " ptr=%p, word=0x%x\n", ptr, word);
     reset_x86();
   }
+}
 
+void ac_init(ac_uptr ptr, ac_uint word) {
+  // Create initial page table
+  initial_page_table(ptr, word);
 }
