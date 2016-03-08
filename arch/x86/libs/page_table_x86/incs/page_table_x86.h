@@ -296,7 +296,7 @@ enum page_mode get_page_mode(void);
 /**
  * For the moment assume linear == physical
  */
-inline void* physical_to_linear_addr(ac_uptr addr) {
+static inline void* physical_to_linear_addr(ac_uptr addr) {
   return (void*)addr;
 }
 
