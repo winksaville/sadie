@@ -16,6 +16,7 @@
 
 #include <thread_x86.h>
 
+#include <apic_x86.h>
 #include <interrupts_x86.h>
 #include <interrupts_x86_print.h>
 #include <native_x86.h>
@@ -30,9 +31,14 @@
 #define NDEBUG
 #include <ac_debug_printf.h>
 
-#define RESCHEDULE_ISR 0xfe
-
 #define STATIC static
+
+#define RESCHEDULE_ISR_INTR       0xfe
+#define TIMER_RESCHEDULE_ISR_INTR 0xfd
+
+#define DEFAULT_TIMER_DIVISOR   6       // Divide by 128
+#define DEFAULT_TIMER_COUNT     100000  // Counter
+ac_u64 timer_reschedule_isr_counter;
 
 // Forward declaractions
 typedef struct tcb_x86 tcb_x86;
@@ -48,6 +54,7 @@ typedef struct tcb_x86 {
   ac_u8* pstack;
   ac_u8* sp;
   ac_u16 ss;
+  ac_u32 slice;
 } tcb_x86;
 
 typedef struct {
@@ -90,6 +97,12 @@ STATIC tcb_x86* pwaiting_list;
 STATIC ac_threads* pthreads;
 
 struct saved_regs {
+  ac_u64 r15;
+  ac_u64 r14;
+  ac_u64 r13;
+  ac_u64 r12;
+  ac_u64 rbp;
+  ac_u64 rbx;
   ac_u64 rax;
   ac_u64 rdx;
   ac_u64 rcx;
@@ -104,12 +117,12 @@ struct saved_regs {
 struct full_stack_frame {
   union {
     struct saved_regs regs;
-    ac_u64 regs_array[9];
+    ac_u64 regs_array[15];
   };
   struct intr_frame iret_frame;
 } __attribute__ ((__packed__));
 
-#define FULL_STACK_FRAME_SIZE 14 * sizeof(ac_u64)
+#define FULL_STACK_FRAME_SIZE 20 * sizeof(ac_u64)
 ac_static_assert(sizeof(struct full_stack_frame) == FULL_STACK_FRAME_SIZE,
     "inital_stack_frame is not " AC_XSTR(FULL_STACK_FRAME_SIZE) " bytes in size");
 
@@ -121,9 +134,21 @@ STATIC void print_full_stack_frame(char* str, struct full_stack_frame* fsf) {
   if (str != AC_NULL) {
     ac_printf("%s:\n", str);
   }
+  ac_printf(" r15=0x%lx\n", fsf->regs.r15);
+  ac_printf(" r14=0x%lx\n", fsf->regs.r14);
+  ac_printf(" r13=0x%lx\n", fsf->regs.r13);
+  ac_printf(" r12=0x%lx\n", fsf->regs.r12);
+  ac_printf(" rbp=0x%lx\n", fsf->regs.rbp);
+  ac_printf(" rbx=0x%lx\n", fsf->regs.rbx);
   ac_printf(" rax=0x%lx\n", fsf->regs.rax);
   ac_printf(" rdx=0x%lx\n", fsf->regs.rdx);
+  ac_printf(" rcx=0x%lx\n", fsf->regs.rcx);
   ac_printf(" rsi=0x%lx\n", fsf->regs.rsi);
+  ac_printf(" rdi=0x%lx\n", fsf->regs.rdi);
+  ac_printf("  r8=0x%lx\n", fsf->regs.r8);
+  ac_printf("  r9=0x%lx\n", fsf->regs.r9);
+  ac_printf(" r10=0x%lx\n", fsf->regs.r10);
+  ac_printf(" r11=0x%lx\n", fsf->regs.r11);
   print_intr_frame(AC_NULL, &fsf->iret_frame);
 }
 #endif
@@ -149,6 +174,7 @@ STATIC tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss) {
     pready = next_tcb(pready);
   }
 
+  //ac_printf("ts id=%d\n", pready->thread_id);
   return pready;
 }
 
@@ -158,7 +184,7 @@ STATIC tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss) {
  */
 void ac_thread_yield(void) {
   // Invoke the rescheduler
-  intr(RESCHEDULE_ISR);
+  intr(RESCHEDULE_ISR_INTR);
 }
 
 /**
@@ -170,13 +196,84 @@ void ac_thread_yield(void) {
  */
 INTERRUPT_HANDLER
 void reschedule_isr(struct intr_frame* frame) {
+  __asm__ volatile(
+      "push %rbx;"
+      "push %rbp;"
+      "push %r12;"
+      "push %r13;"
+      "push %r14;"
+      "push %r15;");
   tcb_x86 *ptcb = thread_scheduler((ac_u8*)get_sp(), get_ss());
 
   set_sp(ptcb->sp);
   set_ss(ptcb->ss);
+  set_apic_timer_initial_count(0);
+  set_apic_timer_initial_count(ptcb->slice);
+  __asm__ volatile(
+      "pop %r15;"
+      "pop %r14;"
+      "pop %r13;"
+      "pop %r12;"
+      "pop %rbp;"
+      "pop %rbx;");
 }
 
+/**
+ * Reschedule the CPU to the next ready thread. CAREFUL, this is
+ * invoked by ac_init/srcs/ac_exception_irq_wrapper.S as such the
+ * stack frame pointed to by sp must be identical.
+ *
+ * Interrupts will be disabled as the scheduler will be invoked
+ */
+INTERRUPT_HANDLER
+void timer_reschedule_isr(struct intr_frame* frame) {
+  __asm__ volatile(
+      "push %rbx;"
+      "push %rbp;"
+      "push %r12;"
+      "push %r13;"
+      "push %r14;"
+      "push %r15;");
+  tcb_x86 *ptcb = thread_scheduler((ac_u8*)get_sp(), get_ss());
 
+  __atomic_add_fetch(&timer_reschedule_isr_counter, 1, __ATOMIC_RELEASE);
+
+  set_sp(ptcb->sp);
+  set_ss(ptcb->ss);
+  set_apic_timer_initial_count(ptcb->slice);
+  __asm__ volatile("":::"memory");
+  send_apic_eoi();
+  __asm__ volatile(
+      "pop %r15;"
+      "pop %r14;"
+      "pop %r13;"
+      "pop %r12;"
+      "pop %rbp;"
+      "pop %rbx;");
+}
+
+/**
+ * @return timer_reschedule_isr_counter.
+ */
+ac_u64 get_timer_reschedule_isr_counter() {
+  return __atomic_load_n(&timer_reschedule_isr_counter, __ATOMIC_ACQUIRE);
+}
+
+/**
+ * Initialize timer_rescheduler interupt
+ */
+STATIC void init_timer() {
+  union apic_timer_lvt_fields_u lvtu = { .fields = get_apic_timer_lvt() };
+
+  lvtu.fields.vector = TIMER_RESCHEDULE_ISR_INTR; // interrupt vector
+  lvtu.fields.disable = AC_FALSE; // interrupt enabled
+  lvtu.fields.mode = 0;     // one shot
+  set_apic_timer_lvt(lvtu.fields);
+
+  __atomic_store_n(&timer_reschedule_isr_counter, 0, __ATOMIC_RELEASE);
+  set_apic_timer_divider(DEFAULT_TIMER_DIVISOR);
+  set_apic_timer_initial_count(DEFAULT_TIMER_COUNT);
+}
 
 /**
  * A routine that calls the actual thread entry
@@ -188,14 +285,16 @@ void reschedule_isr(struct intr_frame* frame) {
 STATIC void* entry_trampoline(void* param) {
   // Invoke the entry point
   tcb_x86* ptcb = (tcb_x86*)param;
+  ac_printf("+entry\n");
   ptcb->entry(ptcb->entry_arg);
+  ac_printf("-entry\n");
 
   // Mark as zombie
   ac_u32* pthread_id = &ptcb->thread_id;
   __atomic_store_n(pthread_id, AC_THREAD_ID_ZOMBIE, __ATOMIC_RELEASE);
 
   // Reschedule
-  intr(RESCHEDULE_ISR);
+  intr(RESCHEDULE_ISR_INTR);
 
   // Never gets here because the code is ZOMBIE
   // But we need to prove it to the compiler
@@ -276,6 +375,7 @@ STATIC void tcb_init(tcb_x86* ptcb, ac_u32 thread_id, ac_u8* pstack,
     void*(*entry)(void*), void* entry_arg) {
   ptcb->entry = entry;
   ptcb->entry_arg = entry_arg;
+  ptcb->slice = DEFAULT_TIMER_COUNT;
   ptcb->pstack = pstack;
   ac_u32* pthread_id = &ptcb->thread_id;
   __atomic_store_n(pthread_id, thread_id, __ATOMIC_RELEASE);
@@ -443,8 +543,11 @@ done:
  * Early initialization of this module
  */
 void ac_thread_early_init() {
+  init_timer();
+
   // Initialize reschedule isr
-  set_intr_handler(RESCHEDULE_ISR, reschedule_isr);
+  set_intr_handler(RESCHEDULE_ISR_INTR, reschedule_isr);
+  set_intr_handler(TIMER_RESCHEDULE_ISR_INTR, timer_reschedule_isr);
 
   // Initialize the idle_stack
   ac_uptr idle_flags = DEFAULT_FLAGS;
@@ -493,6 +596,7 @@ void ac_thread_init(ac_u32 max_threads) {
     pthreads->tcbs[i].pstack = AC_NULL;
     pthreads->tcbs[i].sp = AC_NULL;
   }
+
   // Maybe early, but we don't know a good value?
   main_tcb.thread_id = max_threads;
   idle_tcb.thread_id = main_tcb.thread_id + 1;

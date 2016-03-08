@@ -22,6 +22,11 @@
 #include <ac_inttypes.h>
 
 /**
+ * @return timer_reschedule_isr_counter.
+ */
+ac_u64 get_timer_reschedule_isr_counter();
+
+/**
  * Initialize this module early phase, must be
  * called before ac_thread_init
  */

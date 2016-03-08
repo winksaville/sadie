@@ -25,37 +25,111 @@
 #include <ac_putchar.h>
 #include <ac_test.h>
 
-ac_uint t1_counter;
+volatile ac_u64 t1_counter;
+volatile ac_u64 t1_done;
 
 void* t1(void* p) {
-  t1_counter += 1;
-  ac_printf("t1: p=%p t1_counter=%d\n", p, t1_counter);
+  ac_uptr loops = (ac_u64)p;
+  ac_u64 v = 0;
+  ac_printf("t1:+loops=%d\n", loops);
+
+  for (; loops != 0; loops--) {
+    v = __atomic_add_fetch(&t1_counter, 1, __ATOMIC_RELEASE);
+    //ac_printf("v=%ld loops=%d\n", v, loops);
+    //ac_thread_yield();
+  }
+
+  ac_printf("t1:-v=%d\n", v);
+
+  // The main loop needs to wait on this so we exit.
+  // TODO: Add ac_thread_join.
+  __atomic_store_n(&t1_done, AC_TRUE, __ATOMIC_RELEASE);
+
+  // Wait until main joins then exit
+  while(__atomic_load_n(&t1_done,  __ATOMIC_ACQUIRE) == AC_TRUE) {
+    ;
+  }
+
   return AC_NULL;
 }
 
-ac_bool test_ac_thread_create() {
-  ac_bool error = AC_FALSE;
+ac_uint test_ac_thread_create() {
+  ac_uint error = AC_FALSE;
 
-  error |= AC_TEST(ac_thread_create(AC_THREAD_STACK_MIN, t1, (void*)1) == 0);
+  __atomic_store_n(&t1_counter, 0, __ATOMIC_RELEASE);
+  __atomic_store_n(&t1_done, AC_FALSE, __ATOMIC_RELEASE);
 
-  ac_thread_yield();
+  ac_u64 expected_t1_counter = 10; //1000000000;
+  error |= AC_TEST(ac_thread_create(AC_THREAD_STACK_MIN, t1,
+        (void*)expected_t1_counter) == 0);
 
-  ac_u64 test_ac_thread_create_timer_loops = 0;
+  ac_u64 i = 0;
+  ac_u64 ic = 0;
+  ac_u64 tc = __atomic_load_n(&t1_counter, __ATOMIC_ACQUIRE);
   sti();
-  for (ac_u64 i = 0; (i < 1000000000) && (t1_counter < 1); i++) {
-    test_ac_thread_create_timer_loops += 1;
+  for (i = 0; i < 0x0000010000000000; i++) {
+    tc = __atomic_load_n(&t1_counter, __ATOMIC_ACQUIRE);
+    if (tc >= expected_t1_counter) {
+      break;
+    }
+    //ac_thread_yield();
   }
   cli();
-  ac_printf("test_ac_thread_create: t1_counter=%d test_ac_thread_create_timer_loops=%d\n",
-     t1_counter, test_ac_thread_create_timer_loops);
+  ic = get_timer_reschedule_isr_counter();
 
-  error |= AC_TEST(t1_counter == 1);
+  ac_printf("test_ac_thread_create: t1_counter=%ld exptected_t1_counter=%ld ic=%ld\n",
+      tc, expected_t1_counter, ic);
+
+  error |= AC_TEST(((tc >= expected_t1_counter) &&
+      (tc <= (expected_t1_counter + 1))));
+
+  ac_printf("error=0x%x\n", error);
+
+  // Wait until t1 is done
+  // TODO: Add ac_thread_join
+  for (i = 0; i < 0x0000000100000000; i++) {
+    if (__atomic_load_n(&t1_done, __ATOMIC_ACQUIRE) != AC_FALSE) {
+      break;
+    }
+    ac_thread_yield();
+  }
+  __atomic_store_n(&t1_done, AC_FALSE, __ATOMIC_RELEASE);
+  ac_thread_yield();
 
   return error;
 }
 
+ac_uint test_timer() {
+  ac_uint error = AC_FALSE;
+
+  error |= AC_TEST(get_timer_reschedule_isr_counter() == 0);
+
+  ac_u64 isr_counter = 0;
+  ac_u64 expected_isr_count = 20;
+  ac_u64 test_timer_loops = 0;
+  sti();
+  for (ac_u64 i = 0; (i < 1000000000) &&
+      (get_timer_reschedule_isr_counter() < expected_isr_count); i++) {
+    test_timer_loops += 1;
+  }
+  isr_counter = get_timer_reschedule_isr_counter();
+  cli();
+
+  ac_printf("test_timer: isr_counter=%ld test_timer_loops=%ld\n",
+     isr_counter, test_timer_loops);
+
+  ac_u64 ic = get_timer_reschedule_isr_counter();
+  error |= AC_TEST(((ic >= expected_isr_count) &&
+      (ic <= (expected_isr_count + 1))));
+
+  ac_thread_yield();
+
+  ac_printf("error=0x%x\n", error);
+  return error;
+}
+
 int main(void) {
-  ac_bool error = AC_FALSE;
+  ac_uint error = AC_FALSE;
 
 
   // Initialize interrupt descriptor table and apic since
@@ -66,11 +140,9 @@ int main(void) {
   ac_thread_early_init();
   ac_thread_init(32);
 
-
   if (!error) {
+    error |= test_timer();
     error |= test_ac_thread_create();
-  } else {
-    ac_printf("test thread_x86: NO APIC\n");
   }
 
   if (!error) {
