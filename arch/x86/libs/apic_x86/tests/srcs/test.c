@@ -110,6 +110,11 @@ static void apic_timer_isr(struct intr_frame *frame) {
   apic_timer_isr_counter += 1;
   set_apic_timer_initial_count(apic_timer_initial_count);
 
+  // Use a software barrier so the send_apic_eoi is always last.
+  // If you don't do this the send_apic_eoi has been seen to
+  // move above the set_apic_timer_initial_count.
+  __asm__ volatile("":::"memory");
+
   send_apic_eoi();
 }
 
