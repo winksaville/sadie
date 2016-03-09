@@ -12,4 +12,15 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-subdir('@0@/arch/@1@/libs/@2@'.format(meson.source_root(),Arch,'ac_tsc_impl'))
+if Platform == 'Posix'
+  srcFiles = firstSrcFiles + ['srcs/test.c']
+
+  # Create test_ac_tsc_impl executable
+  test_ac_tsc_impl = executable( 'test_ac_tsc_impl', srcFiles,
+    include_directories : runtimeIncDirs,
+    c_args : compilerArgs,
+    dependencies : [libruntime_dep],
+  )
+
+  run_target('run-test-ac_tsc_impl', test_ac_tsc_impl)
+endif

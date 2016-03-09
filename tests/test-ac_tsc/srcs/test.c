@@ -53,8 +53,6 @@ ac_bool test_ac_tsc() {
 int main(void) {
   ac_bool error = AC_FALSE;
 
-  ac_tsc_init();
-
   error |= test_ac_tsc();
 
   if (!error) {
@@ -63,4 +61,3 @@ int main(void) {
 
   return 0;
 }
-

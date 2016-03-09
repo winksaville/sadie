@@ -62,6 +62,8 @@ subdir('arch/x86/libs/msr_x86/tests')
 subdir('arch/x86/libs/native_x86/tests')
 subdir('arch/x86/libs/page_table_x86/tests')
 
+subdir('platform/Posix/libs/ac_tsc_impl/tests')
+
 #subdir('libs/tests')
 subdir('libs/ac_bits/tests')
 subdir('libs/ac_printf/tests')
