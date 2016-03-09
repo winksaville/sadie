@@ -96,6 +96,7 @@ loop:
 
 done:
   bl  ac_exception_init
+  bl  ac_tsc_init
   mov r0, #10
   bl  ac_thread_early_init
   //bl  ac_cpu_perf_init // Does NOT work on qemu

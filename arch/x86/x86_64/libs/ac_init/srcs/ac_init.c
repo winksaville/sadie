@@ -31,6 +31,7 @@
 #include <ac_printf.h>
 #include <ac_sort.h>
 #include <ac_string.h>
+#include <ac_tsc.h>
 
 static void print_multiboot2_tag(struct multiboot2_header_tag* tag) {
   ac_printf("type=%d size=%d\n", tag->type, tag->size);
@@ -222,6 +223,9 @@ void ac_init(ac_uptr ptr, ac_uint word) {
     ac_printf("ABORTING: file ac_init; initialize_apic failed\n");
     reset_x86();
   }
+
+  // Initialize tsc
+  ac_tsc_init();
 
   // Initialize threading module
   ac_thread_early_init();
