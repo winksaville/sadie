@@ -21,16 +21,16 @@
 ac_bool test_ac_tsc() {
   ac_bool error = AC_FALSE;
 
-#ifdef Posix
+#if defined(Posix) || defined(pc_x86_64)
 
-  ac_u64 cc1 = ac_tscrd();
-  ac_u64 cc2 = ac_tscrd();
-  ac_u64 diff = cc2 - cc1;
-  error |= AC_TEST(cc1 != 0);
-  error |= AC_TEST(cc2 != 0);
+  ac_u64 tsc1 = ac_tscrd();
+  ac_u64 tsc2 = ac_tscrd();
+  ac_u64 diff = tsc2 - tsc1;
+  error |= AC_TEST(tsc1 != 0);
+  error |= AC_TEST(tsc2 != 0);
   error |= AC_TEST(diff > 0);
-  ac_printf("test_ac_tsc: cc1=%llx cc2=%llx diff=%llx\n",
-      cc1, cc2, diff);
+  ac_printf("test_ac_tsc: tsc1=%llx tsc2=%llx diff=%llx\n",
+      tsc1, tsc2, diff);
 
   ac_u32 freq = ac_tsc_freq();
   error |= AC_TEST(freq >= 1000000);
@@ -51,10 +51,16 @@ ac_bool test_ac_tsc() {
 }
 
 int main(void) {
-  if (!test_ac_tsc()) {
-    // Succeeded
+  ac_bool error = AC_FALSE;
+
+  ac_tsc_init();
+
+  error |= test_ac_tsc();
+
+  if (!error) {
     ac_printf("OK\n");
-    return 0;
   }
+
+  return 0;
 }
 

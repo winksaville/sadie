@@ -58,6 +58,10 @@ ac_u64 ac_tsc_freq() {
  * Initialize module
  */
 void ac_tsc_init(void) {
+#if 0
+  // Disable as this is causing ac_exception_undef_handler
+  // and ac_exception_reset_handler to fire.
+
   // Allow user mode to access
   __asm__ volatile ("MCR p15, 0, %0, C9, C14, 0\n\t" :: "r"(1));
 
@@ -65,4 +69,5 @@ void ac_tsc_init(void) {
   __asm__ volatile ("MCR p15, 0, %0, C9, C14, 2\n\t" :: "r"(0x8000000f));
 
   tsc_zero_counters(AC_FALSE);
+#endif
 }
