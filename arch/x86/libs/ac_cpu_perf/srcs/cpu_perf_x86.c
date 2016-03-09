@@ -41,20 +41,3 @@ ac_u64 ac_cpu_perf_cycle_counter_freq() {
   // Just guess for now
   return (ac_u64)2000000000;
 }
-
-/**
- * Return the current cycle counter value
- */
-ac_u64 ac_cpu_perf_cycle_counter_rd() {
-  // Execute the rdtscp, read Time Stamp Counter, instruction
-  // returns the 64 bit TSC value and writes ecx to tscAux value.
-  // The tscAux value is the logical cpu number and can be used
-  // to determine if the thread migrated to a different cpu and
-  // thus the returned value is suspect.
-  ac_u32 lo, hi, aux;
-  __asm__ volatile (
-      "rdtscp\n\t"
-      :"=a"(lo), "=d"(hi), "=c"(aux));
-  // tscAux = aux
-  return ((ac_u64)hi << 32) | (ac_u64)lo;
-}

@@ -108,19 +108,18 @@ ac_uint test_timer() {
   ac_u64 expected_isr_count = 20;
   ac_u64 test_timer_loops = 0;
   ac_uint flags = enable_intr();
-  for (ac_u64 i = 0; (i < 1000000000) &&
+  for (ac_u64 i = 0; (i < 10000000000) &&
       (get_timer_reschedule_isr_counter() < expected_isr_count); i++) {
     test_timer_loops += 1;
   }
   isr_counter = get_timer_reschedule_isr_counter();
   restore_intr(flags);
 
-  ac_printf("test_timer: isr_counter=%ld test_timer_loops=%ld\n",
-     isr_counter, test_timer_loops);
+  ac_printf("test_timer: isr_counter=%ld expected_isr_count=%ld test_timer_loops=%ld\n",
+     isr_counter, expected_isr_count, test_timer_loops);
 
-  ac_u64 ic = get_timer_reschedule_isr_counter();
-  error |= AC_TEST(((ic >= expected_isr_count) &&
-      (ic <= (expected_isr_count + 1))));
+  error |= AC_TEST(((isr_counter >= expected_isr_count) &&
+      (isr_counter <= (expected_isr_count + 1))));
 
   ac_thread_yield();
 

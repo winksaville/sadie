@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Wink Saville
+ * Copyright 2016 Wink Saville
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_LIBS_AC_CPU_PERF_INCS_AC_CPU_PERF_H
-#define SADIE_LIBS_AC_CPU_PERF_INCS_AC_CPU_PERF_H
+#ifndef SADIE_ARCH_ARMV6_ARM1176JZF_S_AC_CPU_PERF_INCS_AC_CPU_PERF_IMPL_H
+#define SADIE_ARCH_ARMV6_ARM1176JZF_S_AC_CPU_PERF_INCS_AC_CPU_PERF_IMPL_H
 
 #include <ac_inttypes.h>
 
 /**
- * Initialize module
+ * Return the current cycle counter value
  */
-void ac_cpu_perf_init(void);
+ac_u64 ac_cpu_perf_cycle_counter_rd(void);
 
-/**
- * Zero counters and enable divider
- */
-void ac_cpu_perf_zero_counters(ac_bool enable_divider);
-
-/**
- * Frequency of ac_cpu_perf_cycle_counter in cycles per second.
- */
-ac_u64 ac_cpu_perf_cycle_counter_freq();
-
-#include <ac_cpu_perf_impl.h>
 
 #endif
