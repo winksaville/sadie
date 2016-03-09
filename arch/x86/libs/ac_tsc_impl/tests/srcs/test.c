@@ -143,6 +143,8 @@ void run_timings(void) {
 int main(void) {
   ac_bool error = AC_FALSE;
 
+  ac_tsc_init();
+
   if (!error) {
     error |= test_tsc();
   }
