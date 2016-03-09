@@ -17,7 +17,7 @@ command:
   - cd build-${Platform}; ninja run-test-ac_arg
   - cd build-${Platform}; ninja run-test-ac_assert
   - cd build-${Platform}; ninja run-test-ac_bits
-  - cd build-${Platform}; ninja run-test-ac_cpu_perf
+  - cd build-${Platform}; ninja run-test-ac_tsc
   - cd build-${Platform}; ninja run-test-ac_dispatcher
   - cd build-${Platform}; ninja run-test-ac_memmgr
   - cd build-${Platform}; ninja run-test-ac_mpscfifo

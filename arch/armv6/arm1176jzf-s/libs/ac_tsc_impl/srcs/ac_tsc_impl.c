@@ -15,34 +15,24 @@
  */
 
 /**
- * From [here](http://stackoverflow.com/questions/3247373/how-to-measure-program-execution-time-in-arm-cortex-a8-processor)
+ * From [here](http://stackac_tsc_impl_arm_overflow.com/questions/3247373/how-to-measure-program-execution-time-in-arm-cortex-a8-processor)
  */
 
-#include <ac_cpu_perf.h>
+#include <ac_tsc.h>
 
 #include <ac_inttypes.h>
 
 static ac_u32 divider;
 static ac_u32 freq;
-static ac_u32 overflow;
 
-/**
- * Initialize module
- */
-void ac_cpu_perf_init(void) {
-  // Allow user mode to access
-  __asm__ volatile ("MCR p15, 0, %0, C9, C14, 0\n\t" :: "r"(1));
-
-  // For now disable counter overflow
-  __asm__ volatile ("MCR p15, 0, %0, C9, C14, 2\n\t" :: "r"(0x8000000f));
-
-  ac_cpu_perf_zero_counters(AC_FALSE);
-}
+// TODO: ac_tsc_impl_arm_overflow is off and is currently always zero.
+// Needs to be public for use by ac_tsc_impl.h
+ac_u32 ac_tsc_impl_arm_overflow;
 
 /**
  * Zero counters and enable divider
  */
-void ac_cpu_perf_zero_counters(ac_bool enable_divider) {
+static void tsc_zero_counters(ac_bool enable_divider) {
   ac_u32 value = 0x7; // Enable all counters and reset the to 0
   if (enable_divider) {
     divider = 64;
@@ -51,25 +41,28 @@ void ac_cpu_perf_zero_counters(ac_bool enable_divider) {
     divider = 1;
   }
   freq = 1000000;
-  overflow = 0;
+  ac_tsc_impl_arm_overflow = 0;
   __asm__ volatile ("MCR p15, 0, %0, c9, c12, 0\t\n" :: "r"(value));
   __asm__ volatile ("MCR p15, 0, %0, c9, c12, 1\t\n" :: "r"(0x8000000f));
   __asm__ volatile ("MCR p15, 0, %0, c9, c12, 3\t\n" :: "r"(0x8000000f));
 }
 
 /**
- * Frequency of ac_cpu_perf_cycle_counter in cycles per second.
+ * Frequency of ac_tsc in cycles per second.
  */
-ac_u64 ac_cpu_perf_cycle_counter_freq() {
+ac_u64 ac_tsc_freq() {
   return (ac_u64)freq / divider;
 }
 
 /**
- * Return the current cycle counter value
+ * Initialize module
  */
-ac_u64 ac_cpu_perf_cycle_counter_rd() {
-  ac_u32 value;
-  __asm__ volatile ("MRC p15, 0, %0, c9, c13, 0\t\n" : "=r"(value));  
+void ac_tsc_init(void) {
+  // Allow user mode to access
+  __asm__ volatile ("MCR p15, 0, %0, C9, C14, 0\n\t" :: "r"(1));
 
-  return ((ac_u64)overflow << 32) | value;
+  // For now disable counter ac_tsc_impl_arm_overflow
+  __asm__ volatile ("MCR p15, 0, %0, C9, C14, 2\n\t" :: "r"(0x8000000f));
+
+  tsc_zero_counters(AC_FALSE);
 }

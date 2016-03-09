@@ -14,30 +14,20 @@
  * limitations under the license.
  */
 
-/**
- * From [here](http://stackoverflow.com/questions/3247373/how-to-measure-program-execution-time-in-arm-cortex-a8-processor)
- */
-
-#include <ac_cpu_perf.h>
+#include <ac_tsc.h>
 
 #include <ac_inttypes.h>
 
 /**
- * Initialize module
- */
-void ac_cpu_perf_init(void) {
-}
-
-/**
- * Zero counters and enable divider
- */
-void ac_cpu_perf_zero_counters(ac_bool enable_divider) {
-}
-
-/**
  * Frequency of ac_cpu_perf_cycle_counter in cycles per second.
  */
-ac_u64 ac_cpu_perf_cycle_counter_freq() {
+ac_u64 ac_tsc_freq() {
   // Just guess for now
   return (ac_u64)2000000000;
+}
+
+/**
+ * Initialize module
+ */
+void ac_tsc_init(void) {
 }

@@ -14,7 +14,6 @@
 
 subdir('test-ac_arg')
 subdir('test-ac_assert')
-subdir('test-ac_cpu_perf')
 subdir('test-ac_dispatcher')
 subdir('test-ac_memmgr')
 subdir('test-ac_mpscfifo')
@@ -22,3 +21,4 @@ subdir('test-ac_string')
 subdir('test-ac_sysconf')
 subdir('test-ac_thread')
 subdir('test-ac_timer')
+subdir('test-ac_tsc')

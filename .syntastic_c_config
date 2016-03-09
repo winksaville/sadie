@@ -9,7 +9,7 @@
 -I
 /home/wink/prgs/sadie/arch/x86/libs/cpuid_x86/incs
 -I
-/home/wink/prgs/sadie/arch/x86/libs/ac_cpu_perf/incs
+/home/wink/prgs/sadie/arch/x86/libs/ac_tsc_impl/incs
 -I
 /home/wink/prgs/sadie/arch/x86/libs/cr_x86/incs
 -I

@@ -12,9 +12,9 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-subdir('ac_cpu_perf')
 subdir('ac_init')
 subdir('ac_interrupts')
 subdir('ac_sysconf')
 subdir('ac_timer')
 subdir('ac_thread')
+subdir('ac_tsc_impl')

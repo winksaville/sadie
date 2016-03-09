@@ -14,38 +14,36 @@
  * limitations under the License.
  */
 
-#include <ac_cpu_perf.h>
+#include <ac_tsc.h>
 
 #include <ac_test.h>
 
-ac_bool test_ac_cpu_perf() {
+ac_bool test_ac_tsc() {
   ac_bool error = AC_FALSE;
 
 #ifdef Posix
 
-  ac_cpu_perf_zero_counters(AC_FALSE);
-
-  ac_u64 cc1 = ac_cpu_perf_cycle_counter_rd();
-  ac_u64 cc2 = ac_cpu_perf_cycle_counter_rd();
+  ac_u64 cc1 = ac_tscrd();
+  ac_u64 cc2 = ac_tscrd();
   ac_u64 diff = cc2 - cc1;
   error |= AC_TEST(cc1 != 0);
   error |= AC_TEST(cc2 != 0);
   error |= AC_TEST(diff > 0);
-  ac_printf("test_ac_cpu_perf: cc1=%llx cc2=%llx diff=%llx\n",
+  ac_printf("test_ac_tsc: cc1=%llx cc2=%llx diff=%llx\n",
       cc1, cc2, diff);
 
-  ac_u32 freq = ac_cpu_perf_cycle_counter_freq();
+  ac_u32 freq = ac_tsc_freq();
   error |= AC_TEST(freq >= 1000000);
-  ac_printf("test_ac_cpu_perf: freq=%d\n", freq);
+  ac_printf("test_ac_tsc: freq=%d\n", freq);
 
 #elif defined(VersatilePB)
 
-  ac_printf("test_ac_cpu_perf: VersatilePB no tests on qemu"
+  ac_printf("test_ac_tsc: VersatilePB no tests on qemu"
       " as Cycle Counter is not available\n");
 
 #else
 
-  ac_printf("test_ac_cpu_perf: Unknown Platform\n");
+  ac_printf("test_ac_tsc: Unknown Platform\n");
 
 #endif
 
@@ -53,7 +51,7 @@ ac_bool test_ac_cpu_perf() {
 }
 
 int main(void) {
-  if (!test_ac_cpu_perf()) {
+  if (!test_ac_tsc()) {
     // Succeeded
     ac_printf("OK\n");
     return 0;

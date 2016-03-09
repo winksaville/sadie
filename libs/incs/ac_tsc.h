@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Wink Saville
+ * Copyright 2015 Wink Saville
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_ARCH_ARMV6_ARM1176JZF_S_AC_CPU_PERF_INCS_AC_CPU_PERF_IMPL_H
-#define SADIE_ARCH_ARMV6_ARM1176JZF_S_AC_CPU_PERF_INCS_AC_CPU_PERF_IMPL_H
+#ifndef SADIE_LIBS_INCS_AC_TSC_H
+#define SADIE_LIBS_INCS_AC_TSC_H
 
 #include <ac_inttypes.h>
 
 /**
- * Return the current cycle counter value
+ * Initialize Time Stamp Counter module
  */
-ac_u64 ac_cpu_perf_cycle_counter_rd(void);
+void ac_tsc_init(void);
 
+/**
+ * Zero counters and enable divider
+ */
+//void ac_cpu_perf_zero_counters(ac_bool enable_divider);
+
+/**
+ * Frequency of tsc in cycles per second.
+ */
+ac_u64 ac_tsc_freq();
+
+/**
+ * Get the implemetation header which has the
+ * ac_tscrd() call, hopefully inlineable.
+ */
+#include <ac_tsc_impl.h>
 
 #endif

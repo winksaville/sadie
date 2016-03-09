@@ -18,7 +18,7 @@ if (Platform == 'pc_x86_32') or (Platform == 'pc_x86_64') or (Platform == 'Posix
   subdir('cpuid_x86')
 
   if (Platform == 'pc_x86_32') or (Platform == 'pc_x86_64')
-    subdir('ac_cpu_perf')
+    subdir('ac_tsc_impl')
     subdir('apic_x86')
     subdir('cr_x86')
     subdir('descriptors_x86')

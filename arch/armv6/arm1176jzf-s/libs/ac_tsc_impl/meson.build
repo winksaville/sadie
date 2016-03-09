@@ -15,5 +15,5 @@
 runtimeIncDirs += [include_directories('incs')]
 
 runtimeSrcs += [
-  '@0@/srcs/cpu_perf_x86.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_tsc_impl.c'.format(meson.current_source_dir()),
 ]

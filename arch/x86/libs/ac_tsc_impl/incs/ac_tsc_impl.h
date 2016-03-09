@@ -14,32 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef ARCH_X86_LIBS_AC_CPU_PERF_INCS_AC_CPU_PERF_IMPL_H
-#define ARCH_X86_LIBS_AC_CPU_PERF_INCS_AC_CPU_PERF_IMPL_H
+#ifndef ARCH_X86_LIBS_AC_TSC_IMPL_INCS_AC_TSC_IMPL_H
+#define ARCH_X86_LIBS_AC_TSC_IMPL_INCS_AC_TSC_IMPL_H
 
 #include <ac_inttypes.h>
 
 /**
- * Return the current cycle counter value
+ * Return the time stamp counter plus auxilliary information
  */
-static inline ac_u64 cpu_perf_x86_rdtsc(void) {
-  // Execute the rdtscp, read Time Stamp Counter, instruction
-  // returns the 64 bit TSC value and writes ecx to tscAux value.
-  // The tscAux value is the logical cpu number and can be used
-  // to determine if the thread migrated to a different cpu and
-  // thus the returned value is suspect.
-  ac_u32 lo, hi;
-  __asm__ volatile (
-      "rdtsc\n\t"
-      :"=a"(lo), "=d"(hi));
-  // tscAux = aux
-  return ((ac_u64)hi << 32) | (ac_u64)lo;
-}
-
-/**
- * Return the current cycle counter value plus auxilliary information
- */
-static inline ac_u64 cpu_perf_x86_rdtscp(ac_u32* aux) {
+static inline ac_u64 ac_tscrd_aux(ac_u32* aux) {
   // Execute the rdtscp, read Time Stamp Counter, instruction
   // returns the 64 bit TSC value and writes ecx to tscAux value.
   // The tscAux value is the logical cpu number and can be used
@@ -54,10 +37,20 @@ static inline ac_u64 cpu_perf_x86_rdtscp(ac_u32* aux) {
 }
 
 /**
- * Return the current cycle counter value
+ * Return the time stack counter
  */
-static inline ac_u64 ac_cpu_perf_cycle_counter_rd(void) {
-  return cpu_perf_x86_rdtsc();
+static inline ac_u64 ac_tscrd(void) {
+  // Execute the rdtscp, read Time Stamp Counter, instruction
+  // returns the 64 bit TSC value and writes ecx to tscAux value.
+  // The tscAux value is the logical cpu number and can be used
+  // to determine if the thread migrated to a different cpu and
+  // thus the returned value is suspect.
+  ac_u32 lo, hi;
+  __asm__ volatile (
+      "rdtsc\n\t"
+      :"=a"(lo), "=d"(hi));
+  // tscAux = aux
+  return ((ac_u64)hi << 32) | (ac_u64)lo;
 }
 
 #endif
