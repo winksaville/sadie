@@ -129,4 +129,38 @@ static __inline void hlt(void) {
   __asm__ volatile("hlt");
 }
 
+/**
+ * Return the time stamp counter plus auxilliary information
+ */
+static inline ac_u64 rdtsc_aux(ac_u32* aux) {
+  // Execute the rdtscp, read Time Stamp Counter, instruction
+  // returns the 64 bit TSC value and writes ecx to tscAux value.
+  // The tscAux value is the logical cpu number and can be used
+  // to determine if the thread migrated to a different cpu and
+  // thus the returned value is suspect.
+  ac_u32 lo, hi;
+  __asm__ volatile (
+      "rdtscp\n\t"
+      :"=a"(lo), "=d"(hi), "=rm"(*aux));
+  // tscAux = aux
+  return ((ac_u64)hi << 32) | (ac_u64)lo;
+}
+
+/**
+ * Return the time stack counter
+ */
+static inline ac_u64 rdtsc(void) {
+  // Execute the rdtscp, read Time Stamp Counter, instruction
+  // returns the 64 bit TSC value and writes ecx to tscAux value.
+  // The tscAux value is the logical cpu number and can be used
+  // to determine if the thread migrated to a different cpu and
+  // thus the returned value is suspect.
+  ac_u32 lo, hi;
+  __asm__ volatile (
+      "rdtsc\n\t"
+      :"=a"(lo), "=d"(hi));
+  // tscAux = aux
+  return ((ac_u64)hi << 32) | (ac_u64)lo;
+}
+
 #endif
