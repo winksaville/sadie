@@ -203,12 +203,12 @@ void reschedule_isr(struct intr_frame* frame) {
       "push %r13;"
       "push %r14;"
       "push %r15;");
-  tcb_x86 *ptcb = thread_scheduler((ac_u8*)get_sp(), get_ss());
 
-  set_sp(ptcb->sp);
-  set_ss(ptcb->ss);
-  set_apic_timer_initial_count(0);
+  tcb_x86 *ptcb = thread_scheduler((ac_u8*)get_sp(), get_ss());
+  __asm__ volatile("movq %0, %%rsp;" :: "rm" (ptcb->sp) : "rsp");
+  __asm__ volatile("movw %0, %%ss;" :: "rm" (ptcb->ss));
   set_apic_timer_initial_count(ptcb->slice);
+
   __asm__ volatile(
       "pop %r15;"
       "pop %r14;"
@@ -234,15 +234,17 @@ void timer_reschedule_isr(struct intr_frame* frame) {
       "push %r13;"
       "push %r14;"
       "push %r15;");
+
   tcb_x86 *ptcb = thread_scheduler((ac_u8*)get_sp(), get_ss());
+  __asm__ volatile("movq %0, %%rsp;" :: "rm" (ptcb->sp) : "rsp");
+  __asm__ volatile("movw %0, %%ss;" :: "rm" (ptcb->ss));
+  set_apic_timer_initial_count(ptcb->slice);
 
   __atomic_add_fetch(&timer_reschedule_isr_counter, 1, __ATOMIC_RELEASE);
 
-  set_sp(ptcb->sp);
-  set_ss(ptcb->ss);
-  set_apic_timer_initial_count(ptcb->slice);
   __asm__ volatile("":::"memory");
   send_apic_eoi();
+
   __asm__ volatile(
       "pop %r15;"
       "pop %r14;"
