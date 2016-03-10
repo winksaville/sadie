@@ -230,5 +230,8 @@ void ac_init(ac_uptr ptr, ac_uint word) {
   // Initialize threading module
   ac_thread_early_init();
 
+  // Enable interrupts
+  sti();
+
   ac_printf("ac_init:-flags=0x%x\n", get_flags());
 }
