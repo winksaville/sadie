@@ -97,21 +97,21 @@ STATIC tcb_x86* pwaiting_list;
 STATIC ac_threads* pthreads;
 
 struct saved_regs {
-  ac_u64 r15;
-  ac_u64 r14;
-  ac_u64 r13;
-  ac_u64 r12;
-  ac_u64 rbp;
-  ac_u64 rbx;
   ac_u64 rax;
   ac_u64 rdx;
   ac_u64 rcx;
+  ac_u64 rbx;
   ac_u64 rsi;
   ac_u64 rdi;
+  ac_u64 rbp;
   ac_u64 r8;
   ac_u64 r9;
   ac_u64 r10;
   ac_u64 r11;
+  ac_u64 r12;
+  ac_u64 r13;
+  ac_u64 r14;
+  ac_u64 r15;
 };
 
 struct full_stack_frame {
@@ -134,21 +134,21 @@ STATIC void print_full_stack_frame(char* str, struct full_stack_frame* fsf) {
   if (str != AC_NULL) {
     ac_printf("%s:\n", str);
   }
-  ac_printf(" r15=0x%lx\n", fsf->regs.r15);
-  ac_printf(" r14=0x%lx\n", fsf->regs.r14);
-  ac_printf(" r13=0x%lx\n", fsf->regs.r13);
-  ac_printf(" r12=0x%lx\n", fsf->regs.r12);
-  ac_printf(" rbp=0x%lx\n", fsf->regs.rbp);
-  ac_printf(" rbx=0x%lx\n", fsf->regs.rbx);
   ac_printf(" rax=0x%lx\n", fsf->regs.rax);
   ac_printf(" rdx=0x%lx\n", fsf->regs.rdx);
   ac_printf(" rcx=0x%lx\n", fsf->regs.rcx);
+  ac_printf(" rbx=0x%lx\n", fsf->regs.rbx);
   ac_printf(" rsi=0x%lx\n", fsf->regs.rsi);
   ac_printf(" rdi=0x%lx\n", fsf->regs.rdi);
+  ac_printf(" rbp=0x%lx\n", fsf->regs.rbp);
   ac_printf("  r8=0x%lx\n", fsf->regs.r8);
   ac_printf("  r9=0x%lx\n", fsf->regs.r9);
   ac_printf(" r10=0x%lx\n", fsf->regs.r10);
   ac_printf(" r11=0x%lx\n", fsf->regs.r11);
+  ac_printf(" r12=0x%lx\n", fsf->regs.r12);
+  ac_printf(" r13=0x%lx\n", fsf->regs.r13);
+  ac_printf(" r14=0x%lx\n", fsf->regs.r14);
+  ac_printf(" r15=0x%lx\n", fsf->regs.r15);
   print_intr_frame(AC_NULL, &fsf->iret_frame);
 }
 #endif
@@ -196,26 +196,13 @@ void ac_thread_yield(void) {
  */
 INTERRUPT_HANDLER
 void reschedule_isr(struct intr_frame* frame) {
-  __asm__ volatile(
-      "push %rbx;"
-      "push %rbp;"
-      "push %r12;"
-      "push %r13;"
-      "push %r14;"
-      "push %r15;");
+  __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp",
+                         "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
 
   tcb_x86 *ptcb = thread_scheduler((ac_u8*)get_sp(), get_ss());
   __asm__ volatile("movq %0, %%rsp;" :: "rm" (ptcb->sp) : "rsp");
   __asm__ volatile("movw %0, %%ss;" :: "rm" (ptcb->ss));
   set_apic_timer_initial_count(ptcb->slice);
-
-  __asm__ volatile(
-      "pop %r15;"
-      "pop %r14;"
-      "pop %r13;"
-      "pop %r12;"
-      "pop %rbp;"
-      "pop %rbx;");
 }
 
 /**
@@ -227,31 +214,18 @@ void reschedule_isr(struct intr_frame* frame) {
  */
 INTERRUPT_HANDLER
 void timer_reschedule_isr(struct intr_frame* frame) {
-  __asm__ volatile(
-      "push %rbx;"
-      "push %rbp;"
-      "push %r12;"
-      "push %r13;"
-      "push %r14;"
-      "push %r15;");
+  __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp",
+                         "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
 
   tcb_x86 *ptcb = thread_scheduler((ac_u8*)get_sp(), get_ss());
-  __asm__ volatile("movq %0, %%rsp;" :: "rm" (ptcb->sp) : "rsp");
-  __asm__ volatile("movw %0, %%ss;" :: "rm" (ptcb->ss));
+  set_sp(ptcb->sp);
+  set_ss(ptcb->ss);
   set_apic_timer_initial_count(ptcb->slice);
 
   __atomic_add_fetch(&timer_reschedule_isr_counter, 1, __ATOMIC_RELEASE);
 
   __asm__ volatile("":::"memory");
   send_apic_eoi();
-
-  __asm__ volatile(
-      "pop %r15;"
-      "pop %r14;"
-      "pop %r13;"
-      "pop %r12;"
-      "pop %rbp;"
-      "pop %rbx;");
 }
 
 /**
