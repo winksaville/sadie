@@ -261,9 +261,7 @@ STATIC void init_timer() {
 STATIC void* entry_trampoline(void* param) {
   // Invoke the entry point
   tcb_x86* ptcb = (tcb_x86*)param;
-  ac_printf("+entry\n");
   ptcb->entry(ptcb->entry_arg);
-  ac_printf("-entry\n");
 
   // Mark as zombie
   ac_u32* pthread_id = &ptcb->thread_id;
