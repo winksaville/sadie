@@ -218,8 +218,8 @@ void timer_reschedule_isr(struct intr_frame* frame) {
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
 
   tcb_x86 *ptcb = thread_scheduler((ac_u8*)get_sp(), get_ss());
-  set_sp(ptcb->sp);
-  set_ss(ptcb->ss);
+  __asm__ volatile("movq %0, %%rsp;" :: "rm" (ptcb->sp) : "rsp");
+  __asm__ volatile("movw %0, %%ss;" :: "rm" (ptcb->ss));
   set_apic_timer_initial_count(ptcb->slice);
 
   __atomic_add_fetch(&timer_reschedule_isr_counter, 1, __ATOMIC_RELEASE);
