@@ -93,32 +93,31 @@ ac_bool test_simple(void) {
 
 typedef struct {
   ac_u64 loops;
-  ac_u64 first;
-  ac_u64 second;
+  ac_u64 start;
+  ac_u64 stop;
   ac_bool done;
 } perf_yield_t;
 
 
-void* yt(void *param) {
-  perf_yield_t* py = (perf_yield_t*)param;
-  ac_u64 loops = py->loops;
-  ac_printf("yt: loops=%ld\n", loops);
-
-  ac_u64 first = ac_tscrd();
+void yield_loop(ac_u64 loops, ac_u64* start, ac_u64* stop) {
+  if (start != AC_NULL) *start = ac_tscrd();
   for(ac_u64 i = 0; i < loops; i++) {
     ac_thread_yield();
   }
-  ac_u64 second = ac_tscrd();
+  if (stop != AC_NULL) *stop = ac_tscrd();
+}
 
-  py->first = first;
-  py->second = second;
+void* yt(void *param) {
+  perf_yield_t* py = (perf_yield_t*)param;
+
+  ac_u64 loops = py->loops;
+  yield_loop(py->loops, &py->start, &py->stop);
 
   __atomic_store_n(&py->done, AC_TRUE, __ATOMIC_RELEASE);
 
   while (__atomic_load_n(&py->done, __ATOMIC_ACQUIRE) == AC_TRUE) {
+    ac_thread_yield();
   }
-
-  ac_printf("ty:-exiting loops=%ld\n", py->loops);
 
   return AC_NULL;
 }
@@ -128,39 +127,46 @@ ac_bool perf_yield(void) {
   ac_bool error = AC_FALSE;
   perf_yield_t py;
 
-  py.loops = 1000000;
-  __atomic_store_n(&py.done, AC_FALSE, __ATOMIC_RELEASE);
+  ac_u64 warm_up_loops = 1000000;
 
-  ac_u64 start = ac_tscrd();
+  ac_printf("py: warm up loops=%ld\n", warm_up_loops);
+  // Warm up cpu
+  yield_loop(warm_up_loops, AC_NULL, AC_NULL);
+
+  // Time a one yield loop
+  py.loops = 1000000;
+  ac_printf("py: timed loops=%ld\n", py.loops);
+
+  yield_loop(py.loops, &py.start, &py.stop);
+
+  ac_printf("py: one thread 0 = %ld %ld - %ld\n",
+      py.stop - py.start, py.stop, py.start);
+
+  // Time  two threads running the yield loop
+  __atomic_store_n(&py.done, AC_FALSE, __ATOMIC_RELEASE);
 
   ac_u32 created = ac_thread_create(0, yt, (void*)&py);
   error |= AC_TEST(created == 0);
 
-  ac_u64 loops = py.loops;
-  ac_printf("py: loops=%ld\n", loops);
+  ac_u64 two_thread_start = ac_tscrd();
 
-  ac_u64 first = ac_tscrd();
-  for(ac_u64 i = 0; i < loops; i++) {
-    ac_thread_yield();
-  }
-  ac_u64 second = ac_tscrd();
-  ac_printf("py: done, waiting\n");
+  ac_u64 start, stop;
+  yield_loop(py.loops, &start, &stop);
 
   while (__atomic_load_n(&py.done, __ATOMIC_ACQUIRE) == AC_FALSE) {
+    ac_thread_yield();
   }
 
-  ac_u64 finish = ac_tscrd();
+  ac_u64 two_thread_stop = ac_tscrd();
 
-  ac_printf("py: finished py = %ld %ld - %ld\n",
-      second - first, second, first);
-  ac_printf("             yt = %ld %ld - %ld\n",
-      py.second - py.first, py.second, py.first);
-  ac_printf("          total = %ld %ld - %ld\n",
-      finish - start, finish, start);
+  ac_printf("py: two thread 0 = %ld %ld - %ld\n",
+      stop - start, stop, start);
+  ac_printf("               1 = %ld %ld - %ld\n",
+      py.stop - py.start, py.stop, py.start);
+  ac_printf("           total = %ld %ld - %ld\n",
+      two_thread_stop - two_thread_start, two_thread_stop, two_thread_start);
 
   __atomic_store_n(&py.done, AC_FALSE, __ATOMIC_RELEASE);
-
-  ac_printf("py:-exiting loops=%ld\n", loops);
 
   // Give other threads one last slice to finish
   ac_thread_yield();
