@@ -40,12 +40,6 @@
 #define DEFAULT_TIMER_COUNT     100000  // Counter
 ac_u64 timer_reschedule_isr_counter;
 
-// Forward declaractions
-typedef struct tcb_x86 tcb_x86;
-STATIC void* entry_trampoline(void* param) __attribute__ ((noreturn));
-STATIC tcb_x86* next_tcb(tcb_x86* pcur_tcb);
-STATIC tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss);
-
 typedef struct tcb_x86 {
   ac_u32 thread_id;
   struct tcb_x86* pnext_tcb;
@@ -154,13 +148,84 @@ STATIC void print_full_stack_frame(char* str, struct full_stack_frame* fsf) {
 #endif
 
 /**
+ * Initialize tcb it with the entry and entry_arg.
+ *
+ * @param entry routine to call to start thread
+ * @param entry_arg is the argument to pass to entry
+ *
+ * Return AC_NULL if an error, i.e. nono available
+ */
+STATIC void tcb_init(tcb_x86* ptcb, ac_u32 thread_id, ac_u8* pstack,
+    void*(*entry)(void*), void* entry_arg) {
+  ptcb->entry = entry;
+  ptcb->entry_arg = entry_arg;
+  ptcb->slice = DEFAULT_TIMER_COUNT;
+  ptcb->pstack = pstack;
+  ac_u32* pthread_id = &ptcb->thread_id;
+  __atomic_store_n(pthread_id, thread_id, __ATOMIC_RELEASE);
+}
+
+/**
+ * Get a tcb and initialize it with the entry and entry_arg.
+ *
+ * @param entry routine to call to start thread
+ * @param entry_arg is the argument to pass to entry
+ *
+ * Return AC_NULL if an error, i.e. nono available
+ */
+STATIC tcb_x86* get_tcb(void*(*entry)(void*), void* entry_arg) {
+  // Find an tcb_x86
+  tcb_x86* ptcb;
+  ac_bool found = AC_FALSE;
+  for (ac_u32 i = 0; i < pthreads->max_count; i++) {
+    ptcb = &pthreads->tcbs[i];
+
+    ac_u32 empty = AC_THREAD_ID_EMPTY;
+    ac_u32* pthread_id = &ptcb->thread_id;
+    ac_bool ok = __atomic_compare_exchange_n(pthread_id, &empty,
+        AC_THREAD_ID_STARTING, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
+    if (ok) {
+      tcb_init(ptcb, i, AC_NULL, entry, entry_arg);
+      found = AC_TRUE;
+      break;
+    }
+  }
+
+  if (!found) {
+    ptcb = AC_NULL;
+  }
+  return ptcb;
+}
+
+/**
+ * Next tcb
+ */
+STATIC __inline__ tcb_x86* next_tcb(tcb_x86* pcur_tcb) {
+  // Next thread
+  tcb_x86* pnext = pcur_tcb->pnext_tcb;
+
+  // Skip any ZOMBIE threads it is ASSUMED the list
+  // has at least one non ZOMBIE thread, the idle thread,
+  // so this is guarranteed not to be an endless loop.
+  ac_u32* pthread_id = &pnext->thread_id;
+  ac_u32 thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
+  while(thread_id == AC_THREAD_ID_ZOMBIE) {
+    // Skip the ZOMBIE
+    pnext = pnext->pnext_tcb;
+    pthread_id = &pnext->thread_id;
+    thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
+  }
+
+  return pnext;
+}
+
+/**
  * Thread scheduler, for internal only, ASSUMES interrupts are DISABLED!
  *
  * @param pcur_sp is the stack of the current thread
  * @return the stack of the next thread to run
  */
-__attribute__ ((__noinline__))
-STATIC tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss) {
+STATIC __inline__ tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss) {
   // Save the current thread stack pointer
   pready->sp = sp;
   pready->ss = ss;
@@ -224,9 +289,40 @@ void timer_reschedule_isr(struct intr_frame* frame) {
 
   __atomic_add_fetch(&timer_reschedule_isr_counter, 1, __ATOMIC_RELEASE);
 
-  __asm__ volatile("":::"memory");
   send_apic_eoi();
 }
+
+/**
+ * A test isr that tests using mov instructions
+ * to save registers rather than push/pop. This
+ * is not tested, just a place holder.
+ */
+INTERRUPT_HANDLER
+void test_isr(struct intr_frame* frame) {
+  struct saved_regs sr;
+
+  __asm__ volatile("mov %%rax, %0;" : "=m"(sr.rax));
+  __asm__ volatile("mov %%r15, %0;" : "=m"(sr.r15));
+  __asm__ volatile("mov (%rbp), %rax;");
+  __asm__ volatile("mov %%rax, %0;" : "=m"(sr.rbp));
+
+  ac_printf("timer_reschedule_isr sr.rax=%x\n", sr.rax);
+
+  tcb_x86 *ptcb = thread_scheduler((ac_u8*)get_sp(), get_ss());
+  __asm__ volatile("movq %0, %%rsp;" :: "rm" (ptcb->sp) : "rsp");
+  __asm__ volatile("movw %0, %%ss;" :: "rm" (ptcb->ss));
+  set_apic_timer_initial_count(ptcb->slice);
+
+  __atomic_add_fetch(&timer_reschedule_isr_counter, 1, __ATOMIC_RELEASE);
+
+  send_apic_eoi();
+
+  __asm__ volatile("mov %0, %%rax;" :: "m"(sr.rbp));
+  __asm__ volatile("mov %0, %%r15;" :: "m"(sr.r15));
+  __asm__ volatile("mov %rax, (%rbp);");
+  __asm__ volatile("mov %0, %%rax;" :: "m"(sr.rax));
+}
+
 
 /**
  * @return timer_reschedule_isr_counter.
@@ -258,6 +354,7 @@ STATIC void init_timer() {
  *
  * @return AC_NULL
  */
+__attribute__((__noreturn__))
 STATIC void* entry_trampoline(void* param) {
   // Invoke the entry point
   tcb_x86* ptcb = (tcb_x86*)param;
@@ -337,77 +434,6 @@ STATIC void* idle(void* param) {
   return AC_NULL;
 }
 
-/**
- * Initialize tcb it with the entry and entry_arg.
- *
- * @param entry routine to call to start thread
- * @param entry_arg is the argument to pass to entry
- *
- * Return AC_NULL if an error, i.e. nono available
- */
-STATIC void tcb_init(tcb_x86* ptcb, ac_u32 thread_id, ac_u8* pstack,
-    void*(*entry)(void*), void* entry_arg) {
-  ptcb->entry = entry;
-  ptcb->entry_arg = entry_arg;
-  ptcb->slice = DEFAULT_TIMER_COUNT;
-  ptcb->pstack = pstack;
-  ac_u32* pthread_id = &ptcb->thread_id;
-  __atomic_store_n(pthread_id, thread_id, __ATOMIC_RELEASE);
-}
-
-/**
- * Get a tcb and initialize it with the entry and entry_arg.
- *
- * @param entry routine to call to start thread
- * @param entry_arg is the argument to pass to entry
- *
- * Return AC_NULL if an error, i.e. nono available
- */
-STATIC tcb_x86* get_tcb(void*(*entry)(void*), void* entry_arg) {
-  // Find an tcb_x86
-  tcb_x86* ptcb;
-  ac_bool found = AC_FALSE;
-  for (ac_u32 i = 0; i < pthreads->max_count; i++) {
-    ptcb = &pthreads->tcbs[i];
-
-    ac_u32 empty = AC_THREAD_ID_EMPTY;
-    ac_u32* pthread_id = &ptcb->thread_id;
-    ac_bool ok = __atomic_compare_exchange_n(pthread_id, &empty,
-        AC_THREAD_ID_STARTING, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
-    if (ok) {
-      tcb_init(ptcb, i, AC_NULL, entry, entry_arg);
-      found = AC_TRUE;
-      break;
-    }
-  }
-
-  if (!found) {
-    ptcb = AC_NULL;
-  }
-  return ptcb;
-}
-
-/**
- * Next tcb
- */
-STATIC __inline__ tcb_x86* next_tcb(tcb_x86* pcur_tcb) {
-  // Next thread
-  tcb_x86* pnext = pcur_tcb->pnext_tcb;
-
-  // Skip any ZOMBIE threads it is ASSUMED the list
-  // has at least one non ZOMBIE thread, the idle thread,
-  // so this is guarranteed not to be an endless loop.
-  ac_u32* pthread_id = &pnext->thread_id;
-  ac_u32 thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
-  while(thread_id == AC_THREAD_ID_ZOMBIE) {
-    // Skip the ZOMBIE
-    pnext = pnext->pnext_tcb;
-    pthread_id = &pnext->thread_id;
-    thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
-  }
-
-  return pnext;
-}
 
 /**
  * Initialize the stack frame assuming no stack switching
@@ -449,7 +475,6 @@ STATIC void init_stack_frame(ac_u8* pstack, ac_uptr stack_size, ac_uptr flags,
 
   *psp = (ac_u8*)sf;
   *pss = sf->iret_frame.ss;
-  //*pbp = (ac_u8*)&sf->regs.rbp;
 }
 
 /**
