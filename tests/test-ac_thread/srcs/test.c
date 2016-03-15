@@ -19,7 +19,6 @@
 #include <ac_thread.h>
 
 #include <ac_tsc.h>
-
 #include <ac_printf.h>
 #include <ac_test.h>
 
@@ -110,7 +109,6 @@ void yield_loop(ac_u64 loops, ac_u64* start, ac_u64* stop) {
 void* yt(void *param) {
   perf_yield_t* py = (perf_yield_t*)param;
 
-  ac_u64 loops = py->loops;
   yield_loop(py->loops, &py->start, &py->stop);
 
   __atomic_store_n(&py->done, AC_TRUE, __ATOMIC_RELEASE);
