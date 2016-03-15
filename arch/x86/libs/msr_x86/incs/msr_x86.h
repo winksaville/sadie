@@ -33,8 +33,7 @@ static __inline__ void set_msr(ac_u32 msr, ac_u64 value) {
   ac_u32 eax = (ac_u32)value;
   ac_u32 edx = (ac_u32)(value >> 32);
   __asm__ volatile("movl  %0, %%ecx\n" :: "g"(msr));
-  __asm__ volatile("wrmsr"
-      :: "a"(eax), "d"(edx));
+  __asm__ volatile("wrmsr" :: "a"(eax), "d"(edx));
 }
 
 // Other includes need get_msr and set_msr defined so they are here.

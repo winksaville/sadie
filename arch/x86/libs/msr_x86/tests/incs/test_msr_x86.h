@@ -25,4 +25,6 @@ ac_bool test_msr_efer_fields();
 
 ac_bool test_msr_mtrrcap_fields();
 
+ac_bool test_msr_perf_power();
+
 #endif

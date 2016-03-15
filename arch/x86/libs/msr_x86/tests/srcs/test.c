@@ -24,11 +24,11 @@
 int main(void) {
   ac_bool error = AC_FALSE;
 
-  initialize_intr_descriptor_table();
-
   error |= test_msr_apic_base_fields();
   error |= test_msr_efer_fields();
   error |= test_msr_mtrrcap_fields();
+
+  test_msr_perf_power();
 
   if (!error) {
     ac_printf("OK\n");
