@@ -38,7 +38,7 @@
 
 #define DEFAULT_TIMER_DIVISOR   6       // Divide by 128
 #define DEFAULT_TIMER_COUNT     100000  // Counter
-ac_u64 timer_reschedule_isr_counter;
+STATIC ac_u64 timer_reschedule_isr_counter;
 
 typedef struct tcb_x86 {
   ac_u32 thread_id;
@@ -124,25 +124,26 @@ ac_static_assert(sizeof(struct full_stack_frame) == FULL_STACK_FRAME_SIZE,
 /**
  * Print full stack frame
  */
-STATIC void print_full_stack_frame(char* str, struct full_stack_frame* fsf) {
+void print_full_stack_frame(char* str, struct full_stack_frame* fsf) {
   if (str != AC_NULL) {
-    ac_printf("%s:\n", str);
+    ac_printf("%s:", str);
   }
-  ac_printf(" rax=0x%lx\n", fsf->regs.rax);
-  ac_printf(" rdx=0x%lx\n", fsf->regs.rdx);
-  ac_printf(" rcx=0x%lx\n", fsf->regs.rcx);
-  ac_printf(" rbx=0x%lx\n", fsf->regs.rbx);
-  ac_printf(" rsi=0x%lx\n", fsf->regs.rsi);
-  ac_printf(" rdi=0x%lx\n", fsf->regs.rdi);
-  ac_printf(" rbp=0x%lx\n", fsf->regs.rbp);
-  ac_printf("  r8=0x%lx\n", fsf->regs.r8);
-  ac_printf("  r9=0x%lx\n", fsf->regs.r9);
-  ac_printf(" r10=0x%lx\n", fsf->regs.r10);
-  ac_printf(" r11=0x%lx\n", fsf->regs.r11);
-  ac_printf(" r12=0x%lx\n", fsf->regs.r12);
-  ac_printf(" r13=0x%lx\n", fsf->regs.r13);
-  ac_printf(" r14=0x%lx\n", fsf->regs.r14);
-  ac_printf(" r15=0x%lx\n", fsf->regs.r15);
+  ac_printf("fsf=0x%p\n", fsf);
+  ac_printf(" rax: 0x%lx 0x%p\n", fsf->regs.rax, &fsf->regs.rax);
+  ac_printf(" rdx: 0x%lx 0x%p\n", fsf->regs.rdx, &fsf->regs.rdx);
+  ac_printf(" rcx: 0x%lx 0x%p\n", fsf->regs.rcx, &fsf->regs.rcx);
+  ac_printf(" rbx: 0x%lx 0x%p\n", fsf->regs.rbx, &fsf->regs.rbx);
+  ac_printf(" rsi: 0x%lx 0x%p\n", fsf->regs.rsi, &fsf->regs.rsi);
+  ac_printf(" rdi: 0x%lx 0x%p\n", fsf->regs.rdi, &fsf->regs.rdi);
+  ac_printf(" rbp: 0x%lx 0x%p\n", fsf->regs.rbp, &fsf->regs.rbp);
+  ac_printf("  r8: 0x%lx 0x%p\n", fsf->regs.r8,  &fsf->regs.r8);
+  ac_printf("  r9: 0x%lx 0x%p\n", fsf->regs.r9,  &fsf->regs.r9);
+  ac_printf(" r10: 0x%lx 0x%p\n", fsf->regs.r10, &fsf->regs.r10);
+  ac_printf(" r11: 0x%lx 0x%p\n", fsf->regs.r11, &fsf->regs.r11);
+  ac_printf(" r12: 0x%lx 0x%p\n", fsf->regs.r12, &fsf->regs.r12);
+  ac_printf(" r13: 0x%lx 0x%p\n", fsf->regs.r13, &fsf->regs.r13);
+  ac_printf(" r14: 0x%lx 0x%p\n", fsf->regs.r14, &fsf->regs.r14);
+  ac_printf(" r15: 0x%lx 0x%p\n", fsf->regs.r15, &fsf->regs.r15);
   print_intr_frame(AC_NULL, &fsf->iret_frame);
 }
 #endif
@@ -225,7 +226,8 @@ STATIC __inline__ tcb_x86* next_tcb(tcb_x86* pcur_tcb) {
  * @param pcur_sp is the stack of the current thread
  * @return the stack of the next thread to run
  */
-STATIC __inline__ tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss) {
+__attribute__((__noinline__))
+tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss) {
   // Save the current thread stack pointer
   pready->sp = sp;
   pready->ss = ss;
@@ -249,7 +251,8 @@ STATIC __inline__ tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss) {
  */
 void ac_thread_yield(void) {
   // Invoke the rescheduler
-  intr(RESCHEDULE_ISR_INTR);
+  //intr(RESCHEDULE_ISR_INTR);
+  thread_x86_yield();
 }
 
 /**
@@ -327,8 +330,17 @@ void test_isr(struct intr_frame* frame) {
 /**
  * @return timer_reschedule_isr_counter.
  */
-ac_u64 get_timer_reschedule_isr_counter() {
+ac_u64 get_timer_reschedule_isr_counter(void) {
   return __atomic_load_n(&timer_reschedule_isr_counter, __ATOMIC_ACQUIRE);
+}
+
+/**
+ * Set timer_reschedule_isr_counter to value
+ *
+ * @param value is stored in counter
+ */
+void set_timer_reschedule_isr_counter(ac_u64 value) {
+  return __atomic_store_n(&timer_reschedule_isr_counter, value, __ATOMIC_RELEASE);
 }
 
 /**
@@ -376,8 +388,9 @@ STATIC void* entry_trampoline(void* param) {
  * Remove any zombie threads recoverying the stack
  * and the tcb.
  */
-STATIC void remove_zombies(void) {
+ac_uint remove_zombies(void) {
   tcb_x86* pzombie = AC_NULL;
+  ac_uint count = 0;
 
   // Loop through the list of ready tcb removing
   // ZOMBIE entries. We'll start at idle_tcb as
@@ -407,9 +420,11 @@ STATIC void remove_zombies(void) {
       }
       ac_u32* pthread_id = &pzombie->thread_id;
       __atomic_store_n(pthread_id, AC_THREAD_ID_EMPTY, __ATOMIC_RELEASE);
+      count += 1;
       pzombie = AC_NULL;
     }
   }
+  return count;
 }
 
 /**

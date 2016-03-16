@@ -14,24 +14,32 @@
  * limitations under the License.
  */
 
-#include <test_msr_x86.h>
+/**
+ * Privates for use in testing
+ */
 
-#include <interrupts_x86.h>
+#ifndef ARCH_X86_LIBS_THREAD_X86_TESTS_INCS_TEST_H
+#define ARCH_X86_LIBS_THREAD_X86_TESTS_INCS_TEST_H
 
 #include <ac_inttypes.h>
-#include <ac_printf.h>
 
-int main(void) {
-  ac_bool error = AC_FALSE;
+/**
+ * @return timer_reschedule_isr_counter.
+ */
+ac_u64 get_timer_reschedule_isr_counter(void);
 
-  error |= test_msr_apic_base_fields();
-  error |= test_msr_efer_fields();
-  error |= test_msr_mtrrcap_fields();
-  error |= test_msr_perf_power();
+/**
+ * Set timer_reschedule_isr_counter to value
+ *
+ * @param value is stored in counter
+ */
+void set_timer_reschedule_isr_counter(ac_u64 value);
 
-  if (!error) {
-    ac_printf("OK\n");
-  }
+/**
+ * Remove zombie threads
+ *
+ * @return number of threads removed
+ */
+ac_uint remove_zombies(void);
 
-  return error;
-}
+#endif

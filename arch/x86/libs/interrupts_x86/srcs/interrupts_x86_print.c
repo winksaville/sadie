@@ -22,11 +22,11 @@ void print_intr_frame(char* str, intr_frame* frame) {
   if (str != AC_NULL) {
     ac_printf("%s:\n", str);
   }
-  ac_printf(" frame->ip: %p\n", frame->ip);
-  ac_printf(" frame->cs: %p\n", frame->cs);
-  ac_printf(" frame->flags: %p\n", frame->flags);
-  ac_printf(" frame->sp: %p\n", frame->sp);
-  ac_printf(" frame->ss: %x\n", frame->ss);
+  ac_printf(" frame->ip:    0x%p 0x%p\n", frame->ip, &frame->ip);
+  ac_printf(" frame->cs:    0x%p 0x%p\n", frame->cs, &frame->cs);
+  ac_printf(" frame->flags: 0x%p 0x%p\n", frame->flags, &frame->flags);
+  ac_printf(" frame->sp:    0x%p 0x%p\n", frame->sp, &frame->sp);
+  ac_printf(" frame->ss:    0x%x 0x%p\n", frame->ss, &frame->ss);
 }
 
 void print_intr_gate(char *str, intr_gate* gate) {

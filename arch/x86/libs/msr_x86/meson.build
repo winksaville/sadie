@@ -15,6 +15,7 @@
 runtimeIncDirs += [include_directories('incs')]
 
 runtimeSrcs += [
+  '@0@/srcs/msr_perf_power_x86.c'.format(meson.current_source_dir()),
   '@0@/srcs/print_msr.c'.format(meson.current_source_dir()),
   '@0@/srcs/print_msr_apic_base.c'.format(meson.current_source_dir()),
   '@0@/srcs/print_msr_efer.c'.format(meson.current_source_dir()),

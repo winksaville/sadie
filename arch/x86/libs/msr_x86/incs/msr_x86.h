@@ -38,5 +38,6 @@ static __inline__ void set_msr(ac_u32 msr, ac_u64 value) {
 #include <msr_apic_base_x86.h>
 #include <msr_efer_x86.h>
 #include <msr_mtrrcap_x86.h>
+#include <msr_perf_power_x86.h>
 
 #endif

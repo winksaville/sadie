@@ -12,6 +12,10 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
+incDirs = runtimeIncDirs
+
+incDirs += include_directories('incs')
+
 if Platform == 'pc_x86_32'
   srcFiles = firstSrcFiles + ['srcs/test.c']
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
@@ -20,7 +24,7 @@ if Platform == 'pc_x86_32'
 
   # Create test_thread_x86 executable
   test_thread_x86 = executable( 'test_thread_x86', srcFiles,
-    include_directories : runtimeIncDirs,
+    include_directories : incDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
     link_depends : linkDeps,
@@ -40,7 +44,7 @@ if Platform == 'pc_x86_64'
 
   # Create test_thread_x86 executable
   test_thread_x86 = executable( 'test_thread_x86', srcFiles,
-    include_directories : runtimeIncDirs,
+    include_directories : incDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
     link_depends : linkDeps,

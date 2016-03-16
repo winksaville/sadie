@@ -20,7 +20,7 @@ if Platform == 'pc_x86_32'
      'srcs/test_msr_apic_base_fields.c',
      'srcs/test_msr_efer_fields.c',
      'srcs/test_msr_mtrrcap_fields.c',
-     'srcs/test_msr_perf_power.c',
+     'srcs/test_msr_perf_power_x86.c',
   ]
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
   linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
@@ -49,7 +49,7 @@ if Platform == 'pc_x86_64'
      'srcs/test_msr_apic_base_fields.c',
      'srcs/test_msr_efer_fields.c',
      'srcs/test_msr_mtrrcap_fields.c',
-     'srcs/test_msr_perf_power.c',
+     'srcs/test_msr_perf_power_x86.c',
   ]
 
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)

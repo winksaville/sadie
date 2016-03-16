@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <test.h>
+
 #include <thread_x86.h>
 
 #include <apic_x86.h>
@@ -27,83 +29,6 @@
 #include <ac_putchar.h>
 #include <ac_test.h>
 #include <ac_tsc.h>
-
-#define IA32_ENERGY_PERF_BIAS   0x1B0
-#define IA32_MISC_ENABLE        0x1A0
-#define MSR_MISC_PWR_MGMT       0x1AA
-#define IA32_PERF_STATUS        0x198
-#define IA32_PERF_CTL           0x199
-
-void display_msrs(void) {
-  ac_u64 ia32_misc_enable;
-  ac_u64 ia32_perf_status;
-  ac_u64 ia32_perf_ctl;
-
-  ia32_misc_enable = get_msr(IA32_MISC_ENABLE);
-  ia32_perf_status = get_msr(IA32_PERF_STATUS);
-
-  // For some reason get/set msr of IA32_PERF_CTL
-  // causes a GP fault on qemu-system-x86_64 when
-  // using kvm. Two solutions turn on ignore_msrs in
-  // kvm See https://bugs.launchpad.net/qemu/+bug/1208540
-  // which says do:
-  //   sudo sh -c "echo 1 >/sys/module/kvm/parameters/ignore_msrs"
-  //
-  // What I did was change tests/meson.build to not use kvm host
-  // as the cpu.
-  ia32_perf_ctl = get_msr(IA32_PERF_CTL);
-
-  ac_printf("IA32_MISC_ENABLE       %x = 0x%lx\n",
-      IA32_MISC_ENABLE, ia32_misc_enable);
-  ac_printf("IA32_PERF_STATUS       %x = 0x%lx\n",
-      IA32_PERF_STATUS, ia32_perf_status);
-  ac_printf("IA32_PERF_CTL          %x = 0x%lx\n",
-      IA32_PERF_CTL, ia32_perf_ctl);
-}
-
-ac_bool msr_perf_power() {
-  ac_bool error = AC_FALSE;
-
-  ac_u32 out_eax, out_ebx, out_ecx, out_edx;
-
-  get_cpuid(6, &out_eax, &out_ebx, &out_ecx, &out_edx);
-  ac_printf("Thermal and Power Management bits eax=0x%x ebx=0x%x ecx=0x%x edx=0x%x\n",
-     out_eax, out_ebx, out_ecx, out_edx);
-
-  if ((out_ecx & 0x8) == 0x80) {
-    ac_u64 msr_misc_pwr_mgmt = get_msr(MSR_MISC_PWR_MGMT);
-    ac_printf("MISC_PWR_MGMT         %x = 0x%lx\n",
-        MSR_MISC_PWR_MGMT, msr_misc_pwr_mgmt);
-
-    // Enable IA32_ENERGY_PERF_BIAS
-    set_msr(MSR_MISC_PWR_MGMT, msr_misc_pwr_mgmt | 0x2);
-
-    msr_misc_pwr_mgmt = get_msr(MSR_MISC_PWR_MGMT);
-    ac_printf("MISC_PWR_MGMT         %x = 0x%lx\n",
-        MSR_MISC_PWR_MGMT, msr_misc_pwr_mgmt);
-
-    ac_printf("IA32_ENERGY_PERF_BIAS %x = 0x%lx\n",
-        IA32_ENERGY_PERF_BIAS, get_msr(IA32_ENERGY_PERF_BIAS));
-  } else {
-    ac_printf("IA32_ENERGY_PERF_BIAS is not supported\n");
-  }
-  ac_u64 ia32_misc_enable;
-  ac_u64 ia32_perf_status;
-  ac_u64 ia32_perf_ctl;
-
-  display_msrs();
-
-  ia32_misc_enable = get_msr(IA32_MISC_ENABLE);
-  set_msr(IA32_MISC_ENABLE, ia32_misc_enable | 0x10000ll);
-
-  ia32_perf_status = get_msr(IA32_PERF_STATUS);
-  ia32_perf_ctl = ia32_perf_status & 0xff00ll;
-  set_msr(IA32_PERF_CTL, ia32_perf_ctl);
-
-  display_msrs();
-
-  return error;
-}
 
 typedef struct {
   ac_u64 loops;
@@ -142,8 +67,8 @@ ac_bool perf_yield(void) {
 
   ac_u64 warm_up_loops = 1000000;
 
-  ac_printf("py: warm up loops=%ld\n", warm_up_loops);
   // Warm up cpu
+  ac_printf("py: warm up loops=%ld\n", warm_up_loops);
   yield_loop(warm_up_loops, AC_NULL, AC_NULL);
 
   // Time a one yield loop
@@ -184,6 +109,48 @@ ac_bool perf_yield(void) {
   // Give other threads one last slice to finish
   ac_thread_yield();
 
+  ac_printf("py:-error=%d\n", error);
+  return error;
+}
+
+ac_uint test_yield_no_other_threads(void) {
+  ac_printf("test_yield_no_other_threads:+\n");
+  ac_uint error = AC_FALSE;
+
+  ac_thread_yield();
+
+  ac_printf("test_yield_no_other_threads:-error=%d\n", error);
+  return error;
+}
+
+volatile ac_u64 t0_counter;
+
+void* t0(void* p) {
+  AC_UNUSED(p);
+  ac_printf("t0:+\n");
+
+  __atomic_add_fetch(&t0_counter, 1, __ATOMIC_RELEASE);
+
+  ac_printf("t0:-\n");
+
+  return AC_NULL;
+}
+
+ac_uint test_yield_one_other_thread(void) {
+  ac_uint error = AC_FALSE;
+  ac_printf("test_yield_one_other_thread:+\n");
+
+  error |= AC_TEST(ac_thread_create(AC_THREAD_STACK_MIN, t0, AC_NULL) == 0);
+
+  ac_printf("test_yield_one_other_thread: call ac_thread_yield\n");
+  thread_x86_yield();
+  ac_printf("test_yield_one_other_thread: back ac_thread_yield\n");
+
+  error |= AC_TEST(t0_counter == 1);
+
+  error |= AC_TEST(remove_zombies() == 1);
+
+  ac_printf("test_yield_one_other_thread:-error=%d\n", error);
   return error;
 }
 
@@ -216,6 +183,7 @@ void* t1(void* p) {
 }
 
 ac_uint test_ac_thread_create() {
+  ac_printf("test_ac_thread_create:+\n");
   ac_uint error = AC_FALSE;
 
   __atomic_store_n(&t1_counter, 0, __ATOMIC_RELEASE);
@@ -245,8 +213,7 @@ ac_uint test_ac_thread_create() {
   error |= AC_TEST(((tc >= expected_t1_counter) &&
       (tc <= (expected_t1_counter + 1))));
 
-  ac_printf("error=0x%x\n", error);
-
+  ac_printf("test_ac_thread_create: wait until t1 is done\n");
   // Wait until t1 is done
   // TODO: Add ac_thread_join
   for (i = 0; i < 0x0000000100000000; i++) {
@@ -258,16 +225,20 @@ ac_uint test_ac_thread_create() {
   __atomic_store_n(&t1_done, AC_FALSE, __ATOMIC_RELEASE);
   ac_thread_yield();
 
+  ac_printf("test_ac_thread_create:-error=%d\n", error);
   return error;
 }
 
 ac_uint test_timer() {
+  ac_printf("test_timer:+\n");
   ac_uint error = AC_FALSE;
+
+  set_timer_reschedule_isr_counter(0);
 
   error |= AC_TEST(get_timer_reschedule_isr_counter() == 0);
 
   ac_u64 isr_counter = 0;
-  ac_u64 expected_isr_count = 20;
+  ac_u64 expected_isr_count = 2;
   ac_u64 test_timer_loops = 0;
   ac_uint flags = enable_intr();
   for (ac_u64 i = 0; (i < 10000000000) &&
@@ -283,9 +254,7 @@ ac_uint test_timer() {
   error |= AC_TEST(((isr_counter >= expected_isr_count) &&
       (isr_counter <= (expected_isr_count + 1))));
 
-  ac_thread_yield();
-
-  ac_printf("error=0x%x\n", error);
+  ac_printf("test_timer:-error=%d\n", error);
   return error;
 }
 
@@ -294,13 +263,17 @@ int main(void) {
 
   ac_thread_init(32);
 
-  msr_perf_power();
-  perf_yield();
-
   if (!error) {
-    error |= test_timer();
+    error |= test_yield_no_other_threads();
+    error |= test_yield_one_other_thread();
     error |= test_ac_thread_create();
+    error |= test_timer();
   }
+
+  ac_uint zombies = remove_zombies();
+  ac_printf("py: zombies removed=%d\n", zombies);
+
+  perf_yield();
 
   if (!error) {
     ac_printf("OK\n");

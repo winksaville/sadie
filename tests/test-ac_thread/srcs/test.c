@@ -127,8 +127,8 @@ ac_bool perf_yield(void) {
 
   ac_u64 warm_up_loops = 1000000;
 
-  ac_printf("py: warm up loops=%ld\n", warm_up_loops);
   // Warm up cpu
+  ac_printf("py: warm up loops=%ld\n", warm_up_loops);
   yield_loop(warm_up_loops, AC_NULL, AC_NULL);
 
   // Time a one yield loop
@@ -169,6 +169,7 @@ ac_bool perf_yield(void) {
   // Give other threads one last slice to finish
   ac_thread_yield();
 
+  ac_printf("py:-error=%d\n", error);
   return error;
 }
 

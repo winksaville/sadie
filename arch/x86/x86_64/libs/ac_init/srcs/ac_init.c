@@ -17,6 +17,7 @@
 #include <apic_x86.h>
 #include <cr_x86.h>
 #include <interrupts_x86.h>
+#include <msr_x86.h>
 #include <native_x86.h>
 #include <page_table_x86.h>
 #include <page_table_x86_print.h>
@@ -226,6 +227,9 @@ void ac_init(ac_uptr ptr, ac_uint word) {
 
   // Initialize tsc
   ac_tsc_init();
+
+  // Initialize perf and power msrs
+  msr_perf_power_x86_init();
 
   // Initialize threading module
   ac_thread_early_init();

@@ -14,24 +14,14 @@
  * limitations under the License.
  */
 
-#include <test_msr_x86.h>
-
-#include <interrupts_x86.h>
+#ifndef ARCH_X86_LIBS_MSR_X86_INCS_MSR_PERF_POWER_X86_H
+#define ARCH_X86_LIBS_MSR_X86_INCS_MSR_PERF_POWER_X86_H
 
 #include <ac_inttypes.h>
-#include <ac_printf.h>
 
-int main(void) {
-  ac_bool error = AC_FALSE;
+/**
+ * Initalize perf_power module
+ */
+ac_bool msr_perf_power_x86_init(void);
 
-  error |= test_msr_apic_base_fields();
-  error |= test_msr_efer_fields();
-  error |= test_msr_mtrrcap_fields();
-  error |= test_msr_perf_power();
-
-  if (!error) {
-    ac_printf("OK\n");
-  }
-
-  return error;
-}
+#endif
