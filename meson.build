@@ -51,17 +51,21 @@ subdir('platform')
 #   subdir('arch/x86/tests/test-native_x86')
 
 #subdir('arch/tests')
-subdir('arch/x86/libs/thread_x86/tests')
+subdir('arch/x86/libs/ac_tsc_impl/tests')
+subdir('arch/x86/libs/ac_receptor_impl/tests')
 subdir('arch/x86/libs/apic_x86/tests')
 subdir('arch/x86/libs/cpuid_x86/tests')
-subdir('arch/x86/libs/ac_tsc_impl/tests')
 subdir('arch/x86/libs/cr_x86/tests')
 subdir('arch/x86/libs/descriptors_x86/tests')
 subdir('arch/x86/libs/interrupts_x86/tests')
 subdir('arch/x86/libs/msr_x86/tests')
 subdir('arch/x86/libs/native_x86/tests')
 subdir('arch/x86/libs/page_table_x86/tests')
+subdir('arch/x86/libs/thread_x86/tests')
 
+subdir('arch/armv6/arm1176jzf-s/libs/ac_receptor_impl/tests')
+
+subdir('platform/Posix/libs/ac_receptor_impl/tests')
 subdir('platform/Posix/libs/ac_tsc_impl/tests')
 
 #subdir('libs/tests')

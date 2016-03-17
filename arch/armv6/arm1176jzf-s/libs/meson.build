@@ -14,6 +14,7 @@
 
 subdir('ac_init')
 subdir('ac_interrupts')
+subdir('ac_receptor_impl')
 subdir('ac_sysconf')
 subdir('ac_timer')
 subdir('ac_thread')

@@ -12,25 +12,15 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-# Posix
+if Platform == 'Posix'
+  srcFiles = firstSrcFiles + ['srcs/test.c']
 
+  # Create test_ac_receptor_impl executable
+  test_ac_receptor_impl = executable( 'test_ac_receptor_impl', srcFiles,
+    include_directories : runtimeIncDirs,
+    c_args : compilerArgs,
+    dependencies : [libruntime_dep],
+  )
 
-# Add general runtime libs
-subdir('@0@/libs'.format(meson.source_root()))
-
-# Add our platform specific libs
-subdir('ac_receptor_impl')
-subdir('ac_tsc_impl')
-subdir('ac_memmgr')
-subdir('ac_putchar')
-subdir('ac_stop')
-subdir('ac_sysconf')
-subdir('ac_thread')
-subdir('ac_timer')
-
-libruntime = static_library('runtime', runtimeSrcs,
-  c_args : compilerArgs,
-  include_directories : runtimeIncDirs)
-
-libruntime_dep += declare_dependency(
-  link_with : libruntime)
+  run_target('run-test-ac_receptor_impl', test_ac_receptor_impl)
+endif
