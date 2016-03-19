@@ -47,6 +47,7 @@ if Platform == 'Posix'
   # Create testit executable
   test_ac_receptor = executable( 'test_ac_receptor', srcFiles,
     include_directories : runtimeIncDirs,
+    link_args : linkArgs,
     c_args : compilerArgs,
     dependencies : [libruntime_dep],
   )

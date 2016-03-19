@@ -22,18 +22,25 @@
 /**
  * Receptor structure
  */
-struct receptor_x86 {
+typedef struct {
   ac_bool signaled;
-};
+} receptor_x86;
 
-typedef struct receptor_x86* ac_receptor_t;
+typedef receptor_x86* ac_receptor_t;
 
 /**
- * Create a receptor
+ * Create a receptor and set it state to signaled parameter
  *
- * @return AC_NULL if failed.
+ * @param signaled is the initial state of the receptor
+ *
+ * @return AC_NULL if unable to allocate a receptor
  */
-ac_receptor_t ac_receptor_create(void);
+ac_receptor_t ac_receptor_create(ac_bool signaled);
+
+/**
+ * Destroy a receptor
+ */
+void ac_receptor_destroy(ac_receptor_t receptor);
 
 /**
  * Wait for the receptor to be signaled only one entity can wait
@@ -55,12 +62,12 @@ ac_uint ac_receptor_signal(ac_receptor_t receptor);
  * Initialize this module early, must be
  * called before receptor_init
  */
-void receptor_early_init(void);
+void ac_receptor_early_init(void);
 
 /**
  * Initialize this module defining the number of
  * sensors to support.
  */
-void receptor_init(ac_uint number_receptors);
+void ac_receptor_init(ac_uint max_receptors);
 
 #endif

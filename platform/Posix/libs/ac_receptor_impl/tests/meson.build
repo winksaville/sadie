@@ -18,6 +18,7 @@ if Platform == 'Posix'
   # Create test_ac_receptor_impl executable
   test_ac_receptor_impl = executable( 'test_ac_receptor_impl', srcFiles,
     include_directories : runtimeIncDirs,
+    link_args : linkArgs,
     c_args : compilerArgs,
     dependencies : [libruntime_dep],
   )

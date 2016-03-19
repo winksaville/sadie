@@ -24,12 +24,20 @@
 #include <ac_debug_printf.h>
 
 /**
- * Create a receptor
+ * Create a receptor and set it state to signaled parameter
  *
- * @return AC_TRUE if successful
+ * @param signaled is the initial state of the receptor
+ *
+ * @return AC_NULL if unable to allocate a receptor
  */
-ac_receptor_t ac_receptor_create(void) {
+ac_receptor_t ac_receptor_create(ac_bool signaled) {
   return AC_NULL;
+}
+
+/**
+ * Destroy a receptor
+ */
+void ac_receptor_destroy(ac_receptor_t receptor) {
 }
 
 /**
@@ -56,14 +64,14 @@ ac_uint ac_receptor_signal(ac_receptor_t receptor) {
  * Initialize this module early, must be
  * called before receptor_init
  */
-void receptor_early_init(void) {
-  ac_printf("receptor_early_init:-does nothing\n");
+void ac_receptor_early_init(void) {
+  ac_printf("ac_receptor_early_init:-does nothing\n");
 }
 
 /**
  * Initialize this module
  */
-void receptor_init(ac_uint number_receptors) {
-  ac_printf("receptor_init:-does nothing number_receptors=%d\n", number_receptors);
+void ac_receptor_init(ac_uint number_receptors) {
+  ac_printf("ac_receptor_init:-does nothing number_receptors=%d\n", number_receptors);
 }
 

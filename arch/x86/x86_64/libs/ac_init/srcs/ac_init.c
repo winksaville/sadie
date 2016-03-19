@@ -30,6 +30,7 @@
 #include <ac_inttypes.h>
 #include <ac_memset.h>
 #include <ac_printf.h>
+#include <ac_receptor.h>
 #include <ac_sort.h>
 #include <ac_string.h>
 #include <ac_tsc.h>
@@ -217,6 +218,9 @@ void ac_init(ac_uptr ptr, ac_uint word) {
   // Initialize interrupt descriptor table and apic since
   // they are not done by default, yet.
   initialize_intr_descriptor_table();
+
+  // Initialize receptor module
+  ac_receptor_early_init();
 
   // Initialize Advanced Programmable Interrupt Controller
   if (initialize_apic() != 0) {
