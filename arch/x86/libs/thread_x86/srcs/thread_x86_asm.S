@@ -57,8 +57,8 @@ thread_x86_yield:
         call   thread_scheduler
 
         // Switch stacks
-        mov    0x28(%rax), %rsp
-        mov    0x30(%rax), %ss
+        mov    0x30(%rax), %rsp
+        mov    0x38(%rax), %ss
 
         // Restore registers and return
         pop     %rax
@@ -76,5 +76,6 @@ thread_x86_yield:
         pop     %r13
         pop     %r14
         pop     %r15
+//        pop     %rbp
 
         iretq

@@ -142,9 +142,7 @@ ac_uint test_yield_one_other_thread(void) {
 
   error |= AC_TEST(ac_thread_create(AC_THREAD_STACK_MIN, t0, AC_NULL) == 0);
 
-  ac_printf("test_yield_one_other_thread: call ac_thread_yield\n");
   thread_x86_yield();
-  ac_printf("test_yield_one_other_thread: back ac_thread_yield\n");
 
   error |= AC_TEST(t0_counter == 1);
 

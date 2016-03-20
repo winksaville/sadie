@@ -41,8 +41,9 @@
 STATIC ac_u64 timer_reschedule_isr_counter;
 
 typedef struct tcb_x86 {
-  ac_u32 thread_id;
+  ac_s32 thread_id;
   struct tcb_x86* pnext_tcb;
+  struct tcb_x86* pprev_tcb;
   void*(*entry)(void*);
   void* entry_arg;
   ac_u8* pstack;
@@ -51,7 +52,9 @@ typedef struct tcb_x86 {
   ac_u32 slice;
 } tcb_x86;
 
-typedef struct {
+typedef struct threads {
+  struct threads* pnext;
+  struct threads* pprev;
   ac_u32 max_count;
   tcb_x86 tcbs[];
 } ac_threads;
@@ -66,12 +69,12 @@ typedef struct {
  * The idle thread
  */
 STATIC ac_u8 idle_stack[AC_THREAD_STACK_MIN] __attribute__ ((aligned(64)));
-STATIC tcb_x86 idle_tcb;
+STATIC tcb_x86* pidle_tcb;
 
 /**
  * The main thread
  */
-STATIC tcb_x86 main_tcb;
+STATIC tcb_x86* pmain_tcb;
 
 /**
  * A NON-EMPTY circular linked list of tcbs to run,
@@ -88,6 +91,7 @@ STATIC tcb_x86* pwaiting_list;
 /**
  * All of the threads
  */
+STATIC ac_u32 total_threads;
 STATIC ac_threads* pthreads;
 
 struct saved_regs {
@@ -106,6 +110,7 @@ struct saved_regs {
   ac_u64 r13;
   ac_u64 r14;
   ac_u64 r15;
+//  ac_u64 rbp;
 };
 
 struct full_stack_frame {
@@ -144,6 +149,7 @@ void print_full_stack_frame(char* str, struct full_stack_frame* fsf) {
   ac_printf(" r13: 0x%lx 0x%p\n", fsf->regs.r13, &fsf->regs.r13);
   ac_printf(" r14: 0x%lx 0x%p\n", fsf->regs.r14, &fsf->regs.r14);
   ac_printf(" r15: 0x%lx 0x%p\n", fsf->regs.r15, &fsf->regs.r15);
+  //ac_printf(" rbp: 0x%lx 0x%p\n", fsf->regs.rbp, &fsf->regs.rbp);
   print_intr_frame(AC_NULL, &fsf->iret_frame);
 }
 #endif
@@ -156,13 +162,16 @@ void print_full_stack_frame(char* str, struct full_stack_frame* fsf) {
  *
  * Return AC_NULL if an error, i.e. nono available
  */
-STATIC void tcb_init(tcb_x86* ptcb, ac_u32 thread_id, ac_u8* pstack,
+STATIC void tcb_init(tcb_x86* ptcb, ac_s32 thread_id,
     void*(*entry)(void*), void* entry_arg) {
   ptcb->entry = entry;
   ptcb->entry_arg = entry_arg;
+  ptcb->pnext_tcb = AC_NULL;
+  ptcb->pprev_tcb = AC_NULL;
   ptcb->slice = DEFAULT_TIMER_COUNT;
-  ptcb->pstack = pstack;
-  ac_u32* pthread_id = &ptcb->thread_id;
+  ptcb->pstack = AC_NULL;
+  ptcb->sp = AC_NULL;
+  ac_s32* pthread_id = &ptcb->thread_id;
   __atomic_store_n(pthread_id, thread_id, __ATOMIC_RELEASE);
 }
 
@@ -175,27 +184,33 @@ STATIC void tcb_init(tcb_x86* ptcb, ac_u32 thread_id, ac_u8* pstack,
  * Return AC_NULL if an error, i.e. nono available
  */
 STATIC tcb_x86* get_tcb(void*(*entry)(void*), void* entry_arg) {
-  // Find an tcb_x86
   tcb_x86* ptcb;
-  ac_bool found = AC_FALSE;
-  for (ac_u32 i = 0; i < pthreads->max_count; i++) {
-    ptcb = &pthreads->tcbs[i];
 
-    ac_u32 empty = AC_THREAD_ID_EMPTY;
-    ac_u32* pthread_id = &ptcb->thread_id;
-    ac_bool ok = __atomic_compare_exchange_n(pthread_id, &empty,
-        AC_THREAD_ID_STARTING, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
-    if (ok) {
-      tcb_init(ptcb, i, AC_NULL, entry, entry_arg);
-      found = AC_TRUE;
-      break;
+  // There must always be at least one ac_threads
+  ac_assert(pthreads != AC_NULL);
+
+  // Search all of the ac_threads for an empty tcb
+  ac_threads* pcur = pthreads;
+  do {
+    // Find an empty tcb;
+    for (ac_u32 i = 0; i < pcur->max_count; i++) {
+      ptcb = &pcur->tcbs[i];
+
+      ac_u32 empty = AC_THREAD_ID_EMPTY;
+      ac_s32* pthread_id = &ptcb->thread_id;
+      ac_bool ok = __atomic_compare_exchange_n(pthread_id, &empty,
+          AC_THREAD_ID_STARTING, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
+      if (ok) {
+        // Found an empty tcb, initialize and return it
+        tcb_init(ptcb, i, entry, entry_arg);
+        return ptcb;
+      }
     }
-  }
+    pcur = pcur->pnext;
+  } while (pcur != pthreads);
 
-  if (!found) {
-    ptcb = AC_NULL;
-  }
-  return ptcb;
+  // No empty tcbs
+  return AC_NULL;
 }
 
 /**
@@ -208,8 +223,8 @@ STATIC __inline__ tcb_x86* next_tcb(tcb_x86* pcur_tcb) {
   // Skip any ZOMBIE threads it is ASSUMED the list
   // has at least one non ZOMBIE thread, the idle thread,
   // so this is guarranteed not to be an endless loop.
-  ac_u32* pthread_id = &pnext->thread_id;
-  ac_u32 thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
+  ac_s32* pthread_id = &pnext->thread_id;
+  ac_s32 thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
   while(thread_id == AC_THREAD_ID_ZOMBIE) {
     // Skip the ZOMBIE
     pnext = pnext->pnext_tcb;
@@ -218,6 +233,41 @@ STATIC __inline__ tcb_x86* next_tcb(tcb_x86* pcur_tcb) {
   }
 
   return pnext;
+}
+
+/**
+ * Add an initialized tcb following pcur
+ *
+ * @param pcur is a tcb in the list which will preceed pnew
+ * @param pnew is a tcb which will after pcur.
+ */
+STATIC void add_tcb_after(tcb_x86* pnew, tcb_x86* pcur) {
+  ac_uint flags = disable_intr();
+  tcb_x86* ptmp = pcur->pnext_tcb;
+  pnew->pnext_tcb = ptmp;
+  pnew->pprev_tcb = pcur;
+  ptmp->pprev_tcb = pnew;
+  pcur->pnext_tcb = pnew;
+
+  restore_intr(flags);
+}
+
+/**
+ * Remove a tcb from the list, we assume the list will
+ * NEVER be empty as idle will always be present.
+ *
+ * @param pcur is a tcb to be removed
+ *
+ * @return pcur
+ */
+tcb_x86* remove_tcb(tcb_x86* pcur) {
+  ac_uint flags = disable_intr();
+  tcb_x86* pprev = pcur->pprev_tcb;
+  tcb_x86* pnext = pcur->pnext_tcb;
+  pprev->pnext_tcb = pnext;
+  pnext->pprev_tcb = pprev;
+  restore_intr(flags);
+  return pcur;
 }
 
 /**
@@ -234,14 +284,13 @@ tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss) {
 
   // Get the next tcb
   pready = next_tcb(pready);
-  if (pready == &idle_tcb) {
+  if (pready == pidle_tcb) {
     // Skip idle once, if idle is the only thread
     // then we'll it will become pready and we'll
     // execute this time.
     pready = next_tcb(pready);
   }
 
-  //ac_printf("ts id=%d\n", pready->thread_id);
   return pready;
 }
 
@@ -373,7 +422,7 @@ STATIC void* entry_trampoline(void* param) {
   ptcb->entry(ptcb->entry_arg);
 
   // Mark as zombie
-  ac_u32* pthread_id = &ptcb->thread_id;
+  ac_s32* pthread_id = &ptcb->thread_id;
   __atomic_store_n(pthread_id, AC_THREAD_ID_ZOMBIE, __ATOMIC_RELEASE);
 
   // Reschedule
@@ -392,49 +441,35 @@ ac_uint remove_zombies(void) {
   tcb_x86* pzombie = AC_NULL;
   ac_uint count = 0;
 
-  // Loop through the list of ready tcb removing
+  // Loop through the list of ready tcbs removing
   // ZOMBIE entries. We'll start at idle_tcb as
   // the tail since its guaranteed to be on the
   // list and not a ZOMBIE.
-  tcb_x86* ptail = &idle_tcb;
-  tcb_x86* phead = idle_tcb.pnext_tcb;
-  while (phead != &idle_tcb) {
+  tcb_x86* phead = pidle_tcb->pnext_tcb;
+  while (phead != pidle_tcb) {
     ac_uptr flags = disable_intr();
-    if (phead->thread_id == AC_THREAD_ID_ZOMBIE) {
+    ac_s32* pthread_id = &phead->thread_id;
+    ac_s32 thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
+    if (thread_id == AC_THREAD_ID_ZOMBIE) {
       // phead is a ZOMBIE, remove it from the
       // list advancing the head past it.
-      pzombie = phead;
-      phead = phead->pnext_tcb;
-      ptail->pnext_tcb = phead;
-    } else {
-      // Not a ZOMBIE advance head and tail
-      ptail = phead;
-      phead = phead->pnext_tcb;
+      pzombie = remove_tcb(phead);
     }
+    // Advance head
+    phead = phead->pnext_tcb;
     restore_intr(flags);
 
     if (pzombie != AC_NULL) {
-      // Remove the ZOMBIE
+      // Free the ZOMBIE's stack and mark it EMPTY
       if (pzombie->pstack != AC_NULL) {
         ac_free(pzombie->pstack);
       }
-      ac_u32* pthread_id = &pzombie->thread_id;
       __atomic_store_n(pthread_id, AC_THREAD_ID_EMPTY, __ATOMIC_RELEASE);
       count += 1;
       pzombie = AC_NULL;
     }
   }
   return count;
-}
-
-/**
- * Add an initialized tcb following pcur
- * * @param tcb to add to the ready list */
-STATIC void add_after(tcb_x86* pcur, tcb_x86* pnew) {
-  ac_uint flags = disable_intr();
-  pnew->pnext_tcb = pcur->pnext_tcb;
-  pcur->pnext_tcb = pnew;
-  restore_intr(flags);
 }
 
 /**
@@ -502,8 +537,10 @@ STATIC void init_stack_frame(ac_u8* pstack, ac_uptr stack_size, ac_uptr flags,
  *
  * Return 0 on success !0 if an error.
  */
-STATIC tcb_x86* thread_create(ac_size_t stack_size, ac_uptr flags,
+__attribute__((noinline))
+tcb_x86* thread_create(ac_size_t stack_size, ac_uptr flags,
     void*(*entry)(void*), void* entry_arg) {
+  ac_uint svflags = disable_intr();
   tcb_x86* ptcb = AC_NULL;
   ac_u8* pstack = AC_NULL;
   int error = 0;
@@ -533,10 +570,10 @@ STATIC tcb_x86* thread_create(ac_size_t stack_size, ac_uptr flags,
   }
   ptcb->pstack = pstack;
   init_stack_frame(pstack, stack_size, flags, entry_trampoline, ptcb,
-      &ptcb->sp, &ptcb->ss); //, &ptcb->bp);
+      &ptcb->sp, &ptcb->ss);
 
   // Add this after pready
-  add_after(pready, ptcb);
+  add_tcb_after(ptcb, pready);
 
 done:
   if (error != 0) {
@@ -550,6 +587,7 @@ done:
   ac_debug_printf("thread_x86 thread_create:-ptcb=0x%p thread_id=%d pready=0x%p next=0x%p\n",
       ptcb, ptcb->thread_id, pready, next_tcb(pready));
 
+  restore_intr(svflags);
   return ptcb;
 }
 
@@ -563,31 +601,35 @@ void ac_thread_early_init() {
   set_intr_handler(RESCHEDULE_ISR_INTR, reschedule_isr);
   set_intr_handler(TIMER_RESCHEDULE_ISR_INTR, timer_reschedule_isr);
 
-  // Initialize the idle_stack
-  ac_uptr idle_flags = DEFAULT_FLAGS;
-  init_stack_frame(idle_stack, sizeof(idle_stack), idle_flags, idle, AC_NULL,
-      &idle_tcb.sp, &idle_tcb.ss); //, &idle_tcb.bp);
+  // Allocate the initial array
+  total_threads = 0;
+  pthreads = AC_NULL;
+  ac_thread_init(2);
+  ac_assert(pthreads != AC_NULL);
 
-  // Get the main tcb, no stack is needed because its
-  // the one currently being used.
-  tcb_init(&main_tcb, 0, AC_NULL, AC_NULL, AC_NULL);
-  tcb_init(&idle_tcb, 1, idle_stack, idle, AC_NULL);
+  pidle_tcb = &pthreads->tcbs[0];
+  pmain_tcb = &pthreads->tcbs[1];
+
+  // Initialize idle and main tcbs
+  tcb_init(pidle_tcb, 0, idle, AC_NULL);
+  tcb_init(pmain_tcb, 1, AC_NULL, AC_NULL);
+
+  // Initialize idle's stack
+  init_stack_frame(idle_stack, sizeof(idle_stack), DEFAULT_FLAGS, idle, pidle_tcb,
+      &pidle_tcb->sp, &pidle_tcb->ss);
 
   // Empty waiting list
   pwaiting_list = AC_NULL;
 
-  // Add main as the only tcb on pready to start
-  main_tcb.pnext_tcb = &main_tcb;
-  pready = &main_tcb;
+  // Add idle as the initial pready list
+  pmain_tcb->pnext_tcb = pmain_tcb;
+  pmain_tcb->pprev_tcb = pmain_tcb;
+  pready = pmain_tcb;
 
-  // Add idle after that
-  add_after(pready, &idle_tcb);
+  add_tcb_after(pidle_tcb, pready);
 
-  // TODO: Start a periodic timer for scheduling
-  // ac_start_periodic_timer(1000); // Timer for scheduling
-
-  ac_debug_printf("thread_x86 ac_thread_early_init:- pready=%p next=%p main_tcb=%p idle_tcb=%p\n",
-      pready, next_tcb(pready), &main_tcb, &idle_tcb);
+  ac_printf("ac_thread_early_init:- pready=0x%lx next=0x%lx pmain=0x%lx pidle=0x%lx\n",
+      pready, next_tcb(pready), pidle_tcb, pmain_tcb);
 }
 
 /**
@@ -596,24 +638,40 @@ void ac_thread_early_init() {
 void ac_thread_init(ac_u32 max_threads) {
   ac_assert(max_threads > 0);
 
-  // Create array of the threads
-  ac_u32 size = sizeof(ac_threads) + (max_threads * sizeof(tcb_x86));
-  pthreads = ac_malloc(size);
-  ac_assert(pthreads != AC_NULL);
+  ac_uint flags = disable_intr();
+  if (max_threads > total_threads) {
+    // Create array of the threads
+    ac_u32 count = max_threads - total_threads;
+    ac_u32 size = sizeof(ac_threads) + (count * sizeof(tcb_x86));
+    ac_threads* pnew = ac_malloc(size);
+    ac_assert(pnew != AC_NULL);
+    pnew->max_count = count;
 
-  pthreads->max_count = max_threads;
-  for (ac_u32 i = 0; i < pthreads->max_count; i++) {
-    pthreads->tcbs[i].thread_id = AC_THREAD_ID_EMPTY;
-    pthreads->tcbs[i].entry = AC_NULL;
-    pthreads->tcbs[i].entry_arg = AC_NULL;
-    pthreads->tcbs[i].pnext_tcb = AC_NULL;
-    pthreads->tcbs[i].pstack = AC_NULL;
-    pthreads->tcbs[i].sp = AC_NULL;
+    // Initialize new entries to AC_THREAD_EMPTY
+    for (ac_u32 i = 0; i < count; i++) {
+      tcb_init(&pnew->tcbs[i], AC_THREAD_ID_EMPTY, AC_NULL, AC_NULL);
+    }
+
+    if (pthreads == AC_NULL) {
+      // Add frist set of threads
+      pnew->pnext = pnew;
+      pnew->pprev = pnew;
+      pthreads = pnew;
+    } else {
+      // Add these new ones to the beginning of the list
+      // by adding after the pthreads then move pthreads
+      ac_threads* ptmp = pthreads->pnext;
+      pnew->pnext = ptmp;
+      pnew->pprev = pthreads;
+      ptmp->pprev = pnew;
+      pthreads->pnext = pnew;
+
+      // Point pthreads at pnew to make it head of the list
+      pthreads = pnew;
+    }
+    total_threads += max_threads;
   }
-
-  // Maybe early, but we don't know a good value?
-  main_tcb.thread_id = max_threads;
-  idle_tcb.thread_id = main_tcb.thread_id + 1;
+  restore_intr(flags);
 }
 
 /**
