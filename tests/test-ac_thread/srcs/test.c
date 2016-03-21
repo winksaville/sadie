@@ -38,8 +38,8 @@ ac_bool test_simple(void) {
   ac_u32 result = t1_count_initial;
 
   t1_count = t1_count_initial;
-  ac_u32 created = ac_thread_create(0, t1, (void*)(ac_uptr)t1_count_increment);
-  error |= AC_TEST(created == 0);
+  ac_thread_t created = ac_thread_create(0, t1, (void*)(ac_uptr)t1_count_increment);
+  error |= AC_TEST(created != 0);
 
   if (created == 0) {
     const ac_u32 max_loops = 1000000000;
@@ -65,7 +65,7 @@ ac_bool test_simple(void) {
     }
 
     created = ac_thread_create(0, t1, (void*)(ac_uptr)t1_count_increment);
-    error |= AC_TEST(created == 0);
+    error |= AC_TEST(created != 0);
 
     if (created == 0) {
       const ac_u32 max_loops = 1000000000;
@@ -143,8 +143,8 @@ ac_bool perf_yield(void) {
   // Time  two threads running the yield loop
   __atomic_store_n(&py.done, AC_FALSE, __ATOMIC_RELEASE);
 
-  ac_u32 created = ac_thread_create(0, yt, (void*)&py);
-  error |= AC_TEST(created == 0);
+  ac_thread_t created = ac_thread_create(0, yt, (void*)&py);
+  error |= AC_TEST(created != 0);
 
   ac_u64 two_thread_start = ac_tscrd();
 

@@ -22,6 +22,13 @@
 #include <ac_thread_stack_min.h>
 
 /**
+ * An opaque implemenation defined value returned
+ * by ac_thread_create and passed as a parmeter
+ * methods.
+ */
+typedef ac_uptr ac_thread_t;
+
+/**
  * Initialize module
  */
 void ac_thread_init(ac_u32 max_threads);
@@ -43,9 +50,9 @@ void ac_thread_yield(void);
  * @param entry is the routine to run
  * @param entry_arg is the argument passed to entry.
  *
- * @return 0 on success !0 if an error.
+ * @return an opaque value which is ZERO if an error.
  */
-ac_u32 ac_thread_create(ac_size_t stack_size,
+ac_thread_t ac_thread_create(ac_size_t stack_size,
     void*(*entry)(void*), void* entry_arg);
 
 #endif

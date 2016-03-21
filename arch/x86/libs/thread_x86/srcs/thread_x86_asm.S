@@ -50,7 +50,8 @@ thread_x86_yield:
         // Disable interrupts
         cli
 
-        // Call thread scheduler
+        // Call thread scheduler, returns in rax the
+        // tcb_x86 pointer of the thread to run
         mov    %ss,%si
         mov    %rsp,%rdi
         movzwl %si,%esi
@@ -76,6 +77,5 @@ thread_x86_yield:
         pop     %r13
         pop     %r14
         pop     %r15
-//        pop     %rbp
 
         iretq

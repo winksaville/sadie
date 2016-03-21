@@ -460,11 +460,10 @@ void ac_thread_init(ac_u32 max_threads) {
  *        If stack_size is > 0 it must be at AC_THREAD_MIN_STACK_SIZE
  *        otherwise an error is returned and the thread is not created.
  *
- * @return 0 on success !0 if an error.
+ * @return an opaque value which is ZERO if an error.
  */
-ac_u32 ac_thread_create(ac_size_t stack_size,
+ac_thread_t ac_thread_create(ac_size_t stack_size,
     void*(*entry)(void*), void* entry_arg) {
-  ac_tcb* ptcb = thread_create(stack_size,
+  return (ac_thread_t)thread_create(stack_size,
       PSR_MODE_SYS | PSR_FIQ_DISABLED | PSR_IRQ_ENABLED, entry, entry_arg);
-  return ptcb == AC_NULL ? 1 : 0;
 }

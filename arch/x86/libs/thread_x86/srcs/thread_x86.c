@@ -110,7 +110,6 @@ struct saved_regs {
   ac_u64 r13;
   ac_u64 r14;
   ac_u64 r15;
-//  ac_u64 rbp;
 };
 
 struct full_stack_frame {
@@ -149,7 +148,6 @@ void print_full_stack_frame(char* str, struct full_stack_frame* fsf) {
   ac_printf(" r13: 0x%lx 0x%p\n", fsf->regs.r13, &fsf->regs.r13);
   ac_printf(" r14: 0x%lx 0x%p\n", fsf->regs.r14, &fsf->regs.r14);
   ac_printf(" r15: 0x%lx 0x%p\n", fsf->regs.r15, &fsf->regs.r15);
-  //ac_printf(" rbp: 0x%lx 0x%p\n", fsf->regs.rbp, &fsf->regs.rbp);
   print_intr_frame(AC_NULL, &fsf->iret_frame);
 }
 #endif
@@ -537,10 +535,10 @@ STATIC void init_stack_frame(ac_u8* pstack, ac_uptr stack_size, ac_uptr flags,
  *
  * Return 0 on success !0 if an error.
  */
-__attribute__((noinline))
-tcb_x86* thread_create(ac_size_t stack_size, ac_uptr flags,
+//__attribute__((noinline))
+STATIC tcb_x86* thread_create(ac_size_t stack_size, ac_uptr flags,
     void*(*entry)(void*), void* entry_arg) {
-  ac_uint svflags = disable_intr();
+  ac_uint sv_flags = disable_intr();
   tcb_x86* ptcb = AC_NULL;
   ac_u8* pstack = AC_NULL;
   int error = 0;
@@ -587,7 +585,7 @@ done:
   ac_debug_printf("thread_x86 thread_create:-ptcb=0x%p thread_id=%d pready=0x%p next=0x%p\n",
       ptcb, ptcb->thread_id, pready, next_tcb(pready));
 
-  restore_intr(svflags);
+  restore_intr(sv_flags);
   return ptcb;
 }
 
@@ -683,10 +681,9 @@ void ac_thread_init(ac_u32 max_threads) {
  *        If stack_size is > 0 it must be at AC_THREAD_MIN_STACK_SIZE
  *        otherwise an error is returned and the thread is not created.
  *
- * @return 0 on success !0 if an error.
+ * @return a opaque value which is ZERO if an error.
  */
-ac_u32 ac_thread_create(ac_size_t stack_size,
+ac_thread_t ac_thread_create(ac_size_t stack_size,
     void*(*entry)(void*), void* entry_arg) {
-  tcb_x86* ptcb = thread_create(stack_size, DEFAULT_FLAGS, entry, entry_arg);
-  return ptcb == AC_NULL ? 1 : 0;
+  return (ac_thread_t)thread_create(stack_size, DEFAULT_FLAGS, entry, entry_arg);
 }

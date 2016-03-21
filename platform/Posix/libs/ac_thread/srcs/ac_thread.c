@@ -27,7 +27,7 @@
 #include <sched.h>
 
 typedef struct {
-  ac_uptr thread_id;
+  pthread_t thread_id;
   void*(*entry)(void*);
   void* entry_arg;
 } ac_tcb;
@@ -48,7 +48,7 @@ static void* entry_trampoline(void* param) {
   ptcb->entry(ptcb->entry_arg);
 
   // Mark AC_THREAD_ID_EMPTY
-  ac_uptr* pthread_id = &ptcb->thread_id;
+  pthread_t* pthread_id = &ptcb->thread_id;
   __atomic_store_n(pthread_id, AC_THREAD_ID_EMPTY, __ATOMIC_RELEASE);
   return AC_NULL;
 }
@@ -88,10 +88,11 @@ void ac_thread_yield(void) {
  *
  * If stack_size is 0 a "default" stack size will be used.
  *
- * Return 0 on success !0 if an error.
+ * @return a opaque value which is ZERO if an error.
  */
-ac_u32 ac_thread_create(ac_size_t stack_size,
+ac_thread_t ac_thread_create(ac_size_t stack_size,
     void*(*entry)(void*), void* entry_arg) {
+  ac_tcb* pthe_tcb = AC_NULL;
   int error = 0;
   pthread_attr_t attr;
   pthread_attr_init(&attr);
@@ -107,18 +108,19 @@ ac_u32 ac_thread_create(ac_size_t stack_size,
   for (ac_u32 i = 0; i < pthreads->max_count; i++) {
     ac_uptr empty = AC_THREAD_ID_EMPTY;
 
-    ac_tcb* ptcb = &pthreads->tcbs[i];
-    ac_uptr* pthread_id = &ptcb->thread_id;
+    ac_tcb* pcur_tcb = &pthreads->tcbs[i];
+    pthread_t* pthread_id = &pcur_tcb->thread_id;
     ac_bool ok = __atomic_compare_exchange_n(pthread_id, &empty,
         AC_THREAD_ID_NOT_EMPTY, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
     if (ok) {
-      ptcb->entry = entry;
-      ptcb->entry_arg = entry_arg;
+      pcur_tcb->entry = entry;
+      pcur_tcb->entry_arg = entry_arg;
       error |= pthread_create((pthread_t *)pthread_id, &attr,
-          entry_trampoline, ptcb);
+          entry_trampoline, pcur_tcb);
       ac_assert(*pthread_id != AC_THREAD_ID_EMPTY);
       ac_assert(*pthread_id != AC_THREAD_ID_NOT_EMPTY);
       if (error == 0) {
+        pthe_tcb = pcur_tcb;
         break;
       } else {
         // Mark as empty and try again, although probably won't work
@@ -130,5 +132,5 @@ ac_u32 ac_thread_create(ac_size_t stack_size,
   pthread_attr_destroy(&attr);
 
 done:
-  return (ac_u32)error;
+  return (ac_thread_t)pthe_tcb;
 }

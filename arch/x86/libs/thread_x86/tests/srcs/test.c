@@ -83,8 +83,8 @@ ac_bool perf_yield(void) {
   // Time  two threads running the yield loop
   __atomic_store_n(&py.done, AC_FALSE, __ATOMIC_RELEASE);
 
-  ac_u32 created = ac_thread_create(0, yt, (void*)&py);
-  error |= AC_TEST(created == 0);
+  ac_thread_t created = ac_thread_create(0, yt, (void*)&py);
+  error |= AC_TEST(created != 0);
 
   ac_u64 two_thread_start = ac_tscrd();
 
@@ -140,7 +140,7 @@ ac_uint test_yield_one_other_thread(void) {
   ac_uint error = AC_FALSE;
   ac_printf("test_yield_one_other_thread:+\n");
 
-  error |= AC_TEST(ac_thread_create(AC_THREAD_STACK_MIN, t0, AC_NULL) == 0);
+  error |= AC_TEST(ac_thread_create(AC_THREAD_STACK_MIN, t0, AC_NULL) != 0);
 
   thread_x86_yield();
 
@@ -189,7 +189,7 @@ ac_uint test_ac_thread_create() {
 
   ac_u64 expected_t1_counter = 10; //1000000000;
   error |= AC_TEST(ac_thread_create(AC_THREAD_STACK_MIN, t1,
-        (void*)expected_t1_counter) == 0);
+        (void*)expected_t1_counter) != 0);
 
   ac_u64 i = 0;
   ac_u64 ic = 0;
