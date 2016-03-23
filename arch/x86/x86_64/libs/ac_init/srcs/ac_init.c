@@ -22,7 +22,6 @@
 #include <page_table_x86.h>
 #include <page_table_x86_print.h>
 #include <reset_x86.h>
-#include <thread_x86.h>
 
 #include <multiboot2.h>
 
@@ -33,6 +32,7 @@
 #include <ac_receptor.h>
 #include <ac_sort.h>
 #include <ac_string.h>
+#include <ac_thread.h>
 #include <ac_tsc.h>
 
 static void print_multiboot2_tag(struct multiboot2_header_tag* tag) {

@@ -35,6 +35,7 @@ compilerArgs += [
   '-march=@0@'.format('armv6zk'),
   '-mcpu=@0@'.format(Cpu),
   '-mtune=@0@'.format(Cpu),
+  '-freg-struct-return'
 ]
 
 if Float != 'NONE'

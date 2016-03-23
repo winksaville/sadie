@@ -38,10 +38,10 @@ ac_bool test_simple(void) {
   ac_u32 result = t1_count_initial;
 
   t1_count = t1_count_initial;
-  ac_thread_t created = ac_thread_create(0, t1, (void*)(ac_uptr)t1_count_increment);
-  error |= AC_TEST(created != 0);
+  ac_thread_rslt_t rslt = ac_thread_create(0, t1, (void*)(ac_uptr)t1_count_increment);
+  error |= AC_TEST(rslt.status == 0);
 
-  if (created == 0) {
+  if (rslt.status == 0) {
     const ac_u32 max_loops = 1000000000;
     ac_u32 loops;
     for (loops = 0; loops < max_loops; loops++) {
@@ -64,10 +64,10 @@ ac_bool test_simple(void) {
       __atomic_load_n(&t1_count, __ATOMIC_ACQUIRE);
     }
 
-    created = ac_thread_create(0, t1, (void*)(ac_uptr)t1_count_increment);
-    error |= AC_TEST(created != 0);
+    rslt = ac_thread_create(0, t1, (void*)(ac_uptr)t1_count_increment);
+    error |= AC_TEST(rslt.status == 0);
 
-    if (created == 0) {
+    if (rslt.status == 0) {
       const ac_u32 max_loops = 1000000000;
       ac_u32 loops;
       for (loops = 0; loops < max_loops; loops++) {
@@ -143,8 +143,8 @@ ac_bool perf_yield(void) {
   // Time  two threads running the yield loop
   __atomic_store_n(&py.done, AC_FALSE, __ATOMIC_RELEASE);
 
-  ac_thread_t created = ac_thread_create(0, yt, (void*)&py);
-  error |= AC_TEST(created != 0);
+  ac_thread_rslt_t rslt = ac_thread_create(0, yt, (void*)&py);
+  error |= AC_TEST(rslt.status == 0);
 
   ac_u64 two_thread_start = ac_tscrd();
 

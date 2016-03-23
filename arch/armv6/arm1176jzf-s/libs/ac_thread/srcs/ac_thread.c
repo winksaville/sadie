@@ -453,17 +453,25 @@ void ac_thread_init(ac_u32 max_threads) {
 }
 
 /**
- * Create a thread and invoke the entry_point passing
- * the parameter entry_arg.
+ * Create a thread and invoke the entry passing entry_arg. If
+ * the entry routine returns the thread is considered dead
+ * and will not be rescheduled and its stack is reclamined.
+ * Any other global memory associated with the thread still
+ * exists and is left untouched.
  *
- * @param stack_size is <= 0 a "default" stack size will be used.
- *        If stack_size is > 0 it must be at AC_THREAD_MIN_STACK_SIZE
- *        otherwise an error is returned and the thread is not created.
+ * @param stack_size is 0 a "default" stack size will be used.
+ * @param entry is the routine to run
+ * @param entry_arg is the argument passed to entry.
  *
- * @return an opaque value which is ZERO if an error.
+ * @return a ac_thread_rslt contains a status and an opaque ac_thread_hdl_t.
+ *         if rslt.status == 0 the thread was created and ac_thread_hdl_t
+ *         is valid.
  */
-ac_thread_t ac_thread_create(ac_size_t stack_size,
+ac_thread_rslt_t ac_thread_create(ac_size_t stack_size,
     void*(*entry)(void*), void* entry_arg) {
-  return (ac_thread_t)thread_create(stack_size,
+  ac_thread_rslt_t rslt;
+  rslt.hdl = (ac_thread_hdl_t)thread_create(stack_size,
       PSR_MODE_SYS | PSR_FIQ_DISABLED | PSR_IRQ_ENABLED, entry, entry_arg);
+  rslt.status = (rslt.hdl != 0) ? 0 : 1;
+  return rslt;
 }

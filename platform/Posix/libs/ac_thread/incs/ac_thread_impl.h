@@ -14,48 +14,32 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_LIBS_INCS_AC_THREAD_H
-#define SADIE_LIBS_INCS_AC_THREAD_H
+#ifndef SADIE_PLATFORM_POSIX_LIBS_AC_THREAD_INCS_AC_THREAD_IMPL_H
+#define SADIE_PLATFORM_POSIX_LIBS_AC_THREAD_INCS_AC_THREAD_IMPL_H
 
 #include <ac_inttypes.h>
 
 /**
  * Minimum stack size
  */
-//#define AC_THREAD_STACK_MIN 0x1000
-
-/**
- * An opaque implemenation defined value returned
- * by ac_thread_create and passed as a parmeter
- * to other methods.
- */
-typedef ac_uptr ac_thread_hdl_t;
-
-/**
- * The result from ac_thread_create.
- */
-typedef struct {
-  ac_uint status;         // status == 0 on success
-  ac_thread_hdl_t hdl;    // handle to the thread if successful
-} ac_thread_rslt_t;
-
+#define AC_THREAD_STACK_MIN PTHREAD_STACK_MIN
 
 /**
  * Initialize this module early phase, must be
  * called before ac_thread_init
  */
-//void ac_thread_early_init();
+void ac_thread_early_init();
 
 /**
  * Initialize module
  */
-//void ac_thread_init(ac_u32 max_threads);
+void ac_thread_init(ac_u32 max_threads);
 
 /**
  * The current thread yeilds the CPU to the next
  * ready thread.
  */
-//void ac_thread_yield(void);
+void ac_thread_yield(void);
 
 /**
  * Create a thread and invoke the entry passing entry_arg. If
@@ -72,9 +56,7 @@ typedef struct {
  *         if rslt.status == 0 the thread was created and ac_thread_hdl_t
  *         is valid.
  */
-//ac_thread_rslt_t ac_thread_create(ac_size_t stack_size,
-//    void*(*entry)(void*), void* entry_arg);
-
-#include <ac_thread_impl.h>
+ac_thread_rslt_t ac_thread_create(ac_size_t stack_size,
+    void*(*entry)(void*), void* entry_arg);
 
 #endif

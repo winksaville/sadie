@@ -17,6 +17,7 @@ runtimeIncDirs += [include_directories('incs')]
 # The compiler arguments
 compilerArgs += [
   '-m32',
+  '-freg-struct-return',
 ]
 
 if Platform != 'Posix'

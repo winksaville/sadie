@@ -83,15 +83,23 @@ void ac_thread_yield(void) {
 
 
 /**
- * Get an execution thread and invoke the entry_point passing
- * the parameter entry_arg.
+ * Create a thread and invoke the entry passing entry_arg. If
+ * the entry routine returns the thread is considered dead
+ * and will not be rescheduled and its stack is reclamined.
+ * Any other global memory associated with the thread still
+ * exists and is left untouched.
  *
- * If stack_size is 0 a "default" stack size will be used.
+ * @param stack_size is 0 a "default" stack size will be used.
+ * @param entry is the routine to run
+ * @param entry_arg is the argument passed to entry.
  *
- * @return a opaque value which is ZERO if an error.
+ * @return a ac_thread_rslt contains a status and an opaque ac_thread_hdl_t.
+ *         if rslt.status == 0 the thread was created and ac_thread_hdl_t
+ *         is valid.
  */
-ac_thread_t ac_thread_create(ac_size_t stack_size,
+ac_thread_rslt_t ac_thread_create(ac_size_t stack_size,
     void*(*entry)(void*), void* entry_arg) {
+  ac_thread_rslt_t rslt;
   ac_tcb* pthe_tcb = AC_NULL;
   int error = 0;
   pthread_attr_t attr;
@@ -132,5 +140,7 @@ ac_thread_t ac_thread_create(ac_size_t stack_size,
   pthread_attr_destroy(&attr);
 
 done:
-  return (ac_thread_t)pthe_tcb;
+  rslt.hdl = (ac_thread_hdl_t)pthe_tcb;
+  rslt.status = (rslt.hdl != 0) ? 0 : 1;
+  return (ac_thread_rslt_t)rslt;
 }

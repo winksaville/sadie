@@ -14,24 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef ARCH_X86_AC_THREAD_INCS_AC_THREAD_X86_H
-#define ARCH_X86_AC_THREAD_INCS_AC_THREAD_X86_H
+#ifndef SADIE_ARCH_X86_LIBS_AC_THREAD_IMPL_INCS_THREAD_X86_H
+#define SADIE_ARCH_X86_LIBS_AC_THREAD_IMPL_INCS_THREAD_X86_H
 
-#include <ac_thread.h>
-
-#include <ac_inttypes.h>
-
-/**
- * Initialize this module early phase, must be
- * called before ac_thread_init
- */
-void ac_thread_early_init();
-
-/**
- * Initialize this module
- */
-void ac_thread_init(ac_u32 max_threads);
-
-void thread_x86_yield(void);
+extern void thread_x86_yield(void);
 
 #endif

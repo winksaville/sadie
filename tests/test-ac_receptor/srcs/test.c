@@ -95,8 +95,8 @@ ac_uint test_receptor(void) {
 
   ac_u64 start = ac_tscrd();
 
-  ac_thread_t created = ac_thread_create(0, t1, (void*)&params);
-  error |= AC_TEST(created != 0);
+  ac_thread_rslt_t rslt = ac_thread_create(0, t1, (void*)&params);
+  error |= AC_TEST(rslt.status == 0);
 
   for(ac_uint i = 0; i < params.loops; i++) {
     while(params.counter < i) {
