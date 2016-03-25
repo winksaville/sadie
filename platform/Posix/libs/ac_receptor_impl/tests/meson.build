@@ -16,12 +16,12 @@ if Platform == 'Posix'
   srcFiles = firstSrcFiles + ['srcs/test.c']
 
   # Create test_ac_receptor_impl executable
-  test_ac_receptor_impl = executable( 'test_ac_receptor_impl', srcFiles,
+  test_posix_ac_receptor_impl = executable( 'test_ac_receptor_impl', srcFiles,
     include_directories : runtimeIncDirs,
     link_args : linkArgs,
     c_args : compilerArgs,
     dependencies : [libruntime_dep],
   )
 
-  run_target('run-test-ac_receptor_impl', test_ac_receptor_impl)
+  run_target('run-test-posix-ac_receptor_impl', test_posix_ac_receptor_impl)
 endif
