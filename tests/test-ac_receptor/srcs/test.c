@@ -23,29 +23,6 @@
 #include <ac_thread.h>
 #include <ac_tsc.h>
 
-ac_u32 t1_count;
-
-struct test_params {
-  ac_receptor_t receptor;
-  ac_uint loops;
-  ac_uint counter;
-  ac_receptor_t done_receptor;
-};
-
-void* t1(void *param) {
-  struct test_params* params = (struct test_params*)param;
-  for(ac_uint i = 0; i < params->loops; i++) {
-    params->counter += 1;
-    ac_printf("t1: waiting thdl=%x\n", ac_thread_get_cur_hdl());
-    ac_receptor_wait(params->receptor);
-    ac_printf("t1: continuing thdl=%x\n", ac_thread_get_cur_hdl());
-  }
-
-  ac_printf("t1: signal done_receptor thdl=0x%x\n", ac_thread_get_cur_hdl());
-  ac_receptor_signal(params->done_receptor);
-  return AC_NULL;
-}
-
 #define round_up(x, y) ({               \
     ac_u64 rem = (x) % (y);             \
     ac_u64 result = ((x) + rem) / (y);  \
@@ -82,6 +59,28 @@ tres_t* calculate_tres(ac_u64 ticks) {
   return AC_NULL;
 }
 
+ac_u32 t1_count;
+
+struct test_params {
+  ac_receptor_t receptor;
+  ac_uint loops;
+  ac_uint counter;
+  ac_receptor_t done_receptor;
+};
+
+void* t1(void *param) {
+  struct test_params* params = (struct test_params*)param;
+  for(ac_uint i = 0; i < params->loops; i++) {
+    params->counter += 1;
+    ac_printf("t1: waiting thdl=%x\n", ac_thread_get_cur_hdl());
+    ac_receptor_wait(params->receptor);
+    ac_printf("t1: continuing thdl=%x\n", ac_thread_get_cur_hdl());
+  }
+
+  ac_printf("t1: signal done_receptor thdl=0x%x\n", ac_thread_get_cur_hdl());
+  ac_receptor_signal(params->done_receptor);
+  return AC_NULL;
+}
 
 ac_uint test_receptor(void) {
   ac_printf("test_receptor:+\n");
@@ -103,7 +102,10 @@ ac_uint test_receptor(void) {
 
   for (ac_uint i = 0; i < params.loops; i++) {
     while (params.counter <= i) {
+      ac_printf("test_receptor: call ac_thread_yield\n");
       ac_thread_yield();
+      //__asm__ volatile("int $3\n");
+      ac_printf("test_receptor: back ac_thread_yield\n");
     }
     ac_printf("test_receptor: signal\n");
     ac_receptor_signal(params.receptor);

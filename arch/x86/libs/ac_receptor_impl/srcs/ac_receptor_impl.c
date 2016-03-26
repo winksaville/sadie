@@ -172,10 +172,12 @@ ac_uint ac_receptor_signal(ac_receptor_t receptor) {
     // will do the right thing.
     ac_thread_hdl_t thdl = __atomic_load_n(preceptor_thdl, __ATOMIC_ACQUIRE);
     ac_debug_assert(thdl > RECEPTOR_SIGNALED);
+    ac_debug_printf("ac_receptor_signal: make ready by thdl=0x%x yield to thdl=0x%x\n",
+        ac_thread_get_cur_hdl(), thdl);
     ac_uint rslt = thread_make_ready(thdl);
     if (rslt == 0) {
-        ac_debug_printf("ac_receptor_signal: made ready by thdl=0x%x yield to thdl=0x%x\n",
-          ac_thread_get_cur_hdl(), thdl);
+      //ac_debug_printf("ac_receptor_signal: made ready by thdl=0x%x yield to thdl=0x%x\n",
+      //    ac_thread_get_cur_hdl(), thdl);
       ac_thread_yield();
     } else {
       ac_debug_printf("ac_receptor_signal: lost race thdl=0x%x signaler thdl=0x%x\n",
