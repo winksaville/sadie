@@ -85,12 +85,6 @@ STATIC tcb_x86* pmain_tcb;
 STATIC tcb_x86* pready;
 
 /**
- * The list of threads which are waiting for some
- * type of event??
- */
-STATIC tcb_x86* pwaiting_list;
-
-/**
  * All of the threads
  */
 STATIC ac_u32 total_threads;
@@ -154,6 +148,20 @@ void print_full_stack_frame(char* str, struct full_stack_frame* fsf) {
   print_intr_frame(AC_NULL, &fsf->iret_frame);
 }
 #endif
+
+void print_tcb_list(const char* str, tcb_x86* phead) {
+#if AC_TRUE
+  if (str != AC_NULL) {
+    ac_printf(str);
+  }
+  tcb_x86* pcur = phead;
+  do {
+    ac_printf("%x:%d ", pcur, pcur->thread_id);
+    pcur = pcur->pnext_tcb;
+  } while (pcur != phead);
+  ac_printf("\n");
+#endif
+}
 
 /**
  * Initialize tcb it with the entry and entry_arg.
@@ -237,6 +245,21 @@ STATIC __inline__ tcb_x86* next_tcb(tcb_x86* pcur_tcb) {
 }
 
 /**
+ * Advance to next ready tcb skipping idle once
+ */
+STATIC void advance_to_next_ready(void) {
+  // Get the next tcb
+  pready = next_tcb(pready);
+  if (pready == pidle_tcb) {
+    // Skip idle once, if idle is the only thread
+    // then we'll it will become pready and we'll
+    // execute this time.
+    pready = next_tcb(pready);
+  }
+}
+
+
+/**
  * Add an initialized tcb following pcur
  *
  * @param pcur is a tcb in the list which will preceed pnew
@@ -300,8 +323,11 @@ STATIC ac_uint remove_tcb_from_ready(tcb_x86* pcur) {
 
   tcb_x86* pnext_tcb = remove_tcb_non_blocking(pcur);
 
-  if (pnext_tcb != AC_NULL) {
+  // Did we just remove pready?
+  if (pcur == pready) {
+    // Yep, change pready and advance to the next ready thread.
     pready = pnext_tcb;
+    advance_to_next_ready();
   }
 
   restore_intr(flags);
@@ -325,14 +351,8 @@ tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss) {
   pready->sp = sp;
   pready->ss = ss;
 
-  // Get the next tcb
-  pready = next_tcb(pready);
-  if (pready == pidle_tcb) {
-    // Skip idle once, if idle is the only thread
-    // then we'll it will become pready and we'll
-    // execute this time.
-    pready = next_tcb(pready);
-  }
+  // Get the next tcb to run
+  advance_to_next_ready();
 
   return pready;
 }
@@ -585,10 +605,12 @@ done:
     }
   }
 
-  ac_debug_printf("thread_x86 thread_create: pstack=0x%p stack_size=0x%x tos=0x%p\n",
+#if AC_FALSE
+  ac_printf("thread_create: pstack=0x%x stack_size=0x%x tos=0x%x\n",
       pstack, stack_size, pstack + stack_size);
-  ac_debug_printf("thread_x86 thread_create:-ptcb=0x%p thread_id=%d pready=0x%p next=0x%p\n",
-      ptcb, ptcb->thread_id, pready, next_tcb(pready));
+  ac_printf("thread_create:-ptcb=0x%x ready: ", ptcb);
+  print_tcb_list(AC_NULL, pready);
+#endif
 
   restore_intr(sv_flags);
   return ptcb;
@@ -621,18 +643,16 @@ void ac_thread_early_init() {
   init_stack_frame(idle_stack, sizeof(idle_stack), DEFAULT_FLAGS, idle, pidle_tcb,
       &pidle_tcb->sp, &pidle_tcb->ss);
 
-  // Empty waiting list
-  pwaiting_list = AC_NULL;
-
-  // Add idle as the initial pready list
+  // Add main as the initial pready list
   pmain_tcb->pnext_tcb = pmain_tcb;
   pmain_tcb->pprev_tcb = pmain_tcb;
   pready = pmain_tcb;
 
+  // Add idle to the pready list
   add_tcb_after(pidle_tcb, pready);
 
-  ac_printf("ac_thread_early_init:- pready=0x%lx next=0x%lx pmain=0x%lx pidle=0x%lx\n",
-      pready, next_tcb(pready), pidle_tcb, pmain_tcb);
+  ac_printf("ac_thread_early_init: pmain=0x%lx pidle=0x%lx\n", pmain_tcb, pidle_tcb);
+  print_tcb_list("ac_thread_early_init:-ready: ", pready);
 }
 
 /**

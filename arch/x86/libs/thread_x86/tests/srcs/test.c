@@ -16,6 +16,7 @@
 
 #include <test.h>
 
+#include <ac_thread.h>
 #include <thread_x86.h>
 
 #include <apic_x86.h>
@@ -124,6 +125,7 @@ ac_uint test_yield_no_other_threads(void) {
 }
 
 volatile ac_u64 t0_counter;
+
 
 void* t0(void* p) {
   AC_UNUSED(p);
@@ -259,6 +261,120 @@ ac_uint test_timer() {
   return error;
 }
 
+struct mp {
+  char* name;
+  ac_u64 loops;
+  ac_bool done;
+};
+
+void* tmulti(void* p) {
+  struct mp* pmp = (struct mp*)p;
+
+  ac_printf("tmulit:+name=%s\n", pmp->name);
+
+  ac_bool* pdone = &pmp->done;
+  ac_u64* ploops = &pmp->loops;
+  while (!__atomic_load_n(pdone, __ATOMIC_ACQUIRE)) {
+    __atomic_add_fetch(ploops, 1, __ATOMIC_RELEASE);
+  }
+
+  ac_printf("tmulit:-name=%s\n", pmp->name, __atomic_load_n(ploops, __ATOMIC_ACQUIRE));
+
+  // The main loop needs to wait on this so we exit.
+  // TODO: Add ac_thread_join.
+  __atomic_store_n(&t1_done, AC_FALSE, __ATOMIC_RELEASE);
+
+  return AC_NULL;
+}
+
+ac_uint test_make_not_ready() {
+  ac_printf("test_make_not_ready:+\n");
+  ac_uint error = AC_FALSE;
+
+  struct mp tm0 = { .name="tm0", .loops=0, .done=AC_FALSE };
+
+  ac_uint flags = enable_intr();
+  ac_printf("test_make_not_ready: flags=%x\n", flags);
+  {
+    ac_thread_rslt_t tm0_rslt;
+
+    tm0_rslt = ac_thread_create(AC_THREAD_STACK_MIN, tmulti, &tm0);
+    error |= AC_TEST(tm0_rslt.status == 0);
+
+    ac_printf("test_make_not_ready: hdl=%x\n", tm0_rslt.hdl);
+    thread_make_not_ready(tm0_rslt.hdl);
+  }
+  restore_intr(flags);
+
+  ac_bool *pdone;
+  pdone = &tm0.done;
+  __atomic_store_n(pdone, AC_TRUE, __ATOMIC_RELEASE);
+
+  ac_thread_yield();
+
+  ac_uint zombies = remove_zombies();
+  ac_printf("test_make_not_ready: zombies removed=%d\n", zombies);
+  ac_printf("test_make_not_ready: 0=%ld\n", tm0.loops);
+
+  ac_printf("test_make_not_ready:-error=%d\n", error);
+  return error;
+}
+
+ac_uint test_multi() {
+  ac_printf("test_multi:+\n");
+  ac_uint error = AC_FALSE;
+
+  struct mp tm0 = { .name="tm0", .loops=0, .done=AC_FALSE };
+  struct mp tm1 = { .name="tm1", .loops=0, .done=AC_FALSE };
+
+  ac_uint flags = enable_intr();
+  {
+    ac_thread_rslt_t tm0_rslt;
+    ac_thread_rslt_t tm1_rslt;
+
+    tm0_rslt = ac_thread_create(AC_THREAD_STACK_MIN, tmulti, &tm0);
+    error |= AC_TEST(tm0_rslt.status == 0);
+    tm1_rslt = ac_thread_create(AC_THREAD_STACK_MIN, tmulti, &tm1);
+    error |= AC_TEST(tm1_rslt.status == 0);
+
+    ac_uint change = 0;
+    for (ac_u64 i = 0; i < 0x0000000100000000; i++) {
+      if ((i & 0x0fffffff) == 0) {
+        if ((change++ & 1) == 0) {
+          ac_printf("tm0 not, tm1 ready ");
+          thread_make_not_ready(tm0_rslt.hdl);
+          thread_make_ready(tm1_rslt.hdl);
+        } else {
+          ac_printf("tm0 ready, tm1 not ");
+          thread_make_ready(tm0_rslt.hdl);
+          thread_make_not_ready(tm1_rslt.hdl);
+        }
+        ac_printf("i=%lx\n", i);
+      }
+    }
+
+    // Be sure both are running so they can be "done"
+    thread_make_ready(tm0_rslt.hdl);
+    thread_make_ready(tm1_rslt.hdl);
+  }
+  restore_intr(flags);
+
+  ac_bool *pdone;
+  pdone = &tm0.done;
+  __atomic_store_n(pdone, AC_TRUE, __ATOMIC_RELEASE);
+  pdone = &tm1.done;
+  __atomic_store_n(pdone, AC_TRUE, __ATOMIC_RELEASE);
+
+  ac_thread_yield();
+
+  ac_uint zombies = remove_zombies();
+  ac_printf("test_multi: zombies removed=%d\n", zombies);
+  ac_printf("test_multi: 0=%ld 1=%ld\n", tm0.loops, tm1.loops);
+
+  ac_printf("test_multi:-error=%d\n", error);
+  return error;
+}
+
 int main(void) {
   ac_uint error = AC_FALSE;
 
@@ -269,6 +385,8 @@ int main(void) {
     error |= test_yield_one_other_thread();
     error |= test_ac_thread_create();
     error |= test_timer();
+    error |= test_make_not_ready();
+    error |= test_multi();
   }
 
   ac_uint zombies = remove_zombies();
