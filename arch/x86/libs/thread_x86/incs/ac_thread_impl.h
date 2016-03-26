@@ -42,6 +42,12 @@ void ac_thread_init(ac_u32 max_threads);
 void ac_thread_yield(void);
 
 /**
+ * Get current thread handle
+ *
+ */
+ac_thread_hdl_t ac_thread_get_cur_hdl(void);
+
+/**
  * Create a thread and invoke the entry passing entry_arg. If
  * the entry routine returns the thread is considered dead
  * and will not be rescheduled and its stack is reclamined.

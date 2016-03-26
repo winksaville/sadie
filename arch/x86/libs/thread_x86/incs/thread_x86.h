@@ -17,6 +17,52 @@
 #ifndef SADIE_ARCH_X86_LIBS_AC_THREAD_IMPL_INCS_THREAD_X86_H
 #define SADIE_ARCH_X86_LIBS_AC_THREAD_IMPL_INCS_THREAD_X86_H
 
-extern void thread_x86_yield(void);
+#include <interrupts_x86.h>
+
+#include <ac_inttypes.h>
+#include <ac_thread.h>
+
+/**
+ * The current thread yeilds the CPU to the next
+ * ready thread.
+ */
+void thread_yield(void);
+
+/**
+ * Remove the thread from its current list
+ *
+ * @param hdl is an opaque thread handle
+ *
+ * @return 0 if successful
+ */
+ac_uint thread_remove_from_list(ac_thread_hdl_t hdl);
+
+/**
+ * Make the thread not ready,
+ *
+ * @param hdl is an opaque thread handle
+ *
+ * @return 0 if successful
+ */
+ac_uint thread_make_not_ready(ac_thread_hdl_t hdl);
+
+/**
+ * Make the thread ready
+ *
+ * @param hdl is an opaque thread handle
+ *
+ * @return 0 if successful
+ */
+ac_uint thread_make_ready(ac_thread_hdl_t hdl);
+
+/**
+ * Handle the reschedule interrupt. Defined in thread_x86_asm.S
+ */
+void reschedule_isr(struct intr_frame* frame);
+
+/**
+ * Handle the timer reschedule interrupt. Defined in thread_x86_asm.S
+ */
+void timer_reschedule_isr(struct intr_frame* frame);
 
 #endif

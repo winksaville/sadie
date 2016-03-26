@@ -16,6 +16,7 @@
 
 #include <ac_thread.h>
 #include <thread_x86.h>
+#include <thread_x86_debug_ctx_switch.h>
 
 #include <apic_x86.h>
 #include <interrupts_x86.h>
@@ -95,6 +96,7 @@ STATIC tcb_x86* pwaiting_list;
 STATIC ac_u32 total_threads;
 STATIC ac_threads* pthreads;
 
+#define NUM_SAVED_REGS 15
 struct saved_regs {
   ac_u64 rax;
   ac_u64 rdx;
@@ -102,7 +104,6 @@ struct saved_regs {
   ac_u64 rbx;
   ac_u64 rsi;
   ac_u64 rdi;
-  ac_u64 rbp;
   ac_u64 r8;
   ac_u64 r9;
   ac_u64 r10;
@@ -111,12 +112,13 @@ struct saved_regs {
   ac_u64 r13;
   ac_u64 r14;
   ac_u64 r15;
+  ac_u64 rbp;
 };
 
 struct full_stack_frame {
   union {
     struct saved_regs regs;
-    ac_u64 regs_array[15];
+    ac_u64 regs_array[NUM_SAVED_REGS];
   };
   struct intr_frame iret_frame;
 } __attribute__ ((__packed__));
@@ -125,7 +127,7 @@ struct full_stack_frame {
 ac_static_assert(sizeof(struct full_stack_frame) == FULL_STACK_FRAME_SIZE,
     "inital_stack_frame is not " AC_XSTR(FULL_STACK_FRAME_SIZE) " bytes in size");
 
-#ifndef NDEBUG
+#ifdef THREAD_X86_DEBUG_CTX_SWITCH
 /**
  * Print full stack frame
  */
@@ -140,7 +142,6 @@ void print_full_stack_frame(char* str, struct full_stack_frame* fsf) {
   ac_printf(" rbx: 0x%lx 0x%p\n", fsf->regs.rbx, &fsf->regs.rbx);
   ac_printf(" rsi: 0x%lx 0x%p\n", fsf->regs.rsi, &fsf->regs.rsi);
   ac_printf(" rdi: 0x%lx 0x%p\n", fsf->regs.rdi, &fsf->regs.rdi);
-  ac_printf(" rbp: 0x%lx 0x%p\n", fsf->regs.rbp, &fsf->regs.rbp);
   ac_printf("  r8: 0x%lx 0x%p\n", fsf->regs.r8,  &fsf->regs.r8);
   ac_printf("  r9: 0x%lx 0x%p\n", fsf->regs.r9,  &fsf->regs.r9);
   ac_printf(" r10: 0x%lx 0x%p\n", fsf->regs.r10, &fsf->regs.r10);
@@ -149,6 +150,7 @@ void print_full_stack_frame(char* str, struct full_stack_frame* fsf) {
   ac_printf(" r13: 0x%lx 0x%p\n", fsf->regs.r13, &fsf->regs.r13);
   ac_printf(" r14: 0x%lx 0x%p\n", fsf->regs.r14, &fsf->regs.r14);
   ac_printf(" r15: 0x%lx 0x%p\n", fsf->regs.r15, &fsf->regs.r15);
+  ac_printf(" rbp: 0x%lx 0x%p\n", fsf->regs.rbp, &fsf->regs.rbp);
   print_intr_frame(AC_NULL, &fsf->iret_frame);
 }
 #endif
@@ -239,16 +241,28 @@ STATIC __inline__ tcb_x86* next_tcb(tcb_x86* pcur_tcb) {
  *
  * @param pcur is a tcb in the list which will preceed pnew
  * @param pnew is a tcb which will after pcur.
+ *
+ * @return 0 if successful
  */
-STATIC void add_tcb_after(tcb_x86* pnew, tcb_x86* pcur) {
+STATIC ac_uint add_tcb_after(tcb_x86* pnew, tcb_x86* pcur) {
+  ac_uint rslt;
   ac_uint flags = disable_intr();
+
   tcb_x86* ptmp = pcur->pnext_tcb;
-  pnew->pnext_tcb = ptmp;
-  pnew->pprev_tcb = pcur;
-  ptmp->pprev_tcb = pnew;
-  pcur->pnext_tcb = pnew;
+  if (pnew->pnext_tcb == AC_NULL) {
+    pnew->pnext_tcb = ptmp;
+    pnew->pprev_tcb = pcur;
+    ptmp->pprev_tcb = pnew;
+    pcur->pnext_tcb = pnew;
+    //ac_printf("add_tcb_after: ret rslt=0, pcur=0x%x pnew=0x%x\n", pcur, pnew);
+    rslt = 0;
+  } else {
+    //ac_printf("add_tcb_after: ret rslt=1, pcur=0x%x pnew=0x%x\n", pcur, pnew);
+    rslt = 1;
+  }
 
   restore_intr(flags);
+  return rslt;
 }
 
 /**
@@ -257,23 +271,53 @@ STATIC void add_tcb_after(tcb_x86* pnew, tcb_x86* pcur) {
  *
  * @param pcur is a tcb to be removed
  *
- * @return pcur
+ * @return pnext if successful, else AC_NULL
  */
-tcb_x86* remove_tcb(tcb_x86* pcur) {
-  ac_uint flags = disable_intr();
-  tcb_x86* pprev = pcur->pprev_tcb;
-  tcb_x86* pnext = pcur->pnext_tcb;
-  pprev->pnext_tcb = pnext;
-  pnext->pprev_tcb = pprev;
-  restore_intr(flags);
-  return pcur;
+STATIC tcb_x86* remove_tcb_non_blocking(tcb_x86* pcur) {
+  tcb_x86* pnext_tcb = pcur->pnext_tcb;
+  if (pnext_tcb != AC_NULL) {
+    tcb_x86* pprev = pcur->pprev_tcb;
+    tcb_x86* pnext = pcur->pnext_tcb;
+    pprev->pnext_tcb = pnext;
+    pnext->pprev_tcb = pprev;
+
+    pcur->pnext_tcb = AC_NULL;
+    pcur->pprev_tcb = AC_NULL;
+  }
+  return pnext_tcb;
 }
 
 /**
- * Thread scheduler, for internal only, ASSUMES interrupts are DISABLED!
+ * Remove a tcb from the list, we assume the list will
+ * NEVER be empty as idle will always be present.
  *
- * @param pcur_sp is the stack of the current thread
- * @return the stack of the next thread to run
+ * @param pcur is a tcb to be removed
+ *
+ * @return 0 if successful
+ */
+STATIC ac_uint remove_tcb_from_ready(tcb_x86* pcur) {
+  ac_uint flags = disable_intr();
+
+  tcb_x86* pnext_tcb = remove_tcb_non_blocking(pcur);
+
+  if (pnext_tcb != AC_NULL) {
+    pready = pnext_tcb;
+  }
+
+  restore_intr(flags);
+
+  return pnext_tcb != AC_NULL ? 0 : 1;
+}
+
+/**
+ * Thread scheduler for reschedule_isr.
+ * For internal only use only and ASSUMES
+ * interrupts are DISABLED!
+ *
+ * @param sp is the stack of the current thread
+ * @param ss is the stack segment of the current thread
+ *
+ * @return the tcb of the next thread to run
  */
 __attribute__((__noinline__))
 tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss) {
@@ -294,86 +338,38 @@ tcb_x86* thread_scheduler(ac_u8* sp, ac_u16 ss) {
 }
 
 /**
+ * Thread scheduler for timer_reschedule_isr.
+ * For internal only use only and ASSUMES
+ * interrupts are DISABLED!
+ *
+ * @param sp is the stack of the current thread
+ * @param ss is the stack segment of the current thread
+ *
+ * @return the tcb of the next thread to run
+ */
+tcb_x86* timer_thread_scheduler(ac_u8* sp, ac_u16 ss) {
+  tcb_x86* ptcb = thread_scheduler((ac_u8*)sp, ss);
+  set_apic_timer_initial_count(ptcb->slice);
+  __atomic_add_fetch(&timer_reschedule_isr_counter, 1, __ATOMIC_RELEASE);
+  send_apic_eoi();
+  return ptcb;
+}
+
+/**
  * The current thread yeilds the CPU to the next
  * ready thread.
  */
 void ac_thread_yield(void) {
-  // Invoke the rescheduler
-  //intr(RESCHEDULE_ISR_INTR);
-  thread_x86_yield();
+  thread_yield();
 }
 
 /**
- * Reschedule the CPU to the next ready thread. CAREFUL, this is
- * invoked by ac_init/srcs/ac_exception_irq_wrapper.S as such the
- * stack frame pointed to by sp must be identical.
+ * Get current thread handle
  *
- * Interrupts will be disabled as the scheduler will be invoked
  */
-INTERRUPT_HANDLER
-void reschedule_isr(struct intr_frame* frame) {
-  __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp",
-                         "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
-
-  tcb_x86 *ptcb = thread_scheduler((ac_u8*)get_sp(), get_ss());
-  __asm__ volatile("movq %0, %%rsp;" :: "rm" (ptcb->sp) : "rsp");
-  __asm__ volatile("movw %0, %%ss;" :: "rm" (ptcb->ss));
-  set_apic_timer_initial_count(ptcb->slice);
+ac_thread_hdl_t ac_thread_get_cur_hdl(void) {
+  return (ac_thread_hdl_t)pready;
 }
-
-/**
- * Reschedule the CPU to the next ready thread. CAREFUL, this is
- * invoked by ac_init/srcs/ac_exception_irq_wrapper.S as such the
- * stack frame pointed to by sp must be identical.
- *
- * Interrupts will be disabled as the scheduler will be invoked
- */
-INTERRUPT_HANDLER
-void timer_reschedule_isr(struct intr_frame* frame) {
-  __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp",
-                         "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
-
-  tcb_x86 *ptcb = thread_scheduler((ac_u8*)get_sp(), get_ss());
-  __asm__ volatile("movq %0, %%rsp;" :: "rm" (ptcb->sp) : "rsp");
-  __asm__ volatile("movw %0, %%ss;" :: "rm" (ptcb->ss));
-  set_apic_timer_initial_count(ptcb->slice);
-
-  __atomic_add_fetch(&timer_reschedule_isr_counter, 1, __ATOMIC_RELEASE);
-
-  send_apic_eoi();
-}
-
-/**
- * A test isr that tests using mov instructions
- * to save registers rather than push/pop. This
- * is not tested, just a place holder.
- */
-INTERRUPT_HANDLER
-void test_isr(struct intr_frame* frame) {
-  struct saved_regs sr;
-
-  __asm__ volatile("mov %%rax, %0;" : "=m"(sr.rax));
-  __asm__ volatile("mov %%r15, %0;" : "=m"(sr.r15));
-  __asm__ volatile("mov (%rbp), %rax;");
-  __asm__ volatile("mov %%rax, %0;" : "=m"(sr.rbp));
-
-  ac_printf("timer_reschedule_isr sr.rax=%x\n", sr.rax);
-
-  tcb_x86 *ptcb = thread_scheduler((ac_u8*)get_sp(), get_ss());
-  __asm__ volatile("movq %0, %%rsp;" :: "rm" (ptcb->sp) : "rsp");
-  __asm__ volatile("movw %0, %%ss;" :: "rm" (ptcb->ss));
-  set_apic_timer_initial_count(ptcb->slice);
-
-  __atomic_add_fetch(&timer_reschedule_isr_counter, 1, __ATOMIC_RELEASE);
-
-  send_apic_eoi();
-
-  __asm__ volatile("mov %0, %%rax;" :: "m"(sr.rbp));
-  __asm__ volatile("mov %0, %%r15;" :: "m"(sr.r15));
-  __asm__ volatile("mov %rax, (%rbp);");
-  __asm__ volatile("mov %0, %%rax;" :: "m"(sr.rax));
-}
-
 
 /**
  * @return timer_reschedule_isr_counter.
@@ -424,8 +420,7 @@ STATIC void* entry_trampoline(void* param) {
   ac_s32* pthread_id = &ptcb->thread_id;
   __atomic_store_n(pthread_id, AC_THREAD_ID_ZOMBIE, __ATOMIC_RELEASE);
 
-  // Reschedule
-  intr(RESCHEDULE_ISR_INTR);
+  thread_yield();
 
   // Never gets here because the code is ZOMBIE
   // But we need to prove it to the compiler
@@ -438,25 +433,32 @@ STATIC void* entry_trampoline(void* param) {
  */
 ac_uint remove_zombies(void) {
   tcb_x86* pzombie = AC_NULL;
+  tcb_x86* pnext_tcb;
   ac_uint count = 0;
 
+  ac_uptr flags = disable_intr();
   // Loop through the list of ready tcbs removing
   // ZOMBIE entries. We'll start at idle_tcb as
   // the tail since its guaranteed to be on the
   // list and not a ZOMBIE.
   tcb_x86* phead = pidle_tcb->pnext_tcb;
   while (phead != pidle_tcb) {
-    ac_uptr flags = disable_intr();
+    //ac_uptr flags = disable_intr();
+
     ac_s32* pthread_id = &phead->thread_id;
     ac_s32 thread_id = __atomic_load_n(pthread_id, __ATOMIC_ACQUIRE);
     if (thread_id == AC_THREAD_ID_ZOMBIE) {
       // phead is a ZOMBIE, remove it from the
       // list advancing the head past it.
-      pzombie = remove_tcb(phead);
+      pzombie = phead;
+      pnext_tcb = remove_tcb_non_blocking(pzombie);
+    } else {
+      pnext_tcb = phead->pnext_tcb;
     }
     // Advance head
-    phead = phead->pnext_tcb;
-    restore_intr(flags);
+    phead = pnext_tcb;
+
+    //restore_intr(flags);
 
     if (pzombie != AC_NULL) {
       // Free the ZOMBIE's stack and mark it EMPTY
@@ -468,6 +470,8 @@ ac_uint remove_zombies(void) {
       pzombie = AC_NULL;
     }
   }
+
+  restore_intr(flags);
   return count;
 }
 
@@ -695,4 +699,26 @@ ac_thread_rslt_t ac_thread_create(ac_size_t stack_size,
   rslt.hdl = (ac_thread_hdl_t)thread_create(stack_size, DEFAULT_FLAGS, entry, entry_arg);
   rslt.status = (rslt.hdl != 0) ? 0 : 1;
   return rslt;
+}
+
+/**
+ * Make the thread not ready,
+ *
+ * @param hdl is an opaque thread handle
+ *
+ * @return 0 if successful
+ */
+ac_uint thread_make_not_ready(ac_thread_hdl_t hdl) {
+  return remove_tcb_from_ready((tcb_x86*)hdl);
+}
+
+/**
+ * Make the thread ready
+ *
+ * @param hdl is an opaque thread handle
+ *
+ * @return 0 if successful, 1 if it is already on a list
+ */
+ac_uint thread_make_ready(ac_thread_hdl_t hdl) {
+  return add_tcb_after((tcb_x86*)hdl, pready);
 }

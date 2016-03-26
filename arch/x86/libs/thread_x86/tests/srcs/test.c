@@ -143,7 +143,9 @@ ac_uint test_yield_one_other_thread(void) {
   error |= AC_TEST(ac_thread_create(AC_THREAD_STACK_MIN,
         t0, AC_NULL).status == 0);
 
-  thread_x86_yield();
+  ac_printf("test_yield_one_other_thread: yielding\n");
+  ac_thread_yield();
+  ac_printf("test_yield_one_other_thread: back\n");
 
   error |= AC_TEST(t0_counter == 1);
 
@@ -188,7 +190,7 @@ ac_uint test_ac_thread_create() {
   __atomic_store_n(&t1_counter, 0, __ATOMIC_RELEASE);
   __atomic_store_n(&t1_done, AC_FALSE, __ATOMIC_RELEASE);
 
-  ac_u64 expected_t1_counter = 1000000000;
+  ac_u64 expected_t1_counter = 4; //1000000000;
   error |= AC_TEST(ac_thread_create(AC_THREAD_STACK_MIN,
         t1, (void*)expected_t1_counter).status == 0);
 

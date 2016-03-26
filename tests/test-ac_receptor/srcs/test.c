@@ -36,9 +36,12 @@ void* t1(void *param) {
   struct test_params* params = (struct test_params*)param;
   for(ac_uint i = 0; i < params->loops; i++) {
     params->counter += 1;
+    ac_printf("t1: waiting thdl=%x\n", ac_thread_get_cur_hdl());
     ac_receptor_wait(params->receptor);
+    ac_printf("t1: continuing thdl=%x\n", ac_thread_get_cur_hdl());
   }
 
+  ac_printf("t1: signal done_receptor thdl=0x%x\n", ac_thread_get_cur_hdl());
   ac_receptor_signal(params->done_receptor);
   return AC_NULL;
 }
@@ -84,27 +87,30 @@ ac_uint test_receptor(void) {
   ac_printf("test_receptor:+\n");
 
   ac_uint error = AC_FALSE;
-#ifdef Posix
+#if defined(Posix) || defined(pc_x86_64)
   struct test_params params;
 
   ac_printf("test_receptor: call ac_receptor_create\n");
   params.receptor = ac_receptor_create(AC_FALSE);
   params.done_receptor = ac_receptor_create(AC_FALSE);
   params.counter = 0;
-  params.loops = 1000000;
+  params.loops = 1; //1000000;
 
   ac_u64 start = ac_tscrd();
 
   ac_thread_rslt_t rslt = ac_thread_create(0, t1, (void*)&params);
   error |= AC_TEST(rslt.status == 0);
 
-  for(ac_uint i = 0; i < params.loops; i++) {
-    while(params.counter < i) {
+  for (ac_uint i = 0; i < params.loops; i++) {
+    while (params.counter <= i) {
       ac_thread_yield();
     }
+    ac_printf("test_receptor: signal\n");
     ac_receptor_signal(params.receptor);
   }
+  ac_printf("test_receptor: wait done_receptor\n");
   ac_receptor_wait(params.done_receptor);
+  ac_printf("test_receptor: continuing done_receptor\n");
 
   ac_u64 stop = ac_tscrd();
   ac_u64 ticks = stop - start;

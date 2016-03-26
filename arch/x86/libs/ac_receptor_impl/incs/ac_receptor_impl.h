@@ -19,14 +19,18 @@
 
 #include <ac_inttypes.h>
 
+#include <ac_thread.h>
+
 /**
  * Receptor structure
  */
 typedef struct {
-  ac_bool signaled;
-} receptor_x86;
+//  ac_uint signaled;     // !0 if signaled
+  ac_thread_hdl_t thdl; // Thread handle waiting
+  ac_uint state;        // Current state
+} thread_x86_receptor_t;
 
-typedef receptor_x86* ac_receptor_t;
+typedef thread_x86_receptor_t* ac_receptor_t;
 
 /**
  * Create a receptor and set it state to signaled parameter

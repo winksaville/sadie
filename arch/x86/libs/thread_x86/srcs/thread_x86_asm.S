@@ -14,10 +14,10 @@
  * limitations under the license.
  */
 
-        .EXTERN thread_scheduler
-        .GLOBAL thread_x86_yield
+#include <thread_x86_debug_ctx_switch.h>
 
-thread_x86_yield:
+        .GLOBAL thread_yield
+thread_yield:
         // Setup interrupt stack frame
         pop     %rcx            # Get return address
         mov     %rsp, %rdx      # Save rsp to rdx
@@ -29,6 +29,9 @@ thread_x86_yield:
         push    %rax            # Push cs
         push    %rcx            # Push rip aka return address
 
+        push    %rbp
+        mov     %rsp, %rbp
+
         // Save regsiters
         push    %r15
         push    %r14
@@ -38,28 +41,43 @@ thread_x86_yield:
         push    %r10
         push    %r9
         push    %r8
-        push    %rbp
         push    %rdi
         push    %rsi
         push    %rbx
         push    %rcx
         push    %rdx
         push    %rax
+
+        // Be sure stack is aligned on 16 byte boundary
+        and     $0xfffffffffffffff0, %rsp
+
         cld    
 
         // Disable interrupts
         cli
 
+#ifdef THREAD_X86_DEBUG_CTX_SWITCH
+        mov     $thread_yield_e_str, %rdi
+        lea     -0x70(%rbp), %rsi
+        callq   print_full_stack_frame
+#endif
+
         // Call thread scheduler, returns in rax the
         // tcb_x86 pointer of the thread to run
-        mov    %ss,%si
-        mov    %rsp,%rdi
-        movzwl %si,%esi
-        call   thread_scheduler
+        mov     %ss,%si
+        movzwl  %si,%esi
+        lea     -0x70(%rbp), %rdi
+        call    thread_scheduler
 
         // Switch stacks
         mov    0x30(%rax), %rsp
         mov    0x38(%rax), %ss
+
+#ifdef THREAD_X86_DEBUG_CTX_SWITCH
+        mov     $thread_yield_x_str, %rdi
+        mov     %rsp, %rsi
+        callq   print_full_stack_frame
+#endif
 
         // Restore registers and return
         pop     %rax
@@ -68,7 +86,6 @@ thread_x86_yield:
         pop     %rbx
         pop     %rsi
         pop     %rdi
-        pop     %rbp
         pop     %r8
         pop     %r9
         pop     %r10
@@ -77,5 +94,165 @@ thread_x86_yield:
         pop     %r13
         pop     %r14
         pop     %r15
+        pop     %rbp
 
         iretq
+
+thread_yield_e_str:
+        .string "thread_yield+"
+
+thread_yield_x_str:
+        .string "thread_yield-"
+
+/**
+ * reschedule_isr
+ */
+        .GLOBAL reschedule_isr
+reschedule_isr:
+        // Save regsiters
+        push    %rbp
+        mov     %rsp, %rbp
+        push    %r15
+        push    %r14
+        push    %r13
+        push    %r12
+        push    %r11
+        push    %r10
+        push    %r9
+        push    %r8
+        push    %rdi
+        push    %rsi
+        push    %rbx
+        push    %rcx
+        push    %rdx
+        push    %rax
+
+        // Be sure stack is aligned on 16 byte boundary
+        and     $0xfffffffffffffff0, %rsp
+
+        cld    
+
+#ifdef THREAD_X86_DEBUG_CTX_SWITCH
+        mov     $reschedule_isr_e_str, %rdi
+        lea     -0x70(%rbp), %rsi
+        callq   print_full_stack_frame
+#endif
+
+        // Call thread scheduler, returns in rax the
+        // tcb_x86 pointer of the thread to run
+        mov     %ss,%si
+        movzwl  %si,%esi
+        lea     -0x70(%rbp), %rdi
+        call    thread_scheduler
+
+        // Switch stacks
+        mov    0x30(%rax), %rsp
+        mov    0x38(%rax), %ss
+
+#ifdef THREAD_X86_DEBUG_CTX_SWITCH
+        mov     $reschedule_is_x_str, %rdi
+        mov     %rsp, %rsi
+        callq   print_full_stack_frame
+#endif
+
+        // Restore registers and return
+        pop     %rax
+        pop     %rdx
+        pop     %rcx
+        pop     %rbx
+        pop     %rsi
+        pop     %rdi
+        pop     %r8
+        pop     %r9
+        pop     %r10
+        pop     %r11
+        pop     %r12
+        pop     %r13
+        pop     %r14
+        pop     %r15
+        pop     %rbp
+
+        iretq
+
+reschedule_isr_e_str:
+        .string "reschedule_isr+"
+
+reschedule_is_x_str:
+        .string "reschedule_isr-"
+
+/**
+ * timer_reschedule_isr
+ */
+        .GLOBAL timer_reschedule_isr
+timer_reschedule_isr:
+        // Save regsiters
+        push    %rbp
+        mov     %rsp, %rbp
+        push    %r15
+        push    %r14
+        push    %r13
+        push    %r12
+        push    %r11
+        push    %r10
+        push    %r9
+        push    %r8
+        push    %rdi
+        push    %rsi
+        push    %rbx
+        push    %rcx
+        push    %rdx
+        push    %rax
+
+        // Be sure stack is aligned on 16 byte boundary
+        and     $0xfffffffffffffff0, %rsp
+
+        cld    
+
+#ifdef THREAD_X86_DEBUG_CTX_SWITCH
+        mov     $reschedule_isr_e_str, %rdi
+        lea     -0x70(%rbp), %rsi
+        callq   print_full_stack_frame
+#endif
+
+        // Call thread scheduler for timer , returns in rax the
+        // tcb_x86 pointer of the thread to run
+        mov     %ss,%si
+        movzwl  %si,%esi
+        lea     -0x70(%rbp), %rdi
+        call   timer_thread_scheduler
+
+        // Switch stacks
+        mov    0x30(%rax), %rsp
+        mov    0x38(%rax), %ss
+
+#ifdef THREAD_X86_DEBUG_CTX_SWITCH
+        mov     $reschedule_is_x_str, %rdi
+        mov     %rsp, %rsi
+        callq   print_full_stack_frame
+#endif
+
+        // Restore registers and return
+        pop     %rax
+        pop     %rdx
+        pop     %rcx
+        pop     %rbx
+        pop     %rsi
+        pop     %rdi
+        pop     %r8
+        pop     %r9
+        pop     %r10
+        pop     %r11
+        pop     %r12
+        pop     %r13
+        pop     %r14
+        pop     %r15
+        pop     %rbp
+
+        iretq
+
+timer_reschedule_isr_e_str:
+        .string "timer_reschedule_isr+"
+
+timer_reschedule_is_x_str:
+        .string "timer_reschedule_isr-"
+
