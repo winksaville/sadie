@@ -90,9 +90,9 @@ static __inline__ ac_uptr get_sp(void) {
 /** set base pointer */
 static __inline__ void set_bp(void* bp) {
 #ifdef CPU_X86_64
-  __asm__ volatile("movq %0, %%rbp;" :: "r" (bp));
+  __asm__ volatile("movq %0, %%rbp;" :: "g" (bp));
 #else /* CPU_X86_32 */
-  __asm__ volatile("movl %0, %%rbp;" :: "r" (bp));
+  __asm__ volatile("movl %0, %%rbp;" :: "g" (bp));
 #endif
 }
 
@@ -122,6 +122,26 @@ static __inline__ ac_uint get_flags(void) {
   );
 #endif
   return flags;
+}
+
+/** set base pointer */
+static __inline__ void set_dx(ac_uint val) {
+#ifdef CPU_X86_64
+  __asm__ volatile("movq %0, %%rdx;" :: "g" (val));
+#else /* CPU_X86_32 */
+  __asm__ volatile("movl %0, %%edx;" :: "g" (val));
+#endif
+}
+
+/** get base pointer */
+static __inline__ ac_uint get_dx(void) {
+  ac_uint dx;
+#ifdef CPU_X86_64
+  __asm__ volatile("movq %%rdx, %0;" : "=r" (dx));
+#else /* CPU_X86_32 */
+  __asm__ volatile("movl %%edx, %0;" : "=r" (dx));
+#endif
+  return dx;
 }
 
 /** hlt, halt instruction */
