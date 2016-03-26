@@ -150,7 +150,11 @@ reschedule_isr:
         mov    0x38(%rax), %ss
 
 #ifdef THREAD_X86_DEBUG_CTX_SWITCH
-        mov     $reschedule_is_x_str, %rdi
+        mov     $reschedule_isr_ptcb_str, %rdi
+        mov     %rax, %rsi
+        mov     %rsp, %rdx
+        callq   ac_printf
+        mov     $reschedule_isr_x_str, %rdi
         mov     %rsp, %rsi
         callq   print_full_stack_frame
 #endif
@@ -174,10 +178,13 @@ reschedule_isr:
 
         iretq
 
+reschedule_isr_ptcb_str:
+        .string "reschedule_isr: ptcb=%x rsp=%x\n"
+
 reschedule_isr_e_str:
         .string "reschedule_isr+"
 
-reschedule_is_x_str:
+reschedule_isr_x_str:
         .string "reschedule_isr-"
 
 /**
@@ -209,7 +216,7 @@ timer_reschedule_isr:
         cld    
 
 #ifdef THREAD_X86_DEBUG_CTX_SWITCH
-        mov     $reschedule_isr_e_str, %rdi
+        mov     $timer_reschedule_isr_e_str, %rdi
         lea     -0x70(%rbp), %rsi
         callq   print_full_stack_frame
 #endif
@@ -226,7 +233,7 @@ timer_reschedule_isr:
         mov    0x38(%rax), %ss
 
 #ifdef THREAD_X86_DEBUG_CTX_SWITCH
-        mov     $reschedule_is_x_str, %rdi
+        mov     $timer_reschedule_isr_x_str, %rdi
         mov     %rsp, %rsi
         callq   print_full_stack_frame
 #endif
@@ -253,6 +260,6 @@ timer_reschedule_isr:
 timer_reschedule_isr_e_str:
         .string "timer_reschedule_isr+"
 
-timer_reschedule_is_x_str:
+timer_reschedule_isr_x_str:
         .string "timer_reschedule_isr-"
 
