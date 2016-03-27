@@ -25,8 +25,12 @@
 /**
  * The current thread yeilds the CPU to the next
  * ready thread.
+ *
+ * @param remove_pready, if AC_TRUE then while yielding
+ *        the tcb pointed to by pready will be removed
+ *        the pready list.
  */
-void thread_yield(void);
+void thread_yield(ac_bool remove_pready);
 
 /**
  * Remove the thread from its current list
@@ -41,10 +45,8 @@ ac_uint thread_remove_from_list(ac_thread_hdl_t hdl);
  * Make the thread not ready,
  *
  * @param hdl is an opaque thread handle
- *
- * @return 0 if successful
  */
-ac_uint thread_make_not_ready(ac_thread_hdl_t hdl);
+void thread_make_not_ready(ac_thread_hdl_t hdl);
 
 /**
  * Make the thread ready

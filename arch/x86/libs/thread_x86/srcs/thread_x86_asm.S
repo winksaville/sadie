@@ -16,6 +16,9 @@
 
 #include <thread_x86_debug_ctx_switch.h>
 
+        // Have the current yield to the next ready thread.
+        //
+        // @param: remove_pready passed to thread_scheduler
         .GLOBAL thread_yield
 thread_yield:
         // Setup interrupt stack frame
@@ -57,16 +60,20 @@ thread_yield:
         cli
 
 #ifdef THREAD_X86_DEBUG_CTX_SWITCH
+        push    %rdi
         mov     $thread_yield_e_str, %rdi
         lea     -0x70(%rbp), %rsi
         callq   print_full_stack_frame
+        pop     %rdi
 #endif
 
         // Call thread scheduler, returns in rax the
         // tcb_x86 pointer of the thread to run
-        mov     %ss,%si
-        movzwl  %si,%esi
-        lea     -0x70(%rbp), %rdi
+        // mov  %rdi, %rdi;        # rdi == remove_ready,
+        //                         # passed in rdi to thread_yield
+        lea     -0x70(%rbp), %rsi; # rsi == sp
+        mov     %ss,%dx;
+        movzwl  %dx,%edx;          # edx == ss
         call    thread_scheduler
 
         // Switch stacks
