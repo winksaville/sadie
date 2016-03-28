@@ -83,7 +83,9 @@ if Platform == 'pc_x86_64'
     depends : [test_ac_receptor])
 
   run_target('run-test-ac_receptor', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              test_ac_receptor_bin, '-enable-kvm', '-cpu', 'host')
+              test_ac_receptor_bin)
+              #Can't use kvm because get/set IA32_PERF_CTL causes GP fault.
+              #test_ac_receptor_bin, '-enable-kvm', '-cpu', 'host')
 
   run_target('run-test-ac_receptor-intdbg', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
               test_ac_receptor_bin, '-d', 'int')
