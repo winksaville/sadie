@@ -43,9 +43,10 @@
 /**
  * Signal the receptor.
  *
- * @return 0 if successfull !0 if an error.
+ * @param receptor to signal
+ * @param if yield_if_waiting is true then this thread yields
  */
-//void ac_receptor_signal(ac_receptor_t receptor);
+//void ac_receptor_signal(ac_receptor_t receptor, ac_bool yield_if_waiting);
 
 
 #include <ac_receptor_impl.h>

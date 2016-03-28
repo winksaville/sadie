@@ -25,7 +25,6 @@
  * Receptor structure
  */
 typedef struct {
-//  ac_uint signaled;     // !0 if signaled
   ac_thread_hdl_t thdl; // Thread handle waiting
   ac_uint state;        // Current state
 } thread_x86_receptor_t;
@@ -58,9 +57,10 @@ ac_uint ac_receptor_wait(ac_receptor_t receptor);
 /**
  * Signal the receptor.
  *
- * @return 0 if successfull !0 if an error.
+ * @param receptor to signal
+ * @param if yield_if_waiting is true then this thread yields
  */
-ac_uint ac_receptor_signal(ac_receptor_t receptor);
+void ac_receptor_signal(ac_receptor_t receptor, ac_bool yield_if_waiting);
 
 /**
  * Initialize this module early, must be
