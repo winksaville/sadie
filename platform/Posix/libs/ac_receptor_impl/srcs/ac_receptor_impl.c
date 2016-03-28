@@ -109,11 +109,15 @@ ac_uint ac_receptor_wait(ac_receptor_t receptor) {
 /**
  * Signal the receptor.
  *
- * @return 0 if successfully waited, !0 indicates an error
+ * @param receptor to signal
+ * @param if yield_if_waiting is true then this thread yields
  */
-ac_uint ac_receptor_signal(ac_receptor_t receptor) {
+void ac_receptor_signal(ac_receptor_t receptor, ac_bool yield_if_waiting) {
   // RACE with create/destroy, user beware.
-  return (ac_uint)sem_post(&receptor->semaphore);
+  sem_post(&receptor->semaphore);
+  if (yield_if_waiting) {
+    ac_thread_yield();
+  }
 }
 
 
