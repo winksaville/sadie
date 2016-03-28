@@ -151,17 +151,19 @@ void print_full_stack_frame(char* str, struct full_stack_frame* fsf) {
 #endif
 
 void print_tcb_list(const char* str, tcb_x86* phead) {
-#if AC_TRUE
-  if (str != AC_NULL) {
-    ac_printf(str);
+  ac_uint flags = disable_intr();
+  {
+    if (str != AC_NULL) {
+      ac_printf(str);
+    }
+    tcb_x86* pcur = phead;
+    do {
+      ac_printf("%x:%d ", pcur, pcur->thread_id);
+      pcur = pcur->pnext_tcb;
+    } while (pcur != phead);
+    ac_printf("\n");
   }
-  tcb_x86* pcur = phead;
-  do {
-    ac_printf("%x:%d ", pcur, pcur->thread_id);
-    pcur = pcur->pnext_tcb;
-  } while (pcur != phead);
-  ac_printf("\n");
-#endif
+  restore_intr(flags);
 }
 
 void print_ready_list(const char* str) {
