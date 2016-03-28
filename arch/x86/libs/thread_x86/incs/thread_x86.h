@@ -67,4 +67,14 @@ void reschedule_isr(struct intr_frame* frame);
  */
 void timer_reschedule_isr(struct intr_frame* frame);
 
+/**
+ * Get number of timer_reschedule_isr that have occurred.
+ */
+ac_u64 get_timer_reschedule_isr_counter(void);
+
+/**
+ * Print ready list
+ */
+void print_ready_list(const char* str);
+
 #endif

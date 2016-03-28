@@ -164,6 +164,10 @@ void print_tcb_list(const char* str, tcb_x86* phead) {
 #endif
 }
 
+void print_ready_list(const char* str) {
+  print_tcb_list(str, pready);
+}
+
 /**
  * Initialize tcb it with the entry and entry_arg.
  *
@@ -724,7 +728,7 @@ ac_thread_rslt_t ac_thread_create(ac_size_t stack_size,
     void*(*entry)(void*), void* entry_arg) {
   ac_thread_rslt_t rslt;
 
-  rslt.hdl = (ac_thread_hdl_t)thread_create(stack_size, DEFAULT_FLAGS, entry, entry_arg);
+  rslt.hdl = (ac_thread_hdl_t)thread_create(stack_size, get_flags(), entry, entry_arg);
   rslt.status = (rslt.hdl != 0) ? 0 : 1;
   return rslt;
 }
