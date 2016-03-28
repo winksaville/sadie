@@ -16,9 +16,6 @@
 
 #include <ac_receptor.h>
 
-//#include <interrupts_x86.h>
-//#include <thread_x86.h>
-
 #include <ac_assert.h>
 #include <ac_inttypes.h>
 #include <ac_printf.h>
@@ -79,21 +76,7 @@ void* t1(void *param) {
 
     //ac_thread_yield();
 
-    //if ((i % 1) == 0) {
-    //  ac_printf("t1: i=%d flags=%x isr_counter=%d receptor.thdl=%x",
-    //      i, get_flags(), get_timer_reschedule_isr_counter(), params->receptor->thdl);
-    //  print_ready_list(" - ");
-    //}
-
-    //ac_printf("t1: waiting    thdl=%x flags=%x\n", ac_thread_get_cur_hdl(), get_flags());
-    //tres_t* ptres;
-    //ac_u64 time;
-    //ac_u64 wait_start = ac_tscrd();
     ac_receptor_wait(params->receptor);
-    //ac_u64 ticks = ac_tscrd() - wait_start;
-    //ptres = calculate_tres(ticks);
-    //time = round_up(ticks * ptres->scaler, ac_tsc_freq());
-    //ac_printf("t1: continuing wait time = %ld%s\n", time, ptres->units);
   }
 
   ac_printf("t1: signal done_receptor\n");
@@ -122,27 +105,22 @@ ac_uint test_receptor(void) {
 
   ac_u64 start = ac_tscrd();
 
-  //ac_printf("test_receptor: loops=%ld\n", params.loops);
+  ac_printf("test_receptor: loops=%ld\n", params.loops);
   ac_uint x = 0;
   for (ac_uint i = 0; i < params.loops; i++) {
     while (__atomic_load_n(&params.counter, __ATOMIC_ACQUIRE) <= i) {
-      //if ((x++ % 20000000) == 0) {
-      //  ac_printf("test_receptor: i=%d x=%d flags=%x isr_counter=%d receptor.thdl=%x",
-      //      i, x, get_flags(), get_timer_reschedule_isr_counter(), params.receptor->thdl);
-      //  print_ready_list(" - ");
-      //}
+      if ((++x % 20000000) == 0) {
+        ac_printf("test_receptor: waiting for counter i=%d x=%d\n", i, x);
+      }
 
-      ////ac_printf("test_receptor: call ac_thread_yield\n");
+      //ac_printf("test_receptor: call ac_thread_yield\n");
       //ac_thread_yield();
     }
     ac_u64 wait_until = ac_tscrd() + (ac_tsc_freq() / 1);
-    //ac_printf("test_receptor: wait_unitil=%ld\n", wait_until);
     while (ac_tscrd() < wait_until) {
-      //if ((x++ % 20000000) == 0) {
-      //  ac_printf("test_receptor: tsc=%ld i=%d x=%d flags=%x isr_counter=%d receptor.thdl=%x",
-      //      ac_tscrd(), i, x, get_flags(), get_timer_reschedule_isr_counter(), params.receptor->thdl);
-      //  print_ready_list(" - ");
-      //}
+      if ((++x % 20000000) == 0) {
+        ac_printf("test_receptor: wait until=%ld cur tsc=%ld i=%d x=%d\n", wait_until, ac_tscrd(), i, x);
+      }
       //ac_thread_yield();
     }
 
