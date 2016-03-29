@@ -69,6 +69,7 @@ if Platform == 'pc_x86_64'
     depends : [test_page_table_x86])
 
   run_target('run-test-page_table_x86', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              test_page_table_x86_bin, '-enable-kvm', '-cpu', 'host')
+              test_page_table_x86_bin)
+              #test_page_table_x86_bin, '-enable-kvm', '-cpu', 'host')
 endif
 

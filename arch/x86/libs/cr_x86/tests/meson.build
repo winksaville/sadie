@@ -59,6 +59,7 @@ if Platform == 'pc_x86_64'
     depends : [test_cr_x86])
 
   run_target('run-test-cr_x86', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              test_cr_x86_bin, '-enable-kvm', '-cpu', 'host')
+              test_cr_x86_bin)
+              #test_cr_x86_bin, '-enable-kvm', '-cpu', 'host')
 endif
 

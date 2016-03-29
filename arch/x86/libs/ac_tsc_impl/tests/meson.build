@@ -59,7 +59,8 @@ if Platform == 'pc_x86_64'
     depends : [test_ac_tsc_impl])
 
   run_target('run-test-ac_tsc_impl', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              test_ac_tsc_impl_bin, '-enable-kvm', '-cpu', 'host')
+              test_ac_tsc_impl_bin)
+              #test_ac_tsc_impl_bin, '-enable-kvm', '-cpu', 'host')
 
   run_target('run-test-ac_tsc_impl-intdbg', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
               test_ac_tsc_impl_bin, '-d', 'int')
