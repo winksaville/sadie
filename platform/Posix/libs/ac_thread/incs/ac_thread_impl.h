@@ -36,6 +36,17 @@ void ac_thread_early_init();
 void ac_thread_init(ac_u32 max_threads);
 
 /**
+ * The current thread waits for some number of nanosecs.
+ */
+void ac_thread_wait_ns(ac_u64 nanosecs);
+
+
+/**
+ * The current thread waits for some number of ticks.
+ */
+void ac_thread_wait_ticks(ac_u64 ticks);
+
+/**
  * The current thread yeilds the CPU to the next
  * ready thread.
  */

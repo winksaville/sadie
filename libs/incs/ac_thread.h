@@ -58,6 +58,16 @@ typedef struct {
 //void ac_thread_yield(void);
 
 /**
+ * The current thread waits for some number of nanosecs.
+ */
+//void ac_thread_wait_ns(ac_u64 nanosecs);
+
+/**
+ * The current thread waits for some number of ticks.
+ */
+//void ac_thread_wait_ticks(ac_u64 ticks);
+
+/**
  * Create a thread and invoke the entry passing entry_arg. If
  * the entry routine returns the thread is considered dead
  * and will not be rescheduled and its stack is reclamined.

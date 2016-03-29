@@ -402,6 +402,20 @@ void ac_reschedule(void) {
   );
 }
 
+/**
+ * The current thread waits for some number of nanosecs.
+ */
+void ac_thread_wait_ns(ac_u64 nanosecs) {
+  // TODO: Not implemented
+}
+
+/**
+ * The current thread waits for some number of ticks.
+ */
+void ac_thread_wait_ticks(ac_u64 ticks) {
+  // TODO: Not implemented
+}
+
 
 /**
  * Early initialization of this module

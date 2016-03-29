@@ -74,7 +74,7 @@ thread_yield:
         lea     -0x70(%rbp), %rsi; # rsi == sp
         mov     %ss,%dx;
         movzwl  %dx,%edx;          # edx == ss
-        call    thread_scheduler
+        call    thread_scheduler_intr_disabled
 
         // Switch stacks
         mov    0x30(%rax), %rsp
@@ -150,7 +150,7 @@ reschedule_isr:
         mov     %ss,%si
         movzwl  %si,%esi
         lea     -0x70(%rbp), %rdi
-        call    thread_scheduler
+        call    thread_scheduler_intr_disabled
 
         // Switch stacks
         mov    0x30(%rax), %rsp
@@ -233,7 +233,7 @@ timer_reschedule_isr:
         mov     %ss,%si
         movzwl  %si,%esi
         lea     -0x70(%rbp), %rdi
-        call   timer_thread_scheduler
+        call   timer_thread_scheduler_intr_disabled
 
         // Switch stacks
         mov    0x30(%rax), %rsp

@@ -24,7 +24,9 @@
 #include <native_x86.h>
 
 #include <ac_assert.h>
+#include <ac_tsc.h>
 #include <ac_debug_assert.h>
+#include <ac_intmath.h>
 #include <ac_inttypes.h>
 #include <ac_memmgr.h>
 #include <ac_putchar.h>
@@ -53,6 +55,7 @@ typedef struct tcb_x86 {
   ac_u8* sp;
   ac_u16 ss;
   ac_u32 slice;
+  ac_u32 cur_slice;
 } tcb_x86;
 
 typedef struct threads {
@@ -253,10 +256,39 @@ STATIC __inline__ tcb_x86* next_tcb(tcb_x86* pcur_tcb) {
 
 
 /**
+ * Add an initialized tcb before pcur
+ *
+ * @param pnew is a tcb which will before pcur.
+ * @param pcur is a tcb in the list which will succeed pnew
+ *
+ * @return 0 if successful
+ */
+STATIC ac_uint add_tcb_before(tcb_x86* pnew, tcb_x86* pcur) {
+  ac_uint rslt;
+  ac_uint flags = disable_intr();
+
+  tcb_x86* ptmp = pcur->pprev_tcb;
+  if (pnew->pprev_tcb == AC_NULL) {
+    pnew->pprev_tcb = ptmp;
+    pnew->pnext_tcb = pcur;
+    ptmp->pnext_tcb = pnew;
+    pcur->pprev_tcb = pnew;
+    //ac_printf("add_tcb_before: ret rslt=0, pcur=0x%x pnew=0x%x\n", pcur, pnew);
+    rslt = 0;
+  } else {
+    //ac_printf("add_tcb_before: ret rslt=1, pcur=0x%x pnew=0x%x\n", pcur, pnew);
+    rslt = 1;
+  }
+
+  restore_intr(flags);
+  return rslt;
+}
+
+/**
  * Add an initialized tcb following pcur
  *
- * @param pcur is a tcb in the list which will preceed pnew
  * @param pnew is a tcb which will after pcur.
+ * @param pcur is a tcb in the list which will preceed pnew
  *
  * @return 0 if successful
  */
@@ -289,11 +321,11 @@ STATIC ac_uint add_tcb_after(tcb_x86* pnew, tcb_x86* pcur) {
  *
  * @return pnext if successful, else AC_NULL
  */
-STATIC tcb_x86* remove_tcb_non_blocking(tcb_x86* pcur) {
+STATIC tcb_x86* remove_tcb_intr_disabled(tcb_x86* pcur) {
   tcb_x86* pnext_tcb = pcur->pnext_tcb;
   if (pnext_tcb != AC_NULL) {
     tcb_x86* pprev_tcb = pcur->pprev_tcb;
-    //ac_printf("remove_tcb_non_blocking: pcur=%x pnext_tcb=%x pprev_tcb=%x\n",
+    //ac_printf("remove_tcb_intr_disabled: pcur=%x pnext_tcb=%x pprev_tcb=%x\n",
     //    pcur, pnext_tcb, pprev_tcb);
     pprev_tcb->pnext_tcb = pnext_tcb;
     pnext_tcb->pprev_tcb = pprev_tcb;
@@ -310,23 +342,74 @@ STATIC tcb_x86* remove_tcb_non_blocking(tcb_x86* pcur) {
  *
  * @param pcur is a tcb to be removed
  */
-STATIC void remove_tcb_from_ready(tcb_x86* pcur) {
-  ac_uint flags = disable_intr();
-
+STATIC void remove_tcb_from_ready_intr_disabled(tcb_x86* pcur) {
   if (pcur == pready) {
-    //ac_printf("remove_tcb_from_ready:+ yield pcur:%x == pready:%x", pcur, pready);
+    //ac_printf("remove_tcb_from_ready_intr_disabled:+ yield pcur:%x == pready:%x", pcur, pready);
     //print_tcb_list(" ", pready);
     thread_yield(AC_TRUE);
-    //ac_printf("remove_tcb_from_ready: after yield pcur:%x == pready:%x", pcur, pready);
+    //ac_printf("remove_tcb_from_ready_intr_disabled: after yield pcur:%x == pready:%x", pcur, pready);
     //print_tcb_list(" ", pready);
   } else {
-    //ac_printf("remove_tcb_from_ready:+ before remove pcur:%x != pready:%x", pcur, pready);
+    //ac_printf("remove_tcb_from_ready_intr_disabled:+ before remove pcur:%x != pready:%x", pcur, pready);
     //print_tcb_list(" ", pready);
-    remove_tcb_non_blocking(pcur);
-    //ac_printf("remove_tcb_from_ready:+ after remove pcur:%x != pready:%x", pcur, pready);
+    remove_tcb_intr_disabled(pcur);
+    //ac_printf("remove_tcb_from_ready_intr_disabled:+ after remove pcur:%x != pready:%x", pcur, pready);
     //print_tcb_list(" ", pready);
   }
+}
 
+static tcb_x86* ptimer_waiting_tcb;
+static ac_u64 timer_waiting_until_tsc;
+static ac_u64 timer_fudge;
+
+static void thread_timer_init(void) {
+  __atomic_store_n(&ptimer_waiting_tcb, AC_NULL, __ATOMIC_RELEASE);
+  __atomic_store_n(&timer_waiting_until_tsc, 0ll, __ATOMIC_RELEASE);
+
+  // TODO: Calculate the fudge
+  __atomic_store_n(&timer_fudge, 1000ll, __ATOMIC_RELEASE);
+}
+
+/**
+ * Let timer mdify the tcb to be scheduled.
+ * Interrupts disabled!
+ */
+static tcb_x86* timer_scheduler_intr_disabled(tcb_x86* next_tcb) {
+  if (__atomic_load_n(&ptimer_waiting_tcb, __ATOMIC_ACQUIRE) != AC_NULL) {
+    // There is a tcb with a timer waiting to expire
+    ac_u64 now = ac_tscrd() + __atomic_load_n(&timer_fudge, __ATOMIC_ACQUIRE);
+    ac_u64 until_tsc = __atomic_load_n(&timer_waiting_until_tsc, __ATOMIC_ACQUIRE);
+    if (now >= until_tsc) {
+      // Timed out so schedule it.
+      add_tcb_before(ptimer_waiting_tcb, next_tcb);
+      next_tcb = ptimer_waiting_tcb;
+      next_tcb->cur_slice = next_tcb->slice;
+      __atomic_store_n(&ptimer_waiting_tcb, AC_NULL, __ATOMIC_RELEASE);
+
+      // TODO: Find the next timer that is going to timeout?
+
+    } else if ((now + next_tcb->cur_slice) >= until_tsc) {
+      next_tcb->cur_slice = until_tsc - now;
+    } else {
+      // timer_waiting_until_tsc is in the far future
+    }
+  } else {
+    // There are no tcb waiting for a timer to expire.
+  }
+
+  return next_tcb;
+}
+
+/**
+ * The current pready tcb is to wait until ac_tscrd() > tsc.
+ */
+static void pready_timer_wait_until_tsc(ac_u64 tsc) {
+  ac_uint flags = disable_intr();
+  {
+    __atomic_store_n(&timer_waiting_until_tsc, tsc, __ATOMIC_RELEASE);
+    __atomic_store_n(&ptimer_waiting_tcb, pready, __ATOMIC_RELEASE);
+    remove_tcb_from_ready_intr_disabled(pready);
+  }
   restore_intr(flags);
 }
 
@@ -341,33 +424,51 @@ STATIC void remove_tcb_from_ready(tcb_x86* pcur) {
  * @return the tcb of the next thread to run
  */
 __attribute__((__noinline__))
-tcb_x86* thread_scheduler(ac_bool remove_pready, ac_u8* sp, ac_u16 ss) {
-  //ac_printf("thread_scheduler:+remove_pready=%d, sp=%x ss=%x\n", remove_pready, sp, ss);
+tcb_x86* thread_scheduler_intr_disabled(ac_bool remove_pready, ac_u8* sp, ac_u16 ss) {
+  //ac_printf("thread_scheduler_intr_disabled:+remove_pready=%d, sp=%x ss=%x\n", remove_pready, sp, ss);
 
   // Save the current thread stack pointer
   pready->sp = sp;
   pready->ss = ss;
 
-  // We assume idle_tcb is never removed from the list
-  // thus neither path below will set pready to AC_NULL
+  // We assume the pready list is never empty as idle_tcb is
+  // always present, thus this is never AC_NULL even when
+  // removing a tcb.
   if (remove_pready) {
-    //ac_printf("thread_scheduler: true remove_pready=%d\n", remove_pready);
-    pready = remove_tcb_non_blocking(pready);
+    //ac_printf("thread_scheduler_intr_disabled: true remove_pready=%d\n", remove_pready);
+
+    // Make sure we never remove pidle_tcb!!
+    ac_assert(pready != pidle_tcb);
+
+    // Remove the pready tcb
+    pready = remove_tcb_intr_disabled(pready);
   } else {
-    //ac_printf("thread_scheduler: false remove_pready=%d\n", remove_pready);
+    // Just get the next tcb
     pready = next_tcb(pready);
   }
-  ac_assert(pready != AC_NULL);
 
+  // Check if pready is pointing at idle_tcb
   if (pready == pidle_tcb) {
-    // Skip idle once, if idle is the only thread
+    // Yep, skip idle unless it's the only thread
     // then we'll it will become pready and we'll
     // execute it this time.
-    //ac_printf("thread_scheduler: skip idle\n");
+    //ac_printf("thread_scheduler_intr_disabled: skip idle\n");
     pready = next_tcb(pready);
   }
 
-  //print_tcb_list("thread_scheduler:-", pready);
+  // Assume this threads cur slice is its default slice
+  pready->cur_slice = pready->slice;
+
+  // Let timer see if it has something that should be scheduled,
+  // Note, it may modify pready->cur_slice.
+  pready = timer_scheduler_intr_disabled(pready);
+
+  // Set the current slice
+  set_apic_timer_initial_count(pready->cur_slice);
+
+  ac_assert(pready != AC_NULL);
+
+  //print_tcb_list("thread_scheduler_intr_disabled:-", pready);
   return pready;
 }
 
@@ -381,9 +482,8 @@ tcb_x86* thread_scheduler(ac_bool remove_pready, ac_u8* sp, ac_u16 ss) {
  *
  * @return the tcb of the next thread to run
  */
-tcb_x86* timer_thread_scheduler(ac_u8* sp, ac_u16 ss) {
-  tcb_x86* ptcb = thread_scheduler(AC_FALSE, (ac_u8*)sp, ss);
-  set_apic_timer_initial_count(ptcb->slice);
+tcb_x86* timer_thread_scheduler_intr_disabled(ac_u8* sp, ac_u16 ss) {
+  tcb_x86* ptcb = thread_scheduler_intr_disabled(AC_FALSE, (ac_u8*)sp, ss);
   __atomic_add_fetch(&timer_reschedule_isr_counter, 1, __ATOMIC_RELEASE);
   send_apic_eoi();
   return ptcb;
@@ -485,7 +585,7 @@ ac_uint remove_zombies(void) {
       // phead is a ZOMBIE, remove it from the
       // list advancing the head past it.
       pzombie = phead;
-      pnext_tcb = remove_tcb_non_blocking(pzombie);
+      pnext_tcb = remove_tcb_intr_disabled(pzombie);
     } else {
       pnext_tcb = phead->pnext_tcb;
     }
@@ -631,10 +731,79 @@ done:
 }
 
 /**
+ * Create a thread and invoke the entry passing entry_arg. If
+ * the entry routine returns the thread is considered dead
+ * and will not be rescheduled and its stack is reclamined.
+ * Any other global memory associated with the thread still
+ * exists and is left untouched.
+ *
+ * @param stack_size is 0 a "default" stack size will be used.
+ * @param entry is the routine to run
+ * @param entry_arg is the argument passed to entry.
+ *
+ * @return a ac_thread_rslt contains a status and an opaque ac_thread_hdl_t.
+ *         if rslt.status == 0 the thread was created and ac_thread_hdl_t
+ *         is valid.
+ */
+ac_thread_rslt_t ac_thread_create(ac_size_t stack_size,
+    void*(*entry)(void*), void* entry_arg) {
+  ac_thread_rslt_t rslt;
+
+  rslt.hdl = (ac_thread_hdl_t)thread_create(stack_size, get_flags(), entry, entry_arg);
+  rslt.status = (rslt.hdl != 0) ? 0 : 1;
+  return rslt;
+}
+
+/**
+ * Make the thread not ready,
+ *
+ * @param hdl is an opaque thread handle
+ */
+void thread_make_not_ready(ac_thread_hdl_t hdl) {
+  ac_uint flags = disable_intr();
+  {
+    remove_tcb_from_ready_intr_disabled((tcb_x86*)hdl);
+  }
+  restore_intr(flags);
+}
+
+/**
+ * Make the thread ready
+ *
+ * @param hdl is an opaque thread handle
+ *
+ * @return 0 if successful, 1 if it is already on a list
+ */
+ac_uint thread_make_ready(ac_thread_hdl_t hdl) {
+  return add_tcb_after((tcb_x86*)hdl, pready);
+}
+
+/**
+ * The current thread waits for some number of nanosecs.
+ */
+void ac_thread_wait_ns(ac_u64 nanosecs) {
+  ac_u64 secs = nanosecs / 1000000000ll;
+  ac_u64 sub_secs = nanosecs % 1000000000ll;
+  ac_u64 ticks = secs * ac_tsc_freq();
+  ticks += AC_U64_DIV_ROUND_UP(sub_secs * ac_tsc_freq(), 1000000000ll);
+
+  pready_timer_wait_until_tsc(ticks);
+}
+
+/**
+ * The current thread waits for some number of ticks.
+ */
+void ac_thread_wait_ticks(ac_u64 ticks) {
+  pready_timer_wait_until_tsc(ac_tscrd() + ticks);
+}
+
+/**
  * Early initialization of this module
  */
 void ac_thread_early_init() {
   init_timer();
+
+  thread_timer_init();
 
   // Initialize reschedule isr
   set_intr_handler(RESCHEDULE_ISR_INTR, reschedule_isr);
@@ -711,46 +880,3 @@ void ac_thread_init(ac_u32 max_threads) {
   restore_intr(flags);
 }
 
-/**
- * Create a thread and invoke the entry passing entry_arg. If
- * the entry routine returns the thread is considered dead
- * and will not be rescheduled and its stack is reclamined.
- * Any other global memory associated with the thread still
- * exists and is left untouched.
- *
- * @param stack_size is 0 a "default" stack size will be used.
- * @param entry is the routine to run
- * @param entry_arg is the argument passed to entry.
- *
- * @return a ac_thread_rslt contains a status and an opaque ac_thread_hdl_t.
- *         if rslt.status == 0 the thread was created and ac_thread_hdl_t
- *         is valid.
- */
-ac_thread_rslt_t ac_thread_create(ac_size_t stack_size,
-    void*(*entry)(void*), void* entry_arg) {
-  ac_thread_rslt_t rslt;
-
-  rslt.hdl = (ac_thread_hdl_t)thread_create(stack_size, get_flags(), entry, entry_arg);
-  rslt.status = (rslt.hdl != 0) ? 0 : 1;
-  return rslt;
-}
-
-/**
- * Make the thread not ready,
- *
- * @param hdl is an opaque thread handle
- */
-void thread_make_not_ready(ac_thread_hdl_t hdl) {
-  remove_tcb_from_ready((tcb_x86*)hdl);
-}
-
-/**
- * Make the thread ready
- *
- * @param hdl is an opaque thread handle
- *
- * @return 0 if successful, 1 if it is already on a list
- */
-ac_uint thread_make_ready(ac_thread_hdl_t hdl) {
-  return add_tcb_after((tcb_x86*)hdl, pready);
-}

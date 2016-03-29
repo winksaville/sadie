@@ -14,17 +14,26 @@
  * limitations under the license.
  */
 
+// Specifiy at least 199309L for nanosleep
+#define _POSIX_C_SOURCE 199506L
+
 #include <ac_thread.h>
 
 #include <ac_assert.h>
+#include <ac_intmath.h>
 #include <ac_memmgr.h>
+#include <ac_tsc.h>
 
+#include <ac_printf.h>
 #define NDEBUG
 #include <ac_debug_printf.h>
 
+#include <errno.h>
 #include <pthread.h>
-#include <unistd.h>
 #include <sched.h>
+#include <unistd.h>
+
+#include <time.h>
 
 typedef struct {
   pthread_t thread_id;
@@ -79,6 +88,56 @@ void ac_thread_init(ac_u32 max_threads) {
  */
 void ac_thread_yield(void) {
   sched_yield();
+}
+
+/**
+ * Have the current thread wait for some number of ticks.
+ */
+static void thread_wait_timespec(struct timespec* ptime) {
+  // Wait loop
+  while (AC_TRUE) {
+    int rslt = nanosleep(ptime, ptime);
+    //ac_printf("ac_thread_wait: rslt=%d\n", rslt);
+    switch (rslt) {
+      case 0: return;
+      case EINTR: break;
+      default: {
+        ac_debug_printf("ac_thread_wait: errno=%d\n", rslt);
+        return;
+        break;
+      }
+    }
+  }
+}
+
+/**
+ * The current thread waits for some number of nanosecs.
+ */
+void ac_thread_wait_ns(ac_u64 nanosecs) {
+  struct timespec time;
+  if (nanosecs < 1000000000) {
+    time.tv_sec = 0;
+    time.tv_nsec = nanosecs;
+  } else {
+    time.tv_sec = nanosecs / 1000000000;
+    time.tv_nsec = nanosecs % 1000000000;
+  }
+
+  thread_wait_timespec(&time);
+}
+
+
+/**
+ * The current thread waits for some number of ticks.
+ */
+void ac_thread_wait_ticks(ac_u64 ticks) {
+  struct timespec time;
+  ac_u64 freq = ac_tsc_freq();
+  ac_u64 sub_sec_ticks = ticks % freq;
+  time.tv_sec = ticks / ac_tsc_freq();
+  time.tv_nsec = AC_U64_DIV_ROUND_UP(sub_sec_ticks * 1000000000ll, freq);
+
+  thread_wait_timespec(&time);
 }
 
 
