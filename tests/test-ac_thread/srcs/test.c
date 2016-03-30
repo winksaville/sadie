@@ -173,12 +173,12 @@ ac_bool test_thread_wait(void) {
       waiting_ticks += ticks;
       successes += 1;
     }
-    ac_printf("test_thread_wait: waiting ns time=%lld ticks=%ld timems=%ld successes=%d\n",
+    ac_printf("test_thread_wait: waiting    ns=%lld act ticks=%ld timems=%ld successes=%d\n",
         params.time, ticks, timems, successes);
 
     ac_receptor_destroy(params.done);
   }
-  ac_printf("test_thread_wait: waiting ns avg    ticks=%ld ac_receptor_wait avg ticks=%ld\n",
+  ac_printf("test_thread_wait: waiting ns    avg ticks=%ld ac_receptor_wait avg ticks=%ld\n",
       AC_U64_DIV_ROUND_UP(waiting_ticks, successes == 0 ? 1 : successes),
       AC_U64_DIV_ROUND_UP(ac_receptor_waiting_ticks,
         ac_receptor_waiting_successes == 0 ? 1 : ac_receptor_waiting_successes));
@@ -225,7 +225,7 @@ ac_bool test_thread_wait(void) {
       waiting_ticks += ticks;
       successes += 1;
     }
-    ac_printf("test_thread_wait: waiting ticks time=%ld ticks=%ld timems=%ld successes=%d\n",
+    ac_printf("test_thread_wait: waiting ticks=%ld act ticks=%ld timems=%ld successes=%d\n",
         params.time, ticks, timems, successes);
 
     ac_receptor_destroy(params.done);
