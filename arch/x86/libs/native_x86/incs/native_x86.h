@@ -18,6 +18,7 @@
 #define ARCH_X86_INCS_NATIVE_X86_H
 
 #include <ac_inttypes.h>
+#include <ac_architecture.h>
 
 /** Set Task Register which is a 16 bit selector into the GDT */
 static __inline__ void set_tr(ac_u16 selector) {
