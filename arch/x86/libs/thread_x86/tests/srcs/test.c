@@ -387,6 +387,7 @@ int main(void) {
     error |= test_timer();
     error |= test_make_not_ready();
     error |= test_multi();
+    error |= test_thread_wait();
   }
 
   ac_uint zombies = remove_zombies();

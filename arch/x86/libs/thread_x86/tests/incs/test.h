@@ -42,4 +42,9 @@ void set_timer_reschedule_isr_counter(ac_u64 value);
  */
 ac_uint remove_zombies(void);
 
+/**
+ * Test waiting
+ */
+ac_bool test_thread_wait(void);
+
 #endif

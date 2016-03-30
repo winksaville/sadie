@@ -19,17 +19,20 @@
 #include <thread_x86_debug_ctx_switch.h>
 
 #include <apic_x86.h>
+#include <cpuid_x86.h>
 #include <interrupts_x86.h>
 #include <interrupts_x86_print.h>
 #include <native_x86.h>
+#include <reset_x86.h>
 
 #include <ac_assert.h>
-#include <ac_tsc.h>
+#include <ac_bits.h>
 #include <ac_debug_assert.h>
 #include <ac_intmath.h>
 #include <ac_inttypes.h>
 #include <ac_memmgr.h>
 #include <ac_putchar.h>
+#include <ac_tsc.h>
 
 #include <ac_printf.h>
 
@@ -41,8 +44,15 @@
 #define RESCHEDULE_ISR_INTR       0xfe
 #define TIMER_RESCHEDULE_ISR_INTR 0xfd
 
-#define DEFAULT_TIMER_DIVISOR   6       // Divide by 128
-#define DEFAULT_TIMER_COUNT     100000  // Counter
+// 1 billionth of a second is a nanosecond
+#define NANOSECS 1000000000ll
+
+// Default slice in nanoseconds
+#define SLICE_DEFAULT_NANOSECS    10000000ll // 10ms
+
+// The default number of ticks for a scheduling slice
+STATIC ac_u64 slice_default;
+
 STATIC ac_u64 timer_reschedule_isr_counter;
 
 typedef struct tcb_x86 {
@@ -54,8 +64,8 @@ typedef struct tcb_x86 {
   ac_u8* pstack;
   ac_u8* sp;
   ac_u16 ss;
-  ac_u32 slice;
-  ac_u32 cur_slice;
+  ac_u64 slice;
+  ac_u64 slice_deadline;
 } tcb_x86;
 
 typedef struct threads {
@@ -187,7 +197,7 @@ STATIC void tcb_init(tcb_x86* ptcb, ac_s32 thread_id,
   ptcb->entry_arg = entry_arg;
   ptcb->pnext_tcb = AC_NULL;
   ptcb->pprev_tcb = AC_NULL;
-  ptcb->slice = DEFAULT_TIMER_COUNT;
+  ptcb->slice = slice_default;
   ptcb->pstack = AC_NULL;
   ptcb->sp = AC_NULL;
   ac_s32* pthread_id = &ptcb->thread_id;
@@ -360,36 +370,26 @@ STATIC void remove_tcb_from_ready_intr_disabled(tcb_x86* pcur) {
 
 static tcb_x86* ptimer_waiting_tcb;
 static ac_u64 timer_waiting_until_tsc;
-static ac_u64 timer_fudge;
-
-static void thread_timer_init(void) {
-  __atomic_store_n(&ptimer_waiting_tcb, AC_NULL, __ATOMIC_RELEASE);
-  __atomic_store_n(&timer_waiting_until_tsc, 0ll, __ATOMIC_RELEASE);
-
-  // TODO: Calculate the fudge
-  __atomic_store_n(&timer_fudge, 1000ll, __ATOMIC_RELEASE);
-}
 
 /**
  * Let timer mdify the tcb to be scheduled.
  * Interrupts disabled!
  */
-static tcb_x86* timer_scheduler_intr_disabled(tcb_x86* next_tcb) {
+STATIC tcb_x86* timer_scheduler_intr_disabled(tcb_x86* next_tcb, ac_u64 now) {
   if (__atomic_load_n(&ptimer_waiting_tcb, __ATOMIC_ACQUIRE) != AC_NULL) {
     // There is a tcb with a timer waiting to expire
-    ac_u64 now = ac_tscrd() + __atomic_load_n(&timer_fudge, __ATOMIC_ACQUIRE);
     ac_u64 until_tsc = __atomic_load_n(&timer_waiting_until_tsc, __ATOMIC_ACQUIRE);
     if (now >= until_tsc) {
       // Timed out so schedule it.
       add_tcb_before(ptimer_waiting_tcb, next_tcb);
       next_tcb = ptimer_waiting_tcb;
-      next_tcb->cur_slice = next_tcb->slice;
+      next_tcb->slice_deadline = now + next_tcb->slice;
       __atomic_store_n(&ptimer_waiting_tcb, AC_NULL, __ATOMIC_RELEASE);
 
       // TODO: Find the next timer that is going to timeout?
 
-    } else if ((now + next_tcb->cur_slice) >= until_tsc) {
-      next_tcb->cur_slice = until_tsc - now;
+    } else if ((next_tcb->slice_deadline) > until_tsc) {
+      next_tcb->slice_deadline = until_tsc;
     } else {
       // timer_waiting_until_tsc is in the far future
     }
@@ -401,7 +401,7 @@ static tcb_x86* timer_scheduler_intr_disabled(tcb_x86* next_tcb) {
 }
 
 /**
- * The current pready tcb is to wait until ac_tscrd() > tsc.
+ * Add a new timer wait
  */
 static void pready_timer_wait_until_tsc(ac_u64 tsc) {
   ac_uint flags = disable_intr();
@@ -425,7 +425,12 @@ static void pready_timer_wait_until_tsc(ac_u64 tsc) {
  */
 __attribute__((__noinline__))
 tcb_x86* thread_scheduler_intr_disabled(ac_bool remove_pready, ac_u8* sp, ac_u16 ss) {
-  //ac_printf("thread_scheduler_intr_disabled:+remove_pready=%d, sp=%x ss=%x\n", remove_pready, sp, ss);
+  // For a consistent notion of now get it once in the scheduler
+  ac_u64 now = ac_tscrd();
+
+  //ac_printf("thread_scheduler_intr_disabled:+remove_pready=%d, sp=%x ss=%x pready=%x flags=%x now=%ld\n",
+  //    remove_pready, sp, ss, pready, ((struct full_stack_frame*)(sp))->iret_frame.flags,
+  //    now);
 
   // Save the current thread stack pointer
   pready->sp = sp;
@@ -456,15 +461,15 @@ tcb_x86* thread_scheduler_intr_disabled(ac_bool remove_pready, ac_u8* sp, ac_u16
     pready = next_tcb(pready);
   }
 
-  // Assume this threads cur slice is its default slice
-  pready->cur_slice = pready->slice;
+  // Set the threads slice deadline
+  pready->slice_deadline = now + pready->slice;
 
   // Let timer see if it has something that should be scheduled,
-  // Note, it may modify pready->cur_slice.
-  pready = timer_scheduler_intr_disabled(pready);
+  // Note, it may modify pready->slice_deadline.
+  pready = timer_scheduler_intr_disabled(pready, now);
 
-  // Set the current slice
-  set_apic_timer_initial_count(pready->cur_slice);
+  // Set the a new tsc deadline for this thread
+  set_apic_timer_tsc_deadline(pready->slice_deadline);
 
   ac_assert(pready != AC_NULL);
 
@@ -526,15 +531,36 @@ void set_timer_reschedule_isr_counter(ac_u64 value) {
  */
 STATIC void init_timer() {
   union apic_timer_lvt_fields_u lvtu = { .fields = get_apic_timer_lvt() };
+  ac_u32 out_eax, out_ebx, out_ecx, out_edx;
+
+  // Verify that TSC_DEADLINE is enabled
+  //
+  // See "Intel 64 and IA-32 Architectures Software Developer's Manual"
+  // Volume 3 chapter 10 "Advanded Programmable Interrupt Controller (APIC)"
+  // Section 10.5.4.1 "TSC-Deadline Mode"
+
+  get_cpuid(1, &out_eax, &out_ebx, &out_ecx, &out_edx);
+  if (AC_GET_BITS(ac_u32, out_ecx, 24, 1) != 1) {
+    ac_printf("CPU does not support TSC-Deadline mode\n");
+    reset_x86();
+  }
 
   lvtu.fields.vector = TIMER_RESCHEDULE_ISR_INTR; // interrupt vector
   lvtu.fields.disable = AC_FALSE; // interrupt enabled
-  lvtu.fields.mode = 0;     // one shot
+  lvtu.fields.mode = 2;     // TSC-Deadline
   set_apic_timer_lvt(lvtu.fields);
 
+  slice_default = AC_U64_DIV_ROUND_UP(SLICE_DEFAULT_NANOSECS * ac_tsc_freq(), NANOSECS);
+
   __atomic_store_n(&timer_reschedule_isr_counter, 0, __ATOMIC_RELEASE);
-  set_apic_timer_divider(DEFAULT_TIMER_DIVISOR);
-  set_apic_timer_initial_count(DEFAULT_TIMER_COUNT);
+  set_apic_timer_tsc_deadline(ac_tscrd() + slice_default);
+
+  // Init waiting globals
+  __atomic_store_n(&ptimer_waiting_tcb, AC_NULL, __ATOMIC_RELEASE);
+  __atomic_store_n(&timer_waiting_until_tsc, 0ll, __ATOMIC_RELEASE);
+
+  ac_printf("init_timer:-slice_default_nanosecs=%ld slice_default=%ld\n",
+      SLICE_DEFAULT_NANOSECS, slice_default);
 }
 
 /**
@@ -782,12 +808,12 @@ ac_uint thread_make_ready(ac_thread_hdl_t hdl) {
  * The current thread waits for some number of nanosecs.
  */
 void ac_thread_wait_ns(ac_u64 nanosecs) {
-  ac_u64 secs = nanosecs / 1000000000ll;
-  ac_u64 sub_secs = nanosecs % 1000000000ll;
+  ac_u64 secs = nanosecs / NANOSECS;
+  ac_u64 sub_secs = nanosecs % NANOSECS;
   ac_u64 ticks = secs * ac_tsc_freq();
-  ticks += AC_U64_DIV_ROUND_UP(sub_secs * ac_tsc_freq(), 1000000000ll);
+  ticks += AC_U64_DIV_ROUND_UP(sub_secs * ac_tsc_freq(), NANOSECS);
 
-  pready_timer_wait_until_tsc(ticks);
+  pready_timer_wait_until_tsc(ac_tscrd() + ticks);
 }
 
 /**
@@ -801,9 +827,9 @@ void ac_thread_wait_ticks(ac_u64 ticks) {
  * Early initialization of this module
  */
 void ac_thread_early_init() {
+  // Initialize timer first, the main reason
+  // is it set slice_default.
   init_timer();
-
-  thread_timer_init();
 
   // Initialize reschedule isr
   set_intr_handler(RESCHEDULE_ISR_INTR, reschedule_isr);
