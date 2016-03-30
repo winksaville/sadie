@@ -17,7 +17,14 @@
 #ifndef ARCH_X86_APIC_X86_INCS_APIC_X86_H
 #define ARCH_X86_APIC_X86_INCS_APIC_X86_H
 
+#include <msr_x86.h>
+
 #include <ac_inttypes.h>
+
+/**
+ * TSC-Deadline msr
+ */
+#define IA32_TSC_DEADLINE 0x6E0
 
 /**
  * APIC linear address
@@ -258,6 +265,20 @@ static __inline__ void set_apic_timer_current_count(ac_u32 val) {
  */
 static __inline__ ac_u32 get_apic_timer_current_count(void) {
   return *(ac_u32*)(apic_lin_addr + 0x390);
+}
+
+/**
+ * Set apic tsr deadline
+ */
+static __inline__ void set_apic_timer_tsc_deadline(ac_u64 val) {
+  set_msr(IA32_TSC_DEADLINE, val);
+}
+
+/**
+ * Set apic tsr deadline
+ */
+static __inline__ ac_u64 get_apic_timer_tsc_deadline(void) {
+  return get_msr(IA32_TSC_DEADLINE);
 }
 
 #endif
