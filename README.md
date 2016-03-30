@@ -34,9 +34,43 @@ cd sadie
 ```
 Create cross-tool-chain
 ---
+
 ```
 vendor-install-tools/install.py all
 ```
+Configure kvm for qemu-system-x86_64
+---
+To be able to things like power/perf/apic I needed to enable
+and configure kvm. If you look at the meson.build for Posix
+and pc_x86_64 platform you'll see that -enable-kvm and -cpu host
+is being passed to qemu-system-x86_64.runner.sh. On my Arch Linux
+system I need to install the kvm, kvm_intel and virtio modules,
+[see](https://wiki.archlinux.org/index.php/KVM).
+
+I'll need to see what happens for testing on circleci!!
+
+To load the modules I added cpupower.conf and kvm-virtio.conf to
+/etc/modules-load.d:
+```
+$ cat /etc/modules-load.d/cpupower.conf
+msr
+cpuid
+
+$ cat /etc/modules-load.d/kvm-virtio.conf
+kvm
+kvm_intel
+virtio
+
+$ cat /etc/modprobe.d/kvm-virtio.conf
+options kvm ignore_msrs=1
+```
+After rebooting so the modules are loaded we see the ignore_msrs
+is set to Y:
+```
+$ sudo cat /sys/module/kvm/parameters/ignore_msrs
+Y
+```
+
 Build sadie for ARM VersatilePB
 ---
 ```
