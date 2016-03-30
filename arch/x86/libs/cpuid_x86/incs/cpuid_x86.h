@@ -19,6 +19,12 @@
 
 #include <ac_inttypes.h>
 
+/**
+ * See "Intel 64 and IA-32 Architectures Software Developer's Manual"
+ * Volume 2 chapter 3.2 "Instructions (A-M)" CPUID
+ * Table 3-17. "Information Returned by CPUID Instruction"
+ */
+
 /** CPUID on a sublead with leaf in eax and subleaf in ecx */
 static __inline__ void  get_cpuid_subleaf(ac_u32 leaf_eax, ac_u32 subleaf_ecx,
     ac_u32 *out_eax, ac_u32 *out_ebx, ac_u32* out_ecx, ac_u32* out_edx) {
