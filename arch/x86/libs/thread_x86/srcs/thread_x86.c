@@ -66,6 +66,7 @@ typedef struct tcb_x86 {
   ac_u16 ss;
   ac_u64 slice;
   ac_u64 slice_deadline;
+  ac_u64 waiting_deadline;
 } tcb_x86;
 
 typedef struct threads {
@@ -198,6 +199,8 @@ STATIC void tcb_init(tcb_x86* ptcb, ac_s32 thread_id,
   ptcb->pnext_tcb = AC_NULL;
   ptcb->pprev_tcb = AC_NULL;
   ptcb->slice = slice_default;
+  ptcb->slice_deadline = 0ll;
+  ptcb->waiting_deadline = 0ll;
   ptcb->pstack = AC_NULL;
   ptcb->sp = AC_NULL;
   ac_s32* pthread_id = &ptcb->thread_id;
@@ -369,29 +372,62 @@ STATIC void remove_tcb_from_ready_intr_disabled(tcb_x86* pcur) {
 }
 
 static tcb_x86* ptimer_waiting_tcb;
-static ac_u64 timer_waiting_until_tsc;
+
+/**
+ * Initialize the waiting tcb data structures
+ */
+STATIC void waiting_tcb_init(void) {
+  __atomic_store_n(&ptimer_waiting_tcb, AC_NULL, __ATOMIC_RELEASE);
+}
+
+/**
+ * Add tcb to waitlist.
+ *
+ * @param ptcb is the tcb to add
+ * @param absolute_tsc is the absolute tsc to wait until
+ */
+STATIC void waiting_tcb_add_intr_disabled(tcb_x86* ptcb, ac_u64 absolute_tsc) {
+  __atomic_store_n(&ptcb->waiting_deadline, absolute_tsc, __ATOMIC_RELEASE);
+  __atomic_store_n(&ptimer_waiting_tcb, ptcb, __ATOMIC_RELEASE);
+}
+
+/**
+ * Return the next tcb that is waiting its turn to become ready.
+ * The tcb is NOT removed.
+ */
+STATIC tcb_x86* waiting_tcb_peek_intr_disabled(void) {
+  return __atomic_load_n(&ptimer_waiting_tcb, __ATOMIC_ACQUIRE);
+}
+
+/**
+ * Remove the next tcb.
+ */
+STATIC void waiting_tcb_remove_intr_disabled(void) {
+  __atomic_store_n(&ptimer_waiting_tcb, AC_NULL, __ATOMIC_RELEASE);
+}
 
 /**
  * Let timer mdify the tcb to be scheduled.
  * Interrupts disabled!
  */
 STATIC tcb_x86* timer_scheduler_intr_disabled(tcb_x86* next_tcb, ac_u64 now) {
-  if (__atomic_load_n(&ptimer_waiting_tcb, __ATOMIC_ACQUIRE) != AC_NULL) {
+  tcb_x86* pwaiting_tcb = waiting_tcb_peek_intr_disabled();
+  if (pwaiting_tcb != AC_NULL) {
+
     // There is a tcb with a timer waiting to expire
-    ac_u64 until_tsc = __atomic_load_n(&timer_waiting_until_tsc, __ATOMIC_ACQUIRE);
-    if (now >= until_tsc) {
+    ac_u64 waiting_deadline = __atomic_load_n(&pwaiting_tcb->waiting_deadline, __ATOMIC_ACQUIRE);
+    if (now >= waiting_deadline) {
       // Timed out so schedule it.
-      add_tcb_before(ptimer_waiting_tcb, next_tcb);
-      next_tcb = ptimer_waiting_tcb;
+      add_tcb_before(pwaiting_tcb, next_tcb);
+      next_tcb = pwaiting_tcb;
       next_tcb->slice_deadline = now + next_tcb->slice;
-      __atomic_store_n(&ptimer_waiting_tcb, AC_NULL, __ATOMIC_RELEASE);
-
-      // TODO: Find the next timer that is going to timeout?
-
-    } else if ((next_tcb->slice_deadline) > until_tsc) {
-      next_tcb->slice_deadline = until_tsc;
+      waiting_tcb_remove_intr_disabled();
+    } else if ((next_tcb->slice_deadline) > waiting_deadline) {
+      // Shorten the next_tcb's slice_deadline so we'll more accurately
+      // start the waiting tcb.
+      next_tcb->slice_deadline = waiting_deadline;
     } else {
-      // timer_waiting_until_tsc is in the far future
+      // The waiting tcb in the future, do nothing
     }
   } else {
     // There are no tcb waiting for a timer to expire.
@@ -406,8 +442,7 @@ STATIC tcb_x86* timer_scheduler_intr_disabled(tcb_x86* next_tcb, ac_u64 now) {
 static void pready_timer_wait_until_tsc(ac_u64 tsc) {
   ac_uint flags = disable_intr();
   {
-    __atomic_store_n(&timer_waiting_until_tsc, tsc, __ATOMIC_RELEASE);
-    __atomic_store_n(&ptimer_waiting_tcb, pready, __ATOMIC_RELEASE);
+    waiting_tcb_add_intr_disabled(pready, tsc);
     remove_tcb_from_ready_intr_disabled(pready);
   }
   restore_intr(flags);
@@ -555,9 +590,8 @@ STATIC void init_timer() {
   __atomic_store_n(&timer_reschedule_isr_counter, 0, __ATOMIC_RELEASE);
   set_apic_timer_tsc_deadline(ac_tscrd() + slice_default);
 
-  // Init waiting globals
-  __atomic_store_n(&ptimer_waiting_tcb, AC_NULL, __ATOMIC_RELEASE);
-  __atomic_store_n(&timer_waiting_until_tsc, 0ll, __ATOMIC_RELEASE);
+  // Init waiting tcb structures
+  waiting_tcb_init();
 
   ac_printf("init_timer:-slice_default_nanosecs=%ld slice_default=%ld\n",
       SLICE_DEFAULT_NANOSECS, slice_default);
