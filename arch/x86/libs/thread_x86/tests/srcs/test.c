@@ -387,13 +387,21 @@ int main(void) {
     error |= test_timer();
     error |= test_make_not_ready();
     error |= test_multi();
-    error |= test_thread_wait();
+
+    // Test using ac_thread_wait_ticks
+    error |= test_thread_wait(1, AC_FALSE);
+    error |= test_thread_wait(2, AC_FALSE);
+    error |= test_thread_wait(3, AC_FALSE);
+    error |= test_thread_wait(4, AC_FALSE);
+
+    // Test using ac_thread_wait_ns
+    error |= test_thread_wait(2, AC_TRUE);
   }
 
   ac_uint zombies = remove_zombies();
   ac_printf("py: zombies removed=%d\n", zombies);
 
-  perf_yield();
+  //perf_yield();
 
   if (!error) {
     ac_printf("OK\n");

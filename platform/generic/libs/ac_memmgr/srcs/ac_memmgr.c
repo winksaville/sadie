@@ -19,7 +19,7 @@
 static ac_size_t idx = 0;
 
 #define MEM_ALIGN ((ac_size_t)64) // MUST BE POWER of 2
-#define MAX_IDX (0x1000 * 64)
+#define MAX_IDX (0x1000 * 0x80)   // Assume 500K of ram
 
 static ac_u8 mem_array[MAX_IDX] __attribute__ ((aligned (MEM_ALIGN)));
 

@@ -22,6 +22,20 @@
 #include <ac_inttypes.h>
 #include <ac_thread.h>
 
+typedef struct tcb_x86 {
+  ac_s32 thread_id;
+  struct tcb_x86* pnext_tcb;
+  struct tcb_x86* pprev_tcb;
+  void*(*entry)(void*);
+  void* entry_arg;
+  ac_u8* pstack;
+  ac_u8* sp;
+  ac_u16 ss;
+  ac_u64 slice;
+  ac_u64 slice_deadline;
+  ac_u64 waiting_deadline;
+} tcb_x86;
+
 /**
  * The current thread yeilds the CPU to the next
  * ready thread.

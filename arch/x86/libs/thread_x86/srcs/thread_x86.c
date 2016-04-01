@@ -17,6 +17,7 @@
 #include <ac_thread.h>
 #include <thread_x86.h>
 #include <thread_x86_debug_ctx_switch.h>
+#include <waiting_tcbs.h>
 
 #include <apic_x86.h>
 #include <cpuid_x86.h>
@@ -54,20 +55,6 @@
 STATIC ac_u64 slice_default;
 
 STATIC ac_u64 timer_reschedule_isr_counter;
-
-typedef struct tcb_x86 {
-  ac_s32 thread_id;
-  struct tcb_x86* pnext_tcb;
-  struct tcb_x86* pprev_tcb;
-  void*(*entry)(void*);
-  void* entry_arg;
-  ac_u8* pstack;
-  ac_u8* sp;
-  ac_u16 ss;
-  ac_u64 slice;
-  ac_u64 slice_deadline;
-  ac_u64 waiting_deadline;
-} tcb_x86;
 
 typedef struct threads {
   struct threads* pnext;
@@ -371,46 +358,12 @@ STATIC void remove_tcb_from_ready_intr_disabled(tcb_x86* pcur) {
   }
 }
 
-static tcb_x86* ptimer_waiting_tcb;
-
-/**
- * Initialize the waiting tcb data structures
- */
-STATIC void waiting_tcb_init(void) {
-  __atomic_store_n(&ptimer_waiting_tcb, AC_NULL, __ATOMIC_RELEASE);
-}
-
-/**
- * Add tcb to waitlist.
- *
- * @param ptcb is the tcb to add
- * @param absolute_tsc is the absolute tsc to wait until
- */
-STATIC void waiting_tcb_add_intr_disabled(tcb_x86* ptcb, ac_u64 absolute_tsc) {
-  __atomic_store_n(&ptcb->waiting_deadline, absolute_tsc, __ATOMIC_RELEASE);
-  __atomic_store_n(&ptimer_waiting_tcb, ptcb, __ATOMIC_RELEASE);
-}
-
-/**
- * Return the next tcb that is waiting its turn to become ready.
- * The tcb is NOT removed.
- */
-STATIC tcb_x86* waiting_tcb_peek_intr_disabled(void) {
-  return __atomic_load_n(&ptimer_waiting_tcb, __ATOMIC_ACQUIRE);
-}
-
-/**
- * Remove the next tcb.
- */
-STATIC void waiting_tcb_remove_intr_disabled(void) {
-  __atomic_store_n(&ptimer_waiting_tcb, AC_NULL, __ATOMIC_RELEASE);
-}
-
 /**
  * Let timer mdify the tcb to be scheduled.
  * Interrupts disabled!
  */
 STATIC tcb_x86* timer_scheduler_intr_disabled(tcb_x86* next_tcb, ac_u64 now) {
+  //ac_printf("timer_scheduler_intr_disabled:+ next_tcb=%p now=%ld\n");
   tcb_x86* pwaiting_tcb = waiting_tcb_peek_intr_disabled();
   if (pwaiting_tcb != AC_NULL) {
 
@@ -433,6 +386,7 @@ STATIC tcb_x86* timer_scheduler_intr_disabled(tcb_x86* next_tcb, ac_u64 now) {
     // There are no tcb waiting for a timer to expire.
   }
 
+  //ac_printf("timer_scheduler_intr_disabled:+ next_tcb=%p\n", next_tcb);
   return next_tcb;
 }
 
@@ -589,9 +543,6 @@ STATIC void init_timer() {
 
   __atomic_store_n(&timer_reschedule_isr_counter, 0, __ATOMIC_RELEASE);
   set_apic_timer_tsc_deadline(ac_tscrd() + slice_default);
-
-  // Init waiting tcb structures
-  waiting_tcb_init();
 
   ac_printf("init_timer:-slice_default_nanosecs=%ld slice_default=%ld\n",
       SLICE_DEFAULT_NANOSECS, slice_default);
@@ -754,6 +705,7 @@ STATIC tcb_x86* thread_create(ac_size_t stack_size, ac_uptr flags,
 
   pstack = ac_malloc(stack_size);
   if (pstack == AC_NULL) {
+    ac_printf("thread_create: could not allocate stack\n");
     error = 1; // TODO: add AC_STATUS_OOM
     goto done;
   }
@@ -762,6 +714,7 @@ STATIC tcb_x86* thread_create(ac_size_t stack_size, ac_uptr flags,
   // Get the tcb and initialize the stack frame
   ptcb = get_tcb(entry, entry_arg);
   if (ptcb == AC_NULL) {
+    ac_printf("thread_create: no tcb's available\n");
     error = 1; // TODO: add AC_STATUS_TO_MANY_THREADS
     goto done;
   }
@@ -894,6 +847,10 @@ void ac_thread_early_init() {
   // Add idle to the pready list
   add_tcb_after(pidle_tcb, pready);
 
+  // Initialize waiting tcbs data structures
+  waiting_tcbs_init(2);
+  print_waiting_tcbs();
+
   ac_printf("ac_thread_early_init: pmain=0x%lx pidle=0x%lx\n", pmain_tcb, pidle_tcb);
   print_tcb_list("ac_thread_early_init:-ready: ", pready);
 }
@@ -936,6 +893,9 @@ void ac_thread_init(ac_u32 max_threads) {
       pthreads = pnew;
     }
     total_threads += max_threads;
+
+    // Gurantee all threads can wait simultaneously
+    waiting_tcbs_update_max(total_threads);
   }
   restore_intr(flags);
 }

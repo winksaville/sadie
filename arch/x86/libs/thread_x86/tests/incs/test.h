@@ -43,8 +43,11 @@ void set_timer_reschedule_isr_counter(ac_u64 value);
 ac_uint remove_zombies(void);
 
 /**
- * Test waiting
+ * Test waiting tick on 1 or more threads.
+ *
+ * @params simultaneous_thread is the number of threads
+ * @params ns is true if to use thread_wait_ns and false for thread_wait_ticks
  */
-ac_bool test_thread_wait(void);
+ac_bool test_thread_wait(ac_uint simultaneous_threads, ac_bool ns);
 
 #endif
