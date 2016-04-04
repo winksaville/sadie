@@ -31,7 +31,7 @@
  * the waiting_tcbs[0] isn't used hence the +1. The highest priority element
  * is waiting_tcbs[1] and is the root node which is the only node without
  * a paraent. Every node always has a priority >= any of its children.
- * Also, the shape of the tree is compete meaning the following three properties
+ * Also, the shape of the tree is compete, meaning the following three properties
  * hold:
  * 1) All leaves are either at depth d or d-1
  * 2) All leaves at depth d-1 are to the right of leaves at depth d
@@ -39,14 +39,19 @@
  * 3.b) that child is to the left of its parent
  * 3.c) and it's the rightmost leaf at depth d.
  *
- * The root/highest priority node is at waiting_tcb[1] (K=0 is unused)
+ * The root/highest priority node is at waiting_tcbs[1] (K=0 is unused)
  *
- * A nodes left child is at waiting_tcb[K*2] and its right child
- * at waiting_tcb[(K*2) + 1].
+ * A nodes left child is at waiting_tcbs[K*2] and its right child
+ * at waiting_tcbs[(K*2) + 1].
  *
- * A node K parent is at waiting_tcb[K/2] using integer division.
+ * A node K parent is at waiting_tcbs[K/2] using integer division.
  */
 
+/**
+ * Assumption: Currently only a single CPU is being used and in the future
+ * when I do support multiple CPU's these will be CPU local and only used
+ * by a single CPU. Thus there is no need for atomic operations.
+ */
 static tcb_x86** waiting_tcbs;
 static ac_uint max_waiting_tcbs;
 static ac_uint num_waiting_tcbs;
@@ -62,21 +67,11 @@ static tcb_x86** allocate_array(ac_uint count) {
 /**
  * swap nodes array[n1] and array[n2]
  */
-static void swap_nodes(ac_uint n1, ac_uint n2) {
-  tcb_x86 *n1_tcb = __atomic_load_n(&waiting_tcbs[n1], __ATOMIC_ACQUIRE);
-  tcb_x86 *n2_tcb = __atomic_load_n(&waiting_tcbs[n2], __ATOMIC_ACQUIRE);
+void swap_nodes(ac_uint n1, ac_uint n2) {
+  tcb_x86 *n2_tcb = waiting_tcbs[n2];
   
-  __atomic_store_n(&waiting_tcbs[n2], n1_tcb, __ATOMIC_RELEASE);
-  __atomic_store_n(&waiting_tcbs[n1], n2_tcb, __ATOMIC_RELEASE);
-}
-
-/**
- * Store node array[dest] = array[srce]
- */
-static void store_node(ac_uint srce, ac_uint dest) {
-  tcb_x86 *srce_tcb = __atomic_load_n(&waiting_tcbs[srce], __ATOMIC_ACQUIRE);
-  
-  __atomic_store_n(&waiting_tcbs[dest], srce_tcb, __ATOMIC_RELEASE);
+  waiting_tcbs[n2] = waiting_tcbs[n1];
+  waiting_tcbs[n1] = n2_tcb;
 }
 
 /**
@@ -84,9 +79,8 @@ static void store_node(ac_uint srce, ac_uint dest) {
  * The tcb is NOT removed.
  */
 tcb_x86* waiting_tcb_peek_intr_disabled(void) {
-  ac_uint count = __atomic_load_n(&num_waiting_tcbs,  __ATOMIC_ACQUIRE);
-  if (count > 0) {
-    return __atomic_load_n(&waiting_tcbs[1], __ATOMIC_ACQUIRE);
+  if (num_waiting_tcbs > 0) {
+    return waiting_tcbs[1];
   } else {
     return AC_NULL;
   }
@@ -103,21 +97,21 @@ void waiting_tcb_add_intr_disabled(tcb_x86* ptcb, ac_u64 absolute_tsc) {
   //print_waiting_tcbs();
 
   // New Node Index is number currently waiting + 1
-  ac_uint nni = __atomic_add_fetch(&num_waiting_tcbs, 1, __ATOMIC_RELEASE);
-  ac_assert(nni <= __atomic_load_n(&max_waiting_tcbs, __ATOMIC_ACQUIRE));
+  ac_uint nni = ++num_waiting_tcbs;
+  ac_assert(nni <= max_waiting_tcbs);
 
   // Store it as the right most node and then find where its final position should be
-  __atomic_store_n(&waiting_tcbs[nni], ptcb, __ATOMIC_RELEASE);
-  __atomic_store_n(&ptcb->waiting_deadline, absolute_tsc, __ATOMIC_RELEASE);
+  waiting_tcbs[nni] = ptcb;
+  ptcb->waiting_deadline = absolute_tsc;
 
   // Now loop up through the new nodes substree comparing with its parent
   // to find its proper position in the heap.
   while (nni > 1) {
     ac_uint parent = nni / 2;
-    tcb_x86* pchild_tcb = __atomic_load_n(&waiting_tcbs[nni], __ATOMIC_ACQUIRE);
-    tcb_x86* pparent_tcb = __atomic_load_n(&waiting_tcbs[parent], __ATOMIC_ACQUIRE);
-    ac_u64 child_waiting_deadline = __atomic_load_n(&pchild_tcb->waiting_deadline, __ATOMIC_ACQUIRE);
-    ac_u64 parent_waiting_deadline = __atomic_load_n(&pparent_tcb->waiting_deadline, __ATOMIC_ACQUIRE);
+    tcb_x86* pchild_tcb = waiting_tcbs[nni];
+    tcb_x86* pparent_tcb = waiting_tcbs[parent];
+    ac_u64 child_waiting_deadline = pchild_tcb->waiting_deadline;
+    ac_u64 parent_waiting_deadline = pparent_tcb->waiting_deadline;
 
     if (child_waiting_deadline < parent_waiting_deadline) {
       swap_nodes(nni, parent);
@@ -139,39 +133,46 @@ void waiting_tcb_remove_intr_disabled(void) {
   //print_waiting_tcbs();
 
   //  Node Index is number currently waiting + 1
-  ac_assert(__atomic_load_n(&num_waiting_tcbs, __ATOMIC_ACQUIRE) > 0);
-  ac_uint new_num = __atomic_fetch_sub(&num_waiting_tcbs, 1, __ATOMIC_RELEASE);
+  if (num_waiting_tcbs == 0) {
+    return;
+  }
+
+  ac_uint old_num = num_waiting_tcbs--;
+
+  if (waiting_tcbs == 0) {
+    // No waiting tcbs to remove
+    return;
+  }
 
   // Place the right most element at the end of the heap as the root.
-  store_node(new_num, 1);
+  //store_node(old_num, 1);
+  waiting_tcbs[1] = waiting_tcbs[old_num];
 
   // Now loop up through the substree comparing parent and
   // its children to find its proper position in the heap.
   ac_uint parent = 1;
-  while (parent < new_num) {
-    tcb_x86* pparent_tcb = __atomic_load_n(&waiting_tcbs[parent], __ATOMIC_ACQUIRE);
+  while (parent < num_waiting_tcbs) {
+    //tcb_x86* pparent_tcb = waiting_tcbs[parent];
 
     ac_uint left_child = parent * 2;
     ac_uint right_child = left_child + 1;
 
-    if (left_child > new_num) {
-      // No children
+    if (left_child > num_waiting_tcbs) {
+      // No children for this node, so we're done
       break;
     }
     
     // Parent and left child exist get their deadlines
-    ac_u64 parent_waiting_deadline = __atomic_load_n(&pparent_tcb->waiting_deadline, __ATOMIC_ACQUIRE);
-    tcb_x86* pleft_child_tcb = __atomic_load_n(&waiting_tcbs[left_child], __ATOMIC_ACQUIRE);
-    ac_u64 left_child_waiting_deadline = __atomic_load_n(&pleft_child_tcb->waiting_deadline, __ATOMIC_ACQUIRE);
+    ac_u64 parent_waiting_deadline = waiting_tcbs[parent]->waiting_deadline;
+    ac_u64 left_child_waiting_deadline = waiting_tcbs[left_child]->waiting_deadline;
 
     // Assume left child is smaller than right_child if the right child exists
     ac_uint smaller_node = left_child;
     ac_u64 smaller_child_waiting_deadline = left_child_waiting_deadline;
 
-    if (right_child <= new_num) {
+    if (right_child <= num_waiting_tcbs) {
       // Both left and right clildren exist, get the right childs waiting deadline
-      tcb_x86* pright_child_tcb = __atomic_load_n(&waiting_tcbs[right_child], __ATOMIC_ACQUIRE);
-      ac_u64 right_child_waiting_deadline = __atomic_load_n(&pright_child_tcb->waiting_deadline, __ATOMIC_ACQUIRE);
+      ac_u64 right_child_waiting_deadline = waiting_tcbs[right_child]->waiting_deadline;
 
       // See if its smaller than the left child
       if (left_child_waiting_deadline > right_child_waiting_deadline) {
@@ -256,14 +257,14 @@ void print_waiting_tcbs(void) {
 void waiting_tcbs_update_max(ac_uint new_max) {
   ac_uint flags = disable_intr();
   {
-    ac_uint cur_max = __atomic_load_n(&max_waiting_tcbs, __ATOMIC_ACQUIRE);
+    ac_uint cur_max = max_waiting_tcbs;
     if (new_max > cur_max) {
       tcb_x86** new = allocate_array(new_max);
       for (ac_uint i = 0; i < cur_max; i++) {
         new[i] = waiting_tcbs[i];
       }
-      __atomic_store_n(&max_waiting_tcbs, new_max, __ATOMIC_RELEASE);
-      __atomic_store_n(waiting_tcbs, new, __ATOMIC_RELEASE);
+      max_waiting_tcbs = new_max;
+      *(void**)waiting_tcbs = (void**)new;
     }
   }
   restore_intr(flags);
@@ -276,9 +277,10 @@ void waiting_tcbs_update_max(ac_uint new_max) {
  */
 void waiting_tcbs_init(ac_uint max) {
   max += 1; // There must be an extra one since waiting_tcbs[0] isn't used
-  tcb_x86** pwt = allocate_array(max);
 
-  __atomic_store_n(waiting_tcbs, pwt, __ATOMIC_RELEASE);
-  __atomic_store_n(&max_waiting_tcbs, max, __ATOMIC_RELEASE);
-  __atomic_store_n(&num_waiting_tcbs, 0, __ATOMIC_RELEASE);
+  waiting_tcbs = allocate_array(max);
+  ac_assert(waiting_tcbs != AC_NULL);
+
+  max_waiting_tcbs = max;
+  num_waiting_tcbs = 0;
 }
