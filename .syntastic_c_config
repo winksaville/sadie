@@ -7,6 +7,8 @@
 -I
 /home/wink/prgs/sadie/arch/x86/libs/cpuid_x86/incs
 -I
+/home/wink/prgs/sadie/arch/x86/libs/ac_pci_impl/incs
+-I
 /home/wink/prgs/sadie/arch/x86/libs/ac_tsc_impl/incs
 -I
 /home/wink/prgs/sadie/arch/x86/libs/cr_x86/incs
@@ -57,6 +59,8 @@
 /home/wink/prgs/sadie/libs/ac_memset/incs
 -I
 /home/wink/prgs/sadie/libs/ac_mpscfifo/incs
+-I
+/home/wink/prgs/sadie/libs/ac_pci/incs
 -I
 /home/wink/prgs/sadie/libs/ac_printf/incs
 -I

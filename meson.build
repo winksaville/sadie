@@ -71,6 +71,7 @@ subdir('platform/Posix/libs/ac_tsc_impl/tests')
 #subdir('libs/tests')
 subdir('libs/ac_bits/tests')
 subdir('libs/ac_printf/tests')
+subdir('libs/ac_pci/tests')
 
 subdir('platform/tests')
 subdir('tests')

@@ -21,24 +21,38 @@
 
 #define AC_IO_WAIT_UNUSED_PORT (0x80)
 
-static inline ac_u8 inb_port(ac_u16 port) {
+static inline ac_u8 io_rd_u8(ac_u16 port) {
   ac_u8 val;
   __asm volatile ( "inb %[port], %[val]" : [val]"=a"(val) : [port] "d"(port));
   return val;
 }
+#define inb_port(port) io_rd_u8((port))
 
-static inline ac_u16 inw_port(ac_u16 port) {
+static inline ac_u16 io_rd_u16(ac_u16 port) {
   ac_u16 val;
   __asm volatile ( "inw %[port], %[val]" : [val]"=a"(val) : [port] "d"(port));
   return val;
 }
+#define inw_port(port) io_rd_u16((port))
 
-static inline void outb_port_value(ac_u16 port, ac_u8 val) {
-    __asm volatile ( "outb %[val], %[port]" : : [val] "a"(val), [port] "d"(port) );
+static inline ac_u32 io_rd_u32(ac_u16 port) {
+  ac_u32 val;
+  __asm volatile ( "inl %[port], %[val]" : [val]"=a"(val) : [port] "d"(port));
+  return val;
 }
 
-static inline void outw_port_value(ac_u16 port, ac_u16 val) {
+static inline void io_wr_u8(ac_u16 port, ac_u8 val) {
+    __asm volatile ( "outb %[val], %[port]" : : [val] "a"(val), [port] "d"(port) );
+}
+#define outb_port_value(port, val) io_wr_u8((port), (val))
+
+static inline void io_wr_u16(ac_u16 port, ac_u16 val) {
     __asm volatile ( "outw %[val], %[port]" : : [val] "a"(val), [port] "d"(port) );
+}
+#define outw_port_value(port, val) io_wr_u16((port), (val))
+
+static inline void io_wr_u32(ac_u16 port, ac_u32 val) {
+    __asm volatile ( "outl %[val], %[port]" : : [val] "a"(val), [port] "d"(port) );
 }
 
 static inline void io_wait(void) {

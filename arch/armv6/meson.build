@@ -14,4 +14,6 @@
 
 runtimeIncDirs += [include_directories('incs')]
 
+subdir('libs')
+
 subdir(Cpu)
