@@ -31,8 +31,8 @@
  * @return 0xFFFFFFFF if that address doesn't exist.
  */
 static inline ac_u32 ac_pci_cfg_rd_u32(ac_pci_cfg_addr cfg_addr) {
+  // Make sure reg is aligned on u32
   cfg_addr.reg &= 0xfffffffc;
-  //union ac_pci_cfg_addr_u addr_u = { .fields = cfg_addr };
   io_wait();
   io_wr_u32(__PCI_CFG_ADDR_PORT, cfg_addr.raw);
   io_wait();
@@ -43,7 +43,8 @@ static inline ac_u32 ac_pci_cfg_rd_u32(ac_pci_cfg_addr cfg_addr) {
  * pci configuration write u32
  */
 static inline void ac_pci_cfg_wr_u32(ac_pci_cfg_addr cfg_addr, ac_u32 val) {
-  //union ac_pci_cfg_addr_u addr_u = { .fields = cfg_addr };
+  // Make sure reg is aligned on u32
+  cfg_addr.reg &= 0xfffffffc;
   io_wait();
   io_wr_u32(__PCI_CFG_ADDR_PORT, cfg_addr.raw);
   io_wait();
