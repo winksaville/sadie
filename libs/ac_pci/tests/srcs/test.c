@@ -98,7 +98,8 @@ struct test_case_ac_pci_cfg_hdr_cmn {
   ac_u8 base_class;
   ac_u8 cache_line_size;
   ac_u8 latency_timer;
-  ac_u8 header_type;
+  ac_u8 hdr_type;
+  ac_bool multi_func;
   ac_u8 bist;
 };
 
@@ -123,8 +124,9 @@ static struct test_case_ac_pci_cfg_hdr_cmn test_case_ac_pci_cfg_hdr_cmn_array[] 
   { .val.hdr_cmn.raw[3]=0x00000080, .cache_line_size=0x80, },
   { .val.hdr_cmn.raw[3]=0x00000100, .latency_timer=0x01, },
   { .val.hdr_cmn.raw[3]=0x00008000, .latency_timer=0x80, },
-  { .val.hdr_cmn.raw[3]=0x00010000, .header_type=0x01, },
-  { .val.hdr_cmn.raw[3]=0x00800000, .header_type=0x80, },
+  { .val.hdr_cmn.raw[3]=0x00010000, .hdr_type=0x01, },
+  { .val.hdr_cmn.raw[3]=0x00400000, .hdr_type=0x40, },
+  { .val.hdr_cmn.raw[3]=0x00800000, .multi_func=0x1, },
   { .val.hdr_cmn.raw[3]=0x01000000, .bist=0x01, },
   { .val.hdr_cmn.raw[3]=0x80000000, .bist=0x80, },
 };
@@ -142,7 +144,8 @@ static ac_bool test_pci_cfg_hdr_cmn(struct test_case_ac_pci_cfg_hdr_cmn* test) {
   error |= AC_TEST(test->val.hdr_cmn.base_class == test->base_class);
   error |= AC_TEST(test->val.hdr_cmn.cache_line_size == test->cache_line_size);
   error |= AC_TEST(test->val.hdr_cmn.latency_timer == test->latency_timer);
-  error |= AC_TEST(test->val.hdr_cmn.header_type == test->header_type);
+  error |= AC_TEST(test->val.hdr_cmn.hdr_type == test->hdr_type);
+  error |= AC_TEST(test->val.hdr_cmn.multi_func == test->multi_func);
   error |= AC_TEST(test->val.hdr_cmn.bist == test->bist);
 
   return error;
@@ -405,7 +408,7 @@ void visit_device(ac_pci_cfg_addr cfg_addr) {
     ac_pci_cfg_addr_print("cfg_addr: ", cfg_addr, "\n");
     ac_pci_cfg_hdr_print("  ", &header);
     if ((header.hdr_cmn.base_class == 0x6) &&
-        ((header.hdr_cmn.header_type & 0x7f) == 1)) {
+        (header.hdr_cmn.hdr_type == 1)) {
       ac_pci_cfg_addr sub_bus = cfg_addr;
       sub_bus.bus = header.hdr1.secondary_bus_number;
       visit_all_devices(sub_bus);
@@ -422,7 +425,7 @@ void visit_all_devices(ac_pci_cfg_addr cfg_addr) {
     cfg_addr.dev = dev;
     ac_u16 vendor_id = ac_pci_cfg_get_vendor_id(cfg_addr);
     if (vendor_id != 0xFFFF) {
-      if ((ac_pci_cfg_get_header_type(cfg_addr) & 0x80) == 0x80) {
+      if (ac_pci_cfg_get_multi_func(cfg_addr)) {
         for (ac_uint func = 0; func <= MAX_FUNC; func++) {
           ac_pci_cfg_addr func_addr = cfg_addr;
           func_addr.func = func;
@@ -441,7 +444,7 @@ void visit_all_devices(ac_pci_cfg_addr cfg_addr) {
  */
 void visit_all_buses(void) {
   ac_pci_cfg_addr cfg_addr = ac_pci_cfg_addr_init(0, 0, 0, 0);
-  if ((ac_pci_cfg_get_header_type(cfg_addr) & 0x80) == 0) {
+  if (ac_pci_cfg_get_multi_func(cfg_addr)) {
     visit_all_devices(cfg_addr);
   } else {
     for (ac_uint func = 0; func <= MAX_FUNC; func++) {

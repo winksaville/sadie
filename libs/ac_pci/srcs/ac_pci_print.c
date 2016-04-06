@@ -48,7 +48,7 @@ void ac_pci_cfg_hdr_cmn_print(char* indent_str, ac_pci_cfg_hdr_cmn* header) {
   ac_printf("%sbase_class=0x%x\n", indent_str, header->base_class);
   ac_printf("%scache_line_size=0x%x\n", indent_str, header->cache_line_size);
   ac_printf("%slatency_timer=0x%x\n", indent_str, header->latency_timer);
-  ac_printf("%sheader_type=0x%x\n", indent_str, header->header_type);
+  ac_printf("%shdr_type=0x%x\n", indent_str, header->hdr_type);
   ac_printf("%sbist=0x%x\n", indent_str, header->bist);
 }
 
@@ -101,7 +101,7 @@ void ac_pci_cfg_hdr_print(char* indent_str, ac_pci_cfg_hdr* header) {
     indent_str = "";
   }
   ac_pci_cfg_hdr_cmn_print(indent_str, &header->hdr_cmn);
-  switch (header->hdr_cmn.header_type & 0x7f) {
+  switch (header->hdr_cmn.hdr_type) {
     case 0: {
       ac_pci_cfg_hdr0_print(indent_str, &header->hdr0);
       break;
@@ -111,8 +111,8 @@ void ac_pci_cfg_hdr_print(char* indent_str, ac_pci_cfg_hdr* header) {
       break;
     }
     default: {
-      ac_printf("header_type %d is NOT supported\n",
-          header->hdr_cmn.header_type);
+      ac_printf("hdr_type %d is NOT supported\n",
+          header->hdr_cmn.hdr_type);
       break;
     }
   }

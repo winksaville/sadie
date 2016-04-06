@@ -58,7 +58,8 @@ struct ac_pci_cfg_hdr_cmn {
       ac_u8 base_class;
       ac_u8 cache_line_size;
       ac_u8 latency_timer;
-      ac_u8 header_type;
+      ac_u8 hdr_type:7;
+      ac_bool multi_func:1;
       ac_u8 bist;
     };
   };
@@ -231,7 +232,12 @@ ac_u16 ac_pci_cfg_get_vendor_id(ac_pci_cfg_addr addr);
  *
  * @return 0xFF if no header type
  */
-ac_u8 ac_pci_cfg_get_header_type(ac_pci_cfg_addr addr);
+ac_u8 ac_pci_cfg_get_hdr_type(ac_pci_cfg_addr addr);
+
+/**
+ * Get PCI multi_func
+ */
+ac_bool ac_pci_cfg_get_multi_func(ac_pci_cfg_addr addr);
 
 /**
  * Get PCI hdr for the addr

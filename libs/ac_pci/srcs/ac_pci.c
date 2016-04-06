@@ -25,18 +25,32 @@
  * @return 0xFFFF if no vendor id
  */
 ac_u16 ac_pci_cfg_get_vendor_id(ac_pci_cfg_addr addr) {
+  ac_pci_cfg_hdr_cmn hdr_cmn;
   addr.reg = 0;
-  return ac_pci_cfg_rd_u16(addr);
+  hdr_cmn.raw[0] = ac_pci_cfg_rd_u32(addr);
+  return hdr_cmn.vendor_id;
 }
 
 /**
  * Get PCI header type
  *
- * @return 0xFF if no header type
+ * @return 0x7F if no header type
  */
-ac_u8 ac_pci_cfg_get_header_type(ac_pci_cfg_addr addr) {
+ac_u8 ac_pci_cfg_get_hdr_type(ac_pci_cfg_addr addr) {
+  ac_pci_cfg_hdr_cmn hdr_cmn;
   addr.reg = 14;
-  return ac_pci_cfg_rd_u8(addr);
+  hdr_cmn.raw[3] = ac_pci_cfg_rd_u32(addr);
+  return hdr_cmn.hdr_type;
+}
+
+/**
+ * Get PCI multi_func
+ */
+ac_bool ac_pci_cfg_get_multi_func(ac_pci_cfg_addr addr) {
+  ac_pci_cfg_hdr_cmn hdr_cmn;
+  addr.reg = 14;
+  hdr_cmn.raw[3] = ac_pci_cfg_rd_u32(addr);
+  return hdr_cmn.multi_func;
 }
 
 /**
@@ -52,7 +66,7 @@ ac_uint ac_pci_cfg_hdr_get(ac_pci_cfg_addr addr, ac_pci_cfg_hdr* header) {
       addr.reg = i * 4;
       header->hdr_cmn.raw[i] = ac_pci_cfg_rd_u32(addr);
     }
-    if ((header->hdr_cmn.header_type & 0x7f) <= 1) {
+    if (header->hdr_cmn.hdr_type <= 1) {
       for (int i = 0; i < AC_ARRAY_COUNT(header->hdr0.raw); i++) {
         addr.reg = (AC_ARRAY_COUNT(header->hdr_cmn.raw) + i) * 4;
         header->hdr0.raw[i] = ac_pci_cfg_rd_u32(addr);
