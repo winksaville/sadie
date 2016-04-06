@@ -21,6 +21,9 @@
 #include <ac_bits.h>
 #include <ac_inttypes.h>
 
+#define MAX_FUNC 0x7
+#define MAX_DEV  0x1F
+#define MAX_BUS  0xFF
 
 struct ac_pci_cfg_addr {
   ac_u32 reg:8;          // Register
@@ -210,6 +213,13 @@ static inline void ac_pci_cfg_wr_u8(ac_pci_cfg_addr cfg_addr, ac_u8 val) {
  * @return 0xFFFF if no vendor id
  */
 ac_u16 ac_pci_cfg_get_vendor_id(ac_pci_cfg_addr addr);
+
+/**
+ * Get PCI header type
+ *
+ * @return 0xFF if no header type
+ */
+ac_u8 ac_pci_cfg_get_header_type(ac_pci_cfg_addr addr);
 
 /**
  * Get PCI hdr for the addr

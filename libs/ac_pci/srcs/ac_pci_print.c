@@ -34,79 +34,81 @@ void ac_pci_cfg_addr_print(char* str, ac_pci_cfg_addr addr, char* terminator) {
   }
 }
 
-void ac_pci_cfg_common_hdr_print(ac_pci_cfg_common_hdr* header) {
-  ac_printf("vendor_id=0x%x\n", header->vendor_id);
-  ac_printf("device_id=0x%x\n", header->device_id);
-  ac_printf("command=0x%x\n", header->command);
-  ac_printf("status=0x%x\n", header->status);
-  ac_printf("revision=0x%x\n", header->revision_id);
-  ac_printf("prog_if=0x%x\n", header->prog_if);
-  ac_printf("sub_class=0x%x\n", header->sub_class);
-  ac_printf("base_class=0x%x\n", header->base_class);
-  ac_printf("cache_line_size=0x%x\n", header->cache_line_size);
-  ac_printf("latency_timer=0x%x\n", header->latency_timer);
-  ac_printf("header_type=0x%x\n", header->header_type);
-  ac_printf("bist=0x%x\n", header->bist);
+void ac_pci_cfg_common_hdr_print(char* indent_str, ac_pci_cfg_common_hdr* header) {
+  if (indent_str == AC_NULL) {
+    indent_str = "";
+  }
+  ac_printf("%svendor_id=0x%x\n", indent_str, header->vendor_id);
+  ac_printf("%sdevice_id=0x%x\n", indent_str, header->device_id);
+  ac_printf("%scommand=0x%x\n", indent_str, header->command);
+  ac_printf("%sstatus=0x%x\n", indent_str, header->status);
+  ac_printf("%srevision=0x%x\n", indent_str, header->revision_id);
+  ac_printf("%sprog_if=0x%x\n", indent_str, header->prog_if);
+  ac_printf("%ssub_class=0x%x\n", indent_str, header->sub_class);
+  ac_printf("%sbase_class=0x%x\n", indent_str, header->base_class);
+  ac_printf("%scache_line_size=0x%x\n", indent_str, header->cache_line_size);
+  ac_printf("%slatency_timer=0x%x\n", indent_str, header->latency_timer);
+  ac_printf("%sheader_type=0x%x\n", indent_str, header->header_type);
+  ac_printf("%sbist=0x%x\n", indent_str, header->bist);
 }
 
-void ac_pci_cfg_hdr0_print(ac_pci_cfg_hdr0* header) {
-  ac_pci_cfg_common_hdr_print(&header->common_hdr);
+void ac_pci_cfg_hdr0_print(char* indent_str, ac_pci_cfg_hdr0* header) {
+  if (indent_str == AC_NULL) {
+    indent_str = "";
+  }
+  ac_pci_cfg_common_hdr_print(indent_str, &header->common_hdr);
   for (ac_uint i = 0; i < AC_ARRAY_COUNT(header->base_addrs); i++) {
-    ac_printf("base_addrs[%d]=0x%x\n", i, header->base_addrs[i]);
+    ac_printf("%sbase_addrs[%d]=0x%x\n", indent_str, i, header->base_addrs[i]);
   }
-  ac_printf("cardbus_cis_ptr=0x%x\n", header->cardbus_cis_ptr);
-  ac_printf("subsystem_vendor_id=0x%x\n", header->subsystem_vendor_id);
-  ac_printf("subsystem_id=0x%x\n", header->subsystem_id);
-  ac_printf("rom_base_addr=0x%x\n", header->rom_base_addr);
-  ac_printf("capabilities=0x%x\n", header->capabilities);
-  ac_printf("interrupt_line=0x%x\n", header->interrupt_line);
-  ac_printf("interrupt_pin=0x%x\n", header->interrupt_pin);
-  ac_printf("min_grant=0x%x\n", header->min_grant);
-  ac_printf("max_grant=0x%x\n", header->max_grant);
+  ac_printf("%scardbus_cis_ptr=0x%x\n", indent_str, header->cardbus_cis_ptr);
+  ac_printf("%ssubsystem_vendor_id=0x%x\n", indent_str, header->subsystem_vendor_id);
+  ac_printf("%ssubsystem_id=0x%x\n", indent_str, header->subsystem_id);
+  ac_printf("%srom_base_addr=0x%x\n", indent_str, header->rom_base_addr);
+  ac_printf("%scapabilities=0x%x\n", indent_str, header->capabilities);
+  ac_printf("%sinterrupt_line=0x%x\n", indent_str, header->interrupt_line);
+  ac_printf("%sinterrupt_pin=0x%x\n", indent_str, header->interrupt_pin);
+  ac_printf("%smin_grant=0x%x\n", indent_str, header->min_grant);
+  ac_printf("%smax_grant=0x%x\n", indent_str, header->max_grant);
 }
 
-void ac_pci_cfg_hdr1_print(ac_pci_cfg_hdr1* header) {
-  ac_pci_cfg_common_hdr_print(&header->common_hdr);
+void ac_pci_cfg_hdr1_print(char* indent_str, ac_pci_cfg_hdr1* header) {
+  if (indent_str == AC_NULL) {
+    indent_str = "";
+  }
+  ac_pci_cfg_common_hdr_print(indent_str, &header->common_hdr);
   for (ac_uint i = 0; i < AC_ARRAY_COUNT(header->base_addrs); i++) {
-    ac_printf("base_addrs[%d]=0x%x\n", i, header->base_addrs[i]);
+    ac_printf("%sbase_addrs[%d]=0x%x\n", indent_str, i, header->base_addrs[i]);
   }
-  ac_printf("primary_bus_number=0x%x\n", header->primary_bus_number);
-  ac_printf("secondary_bus_number=0x%x\n",
-      header->secondary_bus_number);
-  ac_printf("subordinate_bus_number=0x%x\n",
-      header->subordinate_bus_number);
-  ac_printf("secondary_latency_timer=0x%x\n",
-      header->secondary_latency_timer);
-  ac_printf("io_base=0x%x\n", header->io_base);
-  ac_printf("io_limit=0x%x\n", header->io_limit);
-  ac_printf("prefetchable_memory_base=0x%x\n",
-      header->prefetchable_memory_base);
-  ac_printf("prefetchable_memory_limit=0x%x\n",
-      header->prefetchable_memory_limit);
-  ac_printf("prefetchable_hi32_memory_base=0x%x\n",
-      header->prefetchable_hi32_memory_base);
-  ac_printf("prefetchable_hi32_memory_limit=0x%x\n",
-      header->prefetchable_hi32_memory_limit);
-  ac_printf("io_hi16_base=0x%x\n", header->io_hi16_base);
-  ac_printf("io_hi16_limit=0x%x\n", header->io_hi16_limit);
-  ac_printf("capabilities=0x%x\n", header->capabilities);
-  ac_printf("expansion_rom_base=0x%x\n", header->expansion_rom_base);
-  ac_printf("interrupt_line=0x%x\n", header->interrupt_line);
-  ac_printf("interrupt_pin=0x%x\n", header->interrupt_pin);
-  ac_printf("bridge_control=0x%x\n", header->bridge_control);
+  ac_printf("%sprimary_bus_number=0x%x\n", indent_str, header->primary_bus_number);
+  ac_printf("%ssecondary_bus_number=0x%x\n", indent_str, header->secondary_bus_number);
+  ac_printf("%ssubordinate_bus_number=0x%x\n", indent_str, header->subordinate_bus_number);
+  ac_printf("%ssecondary_latency_timer=0x%x\n", indent_str, header->secondary_latency_timer);
+  ac_printf("%sio_base=0x%x\n", indent_str, header->io_base);
+  ac_printf("%sio_limit=0x%x\n", indent_str, header->io_limit);
+  ac_printf("%sprefetchable_memory_base=0x%x\n", indent_str, header->prefetchable_memory_base);
+  ac_printf("%sprefetchable_memory_limit=0x%x\n", indent_str, header->prefetchable_memory_limit);
+  ac_printf("%sprefetchable_hi32_memory_base=0x%x\n", indent_str, header->prefetchable_hi32_memory_base);
+  ac_printf("%sprefetchable_hi32_memory_limit=0x%x\n", indent_str, header->prefetchable_hi32_memory_limit);
+  ac_printf("%sio_hi16_base=0x%x\n", indent_str, header->io_hi16_base);
+  ac_printf("%sio_hi16_limit=0x%x\n", indent_str, header->io_hi16_limit);
+  ac_printf("%scapabilities=0x%x\n", indent_str, header->capabilities);
+  ac_printf("%sexpansion_rom_base=0x%x\n", indent_str, header->expansion_rom_base);
+  ac_printf("%sinterrupt_line=0x%x\n", indent_str, header->interrupt_line);
+  ac_printf("%sinterrupt_pin=0x%x\n", indent_str, header->interrupt_pin);
+  ac_printf("%sbridge_control=0x%x\n", indent_str, header->bridge_control);
 }
 
-void ac_pci_cfg_hdr_print(char* str, ac_pci_cfg_hdr* header) {
-  if (str != AC_NULL) {
-    ac_printf("%s", str);
+void ac_pci_cfg_hdr_print(char* indent_str, ac_pci_cfg_hdr* header) {
+  if (indent_str == AC_NULL) {
+    indent_str = "";
   }
-  switch (header->hdr0.common_hdr.header_type) {
+  switch (header->hdr0.common_hdr.header_type & 0x7f) {
     case 0: {
-      ac_pci_cfg_hdr0_print(&header->hdr0);
+      ac_pci_cfg_hdr0_print(indent_str, &header->hdr0);
       break;
     }
     case 1: {
-      ac_pci_cfg_hdr1_print(&header->hdr1);
+      ac_pci_cfg_hdr1_print(indent_str, &header->hdr1);
       break;
     }
     default: {

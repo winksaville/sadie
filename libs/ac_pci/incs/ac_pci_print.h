@@ -27,21 +27,21 @@ void ac_pci_cfg_addr_print(char* str, ac_pci_cfg_addr addr, char* terminator);
 /**
  * Print PCI common header
  */
-void ac_pci_cfg_common_hdr_print(ac_pci_cfg_common_hdr* header);
-
-/**
- * Print PCI header
- */
-void ac_pci_cfg_hdr_print(char* str, ac_pci_cfg_hdr* header);
+void ac_pci_cfg_common_hdr_print(char* indent_str, ac_pci_cfg_common_hdr* header);
 
 /**
  * Print PCI header type0
  */
-void ac_pci_cfg_hdr0_print(ac_pci_cfg_hdr0* header);
+void ac_pci_cfg_hdr0_print(char* indent_str, ac_pci_cfg_hdr0* header);
 
 /**
  * Print PCI header type1
  */
-void ac_pci_cfg_hdr1_print(ac_pci_cfg_hdr1* header);
+void ac_pci_cfg_hdr1_print(char* indent_str, ac_pci_cfg_hdr1* header);
+
+/**
+ * Print PCI header
+ */
+void ac_pci_cfg_hdr_print(char* indent_str, ac_pci_cfg_hdr* header);
 
 #endif

@@ -54,14 +54,16 @@ static struct test_case test_case_array[] = {
 static ac_bool test_pci_cfg_addr(struct test_case* test) {
   ac_bool error = AC_FALSE;
 
-  ac_pci_cfg_addr_print("fields: ", test->val.fields, "\n");
-
   error |= AC_TEST(test->val.fields.reg == test->reg);
   error |= AC_TEST(test->val.fields.func == test->func);
   error |= AC_TEST(test->val.fields.dev == test->dev);
   error |= AC_TEST(test->val.fields.bus == test->bus);
   error |= AC_TEST(test->val.fields.resv == test->resv);
   error |= AC_TEST(test->val.fields.enable == test->enable);
+
+  if (error) {
+    ac_pci_cfg_addr_print("fields: ", test->val.fields, "\n");
+  }
 
   return error;
 }
@@ -176,9 +178,6 @@ static struct test_case_ac_pci_cfg_hdr0 test_case_ac_pci_cfg_hdr0_array[] = {
 static ac_bool test_pci_cfg_hdr0(struct test_case_ac_pci_cfg_hdr0* test) {
   ac_bool error = AC_FALSE;
 
-  ac_printf("hdr0 fields:\n");
-  ac_pci_cfg_hdr0_print(&test->val.hdr0);
-
   error |= AC_TEST(test->val.hdr0.common_hdr.vendor_id == test->vendor_id);
   error |= AC_TEST(test->val.hdr0.common_hdr.device_id == test->device_id);
   error |= AC_TEST(test->val.hdr0.common_hdr.command == test->command);
@@ -205,6 +204,11 @@ static ac_bool test_pci_cfg_hdr0(struct test_case_ac_pci_cfg_hdr0* test) {
   error |= AC_TEST(test->val.hdr0.interrupt_pin == test->interrupt_pin);
   error |= AC_TEST(test->val.hdr0.min_grant == test->min_grant);
   error |= AC_TEST(test->val.hdr0.max_grant == test->max_grant);
+
+  if (error) {
+    ac_printf("hdr0 fields:\n");
+    ac_pci_cfg_hdr0_print("  ", &test->val.hdr0);
+  }
 
   return error;
 }
@@ -342,9 +346,6 @@ static struct test_case_ac_pci_cfg_hdr1 test_case_ac_pci_cfg_hdr1_array[] = {
 static ac_bool test_pci_cfg_hdr1(struct test_case_ac_pci_cfg_hdr1* test) {
   ac_bool error = AC_FALSE;
 
-  ac_printf("hdr1 fields:\n");
-  ac_pci_cfg_hdr1_print(&test->val.hdr1);
-
   error |= AC_TEST(test->val.hdr0.common_hdr.vendor_id == test->vendor_id);
   error |= AC_TEST(test->val.hdr0.common_hdr.device_id == test->device_id);
   error |= AC_TEST(test->val.hdr0.common_hdr.command == test->command);
@@ -382,6 +383,11 @@ static ac_bool test_pci_cfg_hdr1(struct test_case_ac_pci_cfg_hdr1* test) {
   error |= AC_TEST(test->val.hdr1.interrupt_pin == test->interrupt_pin);
   error |= AC_TEST(test->val.hdr1.bridge_control == test->bridge_control);
 
+  if (error) {
+    ac_printf("hdr1 fields:\n");
+    ac_pci_cfg_hdr1_print("  ", &test->val.hdr1);
+  }
+
   return error;
 }
 
@@ -396,26 +402,78 @@ ac_bool test_pci_cfg_hdr1_fields() {
   return error;
 }
 
+/**
+ * Forward declartion
+ */
+void visit_all_devices(ac_pci_cfg_addr cfg_addr);
+
+/**
+ * Visit a device and recursively call visit_all_devices
+ * if the devices base_class is a bridge (0x6) and it has
+ * a header_type of 1 which indicates its a type of pci bridge.
+ */
+void visit_device(ac_pci_cfg_addr cfg_addr) {
+  ac_u16 vendor_id = ac_pci_cfg_get_vendor_id(cfg_addr);
+  if (vendor_id != 0xFFFF) {
+    ac_pci_cfg_hdr header;
+    ac_pci_cfg_hdr_get(cfg_addr, &header);
+    ac_pci_cfg_addr_print("cfg_addr: ", cfg_addr, "\n");
+    ac_pci_cfg_hdr_print("  ", &header);
+    if ((header.hdr0.common_hdr.base_class == 0x6) &&
+        ((header.hdr0.common_hdr.header_type & 0x7f) == 1)) {
+      ac_pci_cfg_addr sub_bus = cfg_addr;
+      sub_bus.bus = header.hdr1.secondary_bus_number;
+      visit_all_devices(sub_bus);
+    }
+  }
+}
+
+/**
+ * Visit all devices on the bus
+ */
+void visit_all_devices(ac_pci_cfg_addr cfg_addr) {
+  cfg_addr.func = 0;
+  for (ac_uint dev = 0; dev <= MAX_DEV; dev++) {
+    cfg_addr.dev = dev;
+    ac_u16 vendor_id = ac_pci_cfg_get_vendor_id(cfg_addr);
+    if (vendor_id != 0xFFFF) {
+      if ((ac_pci_cfg_get_header_type(cfg_addr) & 0x80) == 0x80) {
+        for (ac_uint func = 0; func <= MAX_FUNC; func++) {
+          ac_pci_cfg_addr func_addr = cfg_addr;
+          func_addr.func = func;
+          visit_device(func_addr);
+        }
+      } else {
+        visit_device(cfg_addr);
+      }
+    }
+  }
+}
+
+/**
+ * This visit all buses.
+ * [See](http://wiki.osdev.org/PCI).
+ */
+void visit_all_buses(void) {
+  ac_pci_cfg_addr cfg_addr = ac_pci_cfg_addr_init(0, 0, 0, 0);
+  if ((ac_pci_cfg_get_header_type(cfg_addr) & 0x80) == 0) {
+    visit_all_devices(cfg_addr);
+  } else {
+    for (ac_uint func = 0; func <= MAX_FUNC; func++) {
+      ac_pci_cfg_addr cfg_addr = ac_pci_cfg_addr_init(0, 0, func, 0);
+      visit_all_devices(cfg_addr);
+    }
+  }
+}
+
 int main(void) {
   ac_bool error = AC_FALSE;
-
-  ac_pci_cfg_addr cfg_addr = ac_pci_cfg_addr_init(1, 2, 3, 4);
-  ac_pci_cfg_addr_print("cfg_addr: ", cfg_addr, "\n");
 
   error |= test_pci_cfg_addr_fields();
   error |= test_pci_cfg_hdr0_fields();
   error |= test_pci_cfg_hdr1_fields();
 
-  for (ac_u32 bus = 0; bus < 256; bus++) {
-    cfg_addr = ac_pci_cfg_addr_init(bus, 0, 0, 0);
-    ac_u16 vendor_id = ac_pci_cfg_get_vendor_id(cfg_addr);
-    if (vendor_id != 0xFFFF) {
-      ac_pci_cfg_addr_print("cfg_addr:", cfg_addr, "\n");
-      ac_pci_cfg_hdr header;
-      ac_pci_cfg_hdr_get(cfg_addr, &header);
-      ac_pci_cfg_hdr_print("", &header);
-    }
-  }
+  visit_all_buses();
 
   if (!error) {
     ac_printf("OK\n");
