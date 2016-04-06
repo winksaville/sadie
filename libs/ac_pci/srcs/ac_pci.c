@@ -38,7 +38,7 @@ ac_u16 ac_pci_cfg_get_vendor_id(ac_pci_cfg_addr addr) {
  */
 ac_u8 ac_pci_cfg_get_hdr_type(ac_pci_cfg_addr addr) {
   ac_pci_cfg_hdr_cmn hdr_cmn;
-  addr.reg = 14;
+  addr.reg = 12;
   hdr_cmn.raw[3] = ac_pci_cfg_rd_u32(addr);
   return hdr_cmn.hdr_type;
 }
@@ -48,7 +48,7 @@ ac_u8 ac_pci_cfg_get_hdr_type(ac_pci_cfg_addr addr) {
  */
 ac_bool ac_pci_cfg_get_multi_func(ac_pci_cfg_addr addr) {
   ac_pci_cfg_hdr_cmn hdr_cmn;
-  addr.reg = 14;
+  addr.reg = 12;
   hdr_cmn.raw[3] = ac_pci_cfg_rd_u32(addr);
   return hdr_cmn.multi_func;
 }
