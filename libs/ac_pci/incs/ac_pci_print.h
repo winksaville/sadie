@@ -27,7 +27,7 @@ void ac_pci_cfg_addr_print(char* str, ac_pci_cfg_addr addr, char* terminator);
 /**
  * Print PCI common header
  */
-void ac_pci_cfg_common_hdr_print(char* indent_str, ac_pci_cfg_common_hdr* header);
+void ac_pci_cfg_hdr_cmn_print(char* indent_str, ac_pci_cfg_hdr_cmn* header);
 
 /**
  * Print PCI header type0

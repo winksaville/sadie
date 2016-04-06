@@ -34,7 +34,7 @@ void ac_pci_cfg_addr_print(char* str, ac_pci_cfg_addr addr, char* terminator) {
   }
 }
 
-void ac_pci_cfg_common_hdr_print(char* indent_str, ac_pci_cfg_common_hdr* header) {
+void ac_pci_cfg_hdr_cmn_print(char* indent_str, ac_pci_cfg_hdr_cmn* header) {
   if (indent_str == AC_NULL) {
     indent_str = "";
   }
@@ -56,7 +56,6 @@ void ac_pci_cfg_hdr0_print(char* indent_str, ac_pci_cfg_hdr0* header) {
   if (indent_str == AC_NULL) {
     indent_str = "";
   }
-  ac_pci_cfg_common_hdr_print(indent_str, &header->common_hdr);
   for (ac_uint i = 0; i < AC_ARRAY_COUNT(header->base_addrs); i++) {
     ac_printf("%sbase_addrs[%d]=0x%x\n", indent_str, i, header->base_addrs[i]);
   }
@@ -75,7 +74,6 @@ void ac_pci_cfg_hdr1_print(char* indent_str, ac_pci_cfg_hdr1* header) {
   if (indent_str == AC_NULL) {
     indent_str = "";
   }
-  ac_pci_cfg_common_hdr_print(indent_str, &header->common_hdr);
   for (ac_uint i = 0; i < AC_ARRAY_COUNT(header->base_addrs); i++) {
     ac_printf("%sbase_addrs[%d]=0x%x\n", indent_str, i, header->base_addrs[i]);
   }
@@ -102,7 +100,8 @@ void ac_pci_cfg_hdr_print(char* indent_str, ac_pci_cfg_hdr* header) {
   if (indent_str == AC_NULL) {
     indent_str = "";
   }
-  switch (header->hdr0.common_hdr.header_type & 0x7f) {
+  ac_pci_cfg_hdr_cmn_print(indent_str, &header->hdr_cmn);
+  switch (header->hdr_cmn.header_type & 0x7f) {
     case 0: {
       ac_pci_cfg_hdr0_print(indent_str, &header->hdr0);
       break;
@@ -113,7 +112,7 @@ void ac_pci_cfg_hdr_print(char* indent_str, ac_pci_cfg_hdr* header) {
     }
     default: {
       ac_printf("header_type %d is NOT supported\n",
-          header->hdr0.common_hdr.header_type);
+          header->hdr_cmn.header_type);
       break;
     }
   }

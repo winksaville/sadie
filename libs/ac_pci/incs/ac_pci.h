@@ -26,12 +26,17 @@
 #define MAX_BUS  0xFF
 
 struct ac_pci_cfg_addr {
-  ac_u32 reg:8;          // Register
-  ac_u32 func:3;         // Function on the device (sub-dev)
-  ac_u32 dev:5;          // Device
-  ac_u32 bus:8;          // Bus
-  ac_u32 resv:7;         // Reserved
-  ac_bool enable:1;     // Enable bit
+  union {
+    ac_u32 raw;                 // u32 version of the cfg_addr
+    struct {
+      ac_u32 reg:8;             // Register
+      ac_u32 func:3;            // Function on the device (sub-dev)
+      ac_u32 dev:5;             // Device
+      ac_u32 bus:8;             // Bus
+      ac_u32 resv:7;            // Reserved
+      ac_bool enable:1;         // Enable bit
+    };
+  };
 } __attribute__((__packed__));
 
 typedef struct ac_pci_cfg_addr  ac_pci_cfg_addr;
@@ -39,100 +44,107 @@ typedef struct ac_pci_cfg_addr  ac_pci_cfg_addr;
 ac_static_assert(sizeof(ac_pci_cfg_addr) == 4,
     L"ac_pci_cfg_addr is not 4 bytes");
 
-union ac_pci_cfg_addr_u {
-  ac_u32 raw;
-  ac_pci_cfg_addr fields;
+struct ac_pci_cfg_hdr_cmn {
+  union {
+    ac_u32 raw[4];
+    struct {
+      ac_u16 vendor_id;
+      ac_u16 device_id;
+      ac_u16 command;
+      ac_u16 status;
+      ac_u8 revision_id;
+      ac_u8 prog_if;
+      ac_u8 sub_class;
+      ac_u8 base_class;
+      ac_u8 cache_line_size;
+      ac_u8 latency_timer;
+      ac_u8 header_type;
+      ac_u8 bist;
+    };
+  };
 } __attribute__((__packed__));
 
-ac_static_assert(sizeof(union ac_pci_cfg_addr_u) == 4,
-    L"ac_pci_cfg_addr_u union is not 4 bytes");
+typedef struct ac_pci_cfg_hdr_cmn ac_pci_cfg_hdr_cmn;
 
-struct ac_pci_cfg_common_hdr {
-  ac_u16 vendor_id;
-  ac_u16 device_id;
-  ac_u16 command;
-  ac_u16 status;
-  ac_u8 revision_id;
-  ac_u8 prog_if;
-  ac_u8 sub_class;
-  ac_u8 base_class;
-  ac_u8 cache_line_size;
-  ac_u8 latency_timer;
-  ac_u8 header_type;
-  ac_u8 bist;
-} __attribute__((__packed__));
-
-typedef struct ac_pci_cfg_common_hdr ac_pci_cfg_common_hdr;
-
-ac_static_assert(sizeof(ac_pci_cfg_common_hdr) == 16,
-    L"ac_pci_cfg_common_hdr is not 16 bytes");
+ac_static_assert(sizeof(ac_pci_cfg_hdr_cmn) == 16,
+    L"ac_pci_cfg_hdr_cmn is not 16 bytes");
 
 
 /**
  * pci type 0 configuration header
  */
 struct ac_pci_cfg_hdr0 {
-  ac_pci_cfg_common_hdr common_hdr;
-  ac_u32 base_addrs[6];
-  ac_u32 cardbus_cis_ptr;
-  ac_u16 subsystem_vendor_id;
-  ac_u16 subsystem_id;
-  ac_u32 rom_base_addr;
-  ac_u32 capabilities:8;
-  ac_u32 resv0:24;
-  ac_u32 resv1;
-  ac_u8 interrupt_line;
-  ac_u8 interrupt_pin;
-  ac_u8 min_grant;
-  ac_u8 max_grant;
+  union {
+    ac_u32 raw[12];
+    struct {
+      ac_u32 base_addrs[6];
+      ac_u32 cardbus_cis_ptr;
+      ac_u16 subsystem_vendor_id;
+      ac_u16 subsystem_id;
+      ac_u32 rom_base_addr;
+      ac_u32 capabilities:8;
+      ac_u32 resv0:24;
+      ac_u32 resv1;
+      ac_u8 interrupt_line;
+      ac_u8 interrupt_pin;
+      ac_u8 min_grant;
+      ac_u8 max_grant;
+    };
+  };
 } __attribute__((__packed__));
 
 typedef struct ac_pci_cfg_hdr0 ac_pci_cfg_hdr0;
 
-ac_static_assert(sizeof(ac_pci_cfg_hdr0) == 64,
-    L"ac_pci_cfg_hdr0 is not 64 bytes");
+ac_static_assert(sizeof(ac_pci_cfg_hdr0) == 48,
+    L"ac_pci_cfg_hdr0 is not 48 bytes");
 
 /**
  * pci configuration header type1
  */
 struct ac_pci_cfg_hdr1 {
-  ac_pci_cfg_common_hdr common_hdr;
-  ac_u32 base_addrs[2];
-  ac_u8 primary_bus_number;
-  ac_u8 secondary_bus_number;
-  ac_u8 subordinate_bus_number;
-  ac_u8 secondary_latency_timer;
-  ac_u8 io_base;
-  ac_u8 io_limit;
-  ac_u16 secondary_status;
-  ac_u16 memory_base;
-  ac_u16 memory_limit;
-  ac_u16 prefetchable_memory_base;
-  ac_u16 prefetchable_memory_limit;
-  ac_u32 prefetchable_hi32_memory_base;
-  ac_u32 prefetchable_hi32_memory_limit;
-  ac_u16 io_hi16_base;
-  ac_u16 io_hi16_limit;
-  ac_u32 capabilities:8;
-  ac_u32 resv0:24;
-  ac_u32 expansion_rom_base;
-  ac_u8 interrupt_line;
-  ac_u8 interrupt_pin;
-  ac_u16 bridge_control;
+  union {
+    ac_u32 raw[12];
+    struct {
+      ac_u32 base_addrs[2];
+      ac_u8 primary_bus_number;
+      ac_u8 secondary_bus_number;
+      ac_u8 subordinate_bus_number;
+      ac_u8 secondary_latency_timer;
+      ac_u8 io_base;
+      ac_u8 io_limit;
+      ac_u16 secondary_status;
+      ac_u16 memory_base;
+      ac_u16 memory_limit;
+      ac_u16 prefetchable_memory_base;
+      ac_u16 prefetchable_memory_limit;
+      ac_u32 prefetchable_hi32_memory_base;
+      ac_u32 prefetchable_hi32_memory_limit;
+      ac_u16 io_hi16_base;
+      ac_u16 io_hi16_limit;
+      ac_u32 capabilities:8;
+      ac_u32 resv0:24;
+      ac_u32 expansion_rom_base;
+      ac_u8 interrupt_line;
+      ac_u8 interrupt_pin;
+      ac_u16 bridge_control;
+    };
+  };
 } __attribute__((__packed__));
 
 typedef struct ac_pci_cfg_hdr1 ac_pci_cfg_hdr1;
 
-ac_static_assert(sizeof(ac_pci_cfg_hdr1) == 64,
-    L"ac_pci_cfg_hdr1 is not 64 bytes");
+ac_static_assert(sizeof(ac_pci_cfg_hdr1) == 48,
+    L"ac_pci_cfg_hdr1 is not 48 bytes");
 
-union ac_pci_cfg_hdr_u {
-  ac_u32 raw_u32s[16];
-  ac_pci_cfg_hdr0 hdr0;
-  ac_pci_cfg_hdr1 hdr1;
+struct ac_pci_cfg_hdr {
+  ac_pci_cfg_hdr_cmn hdr_cmn;
+  union {
+    struct ac_pci_cfg_hdr0 hdr0;
+    struct ac_pci_cfg_hdr1 hdr1;
+  };
 } __attribute__((__packed__));
 
-typedef union ac_pci_cfg_hdr_u ac_pci_cfg_hdr;
+typedef struct ac_pci_cfg_hdr ac_pci_cfg_hdr;
 
 ac_static_assert(sizeof(ac_pci_cfg_hdr) == 64,
     L"ac_pci_cfg_hdr is not 64 bytes");

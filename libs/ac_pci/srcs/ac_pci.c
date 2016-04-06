@@ -45,38 +45,22 @@ ac_u8 ac_pci_cfg_get_header_type(ac_pci_cfg_addr addr) {
  * @return 0 if successful and header is retrieved
  */
 ac_uint ac_pci_cfg_hdr_get(ac_pci_cfg_addr addr, ac_pci_cfg_hdr* header) {
-
-  if (ac_pci_cfg_get_vendor_id(addr) != 0xFFFF) {
-#if 1
-    for (int i = 0; i < AC_ARRAY_COUNT(header->raw_u32s); i++) {
+  addr.reg = 0;
+  header->hdr_cmn.raw[0] = ac_pci_cfg_rd_u32(addr);
+  if (header->hdr_cmn.vendor_id != 0xFFFF) {
+    for (int i = 1; i < AC_ARRAY_COUNT(header->hdr_cmn.raw); i++) {
       addr.reg = i * 4;
-      header->raw_u32s[i] = ac_pci_cfg_rd_u32(addr);
+      header->hdr_cmn.raw[i] = ac_pci_cfg_rd_u32(addr);
     }
-#else
-    addr.reg = 0;
-    header->hdr0.common_hdr.vendor_id = ac_pci_cfg_rd_u16(addr);
-    addr.reg = 2;
-    header->hdr0.common_hdr.device_id = ac_pci_cfg_rd_u16(addr);
-    addr.reg = 6;
-    header->hdr0.common_hdr.status = ac_pci_cfg_rd_u16(addr);
-    addr.reg = 8;
-    header->hdr0.common_hdr.revision_id = ac_pci_cfg_rd_u8(addr);
-    addr.reg = 9;
-    header->hdr0.common_hdr.prog_if = ac_pci_cfg_rd_u8(addr);
-    addr.reg = 10;
-    header->hdr0.common_hdr.sub_class = ac_pci_cfg_rd_u8(addr);
-    addr.reg = 11;
-    header->hdr0.common_hdr.base_class = ac_pci_cfg_rd_u8(addr);
-    addr.reg = 12;
-    header->hdr0.common_hdr.cache_line_size = ac_pci_cfg_rd_u8(addr);
-    addr.reg = 13;
-    header->hdr0.common_hdr.latency_timer = ac_pci_cfg_rd_u8(addr);
-    addr.reg = 14;
-    header->hdr0.common_hdr.header_type = ac_pci_cfg_rd_u8(addr);
-    addr.reg = 15;
-    header->hdr0.common_hdr.bist = ac_pci_cfg_rd_u8(addr);
-#endif
-    return 0;
+    if ((header->hdr_cmn.header_type & 0x7f) <= 1) {
+      for (int i = 0; i < AC_ARRAY_COUNT(header->hdr0.raw); i++) {
+        addr.reg = (AC_ARRAY_COUNT(header->hdr_cmn.raw) + i) * 4;
+        header->hdr0.raw[i] = ac_pci_cfg_rd_u32(addr);
+      }
+      return 0;
+    } else {
+      return 1;
+    }
   } else {
     return 1;
   }
