@@ -49,6 +49,7 @@ void ac_pci_cfg_hdr_cmn_print(char* indent_str, ac_pci_cfg_hdr_cmn* header) {
   ac_printf("%scache_line_size=0x%x\n", indent_str, header->cache_line_size);
   ac_printf("%slatency_timer=0x%x\n", indent_str, header->latency_timer);
   ac_printf("%shdr_type=0x%x\n", indent_str, header->hdr_type);
+  ac_printf("%smulti_func=0x%x\n", indent_str, header->multi_func);
   ac_printf("%sbist=0x%x\n", indent_str, header->bist);
 }
 
