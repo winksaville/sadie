@@ -444,7 +444,7 @@ void visit_all_devices(ac_pci_cfg_addr cfg_addr) {
  */
 void visit_all_buses(void) {
   ac_pci_cfg_addr cfg_addr = ac_pci_cfg_addr_init(0, 0, 0, 0);
-  if (ac_pci_cfg_get_multi_func(cfg_addr)) {
+  if (!ac_pci_cfg_get_multi_func(cfg_addr)) {
     visit_all_devices(cfg_addr);
   } else {
     for (ac_uint func = 0; func <= MAX_FUNC; func++) {
