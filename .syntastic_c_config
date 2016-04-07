@@ -3,13 +3,15 @@
 -I
 /home/wink/prgs/sadie/arch/x86/incs
 -I
-/home/wink/prgs/sadie/arch/x86/libs/apic_x86/incs
--I
-/home/wink/prgs/sadie/arch/x86/libs/cpuid_x86/incs
+/home/wink/prgs/sadie/arch/x86/libs/ac_acpi_impl/incs
 -I
 /home/wink/prgs/sadie/arch/x86/libs/ac_pci_impl/incs
 -I
 /home/wink/prgs/sadie/arch/x86/libs/ac_tsc_impl/incs
+-I
+/home/wink/prgs/sadie/arch/x86/libs/apic_x86/incs
+-I
+/home/wink/prgs/sadie/arch/x86/libs/cpuid_x86/incs
 -I
 /home/wink/prgs/sadie/arch/x86/libs/cr_x86/incs
 -I
@@ -47,6 +49,8 @@
 
 -I
 /home/wink/prgs/sadie/libs/incs
+-I
+/home/wink/prgs/sadie/libs/ac_acpi/incs
 -I
 /home/wink/prgs/sadie/libs/ac_assert/incs
 -I

@@ -19,15 +19,16 @@
 subdir('@0@/libs'.format(meson.source_root()))
 
 # Add our platform specific libs
-subdir('ac_receptor_impl')
-subdir('ac_tsc_impl')
+subdir('ac_acpi_impl')
 subdir('ac_memmgr')
 subdir('ac_pci_impl')
 subdir('ac_putchar')
+subdir('ac_receptor_impl')
 subdir('ac_stop')
 subdir('ac_sysconf')
 subdir('ac_thread')
 subdir('ac_timer')
+subdir('ac_tsc_impl')
 
 libruntime = static_library('runtime', runtimeSrcs,
   c_args : compilerArgs,

@@ -12,5 +12,11 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-subdir('ac_acpi_impl')
-subdir('ac_pci_impl')
+runtimeIncDirs += include_directories(
+  '@0@/incs'.format(meson.current_source_dir())
+)
+
+runtimeSrcs += [
+  '@0@/srcs/ac_acpi.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_acpi_print.c'.format(meson.current_source_dir()),
+]
