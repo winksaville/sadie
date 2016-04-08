@@ -17,6 +17,6 @@
 #ifndef SADIE_LIBS_AC_MEMCMP_INCS_AC_MEMCMP_H
 #define SADIE_LIBS_AC_MEMCMP_INCS_AC_MEMCMP_H
 
-int ac_memcmp(const void* s1, const void* s2, ac_size_t count);
+ac_sint ac_memcmp(const void* s1, const void* s2, ac_size_t count);
 
 #endif

@@ -28,11 +28,11 @@
  *         > 0 if *(ac_u8*)s1 - *(ac_u8*)s2 was positive
  *         < 0 if *(ac_u8*)s1 - *(ac_u8*)s2 was negative
  */
-int ac_memcmp(const void *s1, const void* s2, ac_size_t count) {
+ac_sint ac_memcmp(const void *s1, const void* s2, ac_size_t count) {
   ac_u8* p1 = (ac_u8*)s1;
   ac_u8* p2 = (ac_u8*)s2;
 
-  while (count > 0) {
+  while (count-- > 0) {
     ac_u8 ch1 = *p1++;
     ac_u8 ch2 = *p2++;
     int result = ch1 - ch2;
