@@ -61,6 +61,7 @@ struct ac_acpi_desc_hdr {
   ac_u32 oem_revision;
   ac_u32 creator_id;
   ac_u32 creator_revision;
+  ac_u8 table[];
 } __attribute__((__packed__));
 
 typedef struct ac_acpi_desc_hdr ac_acpi_desc_hdr;
