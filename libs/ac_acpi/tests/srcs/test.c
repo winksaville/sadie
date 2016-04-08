@@ -28,7 +28,7 @@ int main(void) {
   if (rsdp == AC_NULL) {
     ac_printf("ac_acpi_rsdp does not exist, skipping tests\n");
   } else {
-    ac_acpi_rsdp_print("rsdp: ", rsdp);
+    ac_acpi_rsdp_print("rsdp:", rsdp);
   }
 
   if (!error) {

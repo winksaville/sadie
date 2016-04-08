@@ -32,16 +32,53 @@ static void print_bytes(char* str, ac_u8* p, ac_uint length, char* terminator) {
 }
 
 /**
+ * Print a 4 byte descriptor ac_acpi_rsdp
+ */
+void ac_acpi_desc_hdr_signature_print(ac_u32 signature) {
+  ac_u8* p = (ac_u8*)&signature;
+  for (ac_uint i = 0; i < 4; i++) {
+    ac_printf("%c", *p++);
+  }
+}
+
+/**
  * Print ac_acpi_rsdp
  */
 void ac_acpi_rsdp_print(char* str, ac_acpi_rsdp* rsdp) {
   if (str != AC_NULL) {
-    ac_printf("%s", str);
+    ac_printf("%s ", str);
   }
   
-  print_bytes(" signature=", rsdp->signature, sizeof(rsdp->signature), "");
+  print_bytes("signature='", rsdp->signature, sizeof(rsdp->signature), "'");
   ac_printf(" check_sum=%d", rsdp->check_sum);
-  print_bytes(" oem_id= ", rsdp->oem_id, sizeof(rsdp->oem_id), "");
-  ac_printf(" revision=%d rsdt_address=%x length=%d xsdt_address=%x extended_checksum=%d",
-    rsdp->revision, rsdp->rsdt_address, rsdp->length, rsdp->xsdt_address, rsdp->extended_check_sum);
+  print_bytes(" oem_id='", rsdp->oem_id, sizeof(rsdp->oem_id), "'");
+  ac_printf(" revision=%d rsdt_address=%x",
+    rsdp->revision, rsdp->rsdt_address);
+  if (rsdp->revision == 2) {
+    ac_printf(" length=%d xsdt_address=%lx extended_checksum=%d",
+      rsdp->length, rsdp->xsdt_address, rsdp->extended_check_sum);
+  }
+  ac_printf("\n");
+
+  ac_acpi_desc_hdr* sdt;
+  if (rsdp->revision == 0) {
+    sdt = (ac_acpi_desc_hdr*)(ac_uptr)rsdp->rsdt_address;
+  } else if (rsdp->revision == 2) {
+    sdt = (ac_acpi_desc_hdr*)(ac_uptr)rsdp->xsdt_address;
+  } else {
+    ac_printf("ac_acpi_rsdp_get: rdsp=%lx expected revision 0 or 2"
+       " got revision=%d\n", rsdp, rsdp->revision);
+    sdt = AC_NULL;
+  }
+  if (sdt != AC_NULL) {
+    ac_printf("sdt=%p ", sdt);
+    ac_acpi_desc_hdr_signature_print(sdt->signature);
+    ac_printf("\n");
+  }
+}
+
+/**
+ * Print ac_acpi_rsdp
+ */
+void ac_acpi_desc_hdr_print(char* str, ac_acpi_desc_hdr* rsdp) {
 }

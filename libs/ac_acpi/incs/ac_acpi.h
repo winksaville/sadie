@@ -20,7 +20,7 @@
 #include <ac_assert.h>
 #include <ac_inttypes.h>
 
-#define RSDP_SIGNATURE "RSDP PTR "
+#define AC_ACPI_RSDP_SIGNATURE "RSD PTR "
 
 /**
  * Root System Descriptrion Pointer
@@ -43,6 +43,35 @@ struct ac_acpi_rsdp {
 typedef struct ac_acpi_rsdp ac_acpi_rsdp;
 
 ac_static_assert(sizeof(ac_acpi_rsdp) == 36, L"ac_acpi_rsdp is not 36 bytes");
+
+/**
+ * System Description header
+ * See: [Advanced Configuration and Power Interface Specification v6.1]
+ * (https://goo.gl/G1ov65)
+ * section 5.2.7 "Root System Description Table" and
+ * section 5.2.8 "Extended System Description Table".
+ */
+struct ac_acpi_desc_hdr {
+  ac_u32 signature;
+  ac_u32 length;
+  ac_u8 revision;
+  ac_u8 check_sum;
+  ac_u8 oem_id[6];
+  ac_u8 oem_table_id[8];
+  ac_u32 oem_revision;
+  ac_u32 creator_id;
+  ac_u32 creator_revision;
+} __attribute__((__packed__));
+
+typedef struct ac_acpi_desc_hdr ac_acpi_desc_hdr;
+
+ac_static_assert(sizeof(ac_acpi_desc_hdr) == 36, L"ac_acpi_desc_hdr is not 36 bytes");
+
+#define RSDT L'RSDT'
+
+/**
+ * Multiple
+ */
 
 /*********************************************************
  * The following are declared in ac_acpi_impl.h
