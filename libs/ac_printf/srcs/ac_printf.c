@@ -152,6 +152,15 @@ static ac_u32 formatter(ac_writer* writer, const char* format, ac_va_list args) 
                     count += 1;
                     break;
                 }
+                case 'c': {
+                    char c = (char)ac_va_arg(args, ac_uint);
+                    if ((c < 0x20) || (c > 0x7F)) {
+                      c = 0xff;
+                    }
+                    writer->write_param(writer, cast_to_write_param(c));
+                    count += 1;
+                    break;
+                }
                 case 's': {
                     // Handle string specifier
                     char *s = ac_va_arg(args, char *);
@@ -236,12 +245,15 @@ done:
  * Print a formatted string to the writer. This supports a
  * subset of the typical libc printf:
  *   - %% ::= prints a percent
- *   - %d ::= prints a positive or negative long base 10
- *   - %u ::= prints an ac_u32 base 10
- *   - %x ::= prints a ac_u32 base 16
- *   - %p ::= prints a ac_u32 assuming its a pointer base 16 with 0x prepended
+ *   - %c ::= prints a character
  *   - %s ::= prints a string
- *   - %llx ::= prints a ac_u32 long base 16
+ *   - %p ::= prints a pointer base 16 with leading zero's
+ *   - %b ::= prints a ac_uint base 2
+ *   - %d ::= prints a ac_sint base 10
+ *   - %u ::= prints a ac_uint base 10
+ *   - %x ::= prints a ac_uint base 16
+ *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
+ *   - print a 64 bit value in the requested radix.
  *
  * Returns executes writer->get_buff() which must at least
  * return an empty string, it will never be AC_NULL.
@@ -268,6 +280,7 @@ const char* ac_formatter(ac_writer* writer, const char *format, ...) {
  * Print a formatted string to the writer function. This supports a
  * subset of the typical libc printf:
  *   - %% ::= prints a percent
+ *   - %c ::= prints a character
  *   - %s ::= prints a string
  *   - %p ::= prints a pointer base 16 with leading zero's
  *   - %b ::= prints a ac_uint base 2
@@ -292,6 +305,7 @@ ac_uint ac_printfw(ac_writer* writer, const char *format, ...) {
  * Print a formatted string to seL4_PutChar. This supports a
  * subset of the typical libc printf:
  *   - %% ::= prints a percent
+ *   - %c ::= prints a character
  *   - %s ::= prints a string
  *   - %p ::= prints a pointer base 16 with leading zero's
  *   - %b ::= prints a ac_uint base 2
