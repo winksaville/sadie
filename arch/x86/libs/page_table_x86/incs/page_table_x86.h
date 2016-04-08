@@ -412,4 +412,12 @@ struct pde_fields* page_table_map_lin_to_phy(
  */
 void init_page_tables(struct multiboot2_memory_map_tag* mm, ac_uint count);
 
+/**
+ * Initialize early page table which are linear == physical
+ *
+ * @param phylinbase is starting address of linear/physical address
+ * @param lingth is number of bytes to map
+ */
+void init_early_page_tables(ac_u64 phylin_base, ac_u64 length);
+
 #endif

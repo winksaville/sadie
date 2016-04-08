@@ -35,6 +35,7 @@
 #include <ac_thread.h>
 #include <ac_tsc.h>
 
+#if 0
 static void print_multiboot2_tag(struct multiboot2_header_tag* tag) {
   ac_printf("type=%d size=%d\n", tag->type, tag->size);
 }
@@ -208,12 +209,23 @@ static void initial_page_table(ac_uptr ptr, ac_uint word) {
     reset_x86();
   }
 }
+#endif
 
 void ac_init(ac_uptr ptr, ac_uint word) {
   ac_printf("ac_init: flags=0x%x\n", get_flags());
 
+#if 1
+  // Usng the multiboot2 header conflicts with
+  // ACPI so for now just map the first 3Gib+.
+  // I can't map all of it because the default
+  // for my local APIC is 0xfee00000, will look
+  // at moving it above 4Gib so we can map all
+  // of the lower 4Gib as RAM.
+  init_early_page_tables(0ll, 0xE0000000);
+#else
   // Create initial page table
   initial_page_table(ptr, word);
+#endif
 
   // Initialize interrupt descriptor table and apic since
   // they are not done by default, yet.
@@ -239,7 +251,7 @@ void ac_init(ac_uptr ptr, ac_uint word) {
   ac_thread_early_init();
 
   // Enable interrupts
-  sti();
+  //sti();
 
   ac_printf("ac_init:-flags=0x%x\n", get_flags());
 }

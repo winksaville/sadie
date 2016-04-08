@@ -190,15 +190,16 @@ void get_caching_bits(enum page_caching caching, ac_bool* pat, ac_bool* pcd,
  *        if its AC_NULL it will be allocated.
  * param: lin_addr is the linear address the phy_addr is mapped to
  * param: phy_addr is the physical address to map to lin_addr
- * param: size is the number of bytes in the phy_addr must be multiple of 4K
+ * param: length is the number of bytes in the phy_addr must be multiple of 4K
  * param: caching is the caching strategy to use.
  *
  * returns AC_NULL on failure else page_table_base
  */
 struct pde_fields* page_table_map_lin_to_phy(
     struct pde_fields* page_table_base, void* linear_addr, ac_u64 physical_addr,
-    ac_u64 size, enum page_caching caching) {
+    ac_u64 length, enum page_caching caching) {
 
+  ac_u64 size = length;
   ac_bool pat, pcd, pwt;
   ac_debug_printf("page_table_map_lin_to_phy:+ page_table_base=0x%p\n",
       page_table_base);
@@ -382,7 +383,9 @@ struct pde_fields* page_table_map_lin_to_phy(
     }
   }
 
-  ac_printf("page_table_map_lin_to_phy:- page_table_base=0x%lx 1g=%ld, 2m=%ld 4k=%ld\n",
+  ac_printf("page_table_map_lin_to_phy: linear_addr=0x%lx phyical_addr=0x%lx length=0x%lx caching=%d\n",
+      linear_addr, physical_addr, length, caching);
+  ac_printf("page_table_map_lin_to_phy:-page_table_base=0x%lx 1g=%ld, 2m=%ld 4k=%ld\n",
       page_table_base, count_1g_pages, count_2m_pages, count_4k_pages);
 #else /* CPU_X86_32 */
   ac_printf("ABORTING: page_table_map_lin_to_phy CPU_X86_32 not supported\n");
@@ -405,7 +408,6 @@ void init_page_tables(struct multiboot2_memory_map_tag* mm, ac_uint count) {
 
   init_phylin_4k_pages();
 
-#if 1
   ac_uint total_length = 0;
   for (ac_uint i = 0; i < count; i++) {
 
@@ -427,6 +429,29 @@ void init_page_tables(struct multiboot2_memory_map_tag* mm, ac_uint count) {
   }
   ac_printf("RAM: total_length=%ld(0x%lx)\n", total_length, total_length);
 
+  ac_printf("CR3 is now 0x%x\n", get_cr3());
+  set_cr3((ac_uint)pml4);
+  ac_printf("init_page_tables:- Changed to our page tables, CR3=0x%x\n",
+      get_cr3());
+}
+
+/**
+ * Initialize early page table which are linear == physical
+ *
+ * @param phylinbase is starting address of linear/physical address
+ * @param lingth is number of bytes to map
+ */
+void init_early_page_tables(ac_u64 phylin_base, ac_u64 length) {
+  ac_printf("init_early_page_tables:+\n");
+
+  struct pde_fields* pml4 = AC_NULL;
+
+  init_phylin_4k_pages();
+
+#if 1
+  pml4 = page_table_map_lin_to_phy(
+      AC_NULL, (void*)phylin_base, phylin_base, length,
+      PAGE_CACHING_WRITE_BACK);
 #else
   // Map the first gig as 512 2M pages
   pml4 = page_table_map_lin_to_phy(
