@@ -1,4 +1,4 @@
-# Copyright 2015 wink saville
+# Copyright 2016 wink saville
 #
 # licensed under the apache license, version 2.0 (the "license");
 # you may not use this file except in compliance with the license.
@@ -12,20 +12,10 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
+runtimeIncDirs += include_directories(
+  '@0@/incs'.format(meson.current_source_dir())
+)
 
-
-#libsIncDirs = include_directories('incs')
-runtimeIncDirs += [include_directories('incs')]
-
-subdir('ac_acpi')
-subdir('ac_assert')
-subdir('ac_bits')
-subdir('ac_dispatcher')
-subdir('ac_memcmp')
-subdir('ac_memcpy')
-subdir('ac_memset')
-subdir('ac_mpscfifo')
-subdir('ac_pci')
-subdir('ac_printf')
-subdir('ac_sort')
-subdir('ac_string')
+runtimeSrcs += [
+  '@0@/srcs/ac_memcpy.c'.format(meson.current_source_dir()),
+]
