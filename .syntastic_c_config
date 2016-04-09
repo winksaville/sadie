@@ -56,6 +56,8 @@
 -I
 /home/wink/prgs/sadie/libs/ac_bits/incs
 -I
+/home/wink/prgs/sadie/libs/ac_check_sum/incs
+-I
 /home/wink/prgs/sadie/libs/ac_dispatcher/incs
 -I
 /home/wink/prgs/sadie/libs/ac_memcmp/incs
