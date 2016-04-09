@@ -18,6 +18,7 @@
 
 #include <page_table_x86.h>
 
+#include <ac_check_sum.h>
 #include <ac_inttypes.h>
 #include <ac_memcmp.h>
 #include <ac_printf.h>
@@ -62,10 +63,7 @@ ac_acpi_rsdp* ac_acpi_rsdp_get(void) {
            " got revision=%d\n", rsdp, rsdp->revision);
         continue;
       }
-      ac_u8 check_sum = 0;
-      for (ac_u8* p = (ac_u8*)rsdp; check_sum_length > 0; check_sum_length--) {
-        check_sum += *p++;
-      }
+      ac_u8 check_sum = ac_check_sum_u8(rsdp, check_sum_length);
       if (check_sum != 0) {
         ac_printf("ac_acpi_rsdp_get: rdsp=%lx check_sum=%d != 0\n",
             rsdp, check_sum);
