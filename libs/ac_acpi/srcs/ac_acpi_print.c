@@ -98,9 +98,9 @@ void ac_acpi_madt_print(char* str, ac_acpi_desc_hdr* hdr) {
   ac_uint table_len = pmadt->hdr.length - sizeof(ac_acpi_madt);
   for (ac_uint i = 0; i < table_len; i += pentry->len) {
     pentry = (ac_acpi_madt_tl*)&pmadt->table[i];
-    ac_printf("madt: type=%d len=%d", pentry->type, pentry->len);
+    ac_printf(" madt: type=%d len=%d", pentry->type, pentry->len);
     if (pentry->len == 0) {
-      ac_printf(" madt: 0 is a bad length\n");
+      ac_printf(" 0 is a bad length\n");
       break;
     }
     switch (pentry->type) {
@@ -181,12 +181,12 @@ void ac_acpi_rsdp_print(char* str, ac_acpi_rsdp* rsdp) {
       ac_printf("pentry=%p ", pentry);
       if (check_sum == 0) {
         if (ac_memcmp(&pentry->signature, "APIC", sizeof(pentry->signature)) == 0) {
-          ac_acpi_madt_print("APIC: ", pentry);
+          ac_acpi_madt_print("", pentry);
         } else {
           ac_acpi_desc_hdr_print("XXXX: ", pentry, "\n");
         }
       } else {
-        ac_printf("pentry=%p sum=%d NOT zero, skipping\n", pentry, check_sum);
+        ac_printf(" sum=%d is NOT zero, skipping\n", pentry, check_sum);
       }
     }
   }
