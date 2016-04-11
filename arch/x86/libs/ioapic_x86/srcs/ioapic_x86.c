@@ -34,7 +34,7 @@ ac_uint ioapic_get_count(void) {
  * @return the address of an ioapic
  */
 ioapic_regs* ioapic_get_addr(ac_uint idx) {
-  // TODO: Get count from ACPI information
+  // TODO: Get address from ACPI information
   if (idx == 0) {
     return (ioapic_regs*)0xfec00000;
   } else {
@@ -50,7 +50,8 @@ ioapic_regs* ioapic_get_addr(ac_uint idx) {
  * @return id value
  */
 ac_u8 ioapic_get_id(ioapic_regs* regs) {
-  return AC_GET_BITS(ac_u8, ioapic_read_u32(regs, 0), 24, 4);
+  ac_u32 tmp = ioapic_read_u32(regs, 0);
+  return AC_GET_BITS(ac_u8, tmp, 24, 4);
 }
 
 /**
@@ -60,17 +61,9 @@ ac_u8 ioapic_get_id(ioapic_regs* regs) {
  * @param val is the id to write
  */
 void ioapic_set_id(ioapic_regs* regs, ac_u8 val) {
-}
-
-/**
- * Get max redirection entry. First entry is 0, max is the last.
- *
- * @param regs is the address of the ioapic_regs
- *
- * @return max redirection entry
- */
-ac_uint ioapic_get_max_redir_entry(ioapic_regs* regs) {
-  return 23;
+  ac_u32 tmp = ioapic_read_u32(regs, 0);
+  tmp = AC_SET_BITS(ac_u32, tmp, val, 24, 4);
+  ioapic_write_u32(regs, 0, tmp);
 }
 
 /**
@@ -81,29 +74,57 @@ ac_uint ioapic_get_max_redir_entry(ioapic_regs* regs) {
  * @return IOAPIC_VER value
  */
 ac_uint ioapic_get_ver(ioapic_regs* regs) {
-  return 0;
+  ac_u32 tmp = ioapic_read_u32(regs, 1);
+  return AC_GET_BITS(ac_u32, tmp, 0, 8);
 }
 
 /**
- * Get redirection register 0 is first 1 is the second 64 bit register.
- * This method will convert idx to a register address and will
- * read both 32bit registers to form the 64bit value.
+ * Get ioapic arbitration register
  *
  * @param regs is the address of the ioapic_regs
+ *
+ * @return arbitration register
+ */
+ac_u32 ioapic_get_arb(ioapic_regs* regs) {
+  return ioapic_read_u32(regs, 2);
+}
+
+/**
+ * Get max redirection entry. First entry is 0, max is the last.
+ *
+ * @param regs is the address of the ioapic_regs
+ *
+ * @return max redirection entry
+ */
+ac_uint ioapic_get_redir_max_entry(ioapic_regs* regs) {
+  ac_u32 tmp = ioapic_read_u32(regs, 1);
+  return AC_GET_BITS(ac_u32, tmp, 16, 8);
+}
+
+/**
+ * Get redirection register. 0 is first 64 redirection register,
+ * 1 is the second 64 bit redirection register ...
+ *
+ * @param regs is the address of the ioapic_regs
+ * @param idx to a 64 bit redirection register, 0 is first,
+ *        1 is the second 64 bit register and so on.
  *
  * @return the ioapic_redir register
  */
 ioapic_redir ioapic_get_redir(ioapic_regs* regs, ac_uint idx) {
-  ioapic_redir redir = {};
+  ioapic_redir redir;
+  redir.raw = ioapic_read_u64(regs, 0x10 + (idx * 2));
   return redir;
 }
 
 /**
- * Set redirection register 0 is first 1 is the second 64 bit register.
- * This method will convert idx to a register address and will
- * read both 32bit registers to form the 64bit value.
+ * Set redirection register. 0 is first 64 redirection register,
+ * 1 is the second 64 bit redirection register ...
  *
- * @return the ioapic_redir register
+ * @param regs is the address of the ioapic_regs
+ * @param idx to a 64 bit redirection register, 0 is first,
+ *        1 is the second 64 bit register and so on.
  */
 void ioapic_set_redir(ioapic_regs* regs, ac_uint idx, ioapic_redir reg) {
+  ioapic_write_u64(regs, 0x10 + (idx * 2), reg.raw);
 }

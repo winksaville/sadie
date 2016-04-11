@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Wink Saville
+ * Copyright 2016 Wink Saville
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,76 @@
  */
 
 #include <ioapic_x86.h>
+#include <ioapic_x86_print.h>
 
 #include <page_table_x86.h>
 #include <ac_inttypes.h>
 #include <ac_printf.h>
 #include <ac_test.h>
 
-void display_ioapic(void) {
-  ac_uint count = ioapic_get_count();
-  for (ac_uint ioapic = 0; ioapic < count; ioapic++) {
-    ioapic_regs* regs = ioapic_get_addr(ioapic);
-    for (ac_uint i = 0; i < 3; i++) {
-      ac_printf("display_ioapic: 0x=%x 0x=%p\n", i, ioapic_read_u32(regs, i));
-    }
+/**
+ * Test case array filled with the val followed
+ * by the expected field values. The array initialization
+ * fields that are NOT explicitly initialized are zeros.
+ *
+ * This is a shortened walking 1 bit test.
+ */
+struct test_case {
+  ioapic_redir val;
+  ac_u8 intr_vec;
+  ac_u8 delivery_mode;
+  ac_u8 dest_mode;
+  ac_u8 delivery_status;
+  ac_u8 intr_polarity;
+  ac_u8 remote_irr;
+  ac_u8 trigger;
+  ac_u8 intr_mask;
+  ac_u64 resv;
+  ac_u64 dest_field;
+};
 
-    for (ac_uint i = 0x10; i < 0x40; i += 2) {
-      ac_u32 l = ioapic_read_u32(regs, i);
-      ac_u32 h = ioapic_read_u32(regs, i+1);
-      ac_u64 d = ioapic_read_u64(regs, i);
 
-      ac_printf("display_ioapic: 0x=%x 0x=%p\n", i, l);
-      ac_printf("display_ioapic: 0x=%x 0x=%p\n", i + 1, h);
-      ac_printf("display_ioapic: 0x=%x 0x=%p\n", i, d);
-    }
+static struct test_case test_case_array[] = {
+  { .val.raw=0x0000000000000001, .intr_vec=0x1, },
+  { .val.raw=0x0000000000000080, .intr_vec=0x80, },
+  { .val.raw=0x0000000000000100, .delivery_mode=0x1, },
+  { .val.raw=0x0000000000000400, .delivery_mode=0x4, },
+  { .val.raw=0x0000000000000800, .dest_mode=0x1, },
+  { .val.raw=0x0000000000001000, .delivery_status=0x1, },
+  { .val.raw=0x0000000000002000, .intr_polarity=0x1, },
+  { .val.raw=0x0000000000004000, .remote_irr=0x1, },
+  { .val.raw=0x0000000000008000, .trigger=0x1, },
+  { .val.raw=0x0000000000010000, .intr_mask=0x1, },
+  { .val.raw=0x0000000000020000, .resv=0x1, },
+  { .val.raw=0x0080000000000000, .resv=0x4000000000, },
+  { .val.raw=0x0100000000000000, .dest_field=0x1, },
+  { .val.raw=0x8000000000000000, .dest_field=0x80, },
+};
+
+static ac_bool test_ioapic_redir(struct test_case* test) {
+  ac_bool error = AC_FALSE;
+
+  error |= AC_TEST(test->val.intr_vec == test->intr_vec);
+
+  if (error) {
+    ac_printf("test_ioapic_redir: raw=0x%lx ", test->val.raw);
+    ioapic_redir_print("", test->val, "\n");
   }
+
+  return error;
 }
+
+ac_bool test_ioapic_redir_fields() {
+  ac_bool error = AC_FALSE;
+
+  // Execute the test cases
+  for (ac_uint i = 0; i < AC_ARRAY_COUNT(test_case_array); i++) {
+    error |= test_ioapic_redir(&test_case_array[i]);
+  }
+
+  return error;
+}
+
 
 ac_bool test_ioapic(void) {
   ac_bool error = AC_FALSE;
@@ -56,6 +101,32 @@ ac_bool test_ioapic(void) {
   return error;
 }
 
+void display_ioapic(void) {
+  ac_uint count = ioapic_get_count();
+  ac_printf("display_ioapic: count=%d\n", count);
+  for (ac_uint ioapic = 0; ioapic < count; ioapic++) {
+    ioapic_regs* regs = ioapic_get_addr(ioapic);
+    ac_printf(" iopic: %d addr=%p id=0x%x ver=0x%x arb=0x%x\n",
+        ioapic, regs, ioapic_get_id(regs), ioapic_get_ver(regs),
+        ioapic_get_arb(regs));
+
+    ac_printf(" ioapic %d regs 0, 1, 2 raw:\n", ioapic);
+    for (ac_uint i = 0; i < 3; i++) {
+      ac_printf("   reg 0x=%x 0x=%p\n", i, ioapic_read_u32(regs, i));
+    }
+
+    ac_uint max_redir = ioapic_get_redir_max_entry(regs);
+    ac_printf(" iopic %d redir regs count=%d\n", ioapic, max_redir + 1);
+    char* extra_space = " ";
+    for (ac_uint i = 0; i < max_redir; i++) {
+      ioapic_redir redir = ioapic_get_redir(regs, i);
+      if (i >= 10) extra_space = "";
+      ac_printf("   redir %s %d raw 0x=%p ", extra_space, i, redir.raw);
+      ioapic_redir_print("", redir, "\n");
+    }
+  }
+}
+
 int main(void) {
   ac_bool error = AC_FALSE;
 
@@ -68,6 +139,7 @@ int main(void) {
         PAGE_CACHING_STRONG_UNCACHEABLE); //PAGE_CACHING_WRITE_BACK);
     display_ioapic();
     error |= test_ioapic();
+    error |= test_ioapic_redir_fields();
   } else {
     ac_printf("test IOAPIC: NO IOAPIC, skipping tests\n");
   }

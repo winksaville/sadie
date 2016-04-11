@@ -14,6 +14,13 @@
  * limitations under the License.
  */
 
+/**
+ * Intel Doc for "82093AA I/O ADVANCED PROGRAMMABLE INTERRUPT CONTROLLER (IOAPIC)"
+ * availble at https://goo.gl/X1lkkW. This document is for version 0x11 but
+ * currently I'm seeing verion 0x20 but have found no documentation for this
+ * later version.
+ */
+
 #ifndef ARCH_X86_LIBS_IOAPIC_X86_INCS_IOAPIC_X86_H
 #define ARCH_X86_LIBS_IOAPIC_X86_INCS_IOAPIC_X86_H
 
@@ -36,22 +43,31 @@ struct ioapic_regs {
 typedef struct ioapic_regs ioapic_regs;
 
 struct ioapic_redir {
-  ac_u8  intr_vec;              // Interrupt Vector (0x10 .. 0xFE) (RW)
-  ac_u8 delivery_mode:3;        // 0x0 = Fixed, 0x1 = Lowest priority, 0x2 SMI
-                                // 0x3 = Resv, 0x4 = NMI, 0x5 = INIT,
-                                // 0x6 = Resv, 0x7 = External Interrupt (RW)
-  ac_u8 dest_mode:1;            // 0 = Physical mode, 1 = Logical mode (RW)
-  ac_u8 delivery_status:1;      // 0 = Idle, 1 = Send pending (RO)
-  ac_u8 intr_polarity:1;        // 0 = High active, 1 = Low active (RW)
-  ac_u8 remote_irr:1;           // 0 = EOI received, 1 = local APIC accepted (RO)
-  ac_u8 trigger:1;              // 0 = Edge sensitive, 1 = Level sensitive (RW)
-  ac_u8 intr_mask:1;            // 0 = Interrupt is NOT masked, 1 interrupt masked (RW)
-  ac_u64 resv:38;
-  ac_u64 dest_field:7;          // If dest_mode == 0 then dest_field == APIC ID
-                                // else dest_field == logical proc id multiple CPUs
-                                //      may receive interrupt (NOT sure how this works?
-                                //      see: http://f.osdev.org/viewtopic.php?f=1&t=24606
-                                //      for some info)
+  union {
+    ac_u64  raw;
+    struct {
+      ac_u8 intr_vec:8;             // Interrupt Vector (0x10 .. 0xFE) (RW)
+      ac_u8 delivery_mode:3;        // 0x0 = Fixed, 0x1 = Lowest priority, 0x2 SMI
+                                    // 0x3 = Resv, 0x4 = NMI, 0x5 = INIT,
+                                    // 0x6 = Resv, 0x7 = External Interrupt (RW)
+      ac_u8 dest_mode:1;            // 0 = Physical mode and dest_field == APIC ID
+                                    // 1 = Logical mode and dest_field == logical dest address
+                                    // From 3.2.4 of 82093AA documenation (https://goo.gl/X1lkkW)
+                                    // "When DESTMOD=1 (logical mode), destinations are identified
+                                    // by matching on the logical destination under the control of
+                                    // the Destination Format Register and Logical Destination
+                                    // Register in each Local APIC"
+      ac_u8 delivery_status:1;      // 0 = Idle, 1 = Send pending (RO)
+      ac_u8 intr_polarity:1;        // 0 = High active, 1 = Low active (RW)
+      ac_u8 remote_irr:1;           // 0 = EOI received, 1 = local APIC accepted (RO)
+      ac_u8 trigger:1;              // 0 = Edge sensitive, 1 = Level sensitive (RW)
+      ac_u8 intr_mask:1;            // 0 = Interrupt is NOT masked, 1 interrupt masked (RW)
+      ac_u64 resv:38;
+      ac_u64 dest_field:7;          // If dest_mode == 0 then dest_field == APIC ID
+                                    // else dest_field == 1 logical destination address
+                                    // which can be one or more CPU's.
+    };
+  };
 } __attribute__((__packed__));
 
 typedef struct ioapic_redir ioapic_redir;
@@ -123,22 +139,31 @@ ac_u8 ioapic_get_id(ioapic_regs* regs);
 void ioapic_set_id(ioapic_regs* regs, ac_u8 val);
 
 /**
+ * Get ioapic version
+ *
+ * @param regs is the address of the ioapic_regs
+ *
+ * @return version
+ */
+ac_uint ioapic_get_ver(ioapic_regs* regs);
+
+/**
+ * Get ioapic arbitration register
+ *
+ * @param regs is the address of the ioapic_regs
+ *
+ * @return arbitration register
+ */
+ac_u32 ioapic_get_arb(ioapic_regs* regs);
+
+/**
  * Get max redirection entry. First entry is 0, max is the last.
  *
  * @param regs is the address of the ioapic_regs
  *
  * @return max redirection entry
  */
-ac_uint ioapic_get_max_redir_entry(ioapic_regs* regs);
-
-/**
- * Get IOAPIC_VER register
- *
- * @param regs is the address of the ioapic_regs
- *
- * @return IOAPIC_VER value
- */
-ac_uint ioapic_get_ver(ioapic_regs* regs);
+ac_uint ioapic_get_redir_max_entry(ioapic_regs* regs);
 
 /**
  * Get redirection register 0 is first 1 is the second 64 bit register.
