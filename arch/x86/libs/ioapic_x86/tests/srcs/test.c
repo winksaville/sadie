@@ -16,9 +16,30 @@
 
 #include <ioapic_x86.h>
 
+#include <page_table_x86.h>
 #include <ac_inttypes.h>
 #include <ac_printf.h>
 #include <ac_test.h>
+
+void display_ioapic(void) {
+  ac_uint count = ioapic_get_count();
+  for (ac_uint ioapic = 0; ioapic < count; ioapic++) {
+    ioapic_regs* regs = ioapic_get_addr(ioapic);
+    for (ac_uint i = 0; i < 3; i++) {
+      ac_printf("display_ioapic: 0x=%x 0x=%p\n", i, ioapic_read_u32(regs, i));
+    }
+
+    for (ac_uint i = 0x10; i < 0x40; i += 2) {
+      ac_u32 l = ioapic_read_u32(regs, i);
+      ac_u32 h = ioapic_read_u32(regs, i+1);
+      ac_u64 d = ioapic_read_u64(regs, i);
+
+      ac_printf("display_ioapic: 0x=%x 0x=%p\n", i, l);
+      ac_printf("display_ioapic: 0x=%x 0x=%p\n", i + 1, h);
+      ac_printf("display_ioapic: 0x=%x 0x=%p\n", i, d);
+    }
+  }
+}
 
 ac_bool test_ioapic(void) {
   ac_bool error = AC_FALSE;
@@ -40,6 +61,12 @@ int main(void) {
 
   ac_uint count = ioapic_get_count();
   if (count != 0) {
+    ioapic_regs* regs = ioapic_get_addr(0);
+
+    page_table_map_lin_to_phy(get_page_table_linear_addr(),
+        regs, (ac_u64)regs, FOUR_K_PAGE_SIZE,
+        PAGE_CACHING_STRONG_UNCACHEABLE); //PAGE_CACHING_WRITE_BACK);
+    display_ioapic();
     error |= test_ioapic();
   } else {
     ac_printf("test IOAPIC: NO IOAPIC, skipping tests\n");
