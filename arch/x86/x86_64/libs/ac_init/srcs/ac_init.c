@@ -255,7 +255,7 @@ void ac_init(ac_uptr ptr, ac_uint word) {
   ac_keyboard_early_init();
 
   // Enable interrupts
-  //sti();
+  sti();
 
   ac_printf("ac_init:-flags=0x%x\n", get_flags());
 }
