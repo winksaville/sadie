@@ -1,5 +1,5 @@
 /*
- * copyright 2015 wink saville
+ * copyright 2016 wink saville
  *
  * licensed under the apache license, version 2.0 (the "license");
  * you may not use this file except in compliance with the license.
@@ -27,6 +27,7 @@
 
 #include <ac_bits.h>
 #include <ac_inttypes.h>
+#include <ac_keyboard_impl.h> // TODO: Change to ac_keyboard.h
 #include <ac_memset.h>
 #include <ac_printf.h>
 #include <ac_receptor.h>
@@ -249,6 +250,9 @@ void ac_init(ac_uptr ptr, ac_uint word) {
 
   // Initialize threading module
   ac_thread_early_init();
+
+  // Initialize keyboard module
+  ac_keyboard_early_init();
 
   // Enable interrupts
   //sti();

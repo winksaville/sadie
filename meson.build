@@ -52,6 +52,7 @@ subdir('platform')
 
 #subdir('arch/tests')
 subdir('arch/x86/libs/ac_tsc_impl/tests')
+subdir('arch/x86/libs/ac_keyboard_impl/tests')
 subdir('arch/x86/libs/ac_receptor_impl/tests')
 subdir('arch/x86/libs/cpuid_x86/tests')
 subdir('arch/x86/libs/cr_x86/tests')

@@ -45,7 +45,11 @@
 
 # Enable one or the other, be nice if we could automate.
 -I
+/home/wink/prgs/sadie/arch/x86/libs/ac_keyboard_impl/incs
+-I
 /home/wink/prgs/sadie/arch/x86/libs/ac_receptor_impl/incs
+#-I
+#/home/wink/prgs/sadie/platform/Posix/libs/ac_keyboard_impl/incs
 #-I
 #/home/wink/prgs/sadie/platform/Posix/libs/ac_receptor_impl/incs
 
