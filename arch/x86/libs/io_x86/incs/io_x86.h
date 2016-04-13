@@ -19,7 +19,7 @@
 
 #include <ac_inttypes.h>
 
-#define AC_IO_WAIT_UNUSED_PORT (0x80)
+#define AC_IO_UNUSED_PORT (0x80)
 
 static inline ac_u8 io_rd_u8(ac_u16 port) {
   ac_u8 val;
@@ -57,7 +57,12 @@ static inline void io_wr_u32(ac_u16 port, ac_u32 val) {
 
 static inline void io_wait(void) {
   // See http://wiki.osdev.org/Inline_Assembly/Examples#IO_WAIT0
-  outb_port_value(AC_IO_WAIT_UNUSED_PORT, 0);
+  outb_port_value(AC_IO_UNUSED_PORT, 0);
+}
+
+static inline void io_delay(void) {
+  // See http://wiki.osdev.org/Inline_Assembly/Examples#IO_WAIT0
+  outb_port_value(AC_IO_UNUSED_PORT, 0);
 }
 
 #endif
