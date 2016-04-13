@@ -127,23 +127,14 @@ static inline ac_sint keyboard_rd_data_with_timeout(ac_u64 ns) {
 }
 
 /**
- * Write to keyboard data port without waiting
- */
-static inline void keyboard_wr_data_no_wait(ac_u8 data) {
-  //ac_printf("keyboard_wr_data_no_wait:+0x%x\n", data);
-  io_delay();
-  io_wr_u8(KEYBOARD_DATA_PORT, data);
-  //ac_printf("keyboard_wr_data_no_wait:-\n");
-}
-
-/**
  * Write to keyboard data port after waiting for it
  * to be ready to accept the new data.
  */
 static inline void keyboard_wr_data(ac_u8 data) {
   //ac_printf("keyboard_wr_data: status=0x%x\n", keyboard_rd_status());
   while ((keyboard_rd_status() & 0x2) == 0x2);
-  keyboard_wr_data_no_wait(data);
+  io_delay();
+  io_wr_u8(KEYBOARD_DATA_PORT, data);
   //ac_printf("keyboard_wr_data:-status=0x%x\n", keyboard_rd_status());
 }
 
@@ -153,7 +144,7 @@ static inline void keyboard_wr_data(ac_u8 data) {
  */
 static inline void keyboard_wr_cmd(ac_u8 cmd) {
   //ac_printf("keyboard_wr_cmd:+0x%x\n", cmd);
-  io_delay();
+  while ((keyboard_rd_status() & 0x2) == 0x2);
   io_wr_u8(KEYBOARD_CMD_PORT, cmd);
   //ac_printf("keyboard_wr_cmd:-\n");
 }
@@ -164,10 +155,10 @@ static inline void keyboard_wr_cmd(ac_u8 cmd) {
  * @return configuration
  */
 static inline ac_u8 keyboard_rd_config(void) {
-  ac_printf("keyboard_rd_config:\n");
+  //ac_printf("keyboard_rd_config:\n");
   keyboard_wr_cmd(0x20);
   ac_u8 config = keyboard_rd_data();
-  ac_printf("keyboard_rd_config:-0x%x\n", config);
+  //ac_printf("keyboard_rd_config:-0x%x\n", config);
   return config;
 }
 
@@ -175,12 +166,13 @@ static inline ac_u8 keyboard_rd_config(void) {
  * Write keyboard configuration. This is a blocking operation
  */
 static inline void keyboard_wr_config(ac_u8 config) {
-  ac_printf("keyboard_wr_config:\n");
+  //ac_printf("keyboard_wr_config:+config=0x%x\n", config);
   ac_u8 cur_config = keyboard_rd_config();
   config = (cur_config & CFG_RD_ONLY_MASK) | (config & ~CFG_RD_ONLY_MASK);
+  //ac_printf("keyboard_wr_config: config=0x%x\n", config);
   keyboard_wr_cmd(0x60);
   keyboard_wr_data(config);
-  ac_printf("keyboard_wr_config:-\n");
+  //ac_printf("keyboard_wr_config:-config=0x%x\n", keyboard_rd_config());
 }
 
 /**
@@ -211,7 +203,7 @@ static inline void keyboard_wr_controller_output(ac_u8 data) {
 static inline ac_bool keyboard_post(void) {
   keyboard_wr_cmd(0xAA);
   ac_bool result = keyboard_rd_data() == 0x55;
-  ac_printf("keyboard_post:-%b\n", result);
+  //ac_printf("keyboard_post:-%b\n", result);
   return result;
 }
 
@@ -219,11 +211,11 @@ static inline ac_bool keyboard_post(void) {
  * Disable channel 1. This is a blocking operation.
  */
 static inline void keyboard_disable_channel1(void) {
-  ac_printf("keyboard_disable_channel1:+\n");
+  //ac_printf("keyboard_disable_channel1:+\n");
   keyboard_wr_cmd(0xAD);
-  ac_u8 config = keyboard_rd_config();
-  ac_bool result = ((config & 0x10) == 0x10);
-  ac_printf("keyboard_disable_channel1:-%b\n", result);
+  //ac_u8 config = keyboard_rd_config();
+  //ac_bool result = ((config & 0x10) == 0x10);
+  //ac_printf("keyboard_disable_channel1:-%b\n", result);
 }
 
 /**
@@ -232,11 +224,11 @@ static inline void keyboard_disable_channel1(void) {
  * @return  AC_TRUE if channel 1 was enabled
  */
 static inline ac_bool keyboard_enable_channel1(void) {
-  ac_printf("keyboard_enable_channel1:+\n");
+  //ac_printf("keyboard_enable_channel1:+\n");
   keyboard_wr_cmd(0xAE);
   ac_u8 config = keyboard_rd_config();
   ac_bool result = ((config & 0x10) == 0x00);
-  ac_printf("keyboard_enable_channel1:-%d config=%x\n", result, config);
+  //ac_printf("keyboard_enable_channel1:-%d config=%x\n", result, config);
   return result;
 }
 
@@ -244,11 +236,11 @@ static inline ac_bool keyboard_enable_channel1(void) {
  * Disable channel 2.  This is a blocking operation.
  */
 static inline void keyboard_disable_channel2(void) {
-  ac_printf("keyboard_disable_channel2:+\n");
+  //ac_printf("keyboard_disable_channel2:+\n");
   keyboard_wr_cmd(0xA7);
-  ac_u8 config = keyboard_rd_config();
-  ac_bool result = ((config & 0x20) == 0x20);
-  ac_printf("keyboard_disable_channel2:-%b\n", result);
+  //ac_u8 config = keyboard_rd_config();
+  //ac_bool result = ((config & 0x20) == 0x20);
+  //ac_printf("keyboard_disable_channel2:-%b\n", result);
 }
 
 /**
@@ -257,11 +249,11 @@ static inline void keyboard_disable_channel2(void) {
  * @return  AC_TRUE if channel 2 was enabled
  */
 static inline ac_bool keyboard_enable_channel2(void) {
-  ac_printf("keyboard_enable_channel2:+\n");
+  //ac_printf("keyboard_enable_channel2:+\n");
   keyboard_wr_cmd(0xA8);
   ac_u8 config = keyboard_rd_config();
   ac_bool result = ((config & 0x20) == 0x00);
-  ac_printf("keyboard_enable_channel2:-%b\n", result);
+  //ac_printf("keyboard_enable_channel2:-%b\n", result);
   return result;
 }
 
@@ -275,7 +267,7 @@ static inline ac_bool keyboard_has_dual_channels(void) {
   if (result) {
     keyboard_disable_channel2();
   }
-  ac_printf("keyboard_has_dual_channels:-%b\n", result);
+  //ac_printf("keyboard_has_dual_channels:-%b\n", result);
   return result;
 }
 
@@ -288,7 +280,7 @@ static inline ac_bool keyboard_test_channel1(void) {
   keyboard_wr_cmd(0xAB);
   ac_u8 data = keyboard_rd_data();
   ac_bool result = data == 0;
-  ac_printf("keyboard_test_channel1 data=0x%d result=%d\n", data, result);
+  //ac_printf("keyboard_test_channel1 data=0x%d result=%d\n", data, result);
   return result;
 }
 
@@ -301,7 +293,7 @@ static inline ac_bool keyboard_test_channel2(void) {
   keyboard_wr_cmd(0xA9);
   ac_u8 data = keyboard_rd_data();
   ac_bool result = data == 0;
-  ac_printf("keyboard_test_channel2 data=0x%d result=%d\n", data, result);
+  //ac_printf("keyboard_test_channel2 data=0x%d result=%d\n", data, result);
   return result;
 }
 
@@ -309,14 +301,14 @@ static inline ac_bool keyboard_test_channel2(void) {
  * Write data to device. This is a blocking operation.
  */
 static inline void keyboard_send_device(ac_uint channel, ac_u8 data) {
-  ac_printf("keyboard_send_device:+channel=%d data=0x%x\n", channel, data);
+  //ac_printf("keyboard_send_device:+channel=%d data=0x%x\n", channel, data);
   if (channel == 1) {
     keyboard_wr_data(data);
   } else {
     keyboard_wr_cmd(0xD4);
     keyboard_wr_data(data);
   }
-  ac_printf("keyboard_send_device:-channel=%d data=0x%x\n", channel, data);
+  //ac_printf("keyboard_send_device:-channel=%d data=0x%x\n", channel, data);
 }
 
 /**
@@ -326,41 +318,42 @@ static inline ac_sint keyboard_send_device_get_response(ac_uint channel, ac_u64 
   ac_sint response;
 
   ac_u64 timeout_ticks = ac_tscrd() + ac_ns_to_ticks(timeout_ns);
-  ac_printf("keyboard_send_device_get_response:+channel=%d data=0x%x now=%ld timeout_ticks=%ld\n", channel, data, ac_tscrd(), timeout_ticks);
+  //ac_printf("keyboard_send_device_get_response:+channel=%d data=0x%x now=%ld timeout_ticks=%ld\n",
+  //    channel, data, ac_tscrd(), timeout_ticks);
 resend:
   while ((ac_sint)(timeout_ticks - ac_tscrd()) > 0ll) {
-    ac_printf("keyboard_send_device_get_response: channel=%d data=0x%x now=%ld timeout_ticks=%ld diff=%ld\n",
-        channel, data, ac_tscrd(), timeout_ticks, timeout_ticks - ac_tscrd());
+    //ac_printf("keyboard_send_device_get_response: channel=%d data=0x%x now=%ld timeout_ticks=%ld diff=%ld\n",
+    //    channel, data, ac_tscrd(), timeout_ticks, timeout_ticks - ac_tscrd());
     keyboard_send_device(channel, data);
     while ((ac_sint)(timeout_ticks - ac_tscrd()) > 0ll) {
       response = keyboard_rd_data_with_timeout(ONE_MS);
-      ac_printf("keyboard_send_device_get_response: channel=%d data=0x%x response=0x%x now=%ld timeout_ticks=%ld diff=%ld\n",
-          channel, data, response,ac_tscrd(), timeout_ticks, timeout_ticks - ac_tscrd());
+      //ac_printf("keyboard_send_device_get_response: channel=%d data=0x%x response=0x%x now=%ld timeout_ticks=%ld diff=%ld\n",
+      //    channel, data, response,ac_tscrd(), timeout_ticks, timeout_ticks - ac_tscrd());
       if (response == -1) {
-        ac_printf("keyboard_send_device_get_response: channel=%d data=0x%x TIMED OUT now=%ld\n", channel, data, ac_tscrd());
+        //ac_printf("keyboard_send_device_get_response: channel=%d data=0x%x TIMED OUT now=%ld\n", channel, data, ac_tscrd());
         continue;
       } else if (response == 0xfa) {
-        ac_printf("keyboard_send_device_get_response:-channel=%d data=0x%x OK ACK response=0x%x\n", channel, data, response);
+        //ac_printf("keyboard_send_device_get_response:-channel=%d data=0x%x OK ACK response=0x%x\n", channel, data, response);
         return response;
       } else if ((response == 0xff) || (response == 0x00)) {
-        ac_printf("keyboard_send_device_get_response: channel=%d data=0x%x ERROR, resend response=0x%x now=%ld\n", channel, data, response, ac_tscrd());
+        //ac_printf("keyboard_send_device_get_response: channel=%d data=0x%x ERROR, resend response=0x%x now=%ld\n", channel, data, response, ac_tscrd());
         goto resend;
       } else if (response == 0xfe) {
-        ac_printf("keyboard_send_device_get_response: channel=%d data=0x%x RESEND response=0x%x now=%ld\n", channel, data, response, ac_tscrd());
+        //ac_printf("keyboard_send_device_get_response: channel=%d data=0x%x RESEND response=0x%x now=%ld\n", channel, data, response, ac_tscrd());
         goto resend;
       } else if ((response == 0xaa) || (response == 0xfc) || (response == 0xfd)) {
         if (data == 0xFF) {
-          ac_printf("keyboard_send_device_get_response:-channel=%d data=0x%x OK RESET response=0x%x\n", channel, data, response);
+          //ac_printf("keyboard_send_device_get_response:-channel=%d data=0x%x OK RESET response=0x%x\n", channel, data, response);
           return response;
         }
         continue;
       } else {
-        ac_printf("keyboard_send_device_get_response:-channel=%d data=0x%x UNKNOWN response=0x%x\n", channel, data, response);
+        //ac_printf("keyboard_send_device_get_response:-channel=%d data=0x%x UNKNOWN response=0x%x\n", channel, data, response);
         return response;
       }
     }
   }
-  ac_printf("keyboard_send_device_get_response:-channel=%d data=0x%x FULL TIME OUT\n", channel, data);
+  //ac_printf("keyboard_send_device_get_response:-channel=%d data=0x%x FULL TIME OUT\n", channel, data);
   return -1;
 }
 
@@ -370,7 +363,7 @@ resend:
  * @param channel to send reset too ether 1 or 2
  */
 static inline ac_bool keyboard_reset_device(ac_uint channel) {
-  ac_printf("keyboard_reset_device:+channel=%d\n", channel);
+  //ac_printf("keyboard_reset_device:+channel=%d\n", channel);
   ac_sint response = keyboard_send_device_get_response(channel, 100 * ONE_MS, 0xff);
   if (response == -1) {
     return AC_FALSE;
@@ -381,7 +374,7 @@ static inline ac_bool keyboard_reset_device(ac_uint channel) {
       response = keyboard_rd_data();
     }
     ac_bool result = response == 0xFA;
-    ac_printf("keyboard_reset_device:-channel=%d data=0x%x result=%b\n", channel, response, result);
+    //ac_printf("keyboard_reset_device:-channel=%d data=0x%x result=%b\n", channel, response, result);
     return result;
   }
 }
@@ -394,7 +387,7 @@ static inline ac_bool keyboard_reset_device(ac_uint channel) {
  * @return -1 if unknown
  */
 static inline ac_sint keyboard_get_device_type(ac_u8 channel) {
-  ac_printf("keyboard_get_device_type:+channel=%d\n", channel);
+  //ac_printf("keyboard_get_device_type:+channel=%d\n", channel);
   ac_sint result;
 
   // Send disable scanning command
@@ -417,7 +410,7 @@ static inline ac_sint keyboard_get_device_type(ac_u8 channel) {
     result = -1;
   }
 
-  ac_printf("keyboard_get_device_type:-channel=%d result=0x%x\n", channel, result);
+  //ac_printf("keyboard_get_device_type:-channel=%d result=0x%x\n", channel, result);
   return result;
 }
 
@@ -450,60 +443,60 @@ void ac_keyboard_early_init(void) {
   ac_printf("ac_keyboard_early_init:+\n");
 
   // Step 1: Initialize USB Controllers
-  ac_printf("Step 1: Initialzie UBS Controllers, SKIPPING for now\n");
+  //ac_printf("Step 1: Initialzie UBS Controllers, SKIPPING for now\n");
 
   // Step 2: Determine if PS/2 controller exits
-  ac_printf("Step 2: Use ACPI to determine if PS/2 controller exists, SKIPPING for now\n");
+  //ac_printf("Step 2: Use ACPI to determine if PS/2 controller exists, SKIPPING for now\n");
 
   // Step 3: Disable devices
-  ac_printf("Step 3: Disable devices\n");
+  //ac_printf("Step 3: Disable devices\n");
   keyboard_disable_channel1();
   keyboard_disable_channel2();
 
   // Step 4: Flush the output buffer
-  ac_printf("Step 4: Flush the output buffer\n");
-  keyboard_rd_data_now();
-  ac_printf("  keyboard_rd_status=0x%x\n", keyboard_rd_status());
+  //ac_printf("Step 4: Flush the output buffer\n");
+  keyboard_rd_data_with_timeout(ONE_MS);
 
   // Step 5: Set the Controller Configuration
-  ac_printf("Step 5: Set the Controller Configuration\n");
+  //ac_printf("Step 5: Set the Controller Configuration\n");
+  //ac_printf("  cur config=0x%x\n", keyboard_rd_config());
   keyboard_wr_config(
       CFG_PORT1_DISABLED | CFG_PORT2_DISABLED |
       CFG_PORT1_CLOCK_DISABLED | CFG_PORT2_CLOCK_DISABLED |
       CFG_PORT1_TRANSLATION_DISABLED);
-
-  ac_printf("  new config=0x%x\n", keyboard_rd_config());
+  //ac_printf("  new config=0x%x\n", keyboard_rd_config());
 
   // Step 6: Perform Controller Self Test
-  ac_printf("Step 6: keyboard_post=%b\n", keyboard_post());
+  //ac_printf("Step 6: keyboard_post=%b\n", keyboard_post());
 
   // Step 7: Determine if there are 2 Channels
   ac_bool has_dual_channels = keyboard_has_dual_channels();
-  ac_printf("Step 7: keyboard_has_dual_channels=%b\n", has_dual_channels);
+  //ac_printf("Step 7: keyboard_has_dual_channels=%b\n", has_dual_channels);
 
   // Step 8: Test Ports
   ac_bool test_channel1 = keyboard_test_channel1();
   ac_bool test_channel2 = has_dual_channels ? keyboard_test_channel2() : AC_FALSE;
   has_dual_channels = test_channel2;
-  ac_printf("Step 8: has_dual_channels=%b test channel1=%b test_channel2=%b\n",
-      has_dual_channels, test_channel1, test_channel2);
+  //ac_printf("Step 8: has_dual_channels=%b test channel1=%b test_channel2=%b\n",
+  //    has_dual_channels, test_channel1, test_channel2);
 
   // Step 9: Enable the working ports, double checking they got enabled.
   channel1_enabled = test_channel1 ? keyboard_enable_channel1() : AC_FALSE;
   channel2_enabled = test_channel2 ? keyboard_enable_channel2() : AC_FALSE;
-  ac_printf("Step 9: channel1_enabled=%b channel2_enabled=%b\n",
-      channel1_enabled, channel2_enabled);
+  //ac_printf("Step 9: channel1_enabled=%b channel2_enabled=%b\n",
+  //    channel1_enabled, channel2_enabled);
 
   // Step 10: Reset devices
   ac_bool channel1_device_reset = channel1_enabled ? keyboard_reset_device(1) : AC_FALSE;
   ac_bool channel2_device_reset = channel2_enabled ? keyboard_reset_device(2) : AC_FALSE;
-  ac_printf("Step 10: channel1_device_reset=%b channel2_device_reset=%b\n",
-      channel1_device_reset, channel2_device_reset);
+  //ac_printf("Step 10: channel1_device_reset=%b channel2_device_reset=%b\n",
+  //    channel1_device_reset, channel2_device_reset);
 
   channel1_device_type = channel1_device_reset ? keyboard_get_device_type(1) : -1;
   channel2_device_type = channel2_device_reset ? keyboard_get_device_type(2) : -1;
-  ac_printf("Step 11: channel1_device_type=%x channel2_device_type=%x\n",
-      channel1_device_type, channel2_device_type);
+  //ac_printf("Step 11: channel1_device_type=%x channel2_device_type=%x\n",
+  //    channel1_device_type, channel2_device_type);
 
-  ac_printf("ac_keyboard_early_init:-\n");
+  ac_printf("ac_keyboard_early_init:-channel1_device_type=%x channel2_device_type=%x\n",
+      channel1_device_type, channel2_device_type);
 }
