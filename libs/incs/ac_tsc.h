@@ -18,6 +18,7 @@
 #define SADIE_LIBS_INCS_AC_TSC_H
 
 #include <ac_inttypes.h>
+#include <ac_intmath.h>
 
 /**
  * Initialize Time Stamp Counter module
@@ -33,6 +34,16 @@ void ac_tsc_init(void);
  * Frequency of tsc in cycles per second.
  */
 ac_u64 ac_tsc_freq();
+
+#define AC_NANOSECS 1000000000
+
+#define ac_ns_to_ticks(nanosecs) ({ \
+  ac_u64 secs = nanosecs / AC_NANOSECS; \
+  ac_u64 sub_secs = nanosecs % AC_NANOSECS; \
+  ac_u64 ticks = secs * ac_tsc_freq(); \
+  ticks += AC_U64_DIV_ROUND_UP(sub_secs * ac_tsc_freq(), AC_NANOSECS); \
+  ticks; \
+})
 
 /**
  * Get the implemetation header which has the

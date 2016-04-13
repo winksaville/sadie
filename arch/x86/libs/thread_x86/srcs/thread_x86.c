@@ -795,12 +795,7 @@ ac_uint thread_make_ready(ac_thread_hdl_t hdl) {
  * The current thread waits for some number of nanosecs.
  */
 void ac_thread_wait_ns(ac_u64 nanosecs) {
-  ac_u64 secs = nanosecs / NANOSECS;
-  ac_u64 sub_secs = nanosecs % NANOSECS;
-  ac_u64 ticks = secs * ac_tsc_freq();
-  ticks += AC_U64_DIV_ROUND_UP(sub_secs * ac_tsc_freq(), NANOSECS);
-
-  pready_timer_wait_until_tsc(ac_tscrd() + ticks);
+  pready_timer_wait_until_tsc(ac_tscrd() + ac_ns_to_ticks(nanosecs));
 }
 
 /**
