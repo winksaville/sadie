@@ -20,22 +20,17 @@
 #include <ac_inttypes.h>
 
 /**
- * Non blocking read of a character from keyboard
+ * Read of a character from keyboard, block if none available
  *
- * @return -1 if no character
+ * @return character
  */
-ac_sint ac_keyboard_read_non_blocking(void);
+ac_u8 ac_keyboard_rd(void);
+
 
 /**
  * Initialize this module early, must be
  * called before keyboard_init
  */
 void ac_keyboard_early_init(void);
-
-/**
- * Initialize this module defining the number of
- * sensors to support.
- */
-void ac_keyboard_init(void);
 
 #endif

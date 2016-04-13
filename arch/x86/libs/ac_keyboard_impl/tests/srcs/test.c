@@ -16,15 +16,26 @@
 
 #include <ac_keyboard_impl.h>
 
+#include <io_x86.h>
+
 #include <ac_inttypes.h>
 #include <ac_printf.h>
 #include <ac_test.h>
 
+/**
+ * Test the keyboard
+ */
 ac_uint test_keyboard(void) {
   ac_printf("test_keyboard:+\n");
   ac_uint error = AC_FALSE;
 
 #if defined(pc_x86_64)
+  for (ac_uint i = 0; ; i++) {
+    ac_u8 ch;
+    ac_printf("%d Press a key:\n", i);
+    ch = ac_keyboard_rd();
+    ac_printf("%d You pressed: %c (0x%x)\n", i, ch, ch);
+  }
 #endif
 
   ac_printf("test_keyboard:-error=%d\n", error);
@@ -33,8 +44,6 @@ ac_uint test_keyboard(void) {
 
 int main(void) {
   ac_uint error = AC_FALSE;
-
-  ac_keyboard_init();
 
   if (!error) {
     error |= test_keyboard();
