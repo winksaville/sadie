@@ -1010,6 +1010,7 @@ intr_gate* get_intr_gate(ac_u32 intr_num) {
 }
 
 void initialize_intr_descriptor_table(void) {
+  ac_printf("initialize_intr_descriptor_table:+\n");
   intr_divide_err_counter = 0;
   intr_debug_counter = 0;
   intr_nmi_counter = 0;
@@ -1056,4 +1057,5 @@ void initialize_intr_descriptor_table(void) {
 
   // set the idt register to point to idt array
   set_idtr(idt, AC_ARRAY_COUNT(idt));
+  ac_printf("initialize_intr_descriptor_table:-\n");
 }
