@@ -18,6 +18,11 @@
  * This will be using the PS/2 controller for now, eventually
  * we'll need to support keyboard via USB but thats for the
  * future. For PS/2 [see](http://wiki.osdev.org/%228042%22_PS/2_Controller)
+ *
+ * Hardware info:
+ *   [computer-enginerring.org](http://www.computer-engineering.org/ps2keyboard/)
+ *
+ * [Scan code table](http://www.computer-engineering.org/ps2keyboard/scancodes2.html)
  */
 
 #include <ac_keyboard_impl.h>
@@ -53,10 +58,10 @@
 #define CFG_PORT1_TRANSLATION_DISABLED 0x00
 #define CFG_PORT1_TRANSLATION_ENABLED 0x40
 
-static ac_bool channel1_enabled;
-static ac_sint channel1_device_type;
-static ac_bool channel2_enabled;
-static ac_sint channel2_device_type;
+ac_bool channel1_enabled;
+ac_sint channel1_device_type;
+ac_bool channel2_enabled;
+ac_sint channel2_device_type;
 
 /**
  * Read keyboard status port
@@ -492,10 +497,23 @@ void ac_keyboard_early_init(void) {
   //ac_printf("Step 10: channel1_device_reset=%b channel2_device_reset=%b\n",
   //    channel1_device_reset, channel2_device_reset);
 
+  // Step 11: Get the device type
   channel1_device_type = channel1_device_reset ? keyboard_get_device_type(1) : -1;
   channel2_device_type = channel2_device_reset ? keyboard_get_device_type(2) : -1;
   //ac_printf("Step 11: channel1_device_type=%x channel2_device_type=%x\n",
   //    channel1_device_type, channel2_device_type);
+
+  // Step 12: Flush buffers
+  const ac_uint max_flush = 20;
+  ac_uint cnt_flush;
+  for (cnt_flush = 0; cnt_flush < max_flush; cnt_flush++) {
+    ac_sint data = keyboard_rd_data_with_timeout(TEN_MS);
+    if (data == -1) {
+      // Timeout, we're done
+      break;
+    }
+  }
+  ac_printf("ac_keyboard_early_init: cnt_flush=%d\n", cnt_flush);
 
   ac_printf("ac_keyboard_early_init:-channel1_device_type=%x channel2_device_type=%x\n",
       channel1_device_type, channel2_device_type);
