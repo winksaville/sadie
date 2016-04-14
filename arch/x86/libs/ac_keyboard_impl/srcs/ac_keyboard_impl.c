@@ -159,7 +159,8 @@ static inline void keyboard_wr_cmd(ac_u8 cmd) {
  *
  * @return configuration
  */
-static inline ac_u8 keyboard_rd_config(void) {
+ac_u8 keyboard_rd_config(void) {
+//static inline ac_u8 keyboard_rd_config(void) {
   //ac_printf("keyboard_rd_config:\n");
   keyboard_wr_cmd(0x20);
   ac_u8 config = keyboard_rd_data();
@@ -420,9 +421,39 @@ static inline ac_sint keyboard_get_device_type(ac_u8 channel) {
 }
 
 /**
+ * Enable keyboard interrupts
+ */
+void ac_keyboard_intr_enable(void) {
+  ac_u8 config = keyboard_rd_config();
+
+  if (channel1_enabled) {
+    config |= CFG_PORT1_ENABLED;
+  }
+  if (channel2_enabled) {
+    config |= CFG_PORT2_ENABLED;
+  }
+
+  keyboard_wr_config(config);
+}
+
+/**
+ * Disable keyboard interrupts
+ */
+void ac_keyboard_intr_disable(void) {
+  ac_u8 config = keyboard_rd_config();
+
+  if (channel1_enabled) {
+    config &= ~CFG_PORT1_ENABLED;
+  }
+  if (channel2_enabled) {
+    config &= ~CFG_PORT2_ENABLED;
+  }
+
+  keyboard_wr_config(config);
+}
+
+/**
  * Non blocking read of a character from keyboard
- *
- * @param keyboard_id, 0 is the default keyboard
  *
  * @return -1 if no character
  */

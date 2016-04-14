@@ -17,6 +17,7 @@
 #include <ac_keyboard_impl.h>
 
 #include <apic_x86.h>
+#include <native_x86.h>
 #include <ioapic_x86.h>
 #include <ioapic_x86_print.h>
 #include <io_x86.h>
@@ -29,6 +30,8 @@ extern ac_bool channel1_enabled;
 extern ac_sint channel1_device_type;
 extern ac_bool channel2_enabled;
 extern ac_sint channel2_device_type;
+
+ac_u8 keyboard_rd_config(void);
 
 /**
  * Test the keyboard
@@ -63,27 +66,44 @@ ac_bool test_keyboard_interrupts(void) {
   // Step 3: Determine which IRQ the keyboard is connected to
   // for the moment we'll assume only one keyboard and give
   // prioritiy to the first one.
-  ac_uint keyboard_irq = ioapic_get_redir_max_entry(regs) + 1;
+#if 0
+  ac_uint keyboard_irq;
   if (channel2_enabled) {
     keyboard_irq = 12;
   }
   if (channel1_enabled) {
     keyboard_irq = 1;
   }
+#endif
 
-  // Step 4: Program the redir register
-  ioapic_redir redir = ioapic_get_redir(regs, keyboard_irq);
-  redir.intr_vec = 32;
-  redir.delivery_mode = 0; // fixed
-  redir.dest_mode = 0;     // Physical (dest_field == Local APIC ID)
-  redir.intr_polarity = 0; // Active high??
-  redir.trigger = 1;       // Level sensitive
-  redir.intr_mask = 0;     // NOT masked (interrupt is allowed)
-  redir.dest_field = get_apic_id(); // For now this CPU's local apic
-  ioapic_redir_print("keyboard_irq set ioapic_redir=", redir, "\n");
-  ioapic_set_redir(regs, keyboard_irq, redir);
+  ac_printf("test_keyboard_interrupts: redirs before programming\n");
+  ioapic_print();
 
-  error |= AC_TEST(redir.raw == ioapic_get_redir(regs, keyboard_irq).raw);
+  for (ac_uint i = 0; i <= ioapic_get_redir_max_entry(regs); i++) {
+    // Step 4: Program the redir register
+    ioapic_redir redir = ioapic_get_redir(regs, i); //keyboard_irq);
+    redir.intr_vec = 0x20 + i;
+    redir.delivery_mode = 0; // fixed
+    redir.dest_mode = 0;     // Physical (dest_field == Local APIC ID)
+    redir.intr_polarity = 0; // Active High
+    redir.trigger = 0;       // Edge sensitive
+    redir.intr_mask = 0;     // NOT masked (interrupt is allowed)
+    redir.dest_field = get_apic_id(); // For now this CPU's local apic
+    ioapic_set_redir(regs, i, redir); //keyboard_irq, redir);
+  }
+  ac_printf("test_keyboard_interrupts: redirs after  programming\n");
+  ioapic_print();
+
+  ac_printf("test_keyboard_interrupts: before intr_enabled keyboard config=0x%x\n",
+      keyboard_rd_config());
+  ac_keyboard_intr_enable();
+  ac_printf("test_keyboard_interrupts: after  intr_enabled keyboard config=0x%x\n",
+      keyboard_rd_config());
+
+  ac_printf("test_keyboard_interrupts: redirs after enabling intr\n");
+  ioapic_print();
+
+  ac_printf("test_keyboard_interrupts: flags=0x%x\n", get_flags());
 
   ac_printf("test_keyboard_interrupts:-error=%b\n", error);
   return error;

@@ -20,6 +20,16 @@
 #include <ac_inttypes.h>
 
 /**
+ * Enable keyboard interrupts
+ */
+void ac_keyboard_intr_enable(void);
+
+/**
+ * Disable keyboard interrupts
+ */
+void ac_keyboard_intr_disable(void);
+
+/**
  * Read of a character from keyboard, block if none available
  *
  * @return character
