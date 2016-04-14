@@ -75,6 +75,10 @@ ac_bool test_interrupts(void) {
 int main(void) {
   ac_bool error = AC_FALSE;
 
+  // Test we can execute undefined interrupt
+  intr(0x80);
+  intr(0x80);
+
   error |= test_interrupts();
 
   if (!error) {

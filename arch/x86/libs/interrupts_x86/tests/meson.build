@@ -59,6 +59,10 @@ if Platform == 'pc_x86_64'
     depends : [test_interrupts_x86])
 
   run_target('run-test-interrupts_x86', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              test_interrupts_x86_bin)
+              #test_ac_tsc_impl_bin)
+              test_interrupts_x86_bin, '-enable-kvm', '-cpu', 'host')
+
+  run_target('run-test-interrupts_x86-intdbg', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
+              test_interrupts_x86_bin, '-enable-kvm', '-cpu', 'host', '-d', 'int')
 endif
 

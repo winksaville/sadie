@@ -23,4 +23,9 @@
 #define AC_XSTR(s) AC_STR(s)
 #define AC_STR(s) #s
 
+// Concatenate two tokens
+// [See](http://stackoverflow.com/questions/17699443/generating-function-names-with-strings-using-macros-in-c)
+#define AC_CAT_I(a, b) a##b
+#define AC_CAT(a,b) AC_CAT_I(a, b)
+
 #endif
