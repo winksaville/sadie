@@ -236,7 +236,7 @@ void ac_init(ac_uptr ptr, ac_uint word) {
   ac_receptor_early_init();
 
   // Initialize Advanced Programmable Interrupt Controller
-  if (initialize_apic() != 0) {
+  if (apic_early_init() != 0) {
     /** reset */
     ac_printf("ABORTING: file ac_init; initialize_apic failed\n");
     reset_x86();

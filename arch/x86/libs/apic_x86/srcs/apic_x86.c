@@ -113,16 +113,16 @@ static void apic_spurious_interrupt_isr(struct intr_frame *frame) {
 }
 
 /**
- * Initialize APIC
+ * Early APIC Initialization
  *
  * @return 0 if initialized, !0 if an error
  */
-ac_uint initialize_apic(void) {
+ac_uint apic_early_init(void) {
   ac_uint ret_val;
+  ac_printf("apic_early_init:+present=%b\n", apic_present());
 
   // Get Processor info cpuid
   if (apic_present()) {
-    ac_printf("APIC present\n");
 
     // Remap the PIC vectors to 0x20 .. 0x2F
     remap_pic_vectors(0x20, 0x28);
@@ -131,7 +131,7 @@ ac_uint initialize_apic(void) {
     outb_port_value(0xa1, 0xff);
     outb_port_value(0x21, 0xff);
 
-    // Apic is present, map its phusical page as uncachable.
+    // Apic is present, map its physical page as uncachable.
     ac_u64 apic_phy_addr = get_apic_physical_addr();
     apic_lin_addr = (void*)apic_phy_addr; //0x00000001ffee00000;
 
@@ -159,14 +159,13 @@ ac_uint initialize_apic(void) {
     set_apic_spurious_vector(svf);
     set_intr_handler(APIC_SPURIOUS_VECTOR, apic_spurious_interrupt_isr);
 
-
     ret_val = 0;
   } else {
     // No apic
-    ac_printf("APIC NOT present\n");
     ret_val = 1;
   }
 
+  ac_printf("apic_early_init:-ret_val=%d\n", ret_val);
   return ret_val;
 }
 

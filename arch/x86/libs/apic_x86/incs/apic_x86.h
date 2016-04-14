@@ -98,7 +98,7 @@ _Static_assert(sizeof(union apic_timer_lvt_fields_u) == 4,
  *
  * @return 0 if initialized, !0 if an error
  */
-ac_uint initialize_apic();
+ac_uint apic_early_init(void);
 
 /**
  * @return 0 if present, !0 if not
