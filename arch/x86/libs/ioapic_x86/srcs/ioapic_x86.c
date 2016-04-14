@@ -15,6 +15,10 @@
  */
 
 #include <ioapic_x86.h>
+#include <ioapic_x86_print.h>
+
+#include <page_table_x86.h>
+
 #include <ac_bits.h>
 
 /**
@@ -127,4 +131,21 @@ ioapic_redir ioapic_get_redir(ioapic_regs* regs, ac_uint idx) {
  */
 void ioapic_set_redir(ioapic_regs* regs, ac_uint idx, ioapic_redir reg) {
   ioapic_write_u64(regs, 0x10 + (idx * 2), reg.raw);
+}
+
+/**
+ * ioapic early initialization
+ */
+void ioapic_early_init(void) {
+  ac_uint count = ioapic_get_count();
+  ac_printf("ioapic_early_init+count=%d\n", count);
+  if (count != 0) {
+    ioapic_regs* regs = ioapic_get_addr(0);
+
+    page_table_map_lin_to_phy(get_page_table_linear_addr(),
+        regs, (ac_u64)regs, FOUR_K_PAGE_SIZE,
+        PAGE_CACHING_STRONG_UNCACHEABLE); //PAGE_CACHING_WRITE_BACK);
+    ioapic_print();
+  }
+  ac_printf("ioapic_early_init-\n");
 }

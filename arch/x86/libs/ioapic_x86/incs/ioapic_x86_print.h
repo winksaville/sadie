@@ -20,6 +20,11 @@
 #include <ioapic_x86.h>
 
 /**
+ * Print ioapic information
+ */
+void ioapic_print(void);
+
+/**
  * Print ioapic_redir
  *
  * @param str string to print first

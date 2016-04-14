@@ -17,7 +17,6 @@
 #include <ioapic_x86.h>
 #include <ioapic_x86_print.h>
 
-#include <page_table_x86.h>
 #include <ac_inttypes.h>
 #include <ac_printf.h>
 #include <ac_test.h>
@@ -101,43 +100,11 @@ ac_bool test_ioapic(void) {
   return error;
 }
 
-void display_ioapic(void) {
-  ac_uint count = ioapic_get_count();
-  ac_printf("display_ioapic: count=%d\n", count);
-  for (ac_uint ioapic = 0; ioapic < count; ioapic++) {
-    ioapic_regs* regs = ioapic_get_addr(ioapic);
-    ac_printf(" iopic: %d addr=%p id=0x%x ver=0x%x arb=0x%x\n",
-        ioapic, regs, ioapic_get_id(regs), ioapic_get_ver(regs),
-        ioapic_get_arb(regs));
-
-    ac_printf(" ioapic %d regs 0, 1, 2 raw:\n", ioapic);
-    for (ac_uint i = 0; i < 3; i++) {
-      ac_printf("   reg 0x=%x 0x=%p\n", i, ioapic_read_u32(regs, i));
-    }
-
-    ac_uint max_redir = ioapic_get_redir_max_entry(regs);
-    ac_printf(" iopic %d redir regs count=%d\n", ioapic, max_redir + 1);
-    char* extra_space = " ";
-    for (ac_uint i = 0; i < max_redir; i++) {
-      ioapic_redir redir = ioapic_get_redir(regs, i);
-      if (i >= 10) extra_space = "";
-      ac_printf("   redir %s %d raw 0x=%p ", extra_space, i, redir.raw);
-      ioapic_redir_print("", redir, "\n");
-    }
-  }
-}
-
 int main(void) {
   ac_bool error = AC_FALSE;
 
   ac_uint count = ioapic_get_count();
   if (count != 0) {
-    ioapic_regs* regs = ioapic_get_addr(0);
-
-    page_table_map_lin_to_phy(get_page_table_linear_addr(),
-        regs, (ac_u64)regs, FOUR_K_PAGE_SIZE,
-        PAGE_CACHING_STRONG_UNCACHEABLE); //PAGE_CACHING_WRITE_BACK);
-    display_ioapic();
     error |= test_ioapic();
     error |= test_ioapic_redir_fields();
   } else {

@@ -185,4 +185,9 @@ ioapic_redir ioapic_get_redir(ioapic_regs* regs, ac_uint idx);
  */
 void ioapic_set_redir(ioapic_regs* regs, ac_uint idx, ioapic_redir reg);
 
+/**
+ * ioapic early initialization
+ */
+void ioapic_early_init(void);
+
 #endif

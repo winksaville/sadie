@@ -17,6 +17,7 @@
 #include <apic_x86.h>
 #include <cr_x86.h>
 #include <interrupts_x86.h>
+#include <ioapic_x86.h>
 #include <msr_x86.h>
 #include <native_x86.h>
 #include <page_table_x86.h>
@@ -250,6 +251,9 @@ void ac_init(ac_uptr ptr, ac_uint word) {
 
   // Initialize threading module
   ac_thread_early_init();
+
+  // Initialize ioapic
+  ioapic_early_init();
 
   // Initialize keyboard module
   ac_keyboard_early_init();
