@@ -188,6 +188,7 @@ ac_bool test_apic_timer() {
   ac_printf("  lvtu3.fields.disable=%d\n", lvtu3.fields.disable);
   ac_printf("  lvtu3.fields.mode=%d\n", lvtu3.fields.mode);
 
+
   // Expect that the counter fired Between two or three
   error |= AC_TEST((apic_timer_isr_counter >= 100) && (apic_timer_isr_counter <= 101));
 
@@ -199,6 +200,52 @@ ac_bool test_apic_timer() {
   return error;
 }
 
+ac_bool test_apic_tpr(void) {
+  ac_printf("test_apic_tpr:+\n");
+  ac_bool error = AC_FALSE;
+
+  ac_u64 flags = disable_intr();
+
+  // Test we can read/write tpr
+  ac_u32 org_tpr = get_apic_tpr();
+  ac_printf("test_apic_tpr: org_tpr=0x%x\n", org_tpr);
+  error |= AC_TEST(org_tpr == get_apic_tpr());
+
+  set_apic_tpr(0xFF);
+  error |= AC_TEST(0xFF == get_apic_tpr());
+  set_apic_tpr(0xAA);
+  error |= AC_TEST(0xAA == get_apic_tpr());
+  set_apic_tpr(0x55);
+  error |= AC_TEST(0x55 == get_apic_tpr());
+  set_apic_tpr(0x00);
+  error |= AC_TEST(0x00 == get_apic_tpr());
+
+  set_apic_tpr(org_tpr);
+  error |= AC_TEST(org_tpr == get_apic_tpr());
+
+  restore_intr(flags);
+
+  ac_printf("test_apic_tpr:-error=%b org_tpr=0x%x\n", error, org_tpr);
+  return error;
+}
+
+ac_bool test_apic_ppr(void) {
+  ac_printf("test_apic_ppr:+\n");
+  ac_bool error = AC_FALSE;
+
+  ac_u64 flags = disable_intr();
+
+  // Test we can read
+  ac_u32 org_ppr = get_apic_ppr();
+  ac_printf("test_apic_ppr: org_ppr=0x%x\n", org_ppr);
+  error |= AC_TEST(org_ppr == get_apic_ppr());
+
+  restore_intr(flags);
+
+  ac_printf("test_apic_ppr:-error=%b org_ppr=0x%x\n", error, org_ppr);
+  return error;
+}
+
 
 int main(void) {
   ac_bool error = AC_FALSE;
@@ -207,6 +254,8 @@ int main(void) {
     error |= test_apic();
     error |= test_apic_version();
     error |= test_apic_timer();
+    error |= test_apic_tpr();
+    error |= test_apic_ppr();
   } else {
     ac_printf("test APIC: NO APIC\n");
   }

@@ -123,7 +123,6 @@ ac_uint apic_early_init(void) {
 
   // Get Processor info cpuid
   if (apic_present()) {
-
     // Remap the PIC vectors to 0x20 .. 0x2F
     remap_pic_vectors(0x20, 0x28);
 
@@ -158,6 +157,10 @@ ac_uint apic_early_init(void) {
 #endif
     set_apic_spurious_vector(svf);
     set_intr_handler(APIC_SPURIOUS_VECTOR, apic_spurious_interrupt_isr);
+
+    // Print tpr and ppr
+    ac_printf("apic_early_init: tpr=0x%x ppr=0x%x\n",
+        get_apic_tpr(), get_apic_ppr());
 
     ret_val = 0;
   } else {

@@ -40,7 +40,7 @@ void ioapic_print(void) {
     ac_uint max_redir = ioapic_get_redir_max_entry(regs);
     ac_printf(" iopic %d redir regs count=%d\n", ioapic, max_redir + 1);
     char* extra_space = " ";
-    for (ac_uint i = 0; i < max_redir; i++) {
+    for (ac_uint i = 0; i <= max_redir; i++) {
       ioapic_redir redir = ioapic_get_redir(regs, i);
       if (i >= 10) extra_space = "";
       ac_printf("   redir %s %d raw 0x=%p ", extra_space, i, redir.raw);

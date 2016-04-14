@@ -268,6 +268,39 @@ static __inline__ ac_u32 get_apic_timer_current_count(void) {
 }
 
 /**
+ * Set Task-Priority Register (TPR)
+ *
+ * See "Intel 64 and IA-32 Architectures Software Developer's Manual"
+ * Volume 3 chapter 10.8.3.1 "Task and Processor Priorities"
+ * Firgure 10-18. "Task-Priority Register (TPR)"
+ */
+static __inline__ void set_apic_tpr(ac_u32 val) {
+  *(ac_u32*)(apic_lin_addr + 0x80) = val;
+}
+
+/**
+ * Get Task-Priority Register (TPR)
+ *
+ * See "Intel 64 and IA-32 Architectures Software Developer's Manual"
+ * Volume 3 chapter 10.8.3.1 "Task and Processor Priorities"
+ * Firgure 10-18. "Task-Priority Register (TPR)"
+ */
+static __inline__ ac_u32 get_apic_tpr(void) {
+  return *(ac_u32*)(apic_lin_addr + 0x80);
+}
+
+/**
+ * Get Processor-Priority Register (PPR)
+ *
+ * See "Intel 64 and IA-32 Architectures Software Developer's Manual"
+ * Volume 3 chapter 10.8.3.1 "Task and Processor Priorities"
+ * Firgure 10-19. "Processor-Priority Register (PPR)"
+ */
+static __inline__ ac_u32 get_apic_ppr(void) {
+  return *(ac_u32*)(apic_lin_addr + 0xA0);
+}
+
+/**
  * Set apic tsr deadline
  */
 static __inline__ void set_apic_timer_tsc_deadline(ac_u64 val) {
