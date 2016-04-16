@@ -19,8 +19,38 @@
 
 #include <interrupts_x86.h>
 
+// To use print_full_xxx_stack_frame the first and last statements
+// in the interrupt handler must be INTR_SAVE_REGS and INTR_RESTORE_REGS
+// respectively.
+
+// Cause C compiler to save "all" registers for interrupt handlers
+#define INTR_SAVE_REGS \
+__asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", \
+                       "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15")
+
+// We don't need to do anything for restoring
+#define INTR_RESTORE_REGS
+
+/**
+ * Print full exception stack frame, add INTR_SAVE_REGS and
+ * INTR_RESTORE_REGS to the interrupt handler.
+ */
+void print_full_expt_stack_frame(char* str, struct intr_frame* f);
+
+/**
+ * Print full interrupt stack frame, add INTR_SAVE_REGS and
+ * INTR_RESTORE_REGS to the interrupt handler.
+ */
+void print_full_intr_stack_frame(char* str, struct intr_frame* f);
+
+/**
+ * Print the interrupt frame only
+ */
 void print_intr_frame(char* str, intr_frame* frame);
 
+/**
+ * Print an interrupt/exception gate
+ */
 void print_intr_gate(char *str, intr_gate* gate);
 
 #endif

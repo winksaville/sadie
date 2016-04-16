@@ -14,9 +14,106 @@
  * limitations under the License.
  */
 
-#include "ac_inttypes.h"
-#include "ac_printf.h"
-#include "interrupts_x86.h"
+#include <interrupts_x86.h>
+#include <interrupts_x86_print.h>
+
+#include <ac_assert.h>
+#include <ac_inttypes.h>
+#include <ac_printf.h>
+
+#define NUM_SAVED_REGS 15
+struct saved_regs {
+  ac_u64 rax;
+  ac_u64 rdx;
+  ac_u64 rcx;
+  ac_u64 rbx;
+  ac_u64 rsi;
+  ac_u64 rdi;
+  ac_u64 r8;
+  ac_u64 r9;
+  ac_u64 r10;
+  ac_u64 r11;
+  ac_u64 r12;
+  ac_u64 r13;
+  ac_u64 r14;
+  ac_u64 r15;
+  ac_u64 rbp;
+};
+
+struct full_expt_stack_frame {
+  union {
+    struct saved_regs regs;
+    ac_u64 regs_array[NUM_SAVED_REGS];
+  };
+  ac_u64 error_code;
+  struct intr_frame iret_frame;
+} __attribute__ ((__packed__));
+
+#define FULL_EXPT_STACK_FRAME_SIZE (NUM_SAVED_REGS + 5 + 1) * sizeof(ac_u64)
+ac_static_assert(sizeof(struct full_expt_stack_frame) == FULL_EXPT_STACK_FRAME_SIZE,
+    "full_expt_stack_frame is not " AC_XSTR(EXPT_FULL_STACK_FRAME_SIZE) " bytes in size");
+
+struct full_intr_stack_frame {
+  union {
+    struct saved_regs regs;
+    ac_u64 regs_array[NUM_SAVED_REGS];
+  };
+  struct intr_frame iret_frame;
+} __attribute__ ((__packed__));
+
+#define FULL_INTR_STACK_FRAME_SIZE (NUM_SAVED_REGS + 5) * sizeof(ac_u64)
+ac_static_assert(sizeof(struct full_intr_stack_frame) == FULL_INTR_STACK_FRAME_SIZE,
+    "full_intr_stack_frame is not " AC_XSTR(FULL_INTR_STACK_FRAME_SIZE) " bytes in size");
+
+/**
+ * Print full stack frame
+ */
+void print_saved_regs(struct saved_regs* sr) {
+  ac_printf(" rax: 0x%lx 0x%p\n", sr->rax, &sr->rax);
+  ac_printf(" rdx: 0x%lx 0x%p\n", sr->rdx, &sr->rdx);
+  ac_printf(" rcx: 0x%lx 0x%p\n", sr->rcx, &sr->rcx);
+  ac_printf(" rbx: 0x%lx 0x%p\n", sr->rbx, &sr->rbx);
+  ac_printf(" rsi: 0x%lx 0x%p\n", sr->rsi, &sr->rsi);
+  ac_printf(" rdi: 0x%lx 0x%p\n", sr->rdi, &sr->rdi);
+  ac_printf("  r8: 0x%lx 0x%p\n", sr->r8,  &sr->r8);
+  ac_printf("  r9: 0x%lx 0x%p\n", sr->r9,  &sr->r9);
+  ac_printf(" r10: 0x%lx 0x%p\n", sr->r10, &sr->r10);
+  ac_printf(" r11: 0x%lx 0x%p\n", sr->r11, &sr->r11);
+  ac_printf(" r12: 0x%lx 0x%p\n", sr->r12, &sr->r12);
+  ac_printf(" r13: 0x%lx 0x%p\n", sr->r13, &sr->r13);
+  ac_printf(" r14: 0x%lx 0x%p\n", sr->r14, &sr->r14);
+  ac_printf(" r15: 0x%lx 0x%p\n", sr->r15, &sr->r15);
+  ac_printf(" rbp: 0x%lx 0x%p\n", sr->rbp, &sr->rbp);
+}
+
+/**
+ * Print full stack frame
+ */
+void print_full_expt_stack_frame(char* str, struct intr_frame* f) {
+  if (str != AC_NULL) {
+    ac_printf("%s:", str);
+  }
+  // Calculate the fsf subract saved_regs and error_code
+  struct full_expt_stack_frame* fsf = (void*)f - sizeof(struct saved_regs) - sizeof(ac_u64);
+  ac_printf("fsf=0x%p\n", fsf);
+  print_saved_regs(&fsf->regs);
+  ac_printf(" err: 0x%lx 0x%p\n", fsf->error_code, &fsf->error_code);
+  print_intr_frame(AC_NULL, &fsf->iret_frame);
+}
+
+/**
+ * Print full iintr stack frame
+ */
+void print_full_intr_stack_frame(char* str, struct intr_frame* f) {
+  if (str != AC_NULL) {
+    ac_printf("%s:", str);
+  }
+  // Calculate the fsf subract saved_regs
+  struct full_intr_stack_frame* fsf = (void*)f - sizeof(struct saved_regs);
+  ac_printf("fsf=0x%p\n", fsf);
+  print_saved_regs(&fsf->regs);
+  print_intr_frame(AC_NULL, &fsf->iret_frame);
+}
 
 void print_intr_frame(char* str, intr_frame* frame) {
   if (str != AC_NULL) {
