@@ -142,10 +142,24 @@ void ioapic_early_init(void) {
   if (count != 0) {
     ioapic_regs* regs = ioapic_get_addr(0);
 
+    // Map registers into address space
     page_table_map_lin_to_phy(get_page_table_linear_addr(),
         regs, (ac_u64)regs, FOUR_K_PAGE_SIZE,
         PAGE_CACHING_STRONG_UNCACHEABLE); //PAGE_CACHING_WRITE_BACK);
+
+    // Initialize redirection registers.
+    //
+    // Zero everything except interrupt mask which
+    // is set to 1 to disable interrupt forwarding.
+    for (ac_uint i = 0; i <= ioapic_get_redir_max_entry(regs); i++) {
+      ioapic_redir redir;
+      redir.raw = 0;
+      redir.intr_mask = 1;
+      ioapic_set_redir(regs, i, redir);
+    }
+
     ioapic_print();
   }
+
   ac_printf("ioapic_early_init-\n");
 }
