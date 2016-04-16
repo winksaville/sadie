@@ -15,6 +15,7 @@
  */
 
 #include <apic_x86.h>
+#include <apic_x86_print.h>
 
 #include <cpuid_x86.h>
 #include <interrupts_x86.h>
@@ -246,9 +247,32 @@ ac_bool test_apic_ppr(void) {
   return error;
 }
 
+ac_bool test_apic_print(void) {
+  ac_printf("test_apic_print:+\n");
+  ac_bool error = AC_FALSE;
+
+  // Print tpr and ppr
+  ac_printf("apic_early_init: tpr=0x%x ppr=0x%x esr=0x%x\n",
+      get_apic_tpr(), get_apic_ppr(), get_apic_esr());
+
+  apic_irr_print("irr: ");
+  apic_isr_print("isr: ");
+  apic_tmr_print("tmr: ");
+
+  ac_printf("test_apic_print:-\n");
+  return error;
+}
 
 int main(void) {
   ac_bool error = AC_FALSE;
+
+  // Print tpr and ppr
+  ac_printf("apic_early_init: tpr=0x%x ppr=0x%x esr=0x%x\n",
+      get_apic_tpr(), get_apic_ppr(), get_apic_esr());
+
+  apic_irr_print("irr: ");
+  apic_isr_print("srr: ");
+  apic_tmr_print("tmr: ");
 
   if (!error) {
     error |= test_apic();
@@ -256,6 +280,7 @@ int main(void) {
     error |= test_apic_timer();
     error |= test_apic_tpr();
     error |= test_apic_ppr();
+    error |= test_apic_print();
   } else {
     ac_printf("test APIC: NO APIC\n");
   }

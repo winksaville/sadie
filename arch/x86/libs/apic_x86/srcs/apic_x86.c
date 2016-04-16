@@ -15,6 +15,7 @@
  */
 
 #include <apic_x86.h>
+#include <apic_x86_print.h>
 
 #include <interrupts_x86.h>
 #include <io_x86.h>
@@ -141,7 +142,6 @@ ac_uint apic_early_init(void) {
     // Below we enable the APIC, which can be done two different ways,
     // See "Intel 64 and IA-32 Architectures Software Developer's Manual"
     // Volume 3 chapter 10.4.3 "Enabling or Disabling the Local APIC"
-    // Figure 10-21. "EOI Register".
     //
     // I'm choosing to enable spurious_vector since we set the vector anyway.
     struct apic_spurious_vector_fields svf = get_apic_spurious_vector();
@@ -159,8 +159,12 @@ ac_uint apic_early_init(void) {
     set_intr_handler(APIC_SPURIOUS_VECTOR, apic_spurious_interrupt_isr);
 
     // Print tpr and ppr
-    ac_printf("apic_early_init: tpr=0x%x ppr=0x%x\n",
-        get_apic_tpr(), get_apic_ppr());
+    ac_printf("apic_early_init: tpr=0x%x ppr=0x%x esr=0x%x\n",
+        get_apic_tpr(), get_apic_ppr(), get_apic_esr());
+
+    apic_irr_print("irr: ");
+    apic_isr_print("isr: ");
+    apic_tmr_print("tmr: ");
 
     ret_val = 0;
   } else {

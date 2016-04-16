@@ -301,6 +301,44 @@ static __inline__ ac_u32 get_apic_ppr(void) {
 }
 
 /**
+ * Get Error Status Register
+ *
+ * See "Intel 64 and IA-32 Architectures Software Developer's Manual"
+ * Volume 3 chapter 10.5.3 "Error Handling"
+ * Firgure 10-9. "Error Status Register (ESR)"
+ */
+static __inline__ ac_u32 get_apic_esr(void) {
+  return *(ac_u32*)(apic_lin_addr + 0x280);
+}
+
+/**
+ * Get the Interrupt Remode Regster address.
+ *
+ * @return address of a 256 bit (32 byte) IRR array
+ */
+static __inline__ ac_u8* get_apic_irr_addr(void) {
+  return (ac_u8*)(apic_lin_addr + 0x200);
+}
+
+/**
+ * Get the In-Service Regster address.
+ *
+ * @return address of a 256 bit (32 byte) ISR array
+ */
+static __inline__ ac_u8* get_apic_isr_addr(void) {
+  return (ac_u8*)(apic_lin_addr + 0x100);
+}
+
+/**
+ * Get the Trigger Mode Register address.
+ *
+ * @return address of a 256 bit (32 byte) TMR array
+ */
+static __inline__ ac_u8* get_apic_tmr_addr(void) {
+  return (ac_u8*)(apic_lin_addr + 0x180);
+}
+
+/**
  * Set apic tsr deadline
  */
 static __inline__ void set_apic_timer_tsc_deadline(ac_u64 val) {
