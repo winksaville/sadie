@@ -20,22 +20,18 @@
 #include <ac_inttypes.h>
 
 /**
- * Enable keyboard interrupts
- */
-void ac_keyboard_intr_enable(void);
-
-/**
- * Disable keyboard interrupts
- */
-void ac_keyboard_intr_disable(void);
-
-/**
  * Read of a character from keyboard, block if none available
  *
  * @return character
  */
 ac_u8 ac_keyboard_rd(void);
 
+/**
+ * Read keyboard status
+ *
+ * @return AC_TRUE if character is ready
+ */
+ac_bool ac_keyboard_rd_status(void);
 
 /**
  * Initialize this module early, must be
