@@ -62,6 +62,10 @@ if Platform == 'pc_x86_64'
               #test_ac_keyboard_impl_bin)
               test_ac_keyboard_impl_bin, '-enable-kvm', '-cpu', 'host')
 
+  run_target('run-test-ac_keyboard_impl-trace', '@0@/tools/qemu-system-x86_64.runner-trace.sh'.format(meson.source_root()),
+              #test_ac_keyboard_impl_bin)
+              test_ac_keyboard_impl_bin, '-enable-kvm', '-cpu', 'host', '-trace', 'events=/home/wink/tmp/qemu-events')
+
   run_target('run-test-ac_keyboard_impl-intdbg', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
               #test_ac_keyboard_impl_bin, '-d', 'int')
               test_ac_keyboard_impl_bin, '-enable-kvm', '-cpu', 'host', '-d', 'int')
