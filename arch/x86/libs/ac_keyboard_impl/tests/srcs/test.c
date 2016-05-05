@@ -78,18 +78,22 @@ ac_bool test_keyboard(void) {
 #if defined(pc_x86_64)
 #if 1
   ac_u64 isr_counter;
+  ac_uint loops = 0;
   do {
     isr_counter =  __atomic_load_n(&keyboard_isr_counter, __ATOMIC_ACQUIRE);
-    ac_printf("test_keyboard: keyboard_isr_counter=%lu ch=0x%x\n",
-        isr_counter, __atomic_load_n(&ch, __ATOMIC_ACQUIRE));
-    ac_thread_wait_ns(100000000);
+    ac_printf("test_keyboard: %d keyboard_isr_counter=%lu ch=0x%x\r",
+        loops++, isr_counter, __atomic_load_n(&ch, __ATOMIC_ACQUIRE));
+    ac_thread_wait_ns(1000000000);
   } while (isr_counter < 100);
 #else
   for (ac_uint i = 0; ; i++) {
     ac_u8 ch;
     ac_printf("%d Press a key:\n", i);
 
-    while((keyboard_rd_status() & 0x1) == 0); // Wait until ready
+    // Wait until ready
+    while((keyboard_rd_status() & 0x1) == 0) {
+      ac_thread_wait_ns(1000000000);
+    }
     //ac_thread_wait_ns(DELAY_REDIR); // Wait before printing redir to see if DS=1
     ac_printf("redirs before reading keypressed\n");
     print_info();
