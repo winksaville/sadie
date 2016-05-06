@@ -27,4 +27,6 @@ typedef ac_u32 ac_uint;
 typedef ac_s32 ac_sint;
 typedef ac_s32 ac_int;
 
+#define AC_SIZEOF_INT 4
+
 #endif

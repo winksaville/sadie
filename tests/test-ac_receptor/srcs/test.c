@@ -41,8 +41,6 @@ tres_t tres[] = {
   { 1ll, "s" },
 };
 
-#define AC_U64_MAX 0xFFFFFFFFFFFFFFFFll
-
 tres_t* calculate_tres(ac_u64 ticks) {
   //ac_printf("calculate_tres:+ticks=%ld\n", ticks);
   ac_uint i;

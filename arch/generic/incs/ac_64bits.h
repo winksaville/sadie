@@ -27,5 +27,6 @@ typedef ac_u64 ac_uint;
 typedef ac_s64 ac_sint;
 typedef ac_s64 ac_int;
 
+#define AC_SIZEOF_INT 8
 
 #endif
