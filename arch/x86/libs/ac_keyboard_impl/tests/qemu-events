@@ -1,0 +1,16 @@
+ps2_put_keycode
+ps2_read_data
+ps2_set_ledstate
+ps2_reset_keyboard
+ps2_write_keyboard
+ps2_keyboard_set_translation
+ps2_mouse_send_packet
+ps2_mouse_event_disabled
+ps2_mouse_event
+ps2_mouse_fake_event
+ps2_write_mouse
+ps2_kbd_reset
+ps2_mouse_reset
+ps2_kbd_init
+ps2_mouse_init
+

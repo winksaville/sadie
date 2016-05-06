@@ -63,10 +63,6 @@ if Platform == 'pc_x86_64'
     depends : [test_thread_x86])
 
   run_target('run-test-thread_x86', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              #test_thread_x86_bin)
-              test_thread_x86_bin, '-enable-kvm', '-cpu', 'host')
-
-  run_target('run-test-thread_x86-intdbg', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              test_thread_x86_bin, '-d', 'int')
+              test_thread_x86_bin, '-enable-kvm', '-cpu', 'host,+tsc-deadline')
 endif
 

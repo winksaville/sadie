@@ -83,9 +83,5 @@ if Platform == 'pc_x86_64'
     depends : [test_ac_thread])
 
   run_target('run-test-ac_thread', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              #test_ac_thread_bin)
-              test_ac_thread_bin, '-enable-kvm', '-cpu', 'host')
-
-  run_target('run-test-ac_thread-intdbg', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              test_ac_thread_bin, '-d', 'int')
+              test_ac_thread_bin, '-enable-kvm', '-cpu', 'host,+tsc-deadline')
 endif

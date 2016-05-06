@@ -67,25 +67,10 @@ ac_bool test_cpuid() {
       "Invalid cpuid vendor");
   ac_printf("Max leaf=%d vendor_id=%s\n", max_leaf, vendor_id);
 
-  // See that when we request a leaf greater than max_leaf zero's are returned
-  get_cpuid(max_leaf+1, &out_eax, &out_ebx, &out_ecx, &out_edx);
-  error |= AC_TEST(out_eax == 0);
-  error |= AC_TEST(out_ebx == 0);
-  error |= AC_TEST(out_ecx == 0);
-  error |= AC_TEST(out_edx == 0);
-
-
   get_cpuid(0x80000000, &out_eax, &out_ebx, &out_ecx, &out_edx);
   ac_u32 max_extleaf = out_eax;
   error |= AC_TEST_EM(max_extleaf != 0, "max extended leaf was 0");
   ac_printf("Max extended leaf=%x\n", max_extleaf);
-
-  // See that when we request a leaf greater than max_leaf zero's are returned
-  get_cpuid(max_extleaf+1, &out_eax, &out_ebx, &out_ecx, &out_edx);
-  error |= AC_TEST(out_eax == 0);
-  error |= AC_TEST(out_ebx == 0);
-  error |= AC_TEST(out_ecx == 0);
-  error |= AC_TEST(out_edx == 0);
 
   if (ac_strncmp(vendor_id, "GenuineIntel", sizeof(vendor_id)) == 0) {
     ac_u32 max_subleaf = 0;
@@ -189,6 +174,7 @@ ac_bool test_cpuid() {
   ac_printf(" PBE=%b\n", AC_GET_BITS(ac_u32, out_edx, 31, 1));
 
 
+#if 0
   ac_uint max_pab = cpuid_max_physical_address_bits();
   ac_uint max_lab = cpuid_max_linear_address_bits();
 
@@ -198,6 +184,7 @@ ac_bool test_cpuid() {
 
   ac_printf(" max_pab=%u\n", max_pab);
   ac_printf(" max_lab=%u\n", max_lab);
+#endif
 
   return error;
 }

@@ -58,16 +58,14 @@ if Platform == 'pc_x86_64'
       test_ac_keyboard_impl_exe, grub_cfg, '@OUTPUT@'],
     depends : [test_ac_keyboard_impl])
 
-  run_target('run-test-ac_keyboard_impl', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              #test_ac_keyboard_impl_bin)
-              test_ac_keyboard_impl_bin, '-enable-kvm', '-cpu', 'host')
+  run_target('run-test-ac_keyboard_impl', '@0@/tools/qemu-system-x86_64.runner-interactive.sh'.format(meson.source_root()),
+              test_ac_keyboard_impl_bin, '-enable-kvm', '-cpu', 'host,+tsc-deadline')
 
-  run_target('run-test-ac_keyboard_impl-trace', '@0@/tools/qemu-system-x86_64.runner-trace.sh'.format(meson.source_root()),
-              #test_ac_keyboard_impl_bin)
-              test_ac_keyboard_impl_bin, '-enable-kvm', '-cpu', 'host', '-trace', 'events=/home/wink/tmp/qemu-events')
+  # To use tracing it must be enabled, I compiled it locally and configured using:
+  #   ../configure --python=/usr/bin/python2 --enable-debug --enable-debug-tcg --enable-trace-backends=simple --with-trace-file=/home/wink/tmp/qemu-trace
+  run_target('run-test-ac_keyboard_impl-trace', '@0@/tools/qemu-system-x86_64.runner-interactive.sh'.format(meson.source_root()),
+              test_ac_keyboard_impl_bin, '-enable-kvm', '-cpu', 'host,+tsc-deadline',
+              '-trace', 'events=@0@/qemu-events'.format(meson.current_source_dir()))
 
-  run_target('run-test-ac_keyboard_impl-intdbg', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              #test_ac_keyboard_impl_bin, '-d', 'int')
-              test_ac_keyboard_impl_bin, '-enable-kvm', '-cpu', 'host', '-d', 'int')
 endif
 
