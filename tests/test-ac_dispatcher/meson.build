@@ -53,3 +53,33 @@ if Platform == 'Posix'
 
   run_target('run-test-ac_dispatcher', test_ac_dispatcher)
 endif
+
+if Platform == 'pc_x86_64'
+  srcFiles = firstSrcFiles + ['srcs/test.c']
+  linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
+  linkArgs += ['-Wl,-n,-lgcc,-T,@0@'.format(linkfile)]
+  linkDeps += [linkfile]
+
+  # Create test_ac_dispatcher executable
+  test_ac_dispatcher = executable( 'test_ac_dispatcher', srcFiles,
+    include_directories : runtimeIncDirs,
+    c_args : compilerArgs,
+    link_args : linkArgs,
+    link_depends : linkDeps,
+    dependencies : [libruntime_dep],
+  )
+
+  grub_cfg = '@0@/grub.cfg'.format(meson.current_source_dir())
+  test_ac_dispatcher_exe = '@0@/test_ac_dispatcher'.format(meson.current_build_dir())
+
+  # Create test_ac_dispatcher.bin suitable for executing with qemu or on hardware
+  test_ac_dispatcher_bin = custom_target( 'test_ac_dispatcher.img',
+    input : grub_cfg,
+    output : 'test_ac_dispatcher.img',
+    command : ['@0@/tools/grub-mkrescue.runner.sh'.format(meson.source_root()),
+      test_ac_dispatcher_exe, grub_cfg, '@OUTPUT@'],
+    depends : [test_ac_dispatcher])
+
+  run_target('run-test-ac_dispatcher', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
+              test_ac_dispatcher_bin, '-enable-kvm', '-cpu', 'host,+tsc-deadline')
+endif
