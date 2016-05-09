@@ -1,4 +1,4 @@
-# Copyright 2015 wink saville
+# Copyright 2016 wink saville
 #
 # licensed under the apache license, version 2.0 (the "license");
 # you may not use this file except in compliance with the license.
@@ -12,15 +12,18 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
+lclSrcs = ['srcs/test.c', 'srcs/test_threaded_dispatching.c']
+lclIncDirs = [include_directories('../')]
+
 if Platform == 'VersatilePB'
-  srcFiles = firstSrcFiles + ['srcs/test.c']
+  srcFiles = firstSrcFiles + lclSrcs
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
   linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
   # Create test-ac_dispatcher executable
   test_ac_dispatcher = executable( 'test_ac_dispatcher', srcFiles,
-    include_directories : runtimeIncDirs,
+    include_directories : runtimeIncDirs + lclIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
     link_depends : linkDeps,
@@ -42,11 +45,11 @@ endif
 
 
 if Platform == 'Posix'
-  srcFiles = firstSrcFiles + ['srcs/test.c']
+  srcFiles = firstSrcFiles + lclSrcs
 
   # Create testit executable
   test_ac_dispatcher = executable( 'test_ac_dispatcher', srcFiles,
-    include_directories : runtimeIncDirs,
+    include_directories : runtimeIncDirs + lclIncDirs,
     c_args : compilerArgs,
     dependencies : [libruntime_dep],
   )
@@ -55,14 +58,14 @@ if Platform == 'Posix'
 endif
 
 if Platform == 'pc_x86_64'
-  srcFiles = firstSrcFiles + ['srcs/test.c']
+  srcFiles = firstSrcFiles + lclSrcs
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
   linkArgs += ['-Wl,-n,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
   # Create test_ac_dispatcher executable
   test_ac_dispatcher = executable( 'test_ac_dispatcher', srcFiles,
-    include_directories : runtimeIncDirs,
+    include_directories : runtimeIncDirs + lclIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
     link_depends : linkDeps,

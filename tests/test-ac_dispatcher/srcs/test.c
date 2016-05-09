@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Wink Saville
+ * Copyright 2016 Wink Saville
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 //#define NDEBUG
+
+#include "test-ac_dispatcher/incs/tests.h"
 
 #include <ac_dispatcher.h>
 
@@ -118,7 +120,7 @@ static void * ac1_get_data(ac* this) {
   return AC_NULL;
 }
 
-ac ac1 = {
+static ac ac1 = {
   .process_msg = &ac1_process_msg,
   .get_data = &ac1_get_data,
 };
@@ -181,6 +183,11 @@ int main(void) {
   error |= test_dispatcher_get_ret();
   error |= test_dispatcher_add_rmv_acq();
   error |= test_dispatching();
+#ifdef VersatilePB
+  ac_printf("py: threading not working on VersatilePB, skip test_threaded_dispatching()\n");
+#else
+  error |= test_threaded_dispatching();
+#endif
 
   if (!error) {
       // Succeeded
