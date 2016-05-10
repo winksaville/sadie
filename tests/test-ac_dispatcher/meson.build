@@ -50,6 +50,7 @@ if Platform == 'Posix'
   # Create testit executable
   test_ac_dispatcher = executable( 'test_ac_dispatcher', srcFiles,
     include_directories : runtimeIncDirs + lclIncDirs,
+    link_args : linkArgs,
     c_args : compilerArgs,
     dependencies : [libruntime_dep],
   )
