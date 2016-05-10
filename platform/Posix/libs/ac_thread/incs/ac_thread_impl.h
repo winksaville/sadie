@@ -17,12 +17,15 @@
 #ifndef SADIE_PLATFORM_POSIX_LIBS_AC_THREAD_INCS_AC_THREAD_IMPL_H
 #define SADIE_PLATFORM_POSIX_LIBS_AC_THREAD_INCS_AC_THREAD_IMPL_H
 
+
 #include <ac_inttypes.h>
 
 /**
  * Minimum stack size
  */
-#define AC_THREAD_STACK_MIN PTHREAD_STACK_MIN
+//TODO: How to properly include PTHREAD_STACK_MIN
+//#define AC_THREAD_STACK_MIN PTHREAD_STACK_MIN
+#define AC_THREAD_STACK_MIN 16384
 
 /**
  * Initialize this module early phase, must be
