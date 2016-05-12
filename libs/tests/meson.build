@@ -15,3 +15,4 @@
 # Library tests
 subdir('@0@/libs/ac_bits/tests'.format(messon.source_root()));
 subdir('@0@/libs/ac_printf/txsts'.format(messon.source_root()));
+subdir('@0@/libs/ac_time/txsts'.format(messon.source_root()));
