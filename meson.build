@@ -76,6 +76,7 @@ subdir('libs/ac_bits/tests')
 subdir('libs/ac_check_sum/tests')
 subdir('libs/ac_printf/tests')
 subdir('libs/ac_pci/tests')
+subdir('libs/ac_time/tests')
 
 subdir('platform/tests')
 subdir('tests')

@@ -28,5 +28,6 @@ command:
   - cd build-${Platform}; ninja run-test-ac_sysconf
   - cd build-${Platform}; ninja run-test-ac_thread
   - cd build-${Platform}; ninja run-test-ac_timer
+  - cd build-${Platform}; ninja run-test-ac_time
   - cd build-${Platform}; ninja run-test-ac_tsc
 

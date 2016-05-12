@@ -82,4 +82,6 @@
 -I
 /home/wink/prgs/sadie/libs/ac_string/incs
 -I
+/home/wink/prgs/sadie/libs/ac_time/incs
+-I
 /usr/include
