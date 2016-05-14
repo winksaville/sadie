@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
+#define NDEBUG
+
 #include <ac_printf.h>
+#include <ac_debug_printf.h>
 
 #include <ac_inttypes.h>
 #include <ac_string.h>
@@ -142,11 +145,6 @@ static ac_uint get_number(char ch, char** format) {
  */
 static ac_u32 formatter(ac_writer* writer, char const* format, ac_va_list args) {
     ac_u32 count = 0;
-    ac_uint min_width;
-    ac_uint precision;
-
-    AC_UNUSED(min_width);
-    AC_UNUSED(precision);
 
     // Check inputs
     if (IS_AC_NULL(writer) || IS_AC_NULL(formatter)) {
@@ -163,40 +161,68 @@ static ac_u32 formatter(ac_writer* writer, char const* format, ac_va_list args) 
             writer->write_param(writer, cast_to_write_param(ch));
             count += 1;
         } else {
-            // Is a '%' so get the next character to decide the format
+            // Is a '%' so get the next character
             char next_ch = *format++;
-            if (next_ch == 0) {
-                count += 1;
-                goto done;
+
+            // Get Flags
+            writer->sign = ' ';
+            writer->alt_form = AC_FALSE;
+            writer->leading_0 = AC_FALSE;
+            ac_bool flags = AC_TRUE;
+            while (flags) {
+              switch (next_ch) {
+                case 0:
+                  count += 1;
+                  goto done;
+                case '+':
+                case '-':
+                  writer->sign = next_ch;
+                  next_ch = *format++;
+                  ac_debug_printf("sign=%c\n", writer->sign);
+                  break;
+                case '#':
+                  writer->alt_form = AC_TRUE;
+                  next_ch = *format++;
+                  ac_debug_printf("alt_form=%d\n", writer->alt_form);
+                  break;
+                case '0':
+                  writer->leading_0 = AC_TRUE;
+                  next_ch = *format++;
+                  ac_debug_printf("leading_0=%d\n", writer->leading_0);
+                  break;
+                default:
+                  flags = AC_FALSE;
+                  break;
+              }
             }
+            // Get min_width if any
+            writer->min_width = 0;
+            if ((next_ch >= '1') && (next_ch <= '9')) {
+                writer->min_width = get_number(next_ch, (char**)&format);
+                next_ch = *format++;
+                ac_debug_printf("min_width=%d\n", writer->min_width);
+            } else if (next_ch == '*') {
+                writer->min_width = ac_va_arg(args, ac_uint);
+                next_ch = *format++;
+                ac_debug_printf("min_width=%d\n", writer->min_width);
+            }
+            // Get precision if any
+            writer->precision = 0;
             if (next_ch == '.') {
                 next_ch = *format++;
                 if ((next_ch >= '0') && (next_ch <= '9')) {
-                    precision = get_number(next_ch, (char**)&format);
+                    writer->precision = get_number(next_ch, (char**)&format);
                     next_ch = *format++;
-                } else {
-                    precision = 0;
-                }
-                min_width = 0;
-            } else if ((next_ch >= '0') && (next_ch <= '9')) {
-                min_width = get_number(next_ch, (char**)&format);
-                next_ch = *format++;
-                if (next_ch == '.') {
+                } else if (next_ch == '*') {
+                    writer->precision = ac_va_arg(args, ac_uint);
                     next_ch = *format++;
-                    if ((next_ch >= '0') && (next_ch <= '9')) {
-                        precision = get_number(next_ch, (char**)&format);
-                        next_ch = *format++;
-                    } else {
-                        precision = 0;
-                    }
-                } else {
-                    precision = 0;
                 }
-            } else {
-                min_width = 0;
-                precision = 0;
+                ac_debug_printf("precision=%d\n", writer->precision);
             }
             switch (next_ch) {
+                case 0:
+                    count += 1;
+                    goto done;
                 case '%': {
                     // was %% just echo a '%'
                     writer->write_param(writer, cast_to_write_param(next_ch));
@@ -293,18 +319,7 @@ done:
 }
 
 /**
- * Print a formatted string to the writer. This supports a
- * subset of the typical libc printf:
- *   - %% ::= prints a percent
- *   - %c ::= prints a character
- *   - %s ::= prints a string
- *   - %p ::= prints a pointer base 16 with leading zero's
- *   - %b ::= prints a ac_uint base 2
- *   - %d ::= prints a ac_sint base 10
- *   - %u ::= prints a ac_uint base 10
- *   - %x ::= prints a ac_uint base 16
- *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
- *   - print a 64 bit value in the requested radix.
+ * Print a formatted string to the writer.
  *
  * Returns executes writer->get_buff() which must at least
  * return an empty string, it will never be AC_NULL.
@@ -328,18 +343,7 @@ const char* ac_formatter(ac_writer* writer, const char *format, ...) {
 }
 
 /**
- * Print a formatted string to the writer function. This supports a
- * subset of the typical libc printf:
- *   - %% ::= prints a percent
- *   - %c ::= prints a character
- *   - %s ::= prints a string
- *   - %p ::= prints a pointer base 16 with leading zero's
- *   - %b ::= prints a ac_uint base 2
- *   - %d ::= prints a ac_sint base 10
- *   - %u ::= prints a ac_uint base 10
- *   - %x ::= prints a ac_uint base 16
- *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
- *   - print a 64 bit value in the requested radix.
+ * Print a formatted string to the writer function.
  *
  * Returns writer->count which should be the number of characters printed
  */
@@ -353,18 +357,7 @@ ac_uint ac_printfw(ac_writer* writer, const char *format, ...) {
 }
 
 /**
- * Print a formatted string to seL4_PutChar. This supports a
- * subset of the typical libc printf:
- *   - %% ::= prints a percent
- *   - %c ::= prints a character
- *   - %s ::= prints a string
- *   - %p ::= prints a pointer base 16 with leading zero's
- *   - %b ::= prints a ac_uint base 2
- *   - %d ::= prints a ac_sint base 10
- *   - %u ::= prints a ac_uint base 10
- *   - %x ::= prints a ac_uint base 16
- *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
- *   - print a 64 bit value in the requested radix.
+ * Print a formatted string to seL4_PutChar.
  *
  * Returns number of characters printed
  */
@@ -424,17 +417,7 @@ ac_writer* ac_writer_buffer_init(ac_writer* writer, ac_u8* out_buff,
 }
 
 /**
- * Print a formatted string to the output buffer. This supports a
- * subset of the typical libc printf:
- *   - %% ::= prints a percent
- *   - %s ::= prints a string
- *   - %p ::= prints a pointer base 16 with leading zero's
- *   - %b ::= prints a ac_uint base 2
- *   - %d ::= prints a ac_sint base 10
- *   - %u ::= prints a ac_uint base 10
- *   - %x ::= prints a ac_uint base 16
- *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
- *   - print a 64 bit value in the requested radix.
+ * Print a formatted string to the output buffer.
  *
  * Returns number of characters printed
  */

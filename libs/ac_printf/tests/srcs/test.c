@@ -127,6 +127,22 @@ static inline ac_bool test_printing_result(
     failure; \
 })
 
+#define TEST_PRINTING_2_PARAMS(formatting, param1, param2, expectedVal) ({ \
+    ac_bool failure; \
+    ac_printfw(&writer, formatting, param1, param2); \
+    failure = test_printing_result(expectedVal, (Buffer*)(writer.data), \
+        __FUNCTION__, __FILE__, __LINE__); \
+    failure; \
+})
+
+#define TEST_PRINTING_3_PARAMS(formatting, param1, param2, param3, expectedVal) ({ \
+    ac_bool failure; \
+    ac_printfw(&writer, formatting, param1, param2, param3); \
+    failure = test_printing_result(expectedVal, (Buffer*)(writer.data), \
+        __FUNCTION__, __FILE__, __LINE__); \
+    failure; \
+})
+
 
 int main(void) {
   ac_bool failure = AC_FALSE;
@@ -194,12 +210,24 @@ int main(void) {
   failure |= TEST_PRINTING("%d", 1, "1");
   failure |= TEST_PRINTING("%d", 2147483647, "2147483647");
 
+  // flags
+  failure |= TEST_PRINTING("%+d", 123, "123");
+  failure |= TEST_PRINTING("%-d", 123, "123");
+  failure |= TEST_PRINTING("%#d", 123, "123");
+  failure |= TEST_PRINTING("%0d", 123, "123");
+
   // Width precision specifications
   failure |= TEST_PRINTING("%21d", 123, "123");
   failure |= TEST_PRINTING("%21.d", 123, "123");
   failure |= TEST_PRINTING("%21.3d", 123, "123");
   failure |= TEST_PRINTING("%.d", 123, "123");
   failure |= TEST_PRINTING("%.4d", 123, "123");
+  failure |= TEST_PRINTING_2_PARAMS("%*d", 3, 123, "123");
+  failure |= TEST_PRINTING_2_PARAMS("%*.d", 4, 123, "123");
+  failure |= TEST_PRINTING_2_PARAMS("%.*d", 2, 123, "123");
+  ac_uint min_width = 1;
+  ac_uint precision = 3;
+  failure |= TEST_PRINTING_3_PARAMS("%+-#0*.*d", min_width, precision, 123, "123");
 
   // In printf statements constant negative numbers must be cast
   // so they work both 32 and 64 bit environments.

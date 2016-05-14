@@ -47,6 +47,11 @@ typedef struct _ac_writer {
     ac_uint max_len;                // max_len to output, only used under some conditons, for
                                     // instance by a buffer writer.
     void* data;                     // Typically a buffer or the writers control data
+    ac_u8 sign;                     // Flag sign = '+' or '-' or the default = ' '
+    ac_bool alt_form;               // Flag alt_form = AC_TRUE if '#' present, default AC_FALSE
+    ac_bool leading_0;              // Flag leading_0 = AC_TRUE if '0' present, default AC_FALSE
+    ac_uint min_width;              // Minimum width = numeric, default 0
+    ac_uint precision;              // Precision = numeric, default 0
     ac_get_buff_fn get_buff;        // Called at anytime and the contents of the buffer
                                     // or an empty string.
     ac_write_end_fn write_beg;      // Called before first writeParam, optional maybe ac_Null
@@ -57,13 +62,35 @@ typedef struct _ac_writer {
 /**
  * Print a formatted string to the writer. This supports a
  * subset of the typical libc printf:
- *   - %% ::= prints a percent
- *   - %d ::= prints a positive or negative long base 10
- *   - %u ::= prints an ac_u32 base 10
- *   - %x ::= prints a ac_u32 base 16
- *   - %p ::= prints a ac_u32 assuming its a pointer base 16 with 0x prepended
- *   - %s ::= prints a string
- *   - %llx ::= prints a ac_u32 long base 16
+ *
+ * Below the items in braces are optional with '%' the introducer
+ *
+ * {<%>{flags}{min_width}{'.'precison}{len modifier}<format char>}
+ *
+ * flags :
+ *   - sign = '+', '-', default ' '
+ *   - alt_form = '#', default AC_FALSE
+ *   - leading_0 = '0', default AC_FALSE
+ *
+ * min_width:
+ *   - Numeric const value or '*', default 0
+ *
+ * precision:
+ *   - Numeric const value or '*', default 0
+ *
+ * len modifier:
+ *   - 'l' or 'll'
+ *
+ * format char:
+ *   - % ::= prints a percent
+ *   - s ::= prints a string
+ *   - p ::= prints a pointer base 16 with leading zero's
+ *   - b ::= prints a ac_uint base 2
+ *   - d ::= prints a ac_sint base 10
+ *   - u ::= prints a ac_uint base 10
+ *   - x ::= prints a ac_uint base 16
+ *   - For %b, %d, %u, %x can be preceeded by length modifier "l" or "ll" to
+ *   - print a 64 bit value in the requested radix.
  *
  * Returns returns what writer->get_buff() returns if it exists and doesn't
  * return AC_NULL. If get_buff doesn't exists or does return AC_NULL at least
@@ -74,14 +101,34 @@ const char* ac_formatter(ac_writer* writer, const char *format, ...);
 /**
  * Print a formatted string to the writer function. This supports a
  * subset of the typical libc printf:
- *   - %% ::= prints a percent
- *   - %s ::= prints a string
- *   - %p ::= prints a pointer base 16 with leading zero's
- *   - %b ::= prints a ac_uint base 2
- *   - %d ::= prints a ac_sint base 10
- *   - %u ::= prints a ac_uint base 10
- *   - %x ::= prints a ac_uint base 16
- *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
+ *
+ * Below the items in braces are optional with '%' the introducer
+ *
+ * {<%>{flags}{min_width}{'.'precison}{len modifier}<format char>}
+ *
+ * flags :
+ *   - sign = '+', '-', default ' '
+ *   - alt_form = '#', default AC_FALSE
+ *   - leading_0 = '0', default AC_FALSE
+ *
+ * min_width:
+ *   - Numeric const value or '*', default 0
+ *
+ * precision:
+ *   - Numeric const value or '*', default 0
+ *
+ * len modifier:
+ *   - 'l' or 'll'
+ *
+ * format char:
+ *   - % ::= prints a percent
+ *   - s ::= prints a string
+ *   - p ::= prints a pointer base 16 with leading zero's
+ *   - b ::= prints a ac_uint base 2
+ *   - d ::= prints a ac_sint base 10
+ *   - u ::= prints a ac_uint base 10
+ *   - x ::= prints a ac_uint base 16
+ *   - For %b, %d, %u, %x can be preceeded by length modifier "l" or "ll" to
  *   - print a 64 bit value in the requested radix.
  *
  * Returns writer->count which should be the number of characters printed
@@ -91,34 +138,74 @@ ac_uint ac_printfw(ac_writer* writer, const char *format, ...);
 /**
  * Print a formatted string to seL4_PutChar. This supports a
  * subset of the typical libc printf:
- *   - %% ::= prints a percent
- *   - %s ::= prints a string
- *   - %p ::= prints a pointer base 16 with leading zero's
- *   - %b ::= prints a ac_uint base 2
- *   - %d ::= prints a ac_sint base 10
- *   - %u ::= prints a ac_uint base 10
- *   - %x ::= prints a ac_uint base 16
- *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
+ *
+ * Below the items in braces are optional with '%' the introducer
+ *
+ * {<%>{flags}{min_width}{'.'precison}{len modifier}<format char>}
+ *
+ * flags :
+ *   - sign = '+', '-', default ' '
+ *   - alt_form = '#', default AC_FALSE
+ *   - leading_0 = '0', default AC_FALSE
+ *
+ * min_width:
+ *   - Numeric const value or '*', default 0
+ *
+ * precision:
+ *   - Numeric const value or '*', default 0
+ *
+ * len modifier:
+ *   - 'l' or 'll'
+ *
+ * format char:
+ *   - % ::= prints a percent
+ *   - s ::= prints a string
+ *   - p ::= prints a pointer base 16 with leading zero's
+ *   - b ::= prints a ac_uint base 2
+ *   - d ::= prints a ac_sint base 10
+ *   - u ::= prints a ac_uint base 10
+ *   - x ::= prints a ac_uint base 16
+ *   - For %b, %d, %u, %x can be preceeded by length modifier "l" or "ll" to
  *   - print a 64 bit value in the requested radix.
  *
- * Returns number of characters printed
+ * Returns writer->count which should be the number of characters printed
  */
 ac_uint ac_printf(const char *format, ...);
 
 /**
  * Print a formatted string to the output buffer. This supports a
  * subset of the typical libc printf:
- *   - %% ::= prints a percent
- *   - %s ::= prints a string
- *   - %p ::= prints a pointer base 16 with leading zero's
- *   - %b ::= prints a ac_uint base 2
- *   - %d ::= prints a ac_sint base 10
- *   - %u ::= prints a ac_uint base 10
- *   - %x ::= prints a ac_uint base 16
- *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
+ *
+ * Below the items in braces are optional with '%' the introducer
+ *
+ * {<%>{flags}{min_width}{'.'precison}{len modifier}<format char>}
+ *
+ * flags :
+ *   - sign = '+', '-', default ' '
+ *   - alt_form = '#', default AC_FALSE
+ *   - leading_0 = '0', default AC_FALSE
+ *
+ * min_width:
+ *   - Numeric const value or '*', default 0
+ *
+ * precision:
+ *   - Numeric const value or '*', default 0
+ *
+ * len modifier:
+ *   - 'l' or 'll'
+ *
+ * format char:
+ *   - % ::= prints a percent
+ *   - s ::= prints a string
+ *   - p ::= prints a pointer base 16 with leading zero's
+ *   - b ::= prints a ac_uint base 2
+ *   - d ::= prints a ac_sint base 10
+ *   - u ::= prints a ac_uint base 10
+ *   - x ::= prints a ac_uint base 16
+ *   - For %b, %d, %u, %x can be preceeded by length modifier "l" or "ll" to
  *   - print a 64 bit value in the requested radix.
  *
- * Returns number of characters printed
+ * Returns writer->count which should be the number of characters printed
  */
 ac_uint ac_sprintf(ac_u8* out_buff, ac_uint out_buff_len, const char *format, ...);
 
