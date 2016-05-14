@@ -181,7 +181,7 @@ int main(void) {
 
   failure |= TEST_PRINTING_NO_PARAM("Hello", "Hello");
   failure |= TEST_PRINTING_NO_PARAM("%", "");
-  failure |= TEST_PRINTING_NO_PARAM("%1", "%1");
+  failure |= TEST_PRINTING_NO_PARAM("%a", "%a");
   failure |= TEST_PRINTING_NO_PARAM("%%", "%");
 
   failure |= TEST_PRINTING("%s", "string", "string");
@@ -193,6 +193,13 @@ int main(void) {
 
   failure |= TEST_PRINTING("%d", 1, "1");
   failure |= TEST_PRINTING("%d", 2147483647, "2147483647");
+
+  // Width precision specifications
+  failure |= TEST_PRINTING("%21d", 123, "123");
+  failure |= TEST_PRINTING("%21.d", 123, "123");
+  failure |= TEST_PRINTING("%21.3d", 123, "123");
+  failure |= TEST_PRINTING("%.d", 123, "123");
+  failure |= TEST_PRINTING("%.4d", 123, "123");
 
   // In printf statements constant negative numbers must be cast
   // so they work both 32 and 64 bit environments.

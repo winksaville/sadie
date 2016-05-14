@@ -56,7 +56,7 @@ static ac_u32 write_str(ac_writer *writer, char *str) {
 }
 
 /**
- * Output an unsigned int bit value
+ * Output an unsigned int value
  */
 static ac_u32 write_uval(
         ac_writer* writer, ac_u64 val, ac_uint sz_val_in_bytes,
@@ -93,6 +93,9 @@ static ac_u32 write_uval(
     return count;
 }
 
+/**
+ * Output an signed int val
+ */
 static ac_u32 write_sval(
         ac_writer* writer, ac_s64 val, ac_uint sz_val_in_bytes,
         ac_bool radix16Leading0, ac_uint radix) {
@@ -105,6 +108,22 @@ static ac_u32 write_sval(
     return count + write_uval(writer, val, sizeof(ac_uint),
         NO_LEADING_0, 10);
 }
+
+/**
+ * Get a number from format
+ */
+static ac_uint get_number(char ch, char** format) {
+  char* f = *format;
+  ac_uint val = 0;
+  do {
+    val *= 10;
+    val += (ac_uint)(ch - '0');
+    ch = *f++;
+  } while ((ch >= '0') && (ch <= '9'));
+  *format = --f;
+  return val;
+}
+
 
 /**
  * Print a formatted string to the writer function. This supports a
@@ -121,8 +140,13 @@ static ac_u32 write_sval(
  *
  * Returns number of characters consumed
  */
-static ac_u32 formatter(ac_writer* writer, const char* format, ac_va_list args) {
+static ac_u32 formatter(ac_writer* writer, char const* format, ac_va_list args) {
     ac_u32 count = 0;
+    ac_uint min_width;
+    ac_uint precision;
+
+    AC_UNUSED(min_width);
+    AC_UNUSED(precision);
 
     // Check inputs
     if (IS_AC_NULL(writer) || IS_AC_NULL(formatter)) {
@@ -144,6 +168,33 @@ static ac_u32 formatter(ac_writer* writer, const char* format, ac_va_list args) 
             if (next_ch == 0) {
                 count += 1;
                 goto done;
+            }
+            if (next_ch == '.') {
+                next_ch = *format++;
+                if ((next_ch >= '0') && (next_ch <= '9')) {
+                    precision = get_number(next_ch, (char**)&format);
+                    next_ch = *format++;
+                } else {
+                    precision = 0;
+                }
+                min_width = 0;
+            } else if ((next_ch >= '0') && (next_ch <= '9')) {
+                min_width = get_number(next_ch, (char**)&format);
+                next_ch = *format++;
+                if (next_ch == '.') {
+                    next_ch = *format++;
+                    if ((next_ch >= '0') && (next_ch <= '9')) {
+                        precision = get_number(next_ch, (char**)&format);
+                        next_ch = *format++;
+                    } else {
+                        precision = 0;
+                    }
+                } else {
+                    precision = 0;
+                }
+            } else {
+                min_width = 0;
+                precision = 0;
             }
             switch (next_ch) {
                 case '%': {
