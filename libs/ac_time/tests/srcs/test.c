@@ -94,7 +94,7 @@ ac_bool test_time(void) {
   error |= AC_TEST(ac_strncmp("0y0d0h0m1.50s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
   ac_ticks_to_duration_str(ticks, LEADING0, 9, buff, AC_ARRAY_COUNT(buff));
   ac_printf("ac_ticks_to_duration_str(f + (f/2)-100, 9)=%s\n", buff);
-  error |= AC_TEST(ac_strncmp("0y0d0h0m1.499999", (char*)buff, 16) == 0);
+  error |= AC_TEST(ac_strncmp("0y0d0h0m1.4999", (char*)buff, 14) == 0);
 
   ticks = f + (f / 2) - 10;
   ac_ticks_to_duration_str(ticks, LEADING0, 0, buff, AC_ARRAY_COUNT(buff));
@@ -108,7 +108,7 @@ ac_bool test_time(void) {
   error |= AC_TEST(ac_strncmp("0y0d0h0m1.50s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
   ac_ticks_to_duration_str(ticks, LEADING0, 9, buff, AC_ARRAY_COUNT(buff));
   ac_printf("ac_ticks_to_duration_str(f + (f/2)-10, 9)=%s\n", buff);
-  error |= AC_TEST(ac_strncmp("0y0d0h0m1.499999", (char*)buff, 16) == 0);
+  error |= AC_TEST(ac_strncmp("0y0d0h0m1.4999", (char*)buff, 14) == 0);
 
   ticks = f + (f / 2) - 1;
   ac_ticks_to_duration_str(ticks, LEADING0, 0, buff, AC_ARRAY_COUNT(buff));
@@ -122,8 +122,8 @@ ac_bool test_time(void) {
   error |= AC_TEST(ac_strncmp("0y0d0h0m1.50s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
   ac_ticks_to_duration_str(ticks, LEADING0, 9, buff, AC_ARRAY_COUNT(buff));
   ac_printf("ac_ticks_to_duration_str(f + (f/2)-1, 9)=%s\n", buff);
-  error |= AC_TEST((ac_strncmp("0y0d0h0m1.500000", (char*)buff, 16) == 0)
-               | (ac_strncmp("0y0d0h0m1.499999", (char*)buff, 16) == 0));
+  error |= AC_TEST((ac_strncmp("0y0d0h0m1.5000", (char*)buff, 14) == 0)
+               | (ac_strncmp("0y0d0h0m1.4999", (char*)buff, 14) == 0));
 
 
   ticks = f + (f / 2);

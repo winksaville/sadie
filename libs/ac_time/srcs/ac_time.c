@@ -110,24 +110,24 @@ ac_uint ac_ticks_to_duration_str(ac_u64 ticks, ac_bool leading0, ac_uint precisi
   ac_uint count = 0;
   ac_bool printing = leading0;
   if (printing || (years != 0)) {
-    count += ac_sprintf(out_buff, out_buff_len, "%dy", years);
+    count += ac_sprintf(out_buff, out_buff_len, "%ldy", years);
     printing = AC_TRUE;
   }
   if (printing || (days != 0)) {
-    count += ac_sprintf(&out_buff[count], out_buff_len - count, "%dd", days);
+    count += ac_sprintf(&out_buff[count], out_buff_len - count, "%ldd", days);
     printing = AC_TRUE;
   }
   if (printing || (hrs != 0)) {
-    count += ac_sprintf(&out_buff[count], out_buff_len - count, "%dh", hrs);
+    count += ac_sprintf(&out_buff[count], out_buff_len - count, "%ldh", hrs);
     printing = AC_TRUE;
   }
   if (printing || (mins != 0)) {
-    count += ac_sprintf(&out_buff[count], out_buff_len - count, "%dm", mins);
+    count += ac_sprintf(&out_buff[count], out_buff_len - count, "%ldm", mins);
     printing = AC_TRUE;
   }
 
   // Always print seconds
-  count += ac_sprintf(&out_buff[count], out_buff_len - count, "%d", secs);
+  count += ac_sprintf(&out_buff[count], out_buff_len - count, "%ld", secs);
   if (precision > 0) {
     // Print specified number of sub seconds
     count += ac_sprintf(&out_buff[count], out_buff_len - count, ".%s", ssi);

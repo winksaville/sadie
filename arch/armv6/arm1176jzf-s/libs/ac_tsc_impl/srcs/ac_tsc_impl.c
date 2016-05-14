@@ -42,9 +42,15 @@ static void tsc_zero_counters(ac_bool enable_divider) {
   }
   freq = 1000000;
   ac_tsc_impl_arm_overflow = 0;
+
+#if 0
+  // Disable MCR's as they are causing ac_exception_undef_handler
+  // and ac_exception_reset_handler to fire.
+
   __asm__ volatile ("MCR p15, 0, %0, c9, c12, 0\t\n" :: "r"(value));
   __asm__ volatile ("MCR p15, 0, %0, c9, c12, 1\t\n" :: "r"(0x8000000f));
   __asm__ volatile ("MCR p15, 0, %0, c9, c12, 3\t\n" :: "r"(0x8000000f));
+#endif
 }
 
 /**
@@ -59,7 +65,7 @@ ac_u64 ac_tsc_freq() {
  */
 void ac_tsc_init(void) {
 #if 0
-  // Disable as this is causing ac_exception_undef_handler
+  // Disable MCR's as they are causing ac_exception_undef_handler
   // and ac_exception_reset_handler to fire.
 
   // Allow user mode to access
@@ -67,7 +73,7 @@ void ac_tsc_init(void) {
 
   // For now disable counter ac_tsc_impl_arm_overflow
   __asm__ volatile ("MCR p15, 0, %0, C9, C14, 2\n\t" :: "r"(0x8000000f));
+#endif
 
   tsc_zero_counters(AC_FALSE);
-#endif
 }
