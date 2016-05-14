@@ -35,3 +35,9 @@ void* ac_memset(void *s, ac_u8 val, ac_uptr count) {
   return s;
 }
 
+/**
+ * Set memory, compiler needs this for initializing structs and such.
+ */
+void* memset(void *s, int val, ac_size_t count) {
+  return ac_memset(s, val, count);
+}
