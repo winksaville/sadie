@@ -103,4 +103,21 @@ ac_uint ac_printfw(ac_writer* writer, const char *format, ...);
  */
 ac_uint ac_printf(const char *format, ...);
 
+/**
+ * Print a formatted string to the output buffer. This supports a
+ * subset of the typical libc printf:
+ *   - %% ::= prints a percent
+ *   - %s ::= prints a string
+ *   - %p ::= prints a pointer base 16 with leading zero's
+ *   - %b ::= prints a ac_uint base 2
+ *   - %d ::= prints a ac_sint base 10
+ *   - %u ::= prints a ac_uint base 10
+ *   - %x ::= prints a ac_uint base 16
+ *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
+ *   - print a 64 bit value in the requested radix.
+ *
+ * Returns number of characters printed
+ */
+ac_uint ac_sprintf(ac_u8* out_buff, ac_uint out_buff_len, const char *format, ...);
+
 #endif

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define NDEBUG
+
 #include <ac_string.h>
 #include <ac_printf.h>
 #include <ac_debug_printf.h>
@@ -364,6 +366,38 @@ int main(void) {
       failure |= FAIL(ac_formatter(
             &writer, "Unexptected sizeof(ac_uint)=%d", sizeof(ac_uint)));
   }
+
+  /** Test ac_sprintf **/
+  ac_u8 buff[10];
+
+  count = ac_sprintf(AC_NULL, 10, "%d", 0);
+  failure |= AC_TEST(count == 0);
+
+  count = ac_sprintf(buff, 0, "%d", 0);
+  failure |= AC_TEST(count == 0);
+
+  count = ac_sprintf(buff, 1, "%d", 0);
+  failure |= AC_TEST(count == 0);
+
+  count = ac_sprintf(buff, 2, "%s", "12");
+  ac_debug_printf("ac_sprintf(buff, 2, \"%%s\", \"12\")=\"%s\"\n", buff);
+  failure |= AC_TEST(count == 1);
+  failure |= AC_TEST(ac_strncmp("1", (char*)buff, 2) == 0);
+
+  count = ac_sprintf(buff, AC_ARRAY_COUNT(buff), "%d", 0);
+  ac_debug_printf("ac_sprintf(buff, AC_ARRAY_COUNT(buff), \"%%d\", 0)=\"%s\"\n", buff);
+  failure |= AC_TEST(count == 1);
+  failure |= AC_TEST(ac_strncmp("0", (char*)buff, 2) == 0);
+
+  count = ac_sprintf(buff, AC_ARRAY_COUNT(buff), "%d", 1);
+  ac_debug_printf("ac_sprintf(buff, AC_ARRAY_COUNT(buff), \"%%d\", 1)=\"%s\"\n", buff);
+  failure |= AC_TEST(count == 1);
+  failure |= AC_TEST(ac_strncmp("1", (char*)buff, 2) == 0);
+
+  count = ac_sprintf(buff, AC_ARRAY_COUNT(buff), "%d", -1l);
+  ac_debug_printf("ac_sprintf(buff, AC_ARRAY_COUNT(buff), \"%%d\", -1)=\"%s\"\n", buff);
+  failure |= AC_TEST(count == 2);
+  failure |= AC_TEST(ac_strncmp("-1", (char*)buff, 3) == 0);
 
   if (!failure) {
     ac_printf("OK\n");

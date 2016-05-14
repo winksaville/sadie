@@ -334,3 +334,75 @@ ac_uint ac_printf(const char *format, ...) {
     ac_va_end(args);
     return writer.count;
 }
+
+typedef struct {
+  ac_u8* out_buff;
+  ac_uint out_buff_len;
+} sprintf_data;
+
+static const char* sprintf_get_buff(ac_writer *writer) {
+  ((ac_u8*)(writer->data))[writer->count] = 0;
+  return writer->data;
+}
+
+static void sprintf_write_beg(ac_writer* writer) {
+  writer->count = 0;
+}
+
+static void sprintf_write_param(ac_writer* writer, void* param) {
+  sprintf_data* data = (sprintf_data*)writer->data;
+  if (writer->count < (data->out_buff_len - 1)) {
+    data->out_buff[writer->count++] = ((ac_u8)(((ac_uptr)param) & 0xff));
+  }
+}
+
+static void sprintf_write_end(ac_writer* writer) {
+  sprintf_data* data = (sprintf_data*)writer->data;
+  data->out_buff[writer->count] = 0;
+}
+
+/**
+ * Print a formatted string to the output buffer. This supports a
+ * subset of the typical libc printf:
+ *   - %% ::= prints a percent
+ *   - %s ::= prints a string
+ *   - %p ::= prints a pointer base 16 with leading zero's
+ *   - %b ::= prints a ac_uint base 2
+ *   - %d ::= prints a ac_sint base 10
+ *   - %u ::= prints a ac_uint base 10
+ *   - %x ::= prints a ac_uint base 16
+ *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
+ *   - print a 64 bit value in the requested radix.
+ *
+ * Returns number of characters printed
+ */
+ac_uint ac_sprintf(ac_u8* out_buff, ac_uint out_buff_len,
+    const char *format, ...) {
+  ac_va_list args;
+
+  if (out_buff == AC_NULL) {
+    return 0;
+  }
+  if (out_buff_len == 0) {
+    return 0;
+  }
+  if (out_buff_len == 1) {
+    out_buff[0] = 0;
+    return 0;
+  }
+  sprintf_data data = { .out_buff = out_buff, .out_buff_len = out_buff_len };
+
+  ac_writer writer = {
+          .count = 0,
+          .get_buff = sprintf_get_buff,
+          .write_beg = sprintf_write_beg,
+          .write_param = sprintf_write_param,
+          .write_end = sprintf_write_end,
+          .data = &data,
+  };
+
+  ac_va_start(args, format);
+  formatter(&writer, format, args);
+  ac_va_end(args);
+  return writer.count;
+}
