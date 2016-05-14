@@ -102,7 +102,6 @@ ac_uint test_receptor(void) {
   ac_printf("test_receptor:+\n");
 
   ac_uint error = AC_FALSE;
-#if defined(pc_x86_64)
   tres_t* ptres;
   ac_u64 time;
   ac_u64 time_per_op;
@@ -171,7 +170,6 @@ ac_uint test_receptor(void) {
   ac_printf("test_receptor: time_per_op = %ld%s\n", time_per_op, ptres->units);
 
   ac_receptor_destroy(params.receptor);
-#endif
 
   ac_printf("test_receptor:-error=%d\n", error);
   return error;
