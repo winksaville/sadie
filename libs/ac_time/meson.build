@@ -15,3 +15,7 @@
 runtimeIncDirs += include_directories(
   '@0@/incs'.format(meson.current_source_dir())
 )
+
+runtimeSrcs += [
+  '@0@/srcs/ac_time.c'.format(meson.current_source_dir()),
+]
