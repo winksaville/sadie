@@ -30,7 +30,7 @@
  * y:day:min:sec.subsecs
  *
  * @param: ticks is value in ac_tsc_freq
- * @param: leading0 is true if leading zero values are to be printed
+ * @param: leading_0 is true if leading zero values are to be printed
  * @param: precision is number of digits after seconds decimal place
  * @param: out_buf is output buffer
  * @param: out_buf_len is the length of the output buffer
@@ -39,7 +39,7 @@
  *         if out_buf_len == 0 nothing is written
  *         if out_buf_len == 1 only a trailing zero is written
  */
-ac_uint ac_ticks_to_duration_str(ac_u64 ticks, ac_bool leading0, ac_uint precision,
+ac_uint ac_ticks_to_duration_str(ac_u64 ticks, ac_bool leading_0, ac_uint precision,
     ac_u8* out_buff, ac_uint out_buff_len) {
   ac_u64 freq = ac_tsc_freq();
   ac_uint i;
@@ -108,7 +108,7 @@ ac_uint ac_ticks_to_duration_str(ac_u64 ticks, ac_bool leading0, ac_uint precisi
 
   // Conditionally printng years, days, hrs, mins
   ac_uint count = 0;
-  ac_bool printing = leading0;
+  ac_bool printing = leading_0;
   if (printing || (years != 0)) {
     count += ac_sprintf(out_buff, out_buff_len, "%ldy", years);
     printing = AC_TRUE;

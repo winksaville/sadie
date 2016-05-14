@@ -30,8 +30,8 @@
 #define AC_SECS_PER_DAY (24ll * AC_SECS_PER_HR)
 #define AC_SECS_PER_YEAR (365ll * AC_SECS_PER_DAY)
 
-#define LEADING0 AC_TRUE
-#define NO_LEADING0 AC_FALSE
+#define LEADING_0 AC_TRUE
+#define NO_LEADING_0 AC_FALSE
 
 /**
  * Convert ticks to a duration string
