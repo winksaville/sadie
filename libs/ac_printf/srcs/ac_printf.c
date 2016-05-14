@@ -373,11 +373,12 @@ ac_uint ac_printf(const char *format, ...) {
 
     ac_writer writer = {
             .count = 0,
+            .max_len = 0,
+            .data = AC_NULL,
             .get_buff = ret_empty,
             .write_beg = AC_NULL,
             .write_param = write_char,
             .write_end = AC_NULL,
-            .data = AC_NULL,
     };
 
     ac_va_start(args, format);
@@ -385,11 +386,6 @@ ac_uint ac_printf(const char *format, ...) {
     ac_va_end(args);
     return writer.count;
 }
-
-typedef struct {
-  ac_u8* out_buff;
-  ac_uint out_buff_len;
-} sprintf_data;
 
 static const char* sprintf_get_buff(ac_writer *writer) {
   ((ac_u8*)(writer->data))[writer->count] = 0;
@@ -401,15 +397,30 @@ static void sprintf_write_beg(ac_writer* writer) {
 }
 
 static void sprintf_write_param(ac_writer* writer, void* param) {
-  sprintf_data* data = (sprintf_data*)writer->data;
-  if (writer->count < (data->out_buff_len - 1)) {
-    data->out_buff[writer->count++] = ((ac_u8)(((ac_uptr)param) & 0xff));
+  if (writer->count < (writer->max_len - 1)) {
+    ((ac_u8*)(writer->data))[writer->count++] = ((ac_u8)(((ac_uptr)param) & 0xff));
   }
 }
 
 static void sprintf_write_end(ac_writer* writer) {
-  sprintf_data* data = (sprintf_data*)writer->data;
-  data->out_buff[writer->count] = 0;
+  ((ac_u8*)(writer->data))[writer->count] = 0;
+}
+
+/**
+ * Initialize a buffer writer
+ */
+ac_writer* ac_writer_buffer_init(ac_writer* writer, ac_u8* out_buff,
+    ac_uint out_buff_len) {
+
+  writer->count = 0;
+  writer->max_len = out_buff_len;
+  writer->data = out_buff;
+  writer->get_buff = sprintf_get_buff;
+  writer->write_beg = sprintf_write_beg;
+  writer->write_param = sprintf_write_param;
+  writer->write_end = sprintf_write_end;
+
+  return writer;
 }
 
 /**
@@ -441,15 +452,15 @@ ac_uint ac_sprintf(ac_u8* out_buff, ac_uint out_buff_len,
     out_buff[0] = 0;
     return 0;
   }
-  sprintf_data data = { .out_buff = out_buff, .out_buff_len = out_buff_len };
 
   ac_writer writer = {
           .count = 0,
+          .max_len = out_buff_len,
+          .data = out_buff,
           .get_buff = sprintf_get_buff,
           .write_beg = sprintf_write_beg,
           .write_param = sprintf_write_param,
           .write_end = sprintf_write_end,
-          .data = &data,
   };
 
   ac_va_start(args, format);

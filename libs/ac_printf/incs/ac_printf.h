@@ -44,12 +44,14 @@ typedef const char* (*ac_get_buff_fn)(ac_writer* this);
  */
 typedef struct _ac_writer {
     ac_uint count;                  // Number of character written since last write_beg call
+    ac_uint max_len;                // max_len to output, only used under some conditons, for
+                                    // instance by a buffer writer.
+    void* data;                     // Typically a buffer or the writers control data
     ac_get_buff_fn get_buff;        // Called at anytime and the contents of the buffer
                                     // or an empty string.
     ac_write_end_fn write_beg;      // Called before first writeParam, optional maybe ac_Null
     ac_write_param_fn write_param;  // Called to write the parameter
     ac_write_end_fn write_end;      // Called after last writeParam, optional maybe ac_Null
-    void* data;                     // Typically a pointer to the writers control data
 } ac_writer;
 
 /**
