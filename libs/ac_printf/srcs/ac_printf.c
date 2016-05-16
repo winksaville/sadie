@@ -25,8 +25,6 @@
 #include <ac_arg.h>
 //#include <ac_debug_assert.h>
 
-#define NO_LEADING_0 AC_FALSE
-#define RADIX16_LEADING_0 AC_TRUE
 
 /**
  * Write a character using seL4_PutChar
@@ -62,8 +60,7 @@ static ac_u32 write_str(ac_writer *writer, char *str) {
  * Output an unsigned int value
  */
 static ac_u32 write_uval(
-        ac_writer* writer, ac_u64 val, ac_uint sz_val_in_bytes,
-        ac_bool radix16Leading0, ac_uint radix) {
+        ac_writer* writer, ac_u64 val, ac_uint sz_val_in_bytes, ac_uint radix) {
     static const char val_to_char[] = "0123456789abcdef";
     ac_u32 count = 0;
     char result[65];
@@ -71,7 +68,7 @@ static ac_u32 write_uval(
     // Validate radix
     if ((radix <= 1) || (radix > sizeof(val_to_char))) {
         count = write_str(writer, "Bad Radix ");
-        count += write_uval(writer, sz_val_in_bytes, radix, NO_LEADING_0, 10);
+        count += write_uval(writer, sz_val_in_bytes, radix, 10);
     } else {
         ac_sint idx;
         for (idx = 0; idx < sizeof(result); idx++) {
@@ -82,7 +79,7 @@ static ac_u32 write_uval(
             }
         }
         count = idx + 1;
-        if ((radix == 16) && radix16Leading0) {
+        if ((radix == 16) && writer->leading_0) {
             ac_sint pad0Count = (sz_val_in_bytes * 2) - count;
             count += pad0Count;
             while (pad0Count-- > 0) {
@@ -100,16 +97,14 @@ static ac_u32 write_uval(
  * Output an signed int val
  */
 static ac_u32 write_sval(
-        ac_writer* writer, ac_s64 val, ac_uint sz_val_in_bytes,
-        ac_bool radix16Leading0, ac_uint radix) {
+        ac_writer* writer, ac_s64 val, ac_uint sz_val_in_bytes, ac_uint radix) {
     ac_u32 count = 0;
     if (val < 0) {
         writer->write_param(writer, cast_to_write_param('-'));
         count += 1;
         val = -val;
     }
-    return count + write_uval(writer, val, sizeof(ac_uint),
-        NO_LEADING_0, 10);
+    return count + write_uval(writer, val, sizeof(ac_uint), 10);
 }
 
 /**
@@ -246,22 +241,22 @@ static ac_u32 formatter(ac_writer* writer, char const* format, ac_va_list args) 
                 }
                 case 'b': {
                     count += write_uval(writer, ac_va_arg(args, ac_uint),
-                       sizeof(ac_uint), NO_LEADING_0, 2);
+                       sizeof(ac_uint), 2);
                     break;
                 }
                 case 'd': {
                     count += write_sval(writer, ac_va_arg(args, ac_sint),
-                       sizeof(ac_uint), NO_LEADING_0, 2);
+                       sizeof(ac_uint), 2);
                     break;
                 }
                 case 'u': {
                     count += write_uval(writer, ac_va_arg(args, ac_uint),
-                        sizeof(ac_uint), NO_LEADING_0, 10);
+                        sizeof(ac_uint), 10);
                     break;
                 }
                 case 'x': {
                     count += write_uval(writer, ac_va_arg(args, ac_uint),
-                        sizeof(ac_uint), NO_LEADING_0, 16);
+                        sizeof(ac_uint), 16);
                     break;
                 }
                 case 'l': {
@@ -274,19 +269,19 @@ static ac_u32 formatter(ac_writer* writer, char const* format, ac_va_list args) 
                     if (ac_strncmp("b", format, 1) == 0) {
                         format += 1;
                         count += write_uval(writer, ac_va_arg(args, ac_u64),
-                            sizeof(ac_u64), NO_LEADING_0, 2);
+                            sizeof(ac_u64), 2);
                     } else if (ac_strncmp("d", format, 1) == 0) {
                         format += 1;
                         count += write_sval(writer, ac_va_arg(args, ac_u64),
-                            sizeof(ac_u64), NO_LEADING_0, 10);
+                            sizeof(ac_u64), 10);
                     } else if (ac_strncmp("u", format, 1) == 0) {
                         format += 1;
                         count += write_uval(writer, ac_va_arg(args, ac_u64),
-                            sizeof(ac_u64), NO_LEADING_0, 10);
+                            sizeof(ac_u64), 10);
                     } else if (ac_strncmp("x", format, 1) == 0) {
                         format += 1;
                         count += write_uval(writer, ac_va_arg(args, ac_u64),
-                            sizeof(ac_u64), NO_LEADING_0, 16);
+                            sizeof(ac_u64), 16);
                     } else {
                         if (longlong) {
                           count += write_str(writer, "%ll");
@@ -297,8 +292,9 @@ static ac_u32 formatter(ac_writer* writer, char const* format, ac_va_list args) 
                     break;
                 }
                 case 'p': {
+                    writer->leading_0 = AC_TRUE;
                     count += write_uval(writer, (ac_u64)(ac_uptr)ac_va_arg(args, void*),
-                        sizeof(void*), RADIX16_LEADING_0, 16);
+                        sizeof(void*), 16);
                     break;
                 }
                 default: {
