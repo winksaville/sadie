@@ -25,6 +25,15 @@
 #include <ac_arg.h>
 //#include <ac_debug_assert.h>
 
+typedef struct ac_printf_t {
+  ac_printf_format_proc format_proc;
+  ac_u8 ch;
+} ac_printf_t;
+
+#define AC_PRINTF_TS_MAX 16
+static const ac_uint ac_printf_ts_max = AC_PRINTF_TS_MAX;
+static ac_uint ac_printf_ts_count = 0;
+static ac_printf_t ac_printf_ts[AC_PRINTF_TS_MAX];
 
 /**
  * Write a character using seL4_PutChar
@@ -94,6 +103,14 @@ static ac_u32 write_uval(
 }
 
 /**
+ * Write an unsigned value
+ */
+ac_u32 ac_printf_write_uval(
+        ac_writer* writer, ac_u64 val, ac_uint sz_val_in_bytes, ac_uint radix) {
+  return write_uval(writer, val, sz_val_in_bytes, radix);
+}
+
+/**
  * Output an signed int val
  */
 static ac_u32 write_sval(
@@ -105,6 +122,14 @@ static ac_u32 write_sval(
         val = -val;
     }
     return count + write_uval(writer, val, sizeof(ac_uint), 10);
+}
+
+/**
+ * Write a signed value
+ */
+ac_u32 ac_printf_write_sval(
+        ac_writer* writer, ac_s64 val, ac_uint sz_val_in_bytes, ac_uint radix) {
+  return write_sval(writer, val, sz_val_in_bytes, radix);
 }
 
 /**
@@ -298,9 +323,22 @@ static ac_u32 formatter(ac_writer* writer, char const* format, ac_va_list args) 
                     break;
                 }
                 default: {
-                    writer->write_param(writer, cast_to_write_param(ch));
-                    writer->write_param(writer, cast_to_write_param(next_ch));
-                    count += 1;
+                    // Check the ac_printf_t's list
+                    ac_bool processed_format_ch = AC_FALSE;
+                    for (ac_uint i = 0; i < ac_printf_ts_max; i++) {
+                        if (ac_printf_ts[i].ch == next_ch) {
+                            ac_printf_ts[i].format_proc(writer, next_ch, args);
+                            count += 1;
+                            processed_format_ch = AC_TRUE;
+                            break;
+                        }
+                    }
+
+                    if (!processed_format_ch) {
+                        writer->write_param(writer, cast_to_write_param(ch));
+                        writer->write_param(writer, cast_to_write_param(next_ch));
+                        count += 1;
+                    }
                     break;
                 }
             }
@@ -446,4 +484,26 @@ ac_uint ac_sprintf(ac_u8* out_buff, ac_uint out_buff_len,
   formatter(&writer, format, args);
   ac_va_end(args);
   return writer.count;
+}
+
+/**
+ * Register a format processor for ch
+ *
+ * @param fmt_proc is the format processing function
+ * @param ch is the format character which causes fn to be invoked.
+ *
+ * @return 0 if registered successfully
+ */
+ac_uint ac_printf_register_format_proc(ac_printf_format_proc format_proc, ac_u8 ch) {
+  ac_bool ret_val;
+  ac_uint idx = __atomic_fetch_add(&ac_printf_ts_count, 1, __ATOMIC_ACQUIRE);
+  if (idx < ac_printf_ts_max) {
+    ac_printf_ts[idx].format_proc = format_proc;
+    ac_printf_ts[idx].ch = ch;
+    ret_val = 0; // OK
+  } else {
+    __atomic_store_n(&ac_printf_ts_count, ac_printf_ts_max, __ATOMIC_RELEASE);
+    ret_val = 1; // Error
+  }
+  return ret_val;
 }

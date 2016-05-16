@@ -144,6 +144,13 @@ static inline ac_bool test_printing_result(
 })
 
 
+static ac_uint printf_t_format_proc(ac_writer* writer, ac_u8 ch, ac_va_list args) {
+  ac_uint count = ac_printf_write_sval(writer, ac_va_arg(args, ac_u64),
+      sizeof(ac_u64), 10);
+  ac_debug_printf("printf_t_format_proc ch=%c count=%d\n", ch, count);
+  return count;
+}
+
 int main(void) {
   ac_bool failure = AC_FALSE;
   ac_uint count;
@@ -228,6 +235,10 @@ int main(void) {
   ac_uint min_width = 1;
   ac_uint precision = 3;
   failure |= TEST_PRINTING_3_PARAMS("%+-#0*.*d", min_width, precision, 123, "123");
+
+  // Test a ac_printf_format_proc
+  failure |= (ac_printf_register_format_proc(printf_t_format_proc, 't') != 0);
+  failure |= TEST_PRINTING_2_PARAMS("%t %c", 123ll, 'c', "123 c");
 
   // In printf statements constant negative numbers must be cast
   // so they work both 32 and 64 bit environments.

@@ -17,6 +17,7 @@
 #ifndef SADIE_LIBS_AC_PRINTF_INCS_PRINTF_H
 #define SADIE_LIBS_AC_PRINTF_INCS_PRINTF_H
 
+#include <ac_arg.h>
 #include <ac_inttypes.h>
 
 // Cast to a void * for use with valid ac_Write_fn param
@@ -58,6 +59,33 @@ typedef struct _ac_writer {
     ac_write_param_fn write_param;  // Called to write the parameter
     ac_write_end_fn write_end;      // Called after last writeParam, optional maybe ac_Null
 } ac_writer;
+
+/**
+ * A procedure invoked when a format ch is processed
+ */
+typedef ac_uint (*ac_printf_format_proc)(ac_writer* writer, ac_u8 ch, ac_va_list args);
+
+/**
+ * Write an unsigned value
+ */
+ac_u32 ac_printf_write_uval(
+        ac_writer* writer, ac_u64 val, ac_uint sz_val_in_bytes, ac_uint radix);
+
+/**
+ * Write a signed value
+ */
+ac_u32 ac_printf_write_sval(
+        ac_writer* writer, ac_s64 val, ac_uint sz_val_in_bytes, ac_uint radix);
+
+/**
+ * Register a format processor for ch
+ *
+ * @param fn is the format processing function
+ * @param ch is the format character which causes fn to be invoked.
+ *
+ * @return 0 if registered successfully
+ */
+ac_uint ac_printf_register_format_proc(ac_printf_format_proc format_proc, ac_u8 ch);
 
 /**
  * Print a formatted string to the writer. This supports a
