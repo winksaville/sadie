@@ -22,6 +22,15 @@
 
 #include <ac_inttypes.h>
 
+// Set t AC_TRUE to init MCR's. Right now they
+// are causing ac_exception_undef_handler and
+// ac_exception_reset_handler to fire so they
+// are NOT initialized.
+#define INIT_MCRS AC_FALSE
+
+// Divide counter by 64
+#define DIVIDE_BY_64 AC_FALSE
+
 static ac_u32 divider;
 static ac_u32 freq;
 
@@ -33,41 +42,29 @@ ac_u32 ac_tsc_impl_arm_overflow;
  * Zero counters and enable divider
  */
 static void tsc_zero_counters(ac_bool enable_divider) {
-  ac_u32 value = 0x7; // Enable all counters and reset the to 0
-  if (enable_divider) {
-    divider = 64;
-    value |= 0x8; // Divide by 64
-  } else {
-    divider = 1;
-  }
-  freq = 1000000;
-  ac_tsc_impl_arm_overflow = 0;
-
-#if 0
-  // Disable MCR's as they are causing ac_exception_undef_handler
-  // and ac_exception_reset_handler to fire.
-
-  __asm__ volatile ("MCR p15, 0, %0, c9, c12, 0\t\n" :: "r"(value));
-  __asm__ volatile ("MCR p15, 0, %0, c9, c12, 1\t\n" :: "r"(0x8000000f));
-  __asm__ volatile ("MCR p15, 0, %0, c9, c12, 3\t\n" :: "r"(0x8000000f));
-#endif
 }
 
 /**
  * Frequency of ac_tsc in cycles per second.
  */
 ac_u64 ac_tsc_freq() {
-  return (ac_u64)freq / divider;
+  return (ac_u64)freq;
+}
+
+/**
+ * Set the frequency that will be returned by ac_tsc_freq.
+ * This is primiarly used for testing as freq us usually
+ * initialized by ac_tsc_init.
+ */
+void ac_tsc_set_freq(ac_u64 f) {
+  freq = f;
 }
 
 /**
  * Initialize module
  */
 void ac_tsc_init(void) {
-#if 0
-  // Disable MCR's as they are causing ac_exception_undef_handler
-  // and ac_exception_reset_handler to fire.
-
+#if INIT_MCRS
   // Allow user mode to access
   __asm__ volatile ("MCR p15, 0, %0, C9, C14, 0\n\t" :: "r"(1));
 
@@ -75,5 +72,23 @@ void ac_tsc_init(void) {
   __asm__ volatile ("MCR p15, 0, %0, C9, C14, 2\n\t" :: "r"(0x8000000f));
 #endif
 
+
+  ac_u32 value = 0x7; // Enable all counters and reset the to 0
+#ifdef DIVIDE_BY_64
+    divider = 64;
+    value |= 0x8; // Divide by 64
+#else
+    divider = 1;
+#endif
+
+  // TODO: Measure the freq
+  freq = 1000000 / divider;
+  ac_tsc_impl_arm_overflow = 0;
+
+#if INIT_MCRS
+  __asm__ volatile ("MCR p15, 0, %0, c9, c12, 0\t\n" :: "r"(value));
+  __asm__ volatile ("MCR p15, 0, %0, c9, c12, 1\t\n" :: "r"(0x8000000f));
+  __asm__ volatile ("MCR p15, 0, %0, c9, c12, 3\t\n" :: "r"(0x8000000f));
+#endif
   tsc_zero_counters(AC_FALSE);
 }

@@ -35,6 +35,15 @@ ac_u64 ac_tsc_freq() {
 }
 
 /**
+ * Set the frequency that will be returned by ac_tsc_freq.
+ * This is primiarly used for testing as freq us usually
+ * initialized by ac_tsc_init.
+ */
+void ac_tsc_set_freq(ac_u64 f) {
+  freq = f;
+}
+
+/**
  * Initialize module
  */
 void ac_tsc_init(void) {

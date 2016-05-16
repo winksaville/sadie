@@ -26,9 +26,11 @@
 void ac_tsc_init(void);
 
 /**
- * Zero counters and enable divider
+ * Set the frequency that will be returned by ac_tsc_freq.
+ * This is primiarly used for testing as freq us usually
+ * initialized by ac_tsc_init.
  */
-//void ac_cpu_perf_zero_counters(ac_bool enable_divider);
+void ac_tsc_set_freq(ac_u64 f);
 
 /**
  * Frequency of tsc in cycles per second.
