@@ -53,20 +53,21 @@ ac_uint ac_ticks_to_duration_str(ac_u64 ticks, ac_bool leading_0, ac_uint precis
   for (i = 0; i < precision; i++) {
     up *= 10;
   }
-  ac_u64 rounded = ticks + (AC_U64_DIV_ROUND_UP(freq, up));
-  ac_debug_printf("ticks=%lu precision=%d freq=%ld up=%lu f/up=%lu rounded=%lu\n",
-      ticks, precision, freq, up, AC_U64_DIV_ROUND_UP(freq, up), rounded);
+  ac_u64 rounded_freq = up <= freq ? (AC_U64_DIV_ROUND_UP(freq, up)) : 0;
+  ac_u64 rounded = ticks + rounded_freq;
+  ac_debug_printf("ticks=%lu precision=%d freq=%ld up=%lu rounded_freq=%lu rounded=%lu\n",
+      ticks, precision, freq, up, rounded_freq, rounded);
   ticks = rounded;
 
-  ac_u64 sub_secs = ticks % freq;
   ac_u64 secs = ticks / freq;
+  ac_u64 sub_sec_ticks = ticks % freq;
   ac_u64 mins = 0;
   ac_u64 hrs = 0;
   ac_u64 days = 0;
   ac_u64 years = 0;
 
-  ac_debug_printf("freq=%lu precison=%d secs=%lu sub_secs=%lu\n",
-      freq, precision, secs, sub_secs);
+  ac_debug_printf("freq=%lu precison=%d secs=%lu sub_sec_ticks=%lu\n",
+      freq, precision, secs, sub_sec_ticks);
   if (secs >= AC_SECS_PER_YEAR) {
     years = secs / AC_SECS_PER_YEAR;
     secs = secs % AC_SECS_PER_YEAR;
@@ -83,21 +84,24 @@ ac_uint ac_ticks_to_duration_str(ac_u64 ticks, ac_bool leading_0, ac_uint precis
     mins = secs / AC_SECS_PER_MIN;
     secs = secs % AC_SECS_PER_MIN;
   }
-  ac_debug_printf("years=%lu days=%lu hrs=%lu mins=%lu secs=%lu sub_secs=%lu\n",
-      years, days, hrs, mins, secs, sub_secs);
+  ac_debug_printf("years=%lu days=%lu hrs=%lu mins=%lu secs=%lu sub_sec_ticks=%lu\n",
+      years, days, hrs, mins, secs, sub_sec_ticks);
 
   if (precision > 0) {
+    ac_debug_printf(" freq=%ld precision=%ld\n", freq, precision);
+    // Peform "long" division one decimal digit at a time.
     for (i = 0;
-         (sub_secs > 0) && (i < precision) &&
-           (i < (AC_ARRAY_COUNT(ssi)-1)) && (freq >= 10);
+         (sub_sec_ticks > 0) && (i < precision) && (i < (AC_ARRAY_COUNT(ssi)-1));
          i++) {
-      ac_debug_printf("sub_secs=%ld", freq, sub_secs);
-      freq = AC_U64_DIV_ROUND_UP(freq, 10);
-      ssi[i] = '0' + (sub_secs / freq);
-      sub_secs = sub_secs % freq;
-      ac_debug_printf(" precision=%d ssi[%d]=%c\n", precision, i, ssi[i]);
+      ac_debug_printf("sub_sec_ticks=%ld", sub_sec_ticks);
+      sub_sec_ticks *= 10;
+      ac_debug_printf(" sub_sec_ticks*10=%ld", sub_sec_ticks);
+      ac_u8 digit = sub_sec_ticks / freq;
+      ac_debug_printf(" digit=%ld digit*freq=%ld", digit, digit * freq);
+      ssi[i] = '0' + digit;
+      ac_debug_printf(" ssi[%d]=%c\n",  i, ssi[i]);
+      sub_sec_ticks -= (digit * freq);
     }
-
     for (; (i < precision) && (i < (AC_ARRAY_COUNT(ssi)-1));
          i++) {
       ssi[i] = '0';
