@@ -35,6 +35,7 @@
 #include <ac_sort.h>
 #include <ac_string.h>
 #include <ac_thread.h>
+#include <ac_time.h>
 #include <ac_tsc.h>
 
 #if 0
@@ -257,6 +258,9 @@ void ac_init(ac_uptr ptr, ac_uint word) {
 
   // Initialize keyboard module
   ac_keyboard_early_init();
+
+  // Initialize ac_time
+  ac_time_init();
 
   // Enable interrupts
   sti();

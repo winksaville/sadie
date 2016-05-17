@@ -18,6 +18,8 @@
 
 #include <ac_time.h>
 
+#include <ac_arg.h>
+#include <ac_assert.h>
 #include <ac_inttypes.h>
 #include <ac_intmath.h>
 #include <ac_string.h>
@@ -139,4 +141,24 @@ ac_uint ac_ticks_to_duration_str(ac_u64 ticks, ac_bool leading_0, ac_uint precis
   count += ac_sprintf(&out_buff[count], out_buff_len - count, "s");
 
   return count;
+}
+
+/**
+ * Add 't' as a ac_printf format character for time.
+ */
+static void ac_printf_time_format_proc(ac_writer* writer, ac_u8 ch, ac_va_list args) {
+  ac_u8 buff[64];
+
+  ac_ticks_to_duration_str(ac_va_arg(args, ac_u64), writer->leading_0,
+        writer->precision, buff, AC_ARRAY_COUNT(buff));
+  ac_printf_write_str(writer, (char*)buff);
+}
+
+/**
+ * Initialize ac_time.
+ */
+__attribute__((constructor))
+void ac_time_init(void) {
+  ac_uint error = ac_printf_register_format_proc(ac_printf_time_format_proc, 't');
+  ac_assert(error == 0);
 }

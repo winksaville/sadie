@@ -103,6 +103,8 @@ done:
   //bl  ac_cpu_perf_init // Does NOT work on qemu
   bl  ac_interrupts_cpu_enable
 
+  bl  ac_time_init
+
   ldmfd sp!, {pc} // Return
 
 vector_table:
