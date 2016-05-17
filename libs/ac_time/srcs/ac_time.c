@@ -154,11 +154,24 @@ static void ac_printf_time_format_proc(ac_writer* writer, ac_u8 ch, ac_va_list a
   ac_printf_write_str(writer, (char*)buff);
 }
 
+static ac_bool early_init = AC_FALSE;
+
+/**
+ * Initialize ac_time early.
+ */
+__attribute__((constructor))
+void ac_time_early_init(void) {
+  ac_uint error = ac_printf_register_format_proc(ac_printf_time_format_proc, 't');
+  ac_assert(error == 0);
+  early_init = AC_TRUE;
+  ac_printf("ac_time_early_init:-\n");
+}
+
 /**
  * Initialize ac_time.
  */
-__attribute__((constructor))
 void ac_time_init(void) {
-  ac_uint error = ac_printf_register_format_proc(ac_printf_time_format_proc, 't');
-  ac_assert(error == 0);
+  if (!early_init) {
+    ac_time_early_init();
+  }
 }

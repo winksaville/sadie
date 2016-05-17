@@ -260,7 +260,7 @@ void ac_init(ac_uptr ptr, ac_uint word) {
   ac_keyboard_early_init();
 
   // Initialize ac_time
-  ac_time_init();
+  ac_time_early_init();
 
   // Enable interrupts
   sti();

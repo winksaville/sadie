@@ -51,6 +51,11 @@ ac_uint ac_ticks_to_duration_str(ac_u64 ticks, ac_bool leading0, ac_uint precisi
     ac_u8* out_buff, ac_uint out_buff_len);
 
 /**
+ * Initialize ac_time early.
+ */
+void ac_time_early_init(void);
+
+/**
  * Initialize ac_time module.
  */
 void ac_time_init(void);
