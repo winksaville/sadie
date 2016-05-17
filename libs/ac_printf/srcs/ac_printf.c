@@ -46,39 +46,50 @@ static const char* ret_empty(ac_writer* this) {
  * Write a character using seL4_PutChar
  */
 static void write_char(ac_writer* this, void* param) {
-    this->count += 1;
+    AC_UNUSED(this);
     ac_putchar((ac_u8)(((ac_uptr)param) & 0xff));
+    this->count += 1;
+}
+
+/**
+ *  Write a character
+ */
+void ac_printf_write_char(ac_writer* writer, char ch) {
+    writer->write_param(writer, cast_to_write_param(ch));
 }
 
 /**
  * Output a string
  */
-static ac_u32 write_str(ac_writer *writer, char *str) {
-    ac_u32 count = 0;
+static void write_str(ac_writer *writer, char *str) {
     char ch;
 
     while((ch = *str++)) {
         writer->write_param(writer, cast_to_write_param(ch));
-        count += 1;
     }
+}
 
-    return count;
+/**
+ * Write a string
+ */
+void ac_printf_write_str(ac_writer* writer, char* str) {
+  write_str(writer, str);
 }
 
 /**
  * Output an unsigned int value
  */
-static ac_u32 write_uval(
+static void write_uval(
         ac_writer* writer, ac_u64 val, ac_uint sz_val_in_bytes, ac_uint radix) {
     static const char val_to_char[] = "0123456789abcdef";
-    ac_u32 count = 0;
     char result[65];
 
     // Validate radix
     if ((radix <= 1) || (radix > sizeof(val_to_char))) {
-        count = write_str(writer, "Bad Radix ");
-        count += write_uval(writer, sz_val_in_bytes, radix, 10);
+        write_str(writer, "Bad Radix ");
+        write_uval(writer, sz_val_in_bytes, radix, 10);
     } else {
+        ac_u32 count = 0;
         ac_sint idx;
         for (idx = 0; idx < sizeof(result); idx++) {
             result[idx] = val_to_char[val % radix];
@@ -90,7 +101,6 @@ static ac_u32 write_uval(
         count = idx + 1;
         if ((radix == 16) && writer->leading_0) {
             ac_sint pad0Count = (sz_val_in_bytes * 2) - count;
-            count += pad0Count;
             while (pad0Count-- > 0) {
                 writer->write_param(writer, cast_to_write_param('0'));
             }
@@ -99,37 +109,34 @@ static ac_u32 write_uval(
             writer->write_param(writer, cast_to_write_param(result[idx]));
         }
     }
-    return count;
 }
 
 /**
  * Write an unsigned value
  */
-ac_u32 ac_printf_write_uval(
+void ac_printf_write_uval(
         ac_writer* writer, ac_u64 val, ac_uint sz_val_in_bytes, ac_uint radix) {
-  return write_uval(writer, val, sz_val_in_bytes, radix);
+  write_uval(writer, val, sz_val_in_bytes, radix);
 }
 
 /**
  * Output an signed int val
  */
-static ac_u32 write_sval(
+static void write_sval(
         ac_writer* writer, ac_s64 val, ac_uint sz_val_in_bytes, ac_uint radix) {
-    ac_u32 count = 0;
     if (val < 0) {
         writer->write_param(writer, cast_to_write_param('-'));
-        count += 1;
         val = -val;
     }
-    return count + write_uval(writer, val, sizeof(ac_uint), 10);
+    write_uval(writer, val, sizeof(ac_uint), 10);
 }
 
 /**
  * Write a signed value
  */
-ac_u32 ac_printf_write_sval(
+void ac_printf_write_sval(
         ac_writer* writer, ac_s64 val, ac_uint sz_val_in_bytes, ac_uint radix) {
-  return write_sval(writer, val, sz_val_in_bytes, radix);
+    write_sval(writer, val, sz_val_in_bytes, radix);
 }
 
 /**
@@ -163,26 +170,23 @@ static ac_uint get_number(char ch, char** format) {
  *
  * Returns number of characters consumed
  */
-static ac_u32 formatter(ac_writer* writer, char const* format, ac_va_list args) {
-    ac_u32 count = 0;
-
+static void formatter(ac_writer* writer, char const* format, ac_va_list args) {
     // Check inputs
-    if (IS_AC_NULL(writer) || IS_AC_NULL(formatter)) {
+    if (IS_AC_NULL(writer) || IS_AC_NULL(format)) {
         goto done;
     }
 
     if (writer->write_beg != AC_NULL) {
         writer->write_beg(writer);
     }
-    char ch;
+    ac_u8 ch;
     while ((ch = *format++) != 0) {
         if (ch != '%') {
             // Not the format escape character
             writer->write_param(writer, cast_to_write_param(ch));
-            count += 1;
         } else {
             // Is a '%' so get the next character
-            char next_ch = *format++;
+            ac_u8 next_ch = *format++;
 
             // Get Flags
             writer->sign = ' ';
@@ -192,7 +196,6 @@ static ac_u32 formatter(ac_writer* writer, char const* format, ac_va_list args) 
             while (flags) {
               switch (next_ch) {
                 case 0:
-                  count += 1;
                   goto done;
                 case '+':
                 case '-':
@@ -241,12 +244,10 @@ static ac_u32 formatter(ac_writer* writer, char const* format, ac_va_list args) 
             }
             switch (next_ch) {
                 case 0:
-                    count += 1;
                     goto done;
                 case '%': {
                     // was %% just echo a '%'
                     writer->write_param(writer, cast_to_write_param(next_ch));
-                    count += 1;
                     break;
                 }
                 case 'c': {
@@ -255,33 +256,29 @@ static ac_u32 formatter(ac_writer* writer, char const* format, ac_va_list args) 
                       c = 0xff;
                     }
                     writer->write_param(writer, cast_to_write_param(c));
-                    count += 1;
                     break;
                 }
                 case 's': {
                     // Handle string specifier
                     char *s = ac_va_arg(args, char *);
-                    count += write_str(writer, s);
+                    write_str(writer, s);
                     break;
                 }
                 case 'b': {
-                    count += write_uval(writer, ac_va_arg(args, ac_uint),
+                    write_uval(writer, ac_va_arg(args, ac_uint),
                        sizeof(ac_uint), 2);
                     break;
                 }
                 case 'd': {
-                    count += write_sval(writer, ac_va_arg(args, ac_sint),
-                       sizeof(ac_uint), 2);
+                    write_sval(writer, ac_va_arg(args, ac_sint), sizeof(ac_uint), 2);
                     break;
                 }
                 case 'u': {
-                    count += write_uval(writer, ac_va_arg(args, ac_uint),
-                        sizeof(ac_uint), 10);
+                    write_uval(writer, ac_va_arg(args, ac_uint), sizeof(ac_uint), 10);
                     break;
                 }
                 case 'x': {
-                    count += write_uval(writer, ac_va_arg(args, ac_uint),
-                        sizeof(ac_uint), 16);
+                    write_uval(writer, ac_va_arg(args, ac_uint), sizeof(ac_uint), 16);
                     break;
                 }
                 case 'l': {
@@ -293,33 +290,28 @@ static ac_u32 formatter(ac_writer* writer, char const* format, ac_va_list args) 
                     }
                     if (ac_strncmp("b", format, 1) == 0) {
                         format += 1;
-                        count += write_uval(writer, ac_va_arg(args, ac_u64),
-                            sizeof(ac_u64), 2);
+                        write_uval(writer, ac_va_arg(args, ac_u64), sizeof(ac_u64), 2);
                     } else if (ac_strncmp("d", format, 1) == 0) {
                         format += 1;
-                        count += write_sval(writer, ac_va_arg(args, ac_u64),
-                            sizeof(ac_u64), 10);
+                        write_sval(writer, ac_va_arg(args, ac_u64), sizeof(ac_u64), 10);
                     } else if (ac_strncmp("u", format, 1) == 0) {
                         format += 1;
-                        count += write_uval(writer, ac_va_arg(args, ac_u64),
-                            sizeof(ac_u64), 10);
+                        write_uval(writer, ac_va_arg(args, ac_u64), sizeof(ac_u64), 10);
                     } else if (ac_strncmp("x", format, 1) == 0) {
                         format += 1;
-                        count += write_uval(writer, ac_va_arg(args, ac_u64),
-                            sizeof(ac_u64), 16);
+                        write_uval(writer, ac_va_arg(args, ac_u64), sizeof(ac_u64), 16);
                     } else {
                         if (longlong) {
-                          count += write_str(writer, "%ll");
+                          write_str(writer, "%ll");
                         } else {
-                          count += write_str(writer, "%l");
+                          write_str(writer, "%l");
                         }
                     }
                     break;
                 }
                 case 'p': {
                     writer->leading_0 = AC_TRUE;
-                    count += write_uval(writer, (ac_u64)(ac_uptr)ac_va_arg(args, void*),
-                        sizeof(void*), 16);
+                    write_uval(writer, (ac_u64)(ac_uptr)ac_va_arg(args, void*), sizeof(void*), 16);
                     break;
                 }
                 default: {
@@ -328,7 +320,6 @@ static ac_u32 formatter(ac_writer* writer, char const* format, ac_va_list args) 
                     for (ac_uint i = 0; i < ac_printf_ts_max; i++) {
                         if (ac_printf_ts[i].ch == next_ch) {
                             ac_printf_ts[i].format_proc(writer, next_ch, args);
-                            count += 1;
                             processed_format_ch = AC_TRUE;
                             break;
                         }
@@ -337,19 +328,16 @@ static ac_u32 formatter(ac_writer* writer, char const* format, ac_va_list args) 
                     if (!processed_format_ch) {
                         writer->write_param(writer, cast_to_write_param(ch));
                         writer->write_param(writer, cast_to_write_param(next_ch));
-                        count += 1;
                     }
                     break;
                 }
             }
         }
     }
+done:
     if (writer->write_end != AC_NULL) {
         writer->write_end(writer);
     }
-
-done:
-    return count;
 }
 
 /**
@@ -379,7 +367,7 @@ const char* ac_formatter(ac_writer* writer, const char *format, ...) {
 /**
  * Print a formatted string to the writer function.
  *
- * Returns writer->count which should be the number of characters printed
+ * Returns the number of characters printed
  */
 ac_uint ac_printfw(ac_writer* writer, const char *format, ...) {
     ac_va_list args;
@@ -424,9 +412,11 @@ static void sprintf_write_beg(ac_writer* writer) {
 }
 
 static void sprintf_write_param(ac_writer* writer, void* param) {
+  ac_u32 count = writer->count;
   if (writer->count < (writer->max_len - 1)) {
-    ((ac_u8*)(writer->data))[writer->count++] = ((ac_u8)(((ac_uptr)param) & 0xff));
+    ((ac_u8*)(writer->data))[count++] = ((ac_u8)(((ac_uptr)param) & 0xff));
   }
+  writer->count = count;
 }
 
 static void sprintf_write_end(ac_writer* writer) {
@@ -488,6 +478,8 @@ ac_uint ac_sprintf(ac_u8* out_buff, ac_uint out_buff_len,
 
 /**
  * Register a format processor for ch
+ * TODO: Check for ch already registered, but also keep
+ * it thread safe so it needs to be serialized.
  *
  * @param fmt_proc is the format processing function
  * @param ch is the format character which causes fn to be invoked.
@@ -496,6 +488,7 @@ ac_uint ac_sprintf(ac_u8* out_buff, ac_uint out_buff_len,
  */
 ac_uint ac_printf_register_format_proc(ac_printf_format_proc format_proc, ac_u8 ch) {
   ac_bool ret_val;
+
   ac_uint idx = __atomic_fetch_add(&ac_printf_ts_count, 1, __ATOMIC_ACQUIRE);
   if (idx < ac_printf_ts_max) {
     ac_printf_ts[idx].format_proc = format_proc;
@@ -505,5 +498,6 @@ ac_uint ac_printf_register_format_proc(ac_printf_format_proc format_proc, ac_u8 
     __atomic_store_n(&ac_printf_ts_count, ac_printf_ts_max, __ATOMIC_RELEASE);
     ret_val = 1; // Error
   }
+
   return ret_val;
 }

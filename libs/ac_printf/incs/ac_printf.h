@@ -63,18 +63,28 @@ typedef struct _ac_writer {
 /**
  * A procedure invoked when a format ch is processed
  */
-typedef ac_uint (*ac_printf_format_proc)(ac_writer* writer, ac_u8 ch, ac_va_list args);
+typedef void (*ac_printf_format_proc)(ac_writer* writer, ac_u8 ch, ac_va_list args);
+
+/**
+ *  Write a character
+ */
+void ac_printf_write_char(ac_writer* writer, char ch);
+
+/**
+ * Write a a string
+ */
+void ac_printf_write_str(ac_writer* writer, char* str);
 
 /**
  * Write an unsigned value
  */
-ac_u32 ac_printf_write_uval(
+void ac_printf_write_uval(
         ac_writer* writer, ac_u64 val, ac_uint sz_val_in_bytes, ac_uint radix);
 
 /**
  * Write a signed value
  */
-ac_u32 ac_printf_write_sval(
+void ac_printf_write_sval(
         ac_writer* writer, ac_s64 val, ac_uint sz_val_in_bytes, ac_uint radix);
 
 /**

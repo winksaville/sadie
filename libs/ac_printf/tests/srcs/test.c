@@ -144,11 +144,9 @@ static inline ac_bool test_printing_result(
 })
 
 
-static ac_uint printf_t_format_proc(ac_writer* writer, ac_u8 ch, ac_va_list args) {
-  ac_uint count = ac_printf_write_sval(writer, ac_va_arg(args, ac_u64),
-      sizeof(ac_u64), 10);
-  ac_debug_printf("printf_t_format_proc ch=%c count=%d\n", ch, count);
-  return count;
+static void printf_ff_format_proc(ac_writer* writer, ac_u8 ch, ac_va_list args) {
+  ac_printf_write_sval(writer, ac_va_arg(args, ac_u64), sizeof(ac_u64), 10);
+  ac_debug_printf("printf_ff_format_proc ch=%c count=%d\n", ch, writer->count);
 }
 
 int main(void) {
@@ -191,7 +189,6 @@ int main(void) {
   failure |= AC_TEST(better_writer.count == 3);
   failure |= AC_TEST(ac_strncmp(buffer.buff, "bye", 10) == 0);  
   failure |= AC_TEST(ac_strncmp(chars, "", 10) == 0);  
-
 
   // Define a buffer and a writer for testing printf
   ac_writer writer = {
@@ -237,8 +234,9 @@ int main(void) {
   failure |= TEST_PRINTING_3_PARAMS("%+-#0*.*d", min_width, precision, 123, "123");
 
   // Test a ac_printf_format_proc
-  failure |= (ac_printf_register_format_proc(printf_t_format_proc, 't') != 0);
-  failure |= TEST_PRINTING_2_PARAMS("%t %c", 123ll, 'c', "123 c");
+  ac_u8 xx = 0xff;
+  failure |= AC_TEST(ac_printf_register_format_proc(printf_ff_format_proc, xx) == 0);
+  failure |= TEST_PRINTING_2_PARAMS("%\xff %s", 123ll, "ff", "123 ff");
 
   // In printf statements constant negative numbers must be cast
   // so they work both 32 and 64 bit environments.
