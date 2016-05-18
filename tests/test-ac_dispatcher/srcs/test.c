@@ -70,7 +70,7 @@ static int test_dispatcher_add_rmv_acq() {
   ac_mpscfifo q1;
   ac_msg stub1;
 
-  ac_mpscfifo* pq1 = ac_init_mpscfifo(&q1, &stub1);
+  ac_mpscfifo* pq1 = ac_mpscfifo_init(&q1, &stub1);
   error |= AC_TEST(pq1 != AC_NULL);
 
   pac1 = ac_dispatcher_add_acq(pd, &ac1, &q1);
@@ -144,7 +144,7 @@ static ac_bool test_dispatching() {
   ac_mpscfifo ac1q;
   ac_msg stub1;
 
-  ac_mpscfifo* pac1q = ac_init_mpscfifo(&ac1q, &stub1);
+  ac_mpscfifo* pac1q = ac_mpscfifo_init(&ac1q, &stub1);
   error |= AC_TEST(pac1q == &ac1q);
 
   pac1 = ac_dispatcher_add_acq(pd, &ac1, &ac1q);
@@ -155,7 +155,7 @@ static ac_bool test_dispatching() {
     .cmd = 1,
     .arg = 2
   };
-  ac_add_msg(pac1q, &msg1);
+  ac_mpscfifo_add_msg(pac1q, &msg1);
 
 
   ac_debug_printf("test_dispatching: dispatch now\n");
@@ -167,7 +167,7 @@ static ac_bool test_dispatching() {
     .cmd = 1,
     .arg = 3
   };
-  ac_add_msg(pac1q, &msg2);
+  ac_mpscfifo_add_msg(pac1q, &msg2);
 
   ac_debug_printf("test_dispatching: rmv_ac\n");
   ac* pac2 = ac_dispatcher_rmv_ac(pd, pac1);

@@ -89,13 +89,13 @@ static ac_bool process_msgs(acq* pacq) {
   ac_debug_printf("process_msgs:+ pacq=%p\n", pacq);
 
   ac_bool processed_a_msg = AC_FALSE;
-  ac_msg* pmsg = ac_rmv_msg(pacq->pq);
+  ac_msg* pmsg = ac_mpscfifo_rmv_msg(pacq->pq);
   while (pmsg != AC_NULL) {
     pacq->pac->process_msg(pacq->pac, pmsg);
     // TODO: return the message to a pool.
 
     // Get next message
-    pmsg = ac_rmv_msg(pacq->pq);
+    pmsg = ac_mpscfifo_rmv_msg(pacq->pq);
     processed_a_msg = AC_TRUE;
   }
 

@@ -30,14 +30,14 @@ static ac_bool test_init_and_deinit_mpscfifo() {
 
   stub.cmd = -1;
 
-  ac_mpscfifo* pq = ac_init_mpscfifo(&q, &stub);
+  ac_mpscfifo* pq = ac_mpscfifo_init(&q, &stub);
   error |= AC_TEST(pq != AC_NULL);
   error |= AC_TEST(pq == &q);
   error |= AC_TEST(pq->phead == &stub);
   error |= AC_TEST(pq->ptail == &stub);
   error |= AC_TEST(pq->phead->pnext == AC_NULL);
 
-  ac_msg *pStub = ac_deinit_mpscfifo(pq);
+  ac_msg *pStub = ac_mpscfifo_deinit(pq);
   error |= AC_TEST(pStub == &stub);
   error |= AC_TEST(pq->phead == AC_NULL);
   error |= AC_TEST(pq->ptail == AC_NULL);
@@ -59,24 +59,24 @@ static ac_bool test_add_rmv_msg() {
 
   stub.cmd = -1;
 
-  ac_mpscfifo* pq = ac_init_mpscfifo(&q, &stub);
-  presult = ac_rmv_msg(pq);
+  ac_mpscfifo* pq = ac_mpscfifo_init(&q, &stub);
+  presult = ac_mpscfifo_rmv_msg(pq);
   error |= AC_TEST(presult == AC_NULL);
 
   msg.cmd = 1;
-  ac_add_msg(pq, &msg);
+  ac_mpscfifo_add_msg(pq, &msg);
   error |= AC_TEST(pq->phead == &msg);
   error |= AC_TEST(pq->ptail->pnext == &msg);
 
-  presult = ac_rmv_msg(pq);
+  presult = ac_mpscfifo_rmv_msg(pq);
   error |= AC_TEST(presult != AC_NULL);
   error |= AC_TEST(presult != &msg);
   error |= AC_TEST(presult->cmd == 1);
 
-  presult = ac_rmv_msg(pq);
+  presult = ac_mpscfifo_rmv_msg(pq);
   error |= AC_TEST(presult == AC_NULL);
 
-  presult = ac_deinit_mpscfifo(&q);
+  presult = ac_mpscfifo_deinit(&q);
   error |= AC_TEST(presult == &msg);
 
   return error;

@@ -70,7 +70,7 @@ void* t1(void *param) {
   error |= AC_TEST(d != AC_NULL);
 
   // Init the queue
-  ac_init_mpscfifo(&t1_acq, &msg_stub);
+  ac_mpscfifo_init(&t1_acq, &msg_stub);
 
   // Add ac1 and its Q dispatcher
   ac_dispatcher_add_acq(d, &t1_ac, &t1_acq);
@@ -104,7 +104,7 @@ void* t1(void *param) {
 }
 
 void t1_add_msg(ac_msg* msg) {
-  ac_add_msg(&t1_acq, msg);
+  ac_mpscfifo_add_msg(&t1_acq, msg);
   ac_receptor_signal(t1_receptor_waiting, AC_FALSE);
 }
 

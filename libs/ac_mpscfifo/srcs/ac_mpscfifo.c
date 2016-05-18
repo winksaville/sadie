@@ -23,56 +23,52 @@
 #include <ac_inttypes.h>
 
 /**
- * @see mpscfifo.h
+ * @see ac_mpscfifo.h
  */
-ac_mpscfifo *ac_init_mpscfifo(ac_mpscfifo *pq, ac_msg *pStub) {
-  pStub->pnext = AC_NULL;
-  pq->phead = pStub;
-  pq->ptail = pStub;
+ac_mpscfifo* ac_mpscfifo_init(ac_mpscfifo* pq, ac_msg* pstub) {
+  pstub->pnext = AC_NULL;
+  pq->phead = pstub;
+  pq->ptail = pstub;
   return pq;
 }
 
 /**
- * @see mpscfifo.h
+ * @see ac_mpscfifo.h
  */
-ac_msg *ac_deinit_mpscfifo(ac_mpscfifo *pq) {
+ac_msg* ac_mpscfifo_deinit(ac_mpscfifo* pq) {
   // Assert that the Q empty
   ac_assert(pq->ptail->pnext == AC_NULL);
   ac_assert(pq->ptail == pq->phead);
 
   // Get the stub and null head and tail
-  ac_msg *pStub = pq->phead;
+  ac_msg* pstub = pq->phead;
   pq->phead = AC_NULL;
   pq->ptail = AC_NULL;
-  return pStub;
+  return pstub;
 }
 
 /**
  * @see mpscifo.h
  */
-void ac_add_msg(ac_mpscfifo *pq, ac_msg *pmsg) {
+void ac_mpscfifo_add_msg(ac_mpscfifo* pq, ac_msg* pmsg) {
   ac_assert(pq != AC_NULL);
   if (pmsg != AC_NULL) {
     // Be sure pmsg->pnext == AC_NULL
     pmsg->pnext = AC_NULL;
 
-    // Using Builtin Clang doesn't seem to support stdatomic.h
     ac_msg *pprev_head = __atomic_exchange_n(&pq->phead, pmsg, __ATOMIC_ACQ_REL);
     __atomic_store_n(&pprev_head->pnext, pmsg, __ATOMIC_RELEASE);
-
-    // TODO: Support "blocking" which means use condition variable
   }
 }
 
 /**
  * @see mpscifo.h
  */
-ac_msg *ac_rmv_msg(ac_mpscfifo *pq) {
+ac_msg* ac_mpscfifo_rmv_msg(ac_mpscfifo* pq) {
   ac_assert(pq != AC_NULL);
   ac_msg *presult = pq->ptail;
   ac_msg *pnext = __atomic_load_n(&presult->pnext, __ATOMIC_ACQUIRE);
   if (pnext != AC_NULL) {
-    // TODO: Support "blocking" which means use condition variable
     pq->ptail = pnext;
     presult->pnext = AC_NULL;
     presult->prspq = pnext->prspq;
