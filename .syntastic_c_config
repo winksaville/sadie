@@ -74,6 +74,8 @@
 -I
 /home/wink/prgs/sadie/libs/ac_mpscfifo/incs
 -I
+/home/wink/prgs/sadie/libs/ac_msg_pool/incs
+-I
 /home/wink/prgs/sadie/libs/ac_pci/incs
 -I
 /home/wink/prgs/sadie/libs/ac_printf/incs
