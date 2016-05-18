@@ -57,7 +57,7 @@ ac_msg* ac_msg_get(ac_msg_pool mp) {
     // TODO: implement
     msg = AC_NULL;
   }
-  return AC_NULL;
+  return msg;
 }
 
 /**
