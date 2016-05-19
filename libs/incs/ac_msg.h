@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-/**
- * Declare a ac_msg
- */
-
 #ifndef SADIE_LIBS_INCS_AC_MSG_H
 #define SADIE_LIBS_INCS_AC_MSG_H
 
 #include <ac_inttypes.h>
 
-typedef struct _ac_msg {
-  struct _ac_msg *pnext; // Next message
-  void *prspq;           // Response queue, null if none
+typedef struct ac_msg {
+  struct ac_msg *pnext;  // Next message
+  void *pool;            // Pool that this message belongs too
   void *pextra;          // Extra information, null if none
   ac_u32 cmd;            // Command to perform
   ac_u32 arg;            // argument
