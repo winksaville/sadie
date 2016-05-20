@@ -4,8 +4,8 @@ machine:
     INSTALL_PREFIX_DIR: ${HOME}/opt
     PATH: ${INSTALL_PREFIX_DIR}/bin:${INSTALL_PREFIX_DIR}/x-tools/arm-unknown-eabi/bin:${INSTALL_PREFIX_DIR}/x-tools/i386-unknown-elf/bin:${INSTALL_PREFIX_DIR}/x-tools/x86_64-unknown-elf/bin:${PATH}
 
-  python:
-    version: 3.5.1
+  #python:
+  #  version: 3.5.1
 
   pre:
     # Needed by test.sh
@@ -49,10 +49,11 @@ dependencies:
     #- ${INSTALL_PREFIX_DIR_HOME_REL} # This doesn't work.
     - ~/opt
 
+test:
   pre:
     # Default to python 3.5.1, needed because subprocess.run is used in vendor-install-tools
-    #- pyenv global 3.5.1
-    - python2 --version
+    - pyenv global 3.5.0
+    #- python2 --version
     - python3 --version
 
     # Install the tools we need
@@ -64,7 +65,6 @@ dependencies:
     - vendor-install-tools/install.py gcc-arm --installPrefixDir=${INSTALL_PREFIX_DIR}
     - vendor-install-tools/install.py qemu-system-arm --installPrefixDir=${INSTALL_PREFIX_DIR}
 
-test:
   override:
     - circleci-matrix/process-matrix platform-matrix.yml:
         parallel: true
