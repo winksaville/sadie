@@ -51,7 +51,9 @@ dependencies:
 
   pre:
     # Default to python 3.5.1, needed because subprocess.run is used in vendor-install-tools
-    - pyenv global 3.5.1
+    #- pyenv global 3.5.1
+    - python2 --version
+    - python3 --version
 
     # Install the tools we need
     - vendor-install-tools/install.py meson --installPrefixDir=${INSTALL_PREFIX_DIR}
