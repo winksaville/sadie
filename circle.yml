@@ -22,10 +22,10 @@ dependencies:
 
   pre:
     # Install base dependencies
-    - ./ubuntu_base_dependencies_install.sh
+    - vendor-install-tools/ubuntu_base_dependencies_install.sh
 
     # Install latest compilers
-    - GCC_VERSION=6 ./ubuntu_gcc_g++_install.sh
+    - GCC_VERSION=6 vendor-install-tools/ubuntu_gcc_g++_install.sh
 
     # Install python 3.5.1, needed because subprocess.run is used in vendor-install-tools
     # REQUESTED_PYTHON_VER set above
