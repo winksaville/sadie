@@ -18,24 +18,48 @@
 
 #include <ac_msg_pool.h>
 
+#include <ac_assert.h>
+#include <ac_memmgr.h>
+#include <ac_mpscfifo.h>
 #include <ac_msg.h>
+#include <ac_debug_printf.h>
 
-struct msg_pool {
-};
+typedef void (*AcMsgRet)(AcMsgPool mp, AcMsg* msg);
+
+typedef struct msg_pool {
+  AcMsgRet AcMsg_ret;
+  ac_mpscfifo mpscfifo;
+} *AcMsgPool;
 
 /**
  * Create a msg pool
  *
  * @return AC_NULL if no pool
  */
-ac_msg_pool ac_msg_pool_create(ac_u32 count) {
-  ac_msg_pool pool;
+AcMsgPool AcMsgPool_create(ac_u32 count) {
+  AcMsgPool pool;
 
   if (count == 0) {
     pool = AC_NULL;
   } else {
-    // TODO: implement
-    pool = AC_NULL;
+    // Allocate the AcMsgPool
+    pool = ac_malloc(sizeof(AcMsgPool));
+    ac_debug_printf("AcMsgPool_create: pool=%p\n", pool);
+    ac_assert(pool != AC_NULL);
+
+    // Allocate the AcMsg's count + 1 which is the stub
+    AcMsg* arena = ac_malloc(sizeof(AcMsg) * (count + 1));
+    ac_debug_printf("AcMsgPool_create: arena=%p\n", arena);
+
+    // Initialize the mpscfifo and guarantee pool = what's returned
+    ac_assert(ac_mpscfifo_init(&pool->mpscfifo, arena) == &pool->mpscfifo);
+
+    // Add the other messages to the pool
+    for (ac_u32 i = 1; i <= count; i++) {
+      ac_mpscfifo_add_msg(&pool->mpscfifo, &arena[i]);
+      arena[i].pool = pool;
+      ac_debug_printf("AcMsgPool_create: adding &arena[%d]=%p pool=%p\n", i, &arena[i], arena[i].pool);
+    }
   }
 
   return pool;
@@ -48,14 +72,15 @@ ac_msg_pool ac_msg_pool_create(ac_u32 count) {
  *
  * @return a message or AC_NULL if none available
  */
-ac_msg* ac_msg_get(ac_msg_pool mp) {
-  ac_msg* msg;
+AcMsg* AcMsg_get(AcMsgPool mp) {
+  AcMsg* msg;
 
   if (mp == AC_NULL) {
     msg = AC_NULL;
+    ac_debug_printf("AcMsg_get: mp is AC_NULL msg=%p\n", msg);
   } else {
-    // TODO: implement
-    msg = AC_NULL;
+    msg = ac_mpscfifo_rmv_msg_raw(&mp->mpscfifo);
+    ac_debug_printf("AcMsg_get: msg=%p\n", msg);
   }
   return msg;
 }
@@ -65,8 +90,9 @@ ac_msg* ac_msg_get(ac_msg_pool mp) {
  *
  * @param msg a message to return the the pool, AC_NULL is ignored
  */
-void ac_msg_ret(ac_msg_pool mp, ac_msg* msg) {
-  if ((mp != AC_NULL) && (msg != AC_NULL)) {
-    // TODO: implement
+void AcMsg_ret(AcMsg* msg) {
+  ac_debug_printf("AcMsg_ret: msg=%p\n", msg);
+  if ((msg != AC_NULL) && (msg->pool != AC_NULL)) {
+    ac_mpscfifo_add_msg(msg->pool, msg);  
   }
 }

@@ -25,14 +25,14 @@
 #include <ac_inttypes.h>
 #include <ac_msg.h>
 
-typedef struct msg_pool* ac_msg_pool;
+typedef struct msg_pool* AcMsgPool;
 
 /**
  * Create a msg pool
  *
  * @return AC_NULL if no pool
  */
-ac_msg_pool ac_msg_pool_create(ac_u32 count);
+AcMsgPool AcMsgPool_create(ac_u32 count);
 
 /**
  * Get a message from a pool
@@ -41,7 +41,7 @@ ac_msg_pool ac_msg_pool_create(ac_u32 count);
  *
  * @return a message or AC_NULL if none available
  */
-ac_msg* ac_msg_get(ac_msg_pool pool);
+AcMsg* AcMsg_get(AcMsgPool pool);
 
 /**
  * Ret a message to a pool
@@ -49,6 +49,6 @@ ac_msg* ac_msg_get(ac_msg_pool pool);
  * @param pool is a previously created pool
  * @param msg a message to return the the pool, AC_NULL is ignored
  */
-void ac_msg_ret(ac_msg_pool pool, ac_msg* msg);
+void AcMsg_ret(AcMsg* msg);
 
 #endif

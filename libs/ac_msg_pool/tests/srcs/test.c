@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-//#define NDEBUG
+#define NDEBUG
 
 #include <ac_msg_pool.h>
 
@@ -26,20 +26,36 @@ ac_bool test_msg_pool(void) {
   ac_bool error = AC_FALSE;
   ac_debug_printf("test_msg_pool:+\n");
 
-  ac_msg_pool mp;
-  ac_msg* msg;
+  AcMsgPool mp;
+  AcMsg* msg;
+  AcMsg* msg2;
   AC_UNUSED(msg);
 
   // Testing creating an empty pool returns AC_NULL
-  mp = ac_msg_pool_create(0);
+  mp = AcMsgPool_create(0);
   error |= AC_TEST(mp == AC_NULL);
 
-  // Test requesting a message from a AC_NULL pool return AC_NULL
-  msg = ac_msg_get(mp);
+  // Test requesting a message from a AC_NULL pool returns AC_NULL
+  msg = AcMsg_get(mp);
   error |= AC_TEST(msg == AC_NULL);
 
-  // Test returning a AC_NULL msg to a AC_NULL pool
-  ac_msg_ret(mp, msg);
+  // Test returning a AC_NULL msg to a AC_NULL pool doesn't blow up
+  AcMsg_ret(msg);
+
+  // Testing creating a pool with one msg
+  mp = AcMsgPool_create(1);
+  error |= AC_TEST(mp != AC_NULL);
+
+  // Test requesting the message
+  msg = AcMsg_get(mp);
+  error |= AC_TEST(msg != AC_NULL);
+
+  // Test requesting the message
+  msg2 = AcMsg_get(mp);
+  error |= AC_TEST(msg2 == AC_NULL);
+
+  // Test returning the message
+  AcMsg_ret(msg);
 
   ac_debug_printf("test_msg_pool:-\n");
   return error;
@@ -48,6 +64,8 @@ ac_bool test_msg_pool(void) {
 
 int main(void) {
   ac_bool error = AC_FALSE;
+
+  ac_debug_printf("sizeof(AcMsg)=%d\n", sizeof(AcMsg));
 
   error |= test_msg_pool();
 

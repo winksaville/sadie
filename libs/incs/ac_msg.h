@@ -27,4 +27,6 @@ typedef struct ac_msg {
   ac_u32 arg;            // argument
 } ac_msg;
 
+typedef ac_msg AcMsg;
+
 #endif
