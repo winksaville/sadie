@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-//#define NDEBUG
+#define NDEBUG
 
 #include "test-ac_dispatcher/incs/tests.h"
 
 #include <ac_dispatcher.h>
 
+#include <ac_debug_printf.h>
 #include <ac_inttypes.h>
 #include <ac_mpscfifo.h>
-#include <ac_debug_printf.h>
+#include <ac_msg_pool.h>
 #include <ac_receptor.h>
 #include <ac_thread.h>
 #include <ac_test.h>
 
-static ac_bool t1_process_msg(ac* this, ac_msg* pmsg) {
+static ac_bool t1_process_msg(ac* this, AcMsg* pmsg) {
   ac_bool error = AC_FALSE;
 
   ac_debug_printf("t1_process_msg:+ pmsg->cmd=%d, pmsg->arg=%d\n",
@@ -37,6 +38,8 @@ static ac_bool t1_process_msg(ac* this, ac_msg* pmsg) {
   error |= AC_TEST(pmsg->arg > 1);
 
   ac_debug_printf("t1_process_msg:- error=%d\n", error);
+
+  AcMsg_ret(pmsg);
 
   return AC_TRUE;
 }
@@ -60,7 +63,7 @@ void* t1(void *param) {
   ac_bool error = AC_FALSE;
 
   // Add an acq
-  ac_msg msg_stub;
+  AcMsg msg_stub;
   ac_dispatcher* d;
 
   t1_receptor_waiting = ac_receptor_create(AC_FALSE);
@@ -103,7 +106,7 @@ void* t1(void *param) {
   return AC_NULL;
 }
 
-void t1_add_msg(ac_msg* msg) {
+void t1_add_msg(AcMsg* msg) {
   ac_mpscfifo_add_msg(&t1_acq, msg);
   ac_receptor_signal(t1_receptor_waiting, AC_FALSE);
 }
@@ -127,6 +130,9 @@ ac_bool test_threaded_dispatching() {
   // Change ac_thread_init so we don't have to account for "system" threads
   ac_thread_init(3);
   ac_receptor_init(256);
+  AcMsgPool mp = AcMsgPool_create(1);
+
+  error |= AC_TEST(mp != AC_NULL);
 
   t1_receptor_ready = ac_receptor_create(AC_FALSE);
   t1_receptor_done = ac_receptor_create(AC_FALSE);
@@ -138,11 +144,10 @@ ac_bool test_threaded_dispatching() {
   ac_receptor_wait(t1_receptor_ready);
 
   ac_debug_printf("test_threaded_dispatching: send msg\n");
-  ac_msg msg1 = {
-    .cmd = 1,
-    .arg = 2
-  };
-  t1_add_msg(&msg1);
+  AcMsg* msg1 = AcMsg_get(mp);
+  msg1->cmd = 1;
+  msg1->arg = 2;
+  t1_add_msg(msg1);
 
   ac_debug_printf("test_threaded_dispatching: wait 100ms\n");
   ac_thread_wait_ns(100 * 1000000ll);
@@ -154,6 +159,7 @@ ac_bool test_threaded_dispatching() {
   ac_receptor_wait(t1_receptor_done);
 
   ac_debug_printf("test_threaded_dispatching:- error=%d\n", error);
+
 #endif
   return error;
 }
