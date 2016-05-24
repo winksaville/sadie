@@ -35,20 +35,10 @@ typedef struct _ac ac;
 typedef ac_bool (*ac_process_msg_fn)(ac* this, ac_msg* pmsg);
 
 /**
- * Get a components data
- *
- * returns a void pointer to the data associated with this compoent.
- */
-typedef void* (*ac_get_data_fn)(ac* this);
-
-/**
  * An Asynchronouse Component
  */
 typedef struct _ac {
   ac_process_msg_fn process_msg;  // Process a message
-  ac_get_data_fn get_data;        // Return the components data
 } ac;
-
-#define ac_data(pac, type) ((type)(pac->get_data(pac)))
 
 #endif

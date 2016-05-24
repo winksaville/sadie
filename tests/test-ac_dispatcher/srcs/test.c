@@ -116,13 +116,8 @@ static ac_bool ac1_process_msg(ac* this, ac_msg* pmsg) {
   return AC_TRUE;
 }
 
-static void * ac1_get_data(ac* this) {
-  return AC_NULL;
-}
-
 static ac ac1 = {
   .process_msg = &ac1_process_msg,
-  .get_data = &ac1_get_data,
 };
 
 

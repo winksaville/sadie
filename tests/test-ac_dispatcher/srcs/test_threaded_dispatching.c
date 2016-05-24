@@ -44,13 +44,8 @@ static ac_bool t1_process_msg(ac* this, AcMsg* pmsg) {
   return AC_TRUE;
 }
 
-static void * t1_get_data(ac* this) {
-  return AC_NULL;
-}
-
 static ac t1_ac = {
   .process_msg = &t1_process_msg,
-  .get_data = &t1_get_data,
 };
 
 static ac_mpscfifo t1_acq;
