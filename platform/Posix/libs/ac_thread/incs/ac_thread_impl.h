@@ -28,12 +28,6 @@
 #define AC_THREAD_STACK_MIN 16384
 
 /**
- * Initialize this module early phase, must be
- * called before ac_thread_init
- */
-void ac_thread_early_init();
-
-/**
  * Initialize module
  */
 void ac_thread_init(ac_u32 max_threads);

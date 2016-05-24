@@ -127,8 +127,7 @@ ac_bool test_threaded_dispatching() {
 #ifdef VersatilePB
   ac_debug_printf("test_threaded_dispatching: VersatilePB threading not working, skipping\n");
 #else
-  // Change ac_thread_init so we don't have to account for "system" threads
-  ac_thread_init(3);
+  ac_thread_init(1);
   ac_receptor_init(256);
   AcMsgPool mp = AcMsgPool_create(1);
 
@@ -163,5 +162,3 @@ ac_bool test_threaded_dispatching() {
 #endif
   return error;
 }
-
-

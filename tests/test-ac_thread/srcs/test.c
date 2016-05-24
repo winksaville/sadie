@@ -23,6 +23,7 @@
 #include <ac_printf.h>
 #include <ac_receptor.h>
 #include <ac_test.h>
+#include <ac_time.h>
 #include <ac_tsc.h>
 
 ac_u32 t1_count;
@@ -93,9 +94,6 @@ ac_bool test_simple(void) {
   return error;
 }
 
-#define TRIES 10
-#define REQUIRED_SUCCESSES 7
-
 typedef struct {
   ac_u64 time;
   ac_u64 start;
@@ -132,12 +130,13 @@ void* wait_ticks(void* p) {
 }
 
 /**
- * Test waiting tick on 1 or more threads.
+ * Test having a specified number of threads waiting a period of time.
  *
- * @params simultaneous_thread is the number of threads
+ * @params simultaneous_threads is the number of threads
  * @params ns is true if to use thread_wait_ns and false for thread_wait_ticks
  */
-ac_bool test_thread_wait(ac_uint simultaneous_threads, ac_bool ns) {
+ac_bool test_thread_wait(ac_uint simultaneous_threads, ac_bool ns,
+    ac_uint num_tries, ac_uint required_successes) {
   ac_bool error = AC_FALSE;
   char* name = ns ? "ns" : "ticks";
   ac_printf("test_thread_wait(%d, %s):+\n", simultaneous_threads, name);
@@ -152,16 +151,15 @@ ac_bool test_thread_wait(ac_uint simultaneous_threads, ac_bool ns) {
   ac_u64 ac_receptor_waiting_ticks = 0;
   ac_uint ac_receptor_waiting_successes = 0;
 
-  // Test 2 threads ber of multiple threads waiting simultaneiously
-  // since we need to test both left and right subtrees of the binary
-  // heap.
+  // Number of attempts
   successes = 0;
   waiting_ticks = 0;
   ac_receptor_waiting_successes = 0;
   ac_receptor_waiting_ticks = 0;
-  for (ac_uint tries = TRIES; tries > 0; tries--) {
+  for (ac_uint tries = num_tries; tries > 0; tries--) {
     wait_timems = 10;
 
+    // Test the requested number threads waiting simultaneously
     for (ac_uint i = 0; i < simultaneous_threads; i++) {
       ac_u64 time;
       void* (*thread_entry)(void*) = AC_NULL;
@@ -222,8 +220,8 @@ ac_bool test_thread_wait(ac_uint simultaneous_threads, ac_bool ns) {
   // We have to allow some failures as we can't demand 100% success
   // rate because on Linux the time stamp counts are not synchronized
   // across CPU's.
-  error |= AC_TEST(successes >= REQUIRED_SUCCESSES);
-  error |= AC_TEST(ac_receptor_waiting_successes >= REQUIRED_SUCCESSES);
+  error |= AC_TEST(successes >= required_successes);
+  error |= AC_TEST(ac_receptor_waiting_successes >= required_successes);
 
   ac_free(params);
 
@@ -273,16 +271,16 @@ ac_bool perf_yield(void) {
   ac_printf("py: warm up loops=%ld\n", warm_up_loops);
   yield_loop(warm_up_loops, AC_NULL, AC_NULL);
 
-  // Time a one yield loop
+  // Time a one yield loop, i.e. the thread we've been called on
   py.loops = 1000000;
   ac_printf("py: timed loops=%ld\n", py.loops);
 
   yield_loop(py.loops, &py.start, &py.stop);
 
-  ac_printf("py: one thread 0 = %ld %ld - %ld\n",
+  ac_printf("py: one thread 0 = %.9t %ld %ld - %ld\n",
       py.stop - py.start, py.stop, py.start);
 
-  // Time  two threads running the yield loop
+  // Time two threads, the thread we're on plus another we're creating
   __atomic_store_n(&py.done, AC_FALSE, __ATOMIC_RELEASE);
 
   ac_thread_rslt_t rslt = ac_thread_create(0, yt, (void*)&py);
@@ -293,19 +291,22 @@ ac_bool perf_yield(void) {
   ac_u64 start, stop;
   yield_loop(py.loops, &start, &stop);
 
+  // Wait while yt set's py.done is AC_FALSE
   while (__atomic_load_n(&py.done, __ATOMIC_ACQUIRE) == AC_FALSE) {
     ac_thread_yield();
   }
 
   ac_u64 two_thread_stop = ac_tscrd();
 
-  ac_printf("py: two thread 0 = %ld %ld - %ld\n",
-      stop - start, stop, start);
-  ac_printf("               1 = %ld %ld - %ld\n",
-      py.stop - py.start, py.stop, py.start);
-  ac_printf("           total = %ld %ld - %ld\n",
-      two_thread_stop - two_thread_start, two_thread_stop, two_thread_start);
+  ac_printf("py: two thread 0 = %.9t %ld %ld - %ld\n",
+      stop - start, stop - start, stop, start);
+  ac_printf("               1 = %.9t %ld %ld - %ld\n",
+      py.stop - py.start, py.stop - py.start, py.stop, py.start);
+  ac_printf("           total = %.9t %ld %ld - %ld\n",
+      two_thread_stop - two_thread_start, two_thread_stop - two_thread_start,
+      two_thread_stop, two_thread_start);
 
+  // Tell yt we're done
   __atomic_store_n(&py.done, AC_FALSE, __ATOMIC_RELEASE);
 
   // Give other threads one last slice to finish
@@ -321,19 +322,28 @@ int main(void) {
 #ifdef VersatilePB
   ac_printf("py: threading not working on VersatilePB, skip\n");
 #else
-  ac_thread_init(32);
+
+  // Start with only one thread
+  ac_thread_init(1);
   ac_receptor_init(256);
+  ac_time_init();
 
   error |= test_simple();
 
+  #define TRIES 10
+  #define REQUIRED_SUCCESSES 7
+
+  // Increate to 32 threads
+  ac_thread_init(32);
+ 
   // Test using ac_thread_wait_ticks
-  error |= test_thread_wait(1, AC_FALSE);
-  error |= test_thread_wait(2, AC_FALSE);
-  error |= test_thread_wait(3, AC_FALSE);
-  error |= test_thread_wait(4, AC_FALSE);
+  error |= test_thread_wait(1, AC_FALSE, TRIES, REQUIRED_SUCCESSES);
+  error |= test_thread_wait(2, AC_FALSE, TRIES, REQUIRED_SUCCESSES);
+  error |= test_thread_wait(3, AC_FALSE, TRIES, REQUIRED_SUCCESSES);
+  error |= test_thread_wait(4, AC_FALSE, TRIES, REQUIRED_SUCCESSES);
 
   // Test using ac_thread_wait_ns
-  error |= test_thread_wait(2, AC_TRUE);
+  error |= test_thread_wait(2, AC_TRUE, TRIES, REQUIRED_SUCCESSES);
 
   error |= perf_yield();
 #endif
@@ -345,4 +355,3 @@ int main(void) {
 
   return error;
 }
-

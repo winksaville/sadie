@@ -42,6 +42,9 @@
 
 #define STATIC static
 
+// There will be 2 system threads, a main thread and idle thread
+#define SYSTEM_THREAD_COUNT 2
+
 #define RESCHEDULE_ISR_INTR       0xfe
 #define TIMER_RESCHEDULE_ISR_INTR 0xfd
 
@@ -820,7 +823,7 @@ void ac_thread_early_init() {
   // Allocate the initial array
   total_threads = 0;
   pthreads = AC_NULL;
-  ac_thread_init(2);
+  ac_thread_init(SYSTEM_THREAD_COUNT);
   ac_assert(pthreads != AC_NULL);
 
   pidle_tcb = &pthreads->tcbs[0];
@@ -843,7 +846,7 @@ void ac_thread_early_init() {
   add_tcb_after(pidle_tcb, pready);
 
   // Initialize waiting tcbs data structures
-  waiting_tcbs_init(2);
+  waiting_tcbs_init(SYSTEM_THREAD_COUNT);
   print_waiting_tcbs();
 
   ac_printf("ac_thread_early_init: pmain=0x%lx pidle=0x%lx\n", pmain_tcb, pidle_tcb);
@@ -855,6 +858,8 @@ void ac_thread_early_init() {
  */
 void ac_thread_init(ac_u32 max_threads) {
   ac_assert(max_threads > 0);
+
+  max_threads += SYSTEM_THREAD_COUNT;
 
   ac_uint flags = disable_intr();
   if (max_threads > total_threads) {
@@ -894,4 +899,3 @@ void ac_thread_init(ac_u32 max_threads) {
   }
   restore_intr(flags);
 }
-

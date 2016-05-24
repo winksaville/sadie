@@ -72,6 +72,9 @@ void ac_thread_init(ac_u32 max_threads) {
 
   ac_assert(max_threads > 0);
 
+  // Add one for the "main" thread
+  max_threads += 1;
+
   ac_u32 size = sizeof(ac_threads) + (max_threads * sizeof(ac_tcb));
   pthreads = ac_malloc(size);
   ac_assert(pthreads != AC_NULL);
@@ -80,6 +83,11 @@ void ac_thread_init(ac_u32 max_threads) {
   for (ac_u32 i = 0; i < pthreads->max_count; i++) {
     pthreads->tcbs[i].thread_id = AC_THREAD_ID_EMPTY;
   }
+
+  // Initialize pthreads->tcb[0] as main thread
+  pthreads->tcbs[0].thread_id = pthread_self();
+  pthreads->tcbs[0].entry = AC_NULL;
+  pthreads->tcbs[0].entry_arg = AC_NULL;
 }
 
 /**
