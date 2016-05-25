@@ -14,21 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_LIBS_INCS_AC_MSG_H
-#define SADIE_LIBS_INCS_AC_MSG_H
+#ifndef LIBS_AC_MSG_POOL_TESTS_INCS_TEST_H
+#define LIBS_AC_MSG_POOL_TESTS_INCS_TEST_H
 
 #include <ac_inttypes.h>
 
-typedef struct msg_pool* AcMsgPool;
-
-typedef struct ac_msg {
-  struct ac_msg *pnext;  // Next message
-  AcMsgPool pool;        // Pool that this message belongs too
-  void *pextra;          // Extra information, null if none
-  ac_u32 cmd;            // Command to perform
-  ac_u32 arg;            // argument
-} ac_msg;
-
-typedef ac_msg AcMsg;
+ac_bool test_msg_pool_multiple_threads(ac_u32 count);
 
 #endif

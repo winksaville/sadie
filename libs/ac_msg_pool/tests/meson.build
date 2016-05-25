@@ -12,15 +12,18 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
+lclSrcs = ['srcs/test_msg_pool.c', 'srcs/test_msg_pool_multiple_threads.c']
+lclIncDirs = [include_directories('../../')]
+
 if Platform == 'VersatilePB'
-  srcFiles = firstSrcFiles + ['srcs/test.c']
+  srcFiles = firstSrcFiles + lclSrcs
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
   linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
   # Create test-ac_string executable
   test_ac_msg_pool = executable( 'test_ac_msg_pool', srcFiles,
-    include_directories : runtimeIncDirs,
+    include_directories : runtimeIncDirs + lclIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
     link_depends : linkDeps,
@@ -41,11 +44,12 @@ endif
 
 
 if Platform == 'Posix'
-  srcFiles = firstSrcFiles + ['srcs/test.c']
+  srcFiles = firstSrcFiles + lclSrcs
 
   # Create testit executable
   test_ac_msg_pool = executable( 'test_ac_msg_pool', srcFiles,
-    include_directories : runtimeIncDirs,
+    include_directories : runtimeIncDirs + lclIncDirs,
+    link_args : linkArgs,
     c_args : compilerArgs,
     dependencies : [libruntime_dep],
   )
@@ -54,14 +58,14 @@ if Platform == 'Posix'
 endif
 
 if Platform == 'pc_x86_32'
-  srcFiles = firstSrcFiles + ['srcs/test.c']
+  srcFiles = firstSrcFiles + llcSrcs
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
   linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
   # Create test_ac_msg_pool executable
   test_ac_msg_pool = executable( 'test_ac_msg_pool', srcFiles,
-    include_directories : runtimeIncDirs,
+    include_directories : runtimeIncDirs + lclIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
     link_depends : linkDeps,
@@ -74,14 +78,14 @@ endif
 
 
 if Platform == 'pc_x86_64'
-  srcFiles = firstSrcFiles + ['srcs/test.c']
+  srcFiles = firstSrcFiles + lclSrcs
   linkfile = '@0@/platform/@1@/meson.link.ld'.format(meson.source_root(), Platform)
   linkArgs += ['-Wl,-n,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
   # Create test_ac_msg_pool executable
   test_ac_msg_pool = executable( 'test_ac_msg_pool', srcFiles,
-    include_directories : runtimeIncDirs,
+    include_directories : runtimeIncDirs + lclIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
     link_depends : linkDeps,

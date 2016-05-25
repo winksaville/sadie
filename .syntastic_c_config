@@ -54,6 +54,8 @@
 #/home/wink/prgs/sadie/platform/Posix/libs/ac_receptor_impl/incs
 
 -I
+/home/wink/prgs/sadie/libs
+-I
 /home/wink/prgs/sadie/libs/incs
 -I
 /home/wink/prgs/sadie/libs/ac_acpi/incs

@@ -34,32 +34,37 @@ typedef struct msg_pool {
 /**
  * Create a msg pool
  *
+ * @params msg_count is number of messages for this pool
+ *
  * @return AC_NULL if no pool
  */
-AcMsgPool AcMsgPool_create(ac_u32 count) {
+AcMsgPool AcMsgPool_create(ac_u32 msg_count) {
   AcMsgPool pool;
 
-  if (count == 0) {
+  if (msg_count == 0) {
+    ac_debug_printf("AcMsgPool_create:-msg_count is 0 return pool=AC_NULL\n");
     pool = AC_NULL;
   } else {
     // Allocate the AcMsgPool
     pool = ac_malloc(sizeof(AcMsgPool));
-    ac_debug_printf("AcMsgPool_create: pool=%p\n", pool);
+    ac_debug_printf("AcMsgPool_create:+pool=%p\n", pool);
     ac_assert(pool != AC_NULL);
 
     // Allocate the AcMsg's count + 1 which is the stub
-    AcMsg* arena = ac_malloc(sizeof(AcMsg) * (count + 1));
+    AcMsg* arena = ac_malloc(sizeof(AcMsg) * (msg_count + 1));
     ac_debug_printf("AcMsgPool_create: arena=%p\n", arena);
 
     // Initialize the mpscfifo and guarantee pool = what's returned
     ac_assert(ac_mpscfifo_init(&pool->mpscfifo, arena) == &pool->mpscfifo);
+    arena[0].pool = pool;
 
     // Add the other messages to the pool
-    for (ac_u32 i = 1; i <= count; i++) {
+    for (ac_u32 i = 1; i <= msg_count; i++) {
       ac_mpscfifo_add_msg(&pool->mpscfifo, &arena[i]);
       arena[i].pool = pool;
       ac_debug_printf("AcMsgPool_create: adding &arena[%d]=%p pool=%p\n", i, &arena[i], arena[i].pool);
     }
+    ac_debug_printf("AcMsgPool_create:- pool=%p msg_count=%d\n", pool, msg_count);
   }
 
   return pool;
@@ -77,10 +82,11 @@ AcMsg* AcMsg_get(AcMsgPool mp) {
 
   if (mp == AC_NULL) {
     msg = AC_NULL;
-    ac_debug_printf("AcMsg_get: mp is AC_NULL msg=%p\n", msg);
+    ac_debug_printf("AcMsg_get:-mp is AC_NULL msg=%p\n", msg);
   } else {
+    ac_debug_printf("AcMsg_get:+mp=%p\n", mp);
     msg = ac_mpscfifo_rmv_msg_raw(&mp->mpscfifo);
-    ac_debug_printf("AcMsg_get: msg=%p\n", msg);
+    ac_debug_printf("AcMsg_get:-msg=%p\n", msg);
   }
   return msg;
 }
@@ -91,8 +97,10 @@ AcMsg* AcMsg_get(AcMsgPool mp) {
  * @param msg a message to return the the pool, AC_NULL is ignored
  */
 void AcMsg_ret(AcMsg* msg) {
-  ac_debug_printf("AcMsg_ret: msg=%p\n", msg);
   if ((msg != AC_NULL) && (msg->pool != AC_NULL)) {
-    ac_mpscfifo_add_msg(msg->pool, msg);  
+    ac_mpscfifo_add_msg(&msg->pool->mpscfifo, msg);
+    ac_debug_printf("AcMsg_ret:-msg=%p msg->pool=%p\n", msg, msg->pool);
+  } else {
+    ac_debug_printf("AcMsg_ret:+msg=%p msg->pool=%p\n", msg, msg != AC_NULL ? msg->pool : AC_NULL );
   }
 }
