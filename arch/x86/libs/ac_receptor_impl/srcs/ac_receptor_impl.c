@@ -14,6 +14,8 @@
  * limitations under the license.
  */
 
+#define NDEBUG
+
 /**
  * CAUTION: There is a RACE between entities which create/destroy receptors
  * and users that wait/signal. I'm using state to handle racing between
@@ -35,9 +37,9 @@
 
 #include <ac_assert.h>
 #include <ac_debug_assert.h>
+#include <ac_debug_printf.h>
 #include <ac_inttypes.h>
 #include <ac_memmgr.h>
-#include <ac_printf.h>
 #include <ac_thread.h>
 
 #define RECEPTOR_STATE_UNUSED         0
@@ -76,7 +78,7 @@ ac_receptor_t ac_receptor_create(void) {
     }
   }
 
-  ac_printf("ac_receptor_create:-No receptors available\n");
+  ac_debug_printf("ac_receptor_create:-No receptors available\n");
   return AC_NULL;
 }
 
@@ -122,9 +124,9 @@ ac_uint ac_receptor_wait(ac_receptor_t receptor) {
   if (__atomic_compare_exchange_n(preceptor_thdl, &expected,
       my_thdl, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
     // Case 1: not signed and no one is waiting, so wait
-    //ac_printf("ac_receptor_wait: waiting my_thdl=0x%x\n", ac_thread_get_cur_hdl());
+    ac_debug_printf("ac_receptor_wait: waiting my_thdl=0x%x\n", ac_thread_get_cur_hdl());
     thread_make_not_ready(my_thdl);
-    //ac_printf("ac_receptor_wait: resuming my_thdl=0x%x\n", ac_thread_get_cur_hdl());
+    ac_debug_printf("ac_receptor_wait: resuming my_thdl=0x%x\n", ac_thread_get_cur_hdl());
     // We've been awoken, indicate no one is waiting
     __atomic_store_n(preceptor_thdl, RECEPTOR_NO_ONE_WAITING, __ATOMIC_RELEASE);
     //restore_intr(flags);
@@ -135,11 +137,11 @@ ac_uint ac_receptor_wait(ac_receptor_t receptor) {
     if (__atomic_compare_exchange_n(preceptor_thdl, &expected,
         RECEPTOR_NO_ONE_WAITING, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
       // Case 2: Its signaled, so marked no one waiting and continue
-      //ac_printf("ac_receptor_wait: continuing my_thdl=0x%x\n", my_thdl);
+      ac_debug_printf("ac_receptor_wait: continuing my_thdl=0x%x\n", my_thdl);
       return 0;
     } else {
       // Case 3: Someone else is waiting on it, this is currently an error
-      ac_printf("ac_receptor_wait: BUG someone else is waiting my_thdl=0x%x maybe=0x%x\n",
+      ac_debug_printf("ac_receptor_wait: BUG someone else is waiting my_thdl=0x%x maybe=0x%x\n",
           my_thdl, __atomic_load_n(preceptor_thdl, __ATOMIC_ACQUIRE));
       intr(3);
       // Bummer, soneone is already waiting, probably a programmer error
@@ -156,9 +158,66 @@ ac_uint ac_receptor_wait(ac_receptor_t receptor) {
  * Signal the receptor.
  *
  * @param receptor to signal
- * @param if yield_if_waiting is true then this thread yields
  */
-void ac_receptor_signal(ac_receptor_t receptor, ac_bool yield_if_waiting) {
+void ac_receptor_signal(ac_receptor_t receptor) {
+  thread_x86_receptor_t* preceptor = (thread_x86_receptor_t*)receptor;
+  ac_thread_hdl_t* preceptor_thdl = &preceptor->thdl;
+
+#if 0
+
+  // No loop but interrupts disabled
+
+  ac_uint flags = disable_intr();
+  {
+    ac_thread_hdl_t thdl = __atomic_load_n(preceptor_thdl, __ATOMIC_ACQUIRE);
+    if (thdl == RECEPTOR_NO_ONE_WAITING) {
+      __atomic_store_n(preceptor_thdl, RECEPTOR_SIGNALED, __ATOMIC_RELEASE);
+    } else if (thdl == RECEPTOR_SIGNALED) {
+      // Already signaled
+    } else {
+      // Sone one is waiting
+      thread_make_ready(thdl);
+    }
+  }
+  restore_intr(flags);
+
+#else
+
+  // Interrupts are not disabled but a loop
+
+  ac_thread_hdl_t expected = RECEPTOR_NO_ONE_WAITING;
+  while (!__atomic_compare_exchange_n(preceptor_thdl, &expected,
+      RECEPTOR_SIGNALED, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
+    // Could be a racing with another thread, we assume thread_make_ready
+    // will do the right thing.
+    ac_thread_hdl_t thdl = __atomic_load_n(preceptor_thdl, __ATOMIC_ACQUIRE);
+    if (thdl == RECEPTOR_NO_ONE_WAITING) {
+      ac_debug_printf("ac_receptor_signal: No one is waiting, try again\n");
+      continue;
+    } else if (thdl == RECEPTOR_SIGNALED) {
+      ac_debug_printf("ac_receptor_signal:-Already signaled,\n");
+      break;
+    } else {
+      ac_debug_printf("ac_receptor_signal: make ready by thdl=0x%x yield to thdl=0x%x\n",
+          ac_thread_get_cur_hdl(), thdl);
+      thread_make_ready(thdl);
+      break;
+    }
+  }
+
+#endif
+
+  // Receptor is now signaled
+  ac_debug_printf("ac_receptor_signal: signaled by thdl=0x%x\n", ac_thread_get_cur_hdl());
+  return;
+}
+
+/**
+ * Signal the receptor.
+ *
+ * @param receptor to signal
+ */
+void ac_receptor_signal_yield_if_waiting(ac_receptor_t receptor) {
   thread_x86_receptor_t* preceptor = (thread_x86_receptor_t*)receptor;
   ac_thread_hdl_t* preceptor_thdl = &preceptor->thdl;
 
@@ -177,14 +236,9 @@ void ac_receptor_signal(ac_receptor_t receptor, ac_bool yield_if_waiting) {
       // Sone one is waiting
       ac_uint rslt = thread_make_ready(thdl);
       if (rslt == 0) {
-        if (yield_if_waiting) {
-          //ac_printf("ac_receptor_signal:-made ready by thdl=0x%x yield to thdl=0x%x\n",
+          ac_debug_printf("ac_receptor_signal_yiw:-made ready by thdl=0x%x yield to thdl=0x%x\n",
           //    ac_thread_get_cur_hdl(), thdl);
           ac_thread_yield();
-        } else {
-          //ac_printf("ac_receptor_signal:-made ready by thdl=0x%x NO yield to thdl=0x%x\n",
-          //    ac_thread_get_cur_hdl(), thdl);
-        }
       }
     }
   }
@@ -201,36 +255,28 @@ void ac_receptor_signal(ac_receptor_t receptor, ac_bool yield_if_waiting) {
     // will do the right thing.
     ac_thread_hdl_t thdl = __atomic_load_n(preceptor_thdl, __ATOMIC_ACQUIRE);
     if (thdl == RECEPTOR_NO_ONE_WAITING) {
-      //ac_printf("ac_receptor_signal: No one is waiting, try again\n");
+      ac_debug_printf("ac_receptor_signal_yiw: No one is waiting, try again\n");
       continue;
     } else if (thdl == RECEPTOR_SIGNALED) {
-      //ac_printf("ac_receptor_signal:-Already signaled,\n");
+      ac_debug_printf("ac_receptor_signal_yiw:-Already signaled,\n");
       break;
     } else {
-      //ac_printf("ac_receptor_signal: make ready by thdl=0x%x yield to thdl=0x%x\n",
-      //    ac_thread_get_cur_hdl(), thdl);
+      ac_debug_printf("ac_receptor_signal_yiw: make ready by thdl=0x%x yield to thdl=0x%x\n",
+          ac_thread_get_cur_hdl(), thdl);
       ac_uint rslt = thread_make_ready(thdl);
       if (rslt == 0) {
-        if (yield_if_waiting) {
-          //ac_printf("ac_receptor_signal:-made ready by thdl=0x%x yield to thdl=0x%x\n",
-          //    ac_thread_get_cur_hdl(), thdl);
+          ac_debug_printf("ac_receptor_signal_yiw:-made ready by thdl=0x%x yield to thdl=0x%x\n",
+              ac_thread_get_cur_hdl(), thdl);
           ac_thread_yield();
-        } else {
-          //ac_printf("ac_receptor_signal:-made ready by thdl=0x%x NO yield to thdl=0x%x\n",
-          //    ac_thread_get_cur_hdl(), thdl);
-        }
-      } else {
-        //ac_printf("ac_receptor_signal:-lost race thdl=0x%x signaler thdl=0x%x\n",
-        //    thdl, ac_thread_get_cur_hdl());
       }
-      return;
+      break;
     }
   }
 
 #endif
 
-  // Receptor is now signaled and no one was waiting
-  //ac_printf("ac_receptor_signal: signaled by thdl=0x%x\n", ac_thread_get_cur_hdl());
+  // Receptor is now signaled
+  ac_debug_printf("ac_receptor_signal_yiw: signaled by thdl=0x%x\n", ac_thread_get_cur_hdl());
   return;
 }
 
@@ -247,7 +293,7 @@ void ac_receptor_early_init(void) {
  * Initialize this module
  */
 void ac_receptor_init(ac_uint max_receptors) {
-  ac_printf("ac_receptor_init:+max=%d\n", max_receptors);
+  ac_debug_printf("ac_receptor_init:+max=%d\n", max_receptors);
 
   ac_assert(max_receptors > 0);
 
@@ -261,5 +307,5 @@ void ac_receptor_init(ac_uint max_receptors) {
     __atomic_store_n(pstate, RECEPTOR_STATE_UNUSED, __ATOMIC_RELEASE);
   }
 
-  ac_printf("ac_receptor_init:-\n");
+  ac_debug_printf("ac_receptor_init:-\n");
 }

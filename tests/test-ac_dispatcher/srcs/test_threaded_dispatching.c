@@ -77,7 +77,7 @@ void* t1(void *param) {
 
   // Signal t1 is ready
   ac_debug_printf("t1: ready\n");
-  ac_receptor_signal(t1_receptor_ready, AC_FALSE);
+  ac_receptor_signal(t1_receptor_ready);
 
   // Continuously dispatch messages until done
   ac_debug_printf("t1: looping\n");
@@ -96,18 +96,18 @@ void* t1(void *param) {
 
   ac_debug_printf("t1: done\n");
 
-  ac_receptor_signal(t1_receptor_done, AC_TRUE);
+  ac_receptor_signal_yield_if_waiting(t1_receptor_done);
   return AC_NULL;
 }
 
 void t1_add_msg(AcMsg* msg) {
   ac_mpscfifo_add_msg(&t1_acq, msg);
-  ac_receptor_signal(t1_receptor_waiting, AC_FALSE);
+  ac_receptor_signal(t1_receptor_waiting);
 }
 
 void t1_mark_done(void) {
   __atomic_store_n(&t1_done, AC_TRUE, __ATOMIC_RELEASE);
-  ac_receptor_signal(t1_receptor_waiting, AC_TRUE);
+  ac_receptor_signal_yield_if_waiting(t1_receptor_waiting);
 }
 
 /**

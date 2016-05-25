@@ -109,7 +109,7 @@ void* wait_ns(void* p) {
   ac_thread_wait_ns(params->time);
   params->stop = ac_tscrd();
 
-  ac_receptor_signal(params->done, AC_TRUE);
+  ac_receptor_signal_yield_if_waiting(params->done);
 
   //ac_printf("wait_ns:-time=%ld ticks=%ld\n", params->time, params->stop - params->start);
   return AC_NULL;
@@ -123,7 +123,7 @@ void* wait_ticks(void* p) {
   ac_thread_wait_ticks(params->time);
   params->stop = ac_tscrd();
 
-  ac_receptor_signal(params->done, AC_TRUE);
+  ac_receptor_signal_yield_if_waiting(params->done);
 
   //ac_printf("wait_ticks:-time=%ld ticks=%ld\n", params->time, params->stop - params->start);
   return AC_NULL;

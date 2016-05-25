@@ -65,7 +65,7 @@ void* t1(void *param) {
   }
 
   ac_debug_printf("t1: signal done_receptor\n");
-  ac_receptor_signal(params->done_receptor, AC_FALSE);
+  ac_receptor_signal(params->done_receptor);
   return AC_NULL;
 }
 
@@ -98,7 +98,7 @@ ac_uint test_receptor(void) {
     // and is waiting for the signal
     while (__atomic_load_n(&params.counter, __ATOMIC_ACQUIRE) <= i) {
     }
-    ac_receptor_signal(params.receptor, AC_TRUE);
+    ac_receptor_signal_yield_if_waiting(params.receptor);
 #else
     // Wait for params.counter to change, i.e. t1 and incremented the counter
     // and is waiting for the signal
@@ -126,7 +126,7 @@ ac_uint test_receptor(void) {
 
     //ac_printf("test_receptor: signal\n");
     ac_u64 signal_start = ac_tscrd();
-    ac_receptor_signal(params.receptor, AC_TRUE);
+    ac_receptor_signal_yield_if_waiting(params.receptor);
     ac_u64 ticks = ac_tscrd() - signal_start;
     ac_printf("test_receptor: signal time=%.9t\n", ticks);
 #endif

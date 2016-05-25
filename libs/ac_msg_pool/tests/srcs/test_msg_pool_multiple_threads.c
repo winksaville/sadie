@@ -86,7 +86,7 @@ void* mptt(void *param) {
 
   // Signal mptt is ready
   //ac_debug_printf("mptt: ready params=%p\n", params);
-  ac_receptor_signal(params->ready, AC_FALSE);
+  ac_receptor_signal(params->ready);
 
   // Continuously dispatch messages until done
   //ac_debug_printf("mptt: looping params=%p\n", params);
@@ -102,7 +102,7 @@ void* mptt(void *param) {
 
   //ac_debug_printf("mptt:-done error=%d params=%p\n", error, params);
 
-  ac_receptor_signal(params->done, AC_TRUE);
+  ac_receptor_signal_yield_if_waiting(params->done);
   return AC_NULL;
 }
 
@@ -112,7 +112,7 @@ void* mptt(void *param) {
 void mptt_send_msg(mptt_params* params, AcMsg* msg) {
   //ac_debug_printf("mptt_send_msg:+params=%p msg=%p\n", params, msg);
   ac_mpscfifo_add_msg(&params->q, msg);
-  ac_receptor_signal(params->waiting, AC_TRUE); //AC_TRUE);
+  ac_receptor_signal_yield_if_waiting(params->waiting);
 }
 
 /**
@@ -121,7 +121,7 @@ void mptt_send_msg(mptt_params* params, AcMsg* msg) {
 void mptt_stop_and_wait_until_done(mptt_params* params) {
   //ac_debug_printf("mptt_stop_wait_until_done:+params=%p\n", params);
   __atomic_store_n(&params->stop_processing_msgs, AC_TRUE, __ATOMIC_RELEASE);
-  ac_receptor_signal(params->waiting, AC_TRUE);
+  ac_receptor_signal_yield_if_waiting(params->waiting);
   ac_receptor_wait(params->done);
 }
 
