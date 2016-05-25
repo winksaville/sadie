@@ -25,7 +25,7 @@
 // The following will be defined in ac_receptor_impl.h
 
 /**
- * Create a receptor
+ * Create a receptor and set its state to NOT signaled
  *
  * @return AC_NULL if failed.
  */

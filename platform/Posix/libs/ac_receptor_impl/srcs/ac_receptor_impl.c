@@ -54,11 +54,11 @@ typedef struct {
 posix_receptors_t* preceptors;
 
 /**
- * Create a receptor and set it state to signaled
+ * Create a receptor and set its state to signaled
  *
  * @return AC_NULL if unable to allocate a receptor
  */
-ac_receptor_t ac_receptor_create(ac_bool signaled) {
+ac_receptor_t ac_receptor_create(void) {
   // Find an empty slot
   for (ac_uint i = 0; i < preceptors->max_count; i++) {
     posix_receptor_t* preceptor = &preceptors->receptors[i];
@@ -66,7 +66,7 @@ ac_receptor_t ac_receptor_create(ac_bool signaled) {
     ac_uint expected = RECEPTOR_STATE_UNUSED;
     if (__atomic_compare_exchange_n(pstate, &expected,
         RECEPTOR_STATE_INITIALIZING, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
-      sem_init(&preceptors->receptors[i].semaphore, 0, signaled ? 1 : 0);
+      sem_init(&preceptors->receptors[i].semaphore, 0, 0);
       __atomic_store_n(pstate, RECEPTOR_STATE_ACTIVE, __ATOMIC_RELEASE);
       return preceptor;
     }

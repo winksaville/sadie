@@ -113,7 +113,7 @@ ac_bool test_thread_wait(ac_uint simultaneous_threads, ac_bool ns) {
       params[i].start = 0;
       params[i].stop = 0;
 
-      params[i].done = ac_receptor_create(AC_FALSE);
+      params[i].done = ac_receptor_create();
       error |= AC_TEST(params[0].done != AC_NULL);
 
       ac_thread_rslt_t trslt = ac_thread_create(0, thread_entry, (void*)&params[i]);

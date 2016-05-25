@@ -60,8 +60,8 @@ ac_uint test_receptor(void) {
   struct test_params params;
 
   ac_printf("test_receptor: call ac_receptor_create\n");
-  params.receptor = ac_receptor_create(AC_FALSE);
-  params.done_receptor = ac_receptor_create(AC_FALSE);
+  params.receptor = ac_receptor_create();
+  params.done_receptor = ac_receptor_create();
   params.counter = 0;
 #ifdef NDEBUG
   params.loops = 1000000;

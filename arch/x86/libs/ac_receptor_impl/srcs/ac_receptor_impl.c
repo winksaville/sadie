@@ -56,11 +56,11 @@ typedef struct {
 thread_x86_receptors_t* preceptors;
 
 /**
- * Create a receptor and set it state to signaled
+ * Create a receptor and set its state to NOT signaled
  *
  * @return AC_NULL if unable to allocate a receptor
  */
-ac_receptor_t ac_receptor_create(ac_bool signaled) {
+ac_receptor_t ac_receptor_create(void) {
   // Find an empty slot
   for (ac_uint i = 0; i < preceptors->max_count; i++) {
     thread_x86_receptor_t* preceptor = &preceptors->receptors[i];
@@ -69,7 +69,7 @@ ac_receptor_t ac_receptor_create(ac_bool signaled) {
     if (__atomic_compare_exchange_n(pstate, &expected,
         RECEPTOR_STATE_INITIALIZING, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
 
-      preceptors->receptors[i].thdl = signaled ? RECEPTOR_SIGNALED : RECEPTOR_NO_ONE_WAITING;
+      preceptors->receptors[i].thdl = RECEPTOR_NO_ONE_WAITING;
 
       __atomic_store_n(pstate, RECEPTOR_STATE_ACTIVE, __ATOMIC_RELEASE);
       return preceptor;

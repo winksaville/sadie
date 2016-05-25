@@ -60,7 +60,7 @@ void* t1(void *param) {
   // Add an acq
   ac_dispatcher* d;
 
-  t1_receptor_waiting = ac_receptor_create(AC_FALSE);
+  t1_receptor_waiting = ac_receptor_create();
 
   // Get a dispatcher
   d = ac_dispatcher_get(1);
@@ -127,8 +127,8 @@ ac_bool test_threaded_dispatching() {
 
   error |= AC_TEST(mp != AC_NULL);
 
-  t1_receptor_ready = ac_receptor_create(AC_FALSE);
-  t1_receptor_done = ac_receptor_create(AC_FALSE);
+  t1_receptor_ready = ac_receptor_create();
+  t1_receptor_done = ac_receptor_create();
 
   ac_thread_rslt_t result = ac_thread_create(AC_THREAD_STACK_MIN, t1, AC_NULL);
   error |= AC_TEST(result.status == 0);

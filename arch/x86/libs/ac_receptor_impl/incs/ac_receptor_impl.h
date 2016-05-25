@@ -32,13 +32,11 @@ typedef struct {
 typedef thread_x86_receptor_t* ac_receptor_t;
 
 /**
- * Create a receptor and set it state to signaled parameter
- *
- * @param signaled is the initial state of the receptor
+ * Create a receptor and set its state to NOT signaled
  *
  * @return AC_NULL if unable to allocate a receptor
  */
-ac_receptor_t ac_receptor_create(ac_bool signaled);
+ac_receptor_t ac_receptor_create(void);
 
 /**
  * Destroy a receptor
