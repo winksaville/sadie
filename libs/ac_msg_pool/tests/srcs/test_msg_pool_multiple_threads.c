@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define NDEBUG
+//#define NDEBUG
 
 #include <ac_msg_pool/tests/incs/test.h>
 
@@ -66,7 +66,7 @@ void* mptt(void *param) {
   // Add an acq
   ac_dispatcher* d;
 
-  params->waiting = ac_receptor_create(AC_FALSE);
+  params->waiting = ac_receptor_create();
 
   // Get a dispatcher
   d = ac_dispatcher_get(1);
@@ -184,8 +184,8 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count) {
       return error;
     }
 
-    params[i]->ready = ac_receptor_create(AC_FALSE);
-    params[i]->done = ac_receptor_create(AC_FALSE);
+    params[i]->ready = ac_receptor_create();
+    params[i]->done = ac_receptor_create();
 
     ac_thread_rslt_t result = ac_thread_create(0, mptt, params[i]);
     error |= AC_TEST(result.status == 0);
