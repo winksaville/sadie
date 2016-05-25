@@ -119,31 +119,10 @@
 
 #include <ac_assert.h>
 #include <ac_inttypes.h>
+#include <ac_memmgr.h>
+#include <ac_msg_pool.h>
 
-/**
- * @see ac_mpscfifo.h
- */
-ac_mpscfifo* ac_mpscfifo_init(ac_mpscfifo* pq, ac_msg* pstub) {
-  pstub->pnext = AC_NULL;
-  pq->phead = pstub;
-  pq->ptail = pstub;
-  return pq;
-}
-
-/**
- * @see ac_mpscfifo.h
- */
-ac_msg* ac_mpscfifo_deinit(ac_mpscfifo* pq) {
-  // Assert that the Q empty
-  ac_assert(pq->ptail->pnext == AC_NULL);
-  ac_assert(pq->ptail == pq->phead);
-
-  // Get the stub and null head and tail
-  ac_msg* pstub = pq->phead;
-  pq->phead = AC_NULL;
-  pq->ptail = AC_NULL;
-  return pstub;
-}
+AcMsgPool* pstubs = AC_NULL;
 
 /**
  * @see mpscifo.h
@@ -224,4 +203,56 @@ ac_msg* ac_mpscfifo_rmv_msg_raw(ac_mpscfifo* pq) {
 
   // Step 5) Return presult
   return presult;
+}
+
+/**
+ * @see ac_mpscfifo.h
+ */
+void ac_mpscfifo_deinit(ac_mpscfifo* pq) {
+  // Assert that the Q is empty
+  ac_assert(pq->ptail->pnext == AC_NULL);
+  ac_assert(pq->phead != AC_NULL);
+  ac_assert(pq->ptail != AC_NULL);
+  ac_assert(pq->ptail == pq->phead);
+
+  // Return the stub and null head and tail
+  AcMsg_ret(pq->phead);
+  pq->phead = AC_NULL;
+  pq->ptail = AC_NULL;
+}
+
+/**
+ * @see ac_mpscfifo.h
+ */
+void ac_mpscfifo_init_with_stub(ac_mpscfifo* pq, AcMsg* pstub) {
+  ac_assert(pq != AC_NULL);
+  ac_assert(pstub != AC_NULL);
+
+  pstub->pnext = AC_NULL;
+  pq->phead = pstub;
+  pq->ptail = pstub;
+}
+
+/**
+ * @see ac_mpscfifo.h
+ */
+void ac_mpscfifo_init(ac_mpscfifo* pq) {
+  AcMsg* pstub = AcMsg_get(pstubs);
+  if (pstub == AC_NULL) {
+    // Stubs is empty to create a new one.
+    pstub = AcMsg_alloc();
+    pstub->pool = pstubs;
+  }
+  ac_assert(pstub != AC_NULL);
+  ac_mpscfifo_init_with_stub(pq, pstub);
+}
+
+/**
+ * Early initialize module
+ */
+__attribute__((constructor))
+void ac_mpscfifo_early_init(void) {
+  // Create a small pool of stubs we'll add
+  // more as needed, adjust as necessary.
+  pstubs = AcMsgPool_create(1);
 }

@@ -29,7 +29,7 @@ ac_bool test_msg_pool(void) {
   ac_bool error = AC_FALSE;
   ac_debug_printf("test_msg_pool:+\n");
 
-  AcMsgPool mp;
+  AcMsgPool* mp;
   AcMsg* msg;
   AcMsg* msg2;
   AC_UNUSED(msg);

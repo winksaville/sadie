@@ -58,7 +58,6 @@ void* t1(void *param) {
   ac_bool error = AC_FALSE;
 
   // Add an acq
-  AcMsg msg_stub;
   ac_dispatcher* d;
 
   t1_receptor_waiting = ac_receptor_create(AC_FALSE);
@@ -68,8 +67,7 @@ void* t1(void *param) {
   error |= AC_TEST(d != AC_NULL);
 
   // Init the queue
-  msg_stub.pool = AC_NULL;
-  ac_mpscfifo_init(&t1_acq, &msg_stub);
+  ac_mpscfifo_init(&t1_acq);
 
   // Add ac1 and its Q dispatcher
   ac_dispatcher_add_acq(d, &t1_ac, &t1_acq);
@@ -125,7 +123,7 @@ ac_bool test_threaded_dispatching() {
 #else
   ac_thread_init(1);
   ac_receptor_init(256);
-  AcMsgPool mp = AcMsgPool_create(1);
+  AcMsgPool* mp = AcMsgPool_create(1);
 
   error |= AC_TEST(mp != AC_NULL);
 

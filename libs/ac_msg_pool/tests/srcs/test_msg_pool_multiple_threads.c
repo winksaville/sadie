@@ -64,7 +64,6 @@ void* mptt(void *param) {
   //ac_debug_printf("mptt:+ starting  params=%p\n", params);
 
   // Add an acq
-  AcMsg msg_stub;
   ac_dispatcher* d;
 
   params->waiting = ac_receptor_create(AC_FALSE);
@@ -74,8 +73,7 @@ void* mptt(void *param) {
   error |= AC_TEST(d != AC_NULL);
 
   // Init the queue
-  msg_stub.pool = AC_NULL;
-  ac_mpscfifo_init(&params->q, &msg_stub);
+  ac_mpscfifo_init(&params->q);
 
   // Init Async Component
   params->comp.process_msg = mptt_process_msg;
@@ -130,7 +128,7 @@ void mptt_stop_and_wait_until_done(mptt_params* params) {
 /**
  * Count the message in the pool
  */
-ac_u32 count_msgs(AcMsgPool mp, ac_u32 msg_count) {
+ac_u32 count_msgs(AcMsgPool* mp, ac_u32 msg_count) {
   ac_u32 count = 0;
 
   ac_debug_printf("count_msgs:+ msg_count=%d\n", msg_count);
@@ -170,7 +168,7 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count) {
 
   // Create a msg pool
   ac_u32 msg_count = thread_count * 2;
-  AcMsgPool mp = AcMsgPool_create(msg_count);
+  AcMsgPool* mp = AcMsgPool_create(msg_count);
   error |= AC_TEST(mp != AC_NULL);
   error |= AC_TEST(count_msgs(mp, msg_count) == msg_count);
 
@@ -223,7 +221,8 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count) {
       }
     }
   }
-  ac_debug_printf("test_msg_pool_multiple_threads: stopping threads waiting_count=%ld\n", waiting_count);
+  ac_debug_printf("test_msg_pool_multiple_threads: stopping waiting_count=%ld\n",
+      waiting_count);
 
   // Tell each mptt to stop and wait until its done
   for (ac_u32 i = 0; i < thread_count; i++) {

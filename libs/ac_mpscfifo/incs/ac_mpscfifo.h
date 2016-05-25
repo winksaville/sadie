@@ -44,28 +44,16 @@ typedef struct ac_mpscfifo {
 } ac_mpscfifo;
 
 /**
- * Initialize an ac_mpscfifo. Don't forget to empty the fifo
- * and delete the stub before freeing ac_mpscfifo.
- */
-extern ac_mpscfifo* ac_mpscfifo_init(ac_mpscfifo* pq, ac_msg* pstub);
-
-/**
- * Deinitialize the ac_mpscfifo and return the stub which
- * needs to be disposed of properly. Assumes the fifo is empty.
- */
-extern ac_msg* ac_mpscfifo_deinit(ac_mpscfifo* pq);
-
-/**
  * Add a ac_msg to the FIFo. This maybe used by multiple
  * threads and never blocks.
  */
-extern void ac_mpscfifo_add_msg(ac_mpscfifo* pq, ac_msg* pmsg);
+void ac_mpscfifo_add_msg(ac_mpscfifo* pq, ac_msg* pmsg);
 
 /**
  * Remove a ac_msg from the FIFO. This maybe used only by
  * a single thread and returns AC_NULL if the FIFO is empty.
  */
-extern ac_msg* ac_mpscfifo_rmv_msg(ac_mpscfifo* pq);
+ac_msg* ac_mpscfifo_rmv_msg(ac_mpscfifo* pq);
 
 /**
  * Remove a raw ac_msg from the FIFO. A raw message contents
@@ -73,7 +61,22 @@ extern ac_msg* ac_mpscfifo_rmv_msg(ac_mpscfifo* pq);
  * contents after removal. This is useful in managing a pool
  * of empty messages.
  */
-extern ac_msg* ac_mpscfifo_rmv_msg_raw(ac_mpscfifo* pq);
+ac_msg* ac_mpscfifo_rmv_msg_raw(ac_mpscfifo* pq);
 
+/**
+ * Deinitialize the ac_mpscfifo and return the stub which
+ * needs to be disposed of properly. Assumes the fifo is empty.
+ */
+void ac_mpscfifo_deinit(ac_mpscfifo* pq);
+
+/**
+ * Initialize an ac_mpscfifo.
+ */
+void ac_mpscfifo_init(ac_mpscfifo* pq);
+
+/**
+ * Early initialize module
+ */
+void ac_mpscfifo_early_init(void);
 
 #endif

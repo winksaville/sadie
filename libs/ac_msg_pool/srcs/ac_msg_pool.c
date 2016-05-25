@@ -24,50 +24,26 @@
 #include <ac_msg.h>
 #include <ac_debug_printf.h>
 
-typedef void (*AcMsgRet)(AcMsgPool mp, AcMsg* msg);
-
-typedef struct msg_pool {
+typedef struct AcMsgPool {
   AcMsgRet AcMsg_ret;
   ac_mpscfifo mpscfifo;
-} *AcMsgPool;
+} AcMsgPool;
+
+// We are friends with ac_mpscfifo so using the special init routine
+void ac_mpscfifo_init_with_stub(ac_mpscfifo* pq, AcMsg* pstub);
 
 /**
- * Create a msg pool
- *
- * @params msg_count is number of messages for this pool
- *
- * @return AC_NULL if no pool
+ * Allocate a AcMsgPool
  */
-AcMsgPool AcMsgPool_create(ac_u32 msg_count) {
-  AcMsgPool pool;
+AcMsgPool* AcMsgPool_alloc(void) {
+  return ac_malloc(sizeof(AcMsgPool));
+}
 
-  if (msg_count == 0) {
-    ac_debug_printf("AcMsgPool_create:-msg_count is 0 return pool=AC_NULL\n");
-    pool = AC_NULL;
-  } else {
-    // Allocate the AcMsgPool
-    pool = ac_malloc(sizeof(AcMsgPool));
-    ac_debug_printf("AcMsgPool_create:+pool=%p\n", pool);
-    ac_assert(pool != AC_NULL);
-
-    // Allocate the AcMsg's count + 1 which is the stub
-    AcMsg* arena = ac_malloc(sizeof(AcMsg) * (msg_count + 1));
-    ac_debug_printf("AcMsgPool_create: arena=%p\n", arena);
-
-    // Initialize the mpscfifo and guarantee pool = what's returned
-    ac_assert(ac_mpscfifo_init(&pool->mpscfifo, arena) == &pool->mpscfifo);
-    arena[0].pool = pool;
-
-    // Add the other messages to the pool
-    for (ac_u32 i = 1; i <= msg_count; i++) {
-      ac_mpscfifo_add_msg(&pool->mpscfifo, &arena[i]);
-      arena[i].pool = pool;
-      ac_debug_printf("AcMsgPool_create: adding &arena[%d]=%p pool=%p\n", i, &arena[i], arena[i].pool);
-    }
-    ac_debug_printf("AcMsgPool_create:- pool=%p msg_count=%d\n", pool, msg_count);
-  }
-
-  return pool;
+/**
+ * Allocate a AcMsg
+ */
+AcMsg* AcMsg_alloc(void) {
+  return ac_malloc(sizeof(AcMsg));
 }
 
 /**
@@ -77,7 +53,7 @@ AcMsgPool AcMsgPool_create(ac_u32 msg_count) {
  *
  * @return a message or AC_NULL if none available
  */
-AcMsg* AcMsg_get(AcMsgPool mp) {
+AcMsg* AcMsg_get(AcMsgPool* mp) {
   AcMsg* msg;
 
   if (mp == AC_NULL) {
@@ -103,4 +79,93 @@ void AcMsg_ret(AcMsg* msg) {
   } else {
     ac_debug_printf("AcMsg_ret:+msg=%p msg->pool=%p\n", msg, msg != AC_NULL ? msg->pool : AC_NULL );
   }
+}
+
+/**
+ * Initialize a msg pool. This is used primarly by mpscfifo to initialize
+ * its stub pool, PREFER using AcMsgPool_create.
+ *
+ * @params pool to initialize with mpscfifo already initialized
+ * @params msg_count is number of messages for this pool
+ *
+ * @return AC_NULL if no pool
+ */
+void AcMsgPool_init(AcMsgPool* pool, ac_u32 msg_count) {
+  ac_assert(pool != AC_NULL);
+
+  // Allocate the AcMsg's
+  AcMsg* arena = ac_malloc(sizeof(AcMsg) * msg_count);
+  ac_debug_printf("AcMsgPool_init:+ pool=%p arena=%p\n", pool, arena);
+
+  // Add them to the pool
+  for (ac_u32 i = 0; i < msg_count; i++) {
+    ac_mpscfifo_add_msg(&pool->mpscfifo, &arena[i]);
+    arena[i].pool = pool;
+    ac_debug_printf("AcMsgPool_init: adding &arena[%d]=%p pool=%p\n",
+        i, &arena[i], arena[i].pool);
+  }
+
+  ac_debug_printf("AcMsgPool_init:- pool=%p msg_count=%d\n",
+      pool, msg_count);
+}
+
+/**
+ * Create a msg pool
+ *
+ * @params msg_count is number of messages for this pool
+ *
+ * @return AC_NULL if no pool is created
+ */
+AcMsgPool* AcMsgPool_create(ac_u32 msg_count) {
+  ac_bool error = AC_FALSE;
+  AcMsgPool* pool = AC_NULL;
+  AcMsg* arena = AC_NULL;
+
+  if (msg_count == 0) {
+    ac_debug_printf("AcMsgPool_create:-msg_count is 0 return pool=AC_NULL\n");
+    goto done;
+  }
+
+  // Allocate the AcMsgPool
+  pool = AcMsgPool_alloc();
+  ac_debug_printf("AcMsgPool_create:+pool=%p\n", pool);
+  if (pool == AC_NULL) {
+    goto done;
+  }
+
+  // Allocate the AcMsg's and the stub
+  arena = ac_malloc(sizeof(AcMsg) * (msg_count + 1));
+  if (arena == AC_NULL) {
+    goto done;
+  }
+  arena[0].pool = pool;
+  ac_debug_printf("AcMsgPool_create:+ pool=%p arena=%p\n", pool, arena);
+
+  // Initialize the mpscfifo with the first entry as the stub
+  ac_mpscfifo_init_with_stub(&pool->mpscfifo, &arena[0]);
+
+  // Add the rest to the pool
+  for (ac_u32 i = 1; i <= msg_count; i++) {
+    ac_mpscfifo_add_msg(&pool->mpscfifo, &arena[i]);
+    arena[i].pool = pool;
+    ac_debug_printf("AcMsgPool_create: adding &arena[%d]=%p pool=%p\n",
+        i, &arena[i], arena[i].pool);
+  }
+
+done:
+  ac_debug_printf("AcMsgPool_create:- pool=%p msg_count=%d\n",
+      pool, msg_count);
+
+  if (error) {
+    if (arena != AC_NULL) {
+      ac_free(arena);
+      arena = AC_NULL;
+    }
+    if (pool != AC_NULL) {
+      ac_free(pool);
+      pool = AC_NULL;
+    }
+  }
+
+  return pool;
 }

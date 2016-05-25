@@ -19,11 +19,11 @@
 
 #include <ac_inttypes.h>
 
-typedef struct msg_pool* AcMsgPool;
+typedef struct AcMsgPool AcMsgPool;
 
 typedef struct ac_msg {
   struct ac_msg *pnext;  // Next message
-  AcMsgPool pool;        // Pool that this message belongs too
+  AcMsgPool* pool;       // Pool that this message belongs too
   void *pextra;          // Extra information, null if none
   ac_u32 cmd;            // Command to perform
   ac_u32 arg;            // argument
