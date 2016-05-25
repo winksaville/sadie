@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define NDEBUG
+//#define NDEBUG
 
 #include "test-ac_dispatcher/incs/tests.h"
 
@@ -68,6 +68,7 @@ void* t1(void *param) {
   error |= AC_TEST(d != AC_NULL);
 
   // Init the queue
+  msg_stub.pool = AC_NULL;
   ac_mpscfifo_init(&t1_acq, &msg_stub);
 
   // Add ac1 and its Q dispatcher
