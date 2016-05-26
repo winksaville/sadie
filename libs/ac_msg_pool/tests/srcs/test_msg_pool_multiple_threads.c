@@ -45,18 +45,18 @@ typedef struct {
   ac_receptor_t done;
   ac_receptor_t waiting;
   ac_u64 count;
-  struct MsgTsc msg_tsc[25];
+  struct MsgTsc msg_tsc[32];
 } mptt_params;
 
 static ac_bool mptt_process_msg(ac* this, AcMsg* msg) {
   ac_u64 recv_tsc = ac_tscrd();
   mptt_params* params = (mptt_params*)this;
 
-  ac_uint idx = __atomic_fetch_add(&params->count, 1, __ATOMIC_RELAXED);
-  idx %= AC_ARRAY_COUNT(params->msg_tsc);
-  params->msg_tsc[idx].waiting_count = msg->arg;
-  params->msg_tsc[idx].sent_tsc = msg->arg_u64;
-  params->msg_tsc[idx].recv_tsc = recv_tsc;
+  ac_uint idx = params->count++ % AC_ARRAY_COUNT(params->msg_tsc);
+  struct MsgTsc* mt = &params->msg_tsc[idx];
+  mt->waiting_count = msg->arg;
+  mt->sent_tsc = msg->arg_u64;
+  mt->recv_tsc = recv_tsc;
 
   //ac_debug_printf("c=%d\n", msg->cmd);
   //ac_debug_printf("mptt_process_msg:- msg->cmd=%d, msg->arg=%d count=%ld\n",
@@ -65,7 +65,9 @@ static ac_bool mptt_process_msg(ac* this, AcMsg* msg) {
   // Return message
   AcMsg_ret(msg);
 
-  params->msg_tsc[idx].done_tsc = ac_tscrd();
+  mt->done_tsc = ac_tscrd();
+
+  __atomic_thread_fence(__ATOMIC_RELEASE);
   return AC_TRUE;
 }
 
