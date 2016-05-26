@@ -24,9 +24,9 @@ typedef struct AcMsgPool AcMsgPool;
 typedef struct ac_msg {
   struct ac_msg *pnext;  // Next message
   AcMsgPool* pool;       // Pool that this message belongs too
-  void *pextra;          // Extra information, null if none
   ac_u32 cmd;            // Command to perform
-  ac_u32 arg;            // argument
+  ac_u32 arg;            // argument u32
+  ac_u64 arg_u64;        // argument u64
 } ac_msg;
 
 typedef ac_msg AcMsg;

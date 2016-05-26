@@ -107,9 +107,9 @@
  * fail fast is someone uses it.
  *     presult->pnext = AC_NULL;
  *     presult->prspq = poldest->prspq;
- *     presult->pextra = poldest->pextra;
  *     presult->cmd = poldest->cmd;
  *     presult->arg = poldest->arg;
+ *     presult->arg_u64 = poldest->arg_u64;
  *
  * Step 6) Return presult
  *     return presult
@@ -170,9 +170,9 @@ ac_msg* ac_mpscfifo_rmv_msg(ac_mpscfifo* pq) {
   // not strictly necessary we set presult->pnext to AC_NULL so we
   // fail fast is someone uses it.
   presult->pnext = AC_NULL;
-  presult->pextra = poldest->pextra;
   presult->cmd = poldest->cmd;
   presult->arg = poldest->arg;
+  presult->arg_u64 = poldest->arg_u64;
   // DO Not copy AcMsg.pool its associated with the AcMsg as originally allocated.
   //presult->pool = poldest->pool;
 

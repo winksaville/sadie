@@ -26,23 +26,37 @@
 #include <ac_mpscfifo.h>
 #include <ac_msg_pool.h>
 #include <ac_receptor.h>
-#include <ac_thread.h>
 #include <ac_test.h>
+#include <ac_thread.h>
+#include <ac_tsc.h>
+
+struct MsgTsc {
+  ac_u32 waiting_count;
+  ac_u64 sent_tsc;
+  ac_u64 recv_tsc;
+  ac_u64 done_tsc;
+};
 
 typedef struct {
   ac comp;
-  ac_u64 count;
   ac_mpscfifo q;
   ac_bool stop_processing_msgs;
   ac_receptor_t ready;
   ac_receptor_t done;
   ac_receptor_t waiting;
+  ac_u64 count;
+  struct MsgTsc msg_tsc[25];
 } mptt_params;
 
 static ac_bool mptt_process_msg(ac* this, AcMsg* msg) {
+  ac_u64 recv_tsc = ac_tscrd();
   mptt_params* params = (mptt_params*)this;
 
-  __atomic_add_fetch(&params->count, 1, __ATOMIC_RELAXED);
+  ac_uint idx = __atomic_fetch_add(&params->count, 1, __ATOMIC_RELAXED);
+  idx %= AC_ARRAY_COUNT(params->msg_tsc);
+  params->msg_tsc[idx].waiting_count = msg->arg;
+  params->msg_tsc[idx].sent_tsc = msg->arg_u64;
+  params->msg_tsc[idx].recv_tsc = recv_tsc;
 
   //ac_debug_printf("c=%d\n", msg->cmd);
   //ac_debug_printf("mptt_process_msg:- msg->cmd=%d, msg->arg=%d count=%ld\n",
@@ -51,6 +65,7 @@ static ac_bool mptt_process_msg(ac* this, AcMsg* msg) {
   // Return message
   AcMsg_ret(msg);
 
+  params->msg_tsc[idx].done_tsc = ac_tscrd();
   return AC_TRUE;
 }
 
@@ -61,7 +76,7 @@ void* mptt(void *param) {
   ac_bool error = AC_FALSE;
   mptt_params* params = (mptt_params*)param;
 
-  //ac_debug_printf("mptt:+ starting  params=%p\n", params);
+  ac_debug_printf("mptt:+ starting  params=%p\n", params);
 
   // Add an acq
   ac_dispatcher* d;
@@ -100,7 +115,11 @@ void* mptt(void *param) {
 
   ac_dispatcher_rmv_ac(d, &params->comp);
 
-  //ac_debug_printf("mptt:-done error=%d params=%p\n", error, params);
+  ac_dispatcher_ret(d);
+
+  ac_mpscfifo_deinit(&params->q);
+
+  ac_debug_printf("mptt:-done error=%d params=%p\n", error, params);
 
   ac_receptor_signal_yield_if_waiting(params->done);
   return AC_NULL;
@@ -154,6 +173,8 @@ ac_u32 count_msgs(AcMsgPool* mp, ac_u32 msg_count) {
   return count;
 }
 
+extern ac_uint remove_zombies(void);
+
 /**
  * Test msg pools being used by multiple threads
  *
@@ -196,50 +217,75 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count) {
     ac_receptor_wait(params[i]->ready);
   }
 
-
   // Send the threads messages which they will return to our pool
   ac_debug_printf("test_msg_pool_multiple_threads: sending msgs\n");
-  const ac_u64 max_waiting_count = 10000;
-  ac_u64 waiting_count = 0;
-  for (ac_u32 tries = 0; waiting_count < max_waiting_count && tries < 100; tries++) {
+  const ac_u32 max_waiting_count = 10000;
+  ac_u32 waiting_count = 0;
+  ac_bool done_looping = AC_FALSE;
+  for (ac_u32 tries = 0; (!done_looping) && (tries < 1024); tries++) {
     //ac_debug_printf("test_msg_pool_multiple_threads: waiting_count=%ld tries=%d\n",
     //    waiting_count, tries);
-    for (ac_u32 i = 0; waiting_count < max_waiting_count && i < thread_count; i++) {
+    for (ac_u32 i = 0; (!done_looping) && (i < thread_count); i++) {
       AcMsg* msg = AcMsg_get(mp);
-      while (waiting_count < max_waiting_count && msg == AC_NULL) {
-        waiting_count += 1;
+      while ((!done_looping) && (msg == AC_NULL)) {
+        done_looping = waiting_count++ > max_waiting_count;
         ac_thread_yield();
         msg = AcMsg_get(mp);
       }
       if (msg != AC_NULL) {
         msg->cmd = 1;
-        msg->arg = i * tries;
+        msg->arg = waiting_count;
+        msg->arg_u64 = ac_tscrd();
         mptt_send_msg(params[i], msg);
       } else {
-        //ac_debug_printf("test_msg_pool_multiple_threads: %d waiting_count=%ld msg=%p\n",
-        //    i, waiting_count, msg);
+        ac_debug_printf("test_msg_pool_multiple_threads: %d waiting_count=%ld NO msg avail\n",
+            i, waiting_count);
       }
     }
   }
-  ac_debug_printf("test_msg_pool_multiple_threads: stopping waiting_count=%ld\n",
-      waiting_count);
+  //ac_debug_printf("test_msg_pool_multiple_threads: waiting until done\n");
 
   // Tell each mptt to stop and wait until its done
   for (ac_u32 i = 0; i < thread_count; i++) {
     mptt_stop_and_wait_until_done(params[i]);
   }
 
-  //ac_u32 c = 0;
-  count_msgs(mp, msg_count);
+  // Yield to give other threads a little more time to cleanup
+  ac_thread_yield();
 
-  // TODO: Not all messages are returned because of the
-  // 
-  //error |= AC_TEST(c == msg_count);
+#ifdef pc_x86_64
+  // TODO: Clean zombies, we must not be required to do this.
+  remove_zombies();
+#endif
+
+  // If we cleaned up the threads then all of the messages should be back
+  error |= AC_TEST(count_msgs(mp, msg_count) == msg_count);
 
   ac_debug_printf("test_msg_pool_multiple_threads: waiting_count=%ld\n",
       waiting_count);
 
-  ac_thread_yield();
+  // Display MsgTsc's
+  for (ac_u32 thrd = 0; thrd < thread_count; thrd++) {
+    mptt_params* cur = params[thrd];
+    ac_uint max = AC_ARRAY_COUNT(cur->msg_tsc);
+    ac_uint idx;
+    ac_uint count;
+    if (cur->count < max) {
+      idx = 0;
+      count = cur->count;
+    } else {
+      count = max;
+      idx = cur->count % max;
+    }
+    ac_printf("params[%d]=%p\n", thrd, cur);
+    for (; count-- > 0; idx = (idx + 1) % max) {
+      struct MsgTsc* msg_tsc = &cur->msg_tsc[idx];
+      ac_printf("%d: sent=%ld wc=%d travel=%.9t ret=%.9t\n",
+          idx, msg_tsc->sent_tsc, msg_tsc->waiting_count,
+          msg_tsc->recv_tsc - msg_tsc->sent_tsc,
+          msg_tsc->done_tsc - msg_tsc->recv_tsc);
+    }
+  }
 
 #endif
   ac_debug_printf("test_msg_pool_multiple_threads:- error=%d\n", error);

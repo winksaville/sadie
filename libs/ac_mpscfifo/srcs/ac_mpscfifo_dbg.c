@@ -29,8 +29,8 @@
  */
 void ac_msg_print(ac_msg* pmsg) {
   if (pmsg != AC_NULL) {
-    ac_printf("pmsg=%p pnext=%p pool=%p pextra=%p cmd=0x%x arg=0x%x\n", (void *)pmsg,
-           (void *)(pmsg->pnext), pmsg->pool, pmsg->pextra, pmsg->cmd, pmsg->arg);
+    ac_printf("pmsg=%p pnext=%p pool=%p cmd=0x%x arg=0x%x arg=0x%ld\n", (void *)pmsg,
+           (void *)(pmsg->pnext), pmsg->pool, pmsg->cmd, pmsg->arg, pmsg->arg_u64);
   } else {
     ac_printf("pmsg == AC_NULL\n");
   }

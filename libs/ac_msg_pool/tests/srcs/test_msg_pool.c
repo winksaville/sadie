@@ -23,6 +23,7 @@
 #include <ac_debug_printf.h>
 #include <ac_receptor.h>
 #include <ac_test.h>
+#include <ac_time.h>
 #include <ac_thread.h>
 
 ac_bool test_msg_pool(void) {
@@ -82,15 +83,16 @@ ac_bool test_msg_pool(void) {
 int main(void) {
   ac_bool error = AC_FALSE;
 
-  ac_thread_init(13);
+  ac_thread_init(5);
   ac_receptor_init(256);
+  ac_time_init();
 
   ac_debug_printf("sizeof(AcMsg)=%d\n", sizeof(AcMsg));
 
   error |= test_msg_pool();
   error |= test_msg_pool_multiple_threads(1);
   error |= test_msg_pool_multiple_threads(2);
-  error |= test_msg_pool_multiple_threads(10);
+  error |= test_msg_pool_multiple_threads(5);
 
   if (!error) {
     ac_printf("OK\n");
