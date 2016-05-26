@@ -14,6 +14,8 @@
  * limitations under the license.
  */
 
+#define NDEBUG
+
 #include <ac_thread.h>
 #include <thread_x86.h>
 #include <thread_x86_debug_ctx_switch.h>
@@ -209,7 +211,7 @@ STATIC tcb_x86* get_tcb(void*(*entry)(void*), void* entry_arg) {
   tcb_x86* ptcb;
 
   // There must always be at least one ac_threads
-  ac_assert(pthreads != AC_NULL);
+  ac_debug_assert(pthreads != AC_NULL);
 
   // Search all of the ac_threads for an empty tcb
   ac_threads* pcur = pthreads;
@@ -435,7 +437,7 @@ tcb_x86* thread_scheduler_intr_disabled(ac_bool remove_pready, ac_u8* sp, ac_u16
     //ac_printf("thread_scheduler_intr_disabled: true remove_pready=%d\n", remove_pready);
 
     // Make sure we never remove pidle_tcb!!
-    ac_assert(pready != pidle_tcb);
+    ac_debug_assert(pready != pidle_tcb);
 
     // Remove the pready tcb
     pready = remove_tcb_intr_disabled(pready);
@@ -463,7 +465,7 @@ tcb_x86* thread_scheduler_intr_disabled(ac_bool remove_pready, ac_u8* sp, ac_u16
   // Set the a new tsc deadline for this thread
   set_apic_timer_tsc_deadline(pready->slice_deadline);
 
-  ac_assert(pready != AC_NULL);
+  ac_debug_assert(pready != AC_NULL);
 
   //print_tcb_list("thread_scheduler_intr_disabled:-", pready);
   return pready;
@@ -649,8 +651,8 @@ STATIC void init_stack_frame(ac_u8* pstack, ac_uptr stack_size, ac_uptr flags,
       "Assumption that void* is sizeof ac_uptr is false");
 
   // Be sure stack is on a 16 byte boundry
-  ac_assert(((ac_uptr)pstack & 0xf) == 0);
-  ac_assert(((ac_uptr)stack_size & 0xf) == 0);
+  ac_debug_assert(((ac_uptr)pstack & 0xf) == 0);
+  ac_debug_assert(((ac_uptr)stack_size & 0xf) == 0);
 
   // fill the stack with its address for debugging
   //ac_uptr* pfill = (ac_uptr*)pstack;
@@ -712,7 +714,7 @@ STATIC tcb_x86* thread_create(ac_size_t stack_size, ac_uptr flags,
     error = 1; // TODO: add AC_STATUS_OOM
     goto done;
   }
-  ac_assert(((ac_uptr)pstack & 0xf) == 0);
+  ac_debug_assert(((ac_uptr)pstack & 0xf) == 0);
 
   // Get the tcb and initialize the stack frame
   ptcb = get_tcb(entry, entry_arg);
