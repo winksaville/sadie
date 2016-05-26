@@ -139,11 +139,6 @@ void waiting_tcb_remove_intr_disabled(void) {
 
   ac_uint old_num = num_waiting_tcbs--;
 
-  if (waiting_tcbs == 0) {
-    // No waiting tcbs to remove
-    return;
-  }
-
   // Place the right most element at the end of the heap as the root.
   //store_node(old_num, 1);
   waiting_tcbs[1] = waiting_tcbs[old_num];
@@ -182,7 +177,7 @@ void waiting_tcb_remove_intr_disabled(void) {
       }
     }
 
-    // We know which child is samller check if we should swap it with parent
+    // We know which child is smaller check if we should swap it with parent
     if (parent_waiting_deadline > smaller_child_waiting_deadline) {
       swap_nodes(parent, smaller_node);
     } else {
