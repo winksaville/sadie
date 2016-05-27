@@ -30,6 +30,9 @@
 #include <ac_thread.h>
 #include <ac_tsc.h>
 
+// Needed of this is  pc_x86_64
+extern ac_uint remove_zombies(void);
+
 struct MsgTsc {
   ac_u32 waiting_count;
   ac_u64 sent_tsc;
@@ -77,36 +80,26 @@ static ac_bool mptt_process_msg(ac* this, AcMsg* msg) {
 void* mptt(void *param) {
   ac_bool error = AC_FALSE;
   mptt_params* params = (mptt_params*)param;
+  ac_dispatcher* d;
 
   ac_debug_printf("mptt:+ starting  params=%p\n", params);
 
-  // Add an acq
-  ac_dispatcher* d;
-
-  params->waiting = ac_receptor_create();
-
-  // Get a dispatcher
+  // Get a dispatcher and add a queue and message processor
   d = ac_dispatcher_get(1);
   error |= AC_TEST(d != AC_NULL);
 
-  // Init the queue
   ac_mpscfifo_init(&params->q);
-
-  // Init Async Component
   params->comp.process_msg = mptt_process_msg;
-
-  // Add ac1 and its Q dispatcher
   ac_dispatcher_add_acq(d, &params->comp, &params->q);
 
-  // We're not stopped
+  // Create the waiting receptor and init our not stopped flag
+  params->waiting = ac_receptor_create();
   __atomic_store_n(&params->stop_processing_msgs, AC_FALSE, __ATOMIC_RELEASE);
 
   // Signal mptt is ready
-  //ac_debug_printf("mptt: ready params=%p\n", params);
   ac_receptor_signal(params->ready);
 
-  // Continuously dispatch messages until done
-  //ac_debug_printf("mptt: looping params=%p\n", params);
+  // Continuously dispatch messages until we're told to stop
   while (__atomic_load_n(&params->stop_processing_msgs, __ATOMIC_ACQUIRE) == AC_FALSE) {
     if (!ac_dispatch(d)) {
       //ac_debug_printf("mptt: waiting\n");
@@ -115,10 +108,9 @@ void* mptt(void *param) {
     }
   }
 
+  // Cleanup, TODO: cleanup waiting receptor
   ac_dispatcher_rmv_ac(d, &params->comp);
-
   ac_dispatcher_ret(d);
-
   ac_mpscfifo_deinit(&params->q);
 
   ac_debug_printf("mptt:-done error=%d params=%p\n", error, params);
@@ -174,8 +166,6 @@ ac_u32 count_msgs(AcMsgPool* mp, ac_u32 msg_count) {
   ac_debug_printf("count_msgs:- count=%d\n", count);
   return count;
 }
-
-extern ac_uint remove_zombies(void);
 
 /**
  * Test msg pools being used by multiple threads
@@ -256,7 +246,7 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count) {
   ac_thread_yield();
 
 #ifdef pc_x86_64
-  // TODO: Clean zombies, we must not be required to do this.
+  // TODO: Remove zombies thread, we shouldn't have to do this!
   remove_zombies();
 #endif
 
