@@ -220,7 +220,12 @@ ac_bool test_thread_wait(ac_uint simultaneous_threads, ac_bool ns,
   // We have to allow some failures as we can't demand 100% success
   // rate because on Linux the time stamp counts are not synchronized
   // across CPU's.
-  error |= AC_TEST(successes >= required_successes);
+  ac_printf("test_thread_wait(%d, %s): waiting %s successes=%d required_successes=%d\n",
+      simultaneous_threads, name, name, successes, required_successes * simultaneous_threads);
+  error |= AC_TEST(successes >= (required_successes * simultaneous_threads));
+
+  ac_printf("test_thread_wait(%d, %s): waiting %s receptor_waiting_successes=%d required_successes=%d\n",
+      simultaneous_threads, name, name, ac_receptor_waiting_successes, required_successes);
   error |= AC_TEST(ac_receptor_waiting_successes >= required_successes);
 
   ac_free(params);
