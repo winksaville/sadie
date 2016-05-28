@@ -135,7 +135,7 @@ int main(void) {
   ac_thread_init(8);
   ac_receptor_init(256);
 
-  ac_time_init();
+  AcTime_init();
 
   if (!error) {
     error |= test_receptor();

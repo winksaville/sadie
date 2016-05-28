@@ -28,6 +28,21 @@
 #include <ac_debug_printf.h>
 
 /**
+ * Convert nanos seconds to ticks
+ *
+ * @param: nanos
+ *
+ * @return: number of ticks
+ */
+ac_u64 AcTime_nanos_to_ticks(ac_u64 nanos) {
+  ac_u64 secs = nanos / AC_SEC_IN_NS;
+  ac_u64 sub_secs = nanos % AC_SEC_IN_NS;
+
+  return (secs * ac_tsc_freq()) +
+    AC_U64_DIV_ROUND_UP(sub_secs * ac_tsc_freq(), AC_SEC_IN_NS);
+}
+
+/**
  * Convert ticks to a duration string
  * y:day:min:sec.subsecs
  *
@@ -41,7 +56,7 @@
  *         if out_buf_len == 0 nothing is written
  *         if out_buf_len == 1 only a trailing zero is written
  */
-ac_uint ac_ticks_to_duration_str(ac_u64 ticks, ac_bool leading_0, ac_uint precision,
+ac_uint AcTime_ticks_to_duration_str(ac_u64 ticks, ac_bool leading_0, ac_uint precision,
     ac_u8* out_buff, ac_uint out_buff_len) {
   ac_u64 freq = ac_tsc_freq();
   ac_uint i;
@@ -149,7 +164,7 @@ ac_uint ac_ticks_to_duration_str(ac_u64 ticks, ac_bool leading_0, ac_uint precis
 static void ac_printf_time_format_proc(ac_writer* writer, ac_u8 ch, ac_va_list args) {
   ac_u8 buff[64];
 
-  ac_ticks_to_duration_str(ac_va_arg(args, ac_u64), writer->leading_0,
+  AcTime_ticks_to_duration_str(ac_va_arg(args, ac_u64), writer->leading_0,
         writer->precision, buff, AC_ARRAY_COUNT(buff));
   ac_printf_write_str(writer, (char*)buff);
 }
@@ -160,18 +175,18 @@ static ac_bool early_init = AC_FALSE;
  * Initialize ac_time early.
  */
 __attribute__((constructor))
-void ac_time_early_init(void) {
+void AcTime_early_init(void) {
   ac_uint error = ac_printf_register_format_proc(ac_printf_time_format_proc, 't');
   ac_assert(error == 0);
   early_init = AC_TRUE;
-  ac_printf("ac_time_early_init:-\n");
+  ac_printf("AcTime_early_init:-\n");
 }
 
 /**
  * Initialize ac_time.
  */
-void ac_time_init(void) {
+void AcTime_init(void) {
   if (!early_init) {
-    ac_time_early_init();
+    AcTime_early_init();
   }
 }

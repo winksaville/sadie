@@ -1,5 +1,4 @@
-/*
- * Copyright 2015 Wink Saville
+/* * Copyright 2015 Wink Saville
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +33,15 @@
 #define NO_LEADING_0 AC_FALSE
 
 /**
+ * Convert nanos seconds to ticks
+ *
+ * @param: nanos
+ *
+ * @return: number of ticks
+ */
+ac_u64 AcTime_nanos_to_ticks(ac_u64 nanos);
+
+/**
  * Convert ticks to a duration string
  * y:day:min:sec.subsecs
  *
@@ -47,17 +55,17 @@
  *         if out_buff_len == 0 nothing is written
  *         if out_buff_len == 1 only a trailing zero is written
  */
-ac_uint ac_ticks_to_duration_str(ac_u64 ticks, ac_bool leading0, ac_uint precision,
+ac_uint AcTime_ticks_to_duration_str(ac_u64 ticks, ac_bool leading0, ac_uint precision,
     ac_u8* out_buff, ac_uint out_buff_len);
 
 /**
  * Initialize ac_time early.
  */
-void ac_time_early_init(void);
+void AcTime_early_init(void);
 
 /**
  * Initialize ac_time module.
  */
-void ac_time_init(void);
+void AcTime_init(void);
 
 #endif

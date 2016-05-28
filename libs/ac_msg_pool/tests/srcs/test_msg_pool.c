@@ -85,7 +85,7 @@ int main(void) {
 
   ac_thread_init(10);
   ac_receptor_init(256);
-  ac_time_init();
+  AcTime_init();
 
   ac_debug_printf("sizeof(AcMsg)=%d\n", sizeof(AcMsg));
 

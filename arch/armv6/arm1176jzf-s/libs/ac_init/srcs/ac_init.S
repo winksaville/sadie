@@ -103,7 +103,7 @@ done:
   //bl  ac_cpu_perf_init // Does NOT work on qemu
   bl  ac_interrupts_cpu_enable
 
-  bl  ac_time_early_init
+  bl  AcTime_early_init
 
   ldmfd sp!, {pc} // Return
 

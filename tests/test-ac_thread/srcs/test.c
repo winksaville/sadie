@@ -326,7 +326,7 @@ int main(void) {
   // Start with only one thread
   ac_thread_init(1);
   ac_receptor_init(256);
-  ac_time_init();
+  AcTime_init();
 
   error |= test_simple();
 
