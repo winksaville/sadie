@@ -265,21 +265,22 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count) {
   // and other pages in the wiki for additional information.
   ac_u64 start = ac_tscrd();
   ac_debug_printf("test_msg_pool_multiple_threads: sending msgs\n");
-  const ac_u32 max_waiting_count = 10000;
+  const ac_u32 max_waiting_count = 100000;
   ac_u32 waiting_count = 0;
   for (ac_u32 message = 0; !error && (message < MSGS_PER_THREAD); message++) {
     ac_debug_printf("test_msg_pool_multiple_threads: waiting_count=%ld message=%d\n",
         waiting_count, message);
-    //for (ac_s32 i = thread_count - 1; !error && (i >= 0); i--) {
     for (ac_s32 i = 0; !error && (i < thread_count); i++) {
         ac_debug_printf("test_msg_pool_multiple_threads: %d waiting_count=%ld TOP Loop\n",
             i, waiting_count);
       AcMsg* msg = AcMsg_get(mp);
       while (!error && (msg == AC_NULL)) {
-        error |= AC_TEST(waiting_count++ < max_waiting_count);
-        if (error) {
-          ac_debug_printf("test_msg_pool_multiple_threads: %d waiting_count=%ld ERROR, no msgs avail\n",
+        if (waiting_count++ >= max_waiting_count) {
+          ac_printf("test_msg_pool_multiple_threads: %d waiting_count=%ld ERROR, no msgs avail\n",
               i, waiting_count);
+          // Report the failure.
+          error |= AC_TEST(waiting_count < max_waiting_count);
+          break;
         }
         ac_thread_yield();
         msg = AcMsg_get(mp);
