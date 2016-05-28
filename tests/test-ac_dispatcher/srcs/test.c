@@ -174,7 +174,7 @@ int main(void) {
   error |= test_dispatcher_get_ret();
   error |= test_dispatcher_add_rmv_acq();
   error |= test_dispatching();
-#ifdef VersatilePB
+#if AC_PLATFORM == VersatilePB
   ac_printf("py: threading not working on VersatilePB, skip test_threaded_dispatching()\n");
 #else
   error |= test_threaded_dispatching();

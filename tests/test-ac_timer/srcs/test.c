@@ -26,7 +26,7 @@
 #include <ac_test.h>
 #include <ac_debug_printf.h>
 
-#if defined(VersatilePB)
+#if AC_PLATFORM == VersatilePB
 #include <ac_exceptions.h>
 #include <ac_interrupts.h>
 #include <ac_pl190_vic.h>
@@ -112,11 +112,11 @@ void periodic_handler(ac_uptr param) {
 
 int main(void) {
   ac_bool error = AC_FALSE;
-#if defined(Posix)
+#if AC_PLATFORM == Posix
 
   ac_printf("test_ac_timer: no tests for Posix\n");
 
-#elif defined(VersatilePB)
+#elif AC_PLATFORM == VersatilePB
   ac_u32 result;
 
   //ac_printf("test_ac_timer: initial routes=0x%x enable=0x%x\n",

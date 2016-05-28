@@ -118,7 +118,7 @@ void t1_mark_done(void) {
 ac_bool test_threaded_dispatching() {
   ac_bool error = AC_FALSE;
   ac_debug_printf("test_threaded_dispatching:+\n");
-#ifdef VersatilePB
+#if AC_PLATFORM == VersatilePB
   ac_debug_printf("test_threaded_dispatching: VersatilePB threading not working, skipping\n");
 #else
   ac_thread_init(1);

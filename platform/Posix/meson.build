@@ -21,8 +21,10 @@ Cpu = 'x86_64'
 
 # The compiler arguments
 compilerArgs += [
-  '-D@0@'.format(Platform),
-  '-D@0@'.format(Arch),
+  '-D@0@=1'.format(Platform),
+  '-D@0@=1'.format(Arch),
+  '-DAC_PLATFORM=@0@'.format(Platform),
+  '-DAC_ARCH=@0@'.format(Arch),
 ]
 
 subdir('@0@/arch'.format(meson.source_root()))

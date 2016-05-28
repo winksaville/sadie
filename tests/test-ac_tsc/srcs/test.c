@@ -21,7 +21,7 @@
 ac_bool test_ac_tsc() {
   ac_bool error = AC_FALSE;
 
-#if defined(Posix) || defined(pc_x86_64)
+#if AC_PLATFORM == Posix || AC_PLATFORM == pc_x86_64
 
   ac_u64 tsc1 = ac_tscrd();
   ac_u64 tsc2 = ac_tscrd();
@@ -36,7 +36,7 @@ ac_bool test_ac_tsc() {
   error |= AC_TEST(freq >= 1000000);
   ac_printf("test_ac_tsc: freq=%d\n", freq);
 
-#elif defined(VersatilePB)
+#elif AC_PLATFORM == VersatilePB
 
   ac_printf("test_ac_tsc: VersatilePB no tests on qemu"
       " as Cycle Counter is not available\n");

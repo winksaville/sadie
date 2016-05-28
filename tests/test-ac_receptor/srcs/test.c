@@ -56,7 +56,7 @@ ac_uint test_receptor(void) {
   ac_printf("test_receptor:+\n");
 
   ac_uint error = AC_FALSE;
-#if defined(Posix) || defined(pc_x86_64)
+#if AC_PLATFORM == Posix || AC_PLATFORM == pc_x86_64
   struct test_params params;
 
   ac_printf("test_receptor: call ac_receptor_create\n");

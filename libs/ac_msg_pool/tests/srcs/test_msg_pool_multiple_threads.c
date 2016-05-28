@@ -33,14 +33,14 @@
 #define MSGS_PER_THREAD 20
 #define MSGS_TSC_COUNT  MSGS_PER_THREAD
 
-#ifdef pc_x86_64
+#if AC_PLATFORM == pc_x86_64
 extern ac_uint remove_zombies(void);
 extern void print_ready_list(const char* str);
 extern ac_u32 get_ready_length(void);
 #endif
 
 ac_u32 ready_length(void) {
-#ifdef pc_x86_64
+#if AC_PLATFORM == pc_x86_64
   // This only returns a value if SUPPORT_READY_LENGTH is defined
   // when compliing thread_x86.c. Undefined by default and returns 0.
   return get_ready_length();
@@ -50,7 +50,7 @@ ac_u32 ready_length(void) {
 }
 
 void rmv_zombies(void) {
-#ifdef pc_x86_64
+#if AC_PLATFORM == pc_x86_64
   remove_zombies();
 #endif
 }
@@ -215,8 +215,8 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count) {
   ac_bool error = AC_FALSE;
   ac_printf("test_msg_pool_multiple_threads:+ thread_count=%d rl=%d\n", thread_count,
       ready_length());
-#ifdef VersatilePB
-  ac_debug_printf("test_msg_pool_multiple_threads: VersatilePB threading not working, skipping\n");
+#if AC_PLATFORM == VersatilePB
+  ac_printf("test_msg_pool_multiple_threads: VersatilePB threading not working, skipping\n");
 #else
 
   // Create a msg pool. The msg_count must be at

@@ -319,7 +319,7 @@ ac_bool perf_yield(void) {
 int main(void) {
   ac_bool error = AC_FALSE;
 
-#ifdef VersatilePB
+#if AC_PLATFORM == VersatilePB
   ac_printf("py: threading not working on VersatilePB, skip\n");
 #else
 
