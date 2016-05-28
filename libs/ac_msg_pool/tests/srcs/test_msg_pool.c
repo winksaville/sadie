@@ -83,7 +83,7 @@ ac_bool test_msg_pool(void) {
 int main(void) {
   ac_bool error = AC_FALSE;
 
-  ac_thread_init(5);
+  ac_thread_init(10);
   ac_receptor_init(256);
   ac_time_init();
 
@@ -91,8 +91,7 @@ int main(void) {
 
   error |= test_msg_pool();
   error |= test_msg_pool_multiple_threads(1);
-  error |= test_msg_pool_multiple_threads(2);
-  error |= test_msg_pool_multiple_threads(5);
+  error |= test_msg_pool_multiple_threads(10);
 
   if (!error) {
     ac_printf("OK\n");
