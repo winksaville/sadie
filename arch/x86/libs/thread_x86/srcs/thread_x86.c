@@ -44,6 +44,9 @@
 
 #define STATIC static
 
+#define SUPPORT_READY_LENGTH // Optional ready list length
+
+
 // There will be 2 system threads, a main thread and idle thread
 #define SYSTEM_THREAD_COUNT 2
 
@@ -90,6 +93,10 @@ STATIC tcb_x86* pmain_tcb;
  * it always contains at least the idle tcb, if nohting else.
  */
 STATIC tcb_x86* pready;
+
+#ifdef SUPPORT_READY_LENGTH
+STATIC ac_u32 ready_length;
+#endif
 
 /**
  * All of the threads
@@ -163,6 +170,9 @@ void print_tcb_list(const char* str, tcb_x86* phead) {
       ac_printf(str);
     }
     tcb_x86* pcur = phead;
+#ifdef SUPPORT_READY_LENGTH
+    ac_printf("%d ", ready_length);
+#endif
     do {
       ac_printf("%x:%d ", pcur, pcur->thread_id);
       pcur = pcur->pnext_tcb;
@@ -274,6 +284,10 @@ STATIC ac_uint add_tcb_before(tcb_x86* pnew, tcb_x86* pcur) {
 
   tcb_x86* ptmp = pcur->pprev_tcb;
   if (pnew->pprev_tcb == AC_NULL) {
+#ifdef SUPPORT_READY_LENGTH
+    __atomic_fetch_add(&ready_length, 1, __ATOMIC_RELAXED);
+#endif
+
     pnew->pprev_tcb = ptmp;
     pnew->pnext_tcb = pcur;
     ptmp->pnext_tcb = pnew;
@@ -303,6 +317,10 @@ STATIC ac_uint add_tcb_after(tcb_x86* pnew, tcb_x86* pcur) {
 
   tcb_x86* ptmp = pcur->pnext_tcb;
   if (pnew->pnext_tcb == AC_NULL) {
+#ifdef SUPPORT_READY_LENGTH
+    __atomic_fetch_add(&ready_length, 1, __ATOMIC_RELAXED);
+#endif
+
     pnew->pnext_tcb = ptmp;
     pnew->pprev_tcb = pcur;
     ptmp->pprev_tcb = pnew;
@@ -329,6 +347,10 @@ STATIC ac_uint add_tcb_after(tcb_x86* pnew, tcb_x86* pcur) {
 STATIC tcb_x86* remove_tcb_intr_disabled(tcb_x86* pcur) {
   tcb_x86* pnext_tcb = pcur->pnext_tcb;
   if (pnext_tcb != AC_NULL) {
+#ifdef SUPPORT_READY_LENGTH
+    __atomic_fetch_sub(&ready_length, 1, __ATOMIC_RELAXED);
+#endif
+
     tcb_x86* pprev_tcb = pcur->pprev_tcb;
     //ac_printf("remove_tcb_intr_disabled: pcur=%x pnext_tcb=%x pprev_tcb=%x\n",
     //    pcur, pnext_tcb, pprev_tcb);
@@ -738,8 +760,8 @@ done:
   }
 
 #if AC_FALSE
-  ac_printf("thread_create: pstack=0x%x stack_size=0x%x tos=0x%x\n",
-      pstack, stack_size, pstack + stack_size);
+  ac_printf("thread_create: pstack=0x%x stack_size=0x%x tos=0x%x rl=%d\n",
+      pstack, stack_size, pstack + stack_size, get_ready_length());
   ac_printf("thread_create:-ptcb=0x%x ready: ", ptcb);
   print_tcb_list(AC_NULL, pready);
 #endif
@@ -811,6 +833,18 @@ void ac_thread_wait_ticks(ac_u64 ticks) {
 }
 
 /**
+ * @return: the approximate number of threads currently
+ * on the ready queue. For diagnostic purproses ONLY.
+ */
+ac_u32 get_ready_length(void) {
+#ifdef SUPPORT_READY_LENGTH
+  return __atomic_load_n(&ready_length, __ATOMIC_RELAXED);
+#else
+  return 0;
+#endif
+}
+
+/**
  * Early initialization of this module
  */
 void ac_thread_early_init() {
@@ -843,6 +877,9 @@ void ac_thread_early_init() {
   pmain_tcb->pnext_tcb = pmain_tcb;
   pmain_tcb->pprev_tcb = pmain_tcb;
   pready = pmain_tcb;
+#ifdef SUPPORT_READY_LENGTH
+  ready_length = 1;
+#endif
 
   // Add idle to the pready list
   add_tcb_after(pidle_tcb, pready);
@@ -851,7 +888,8 @@ void ac_thread_early_init() {
   waiting_tcbs_init(SYSTEM_THREAD_COUNT);
   print_waiting_tcbs();
 
-  ac_printf("ac_thread_early_init: pmain=0x%lx pidle=0x%lx\n", pmain_tcb, pidle_tcb);
+  ac_printf("ac_thread_early_init: pmain=0x%lx pidle=0x%lx rl=%d\n", pmain_tcb, pidle_tcb,
+      get_ready_length());
   print_tcb_list("ac_thread_early_init:-ready: ", pready);
 }
 
