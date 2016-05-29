@@ -33,13 +33,22 @@
 #define NO_LEADING_0 AC_FALSE
 
 /**
- * Convert nanos seconds to ticks
+ * Convert nano seconds to ticks
  *
  * @param: nanos
  *
  * @return: number of ticks
  */
 ac_u64 AcTime_nanos_to_ticks(ac_u64 nanos);
+
+/**
+ * Convert ticks to nano seconds
+ *
+ * @param: ticks
+ *
+ * @return: number of nano seconds
+ */
+ac_u64 AcTime_ticks_to_nanos(ac_u64 ticks);
 
 /**
  * Convert ticks to a duration string

@@ -190,6 +190,24 @@ ac_bool test_time(ac_u64 test_freq) {
 int main(void) {
   ac_bool error = AC_FALSE;
 
+  ac_u64 freq = ac_tsc_freq();
+  ac_u64 test_nanos = AcTime_ticks_to_nanos(freq);
+  ac_printf("test_nanos=%ld AC_SEC_IN_NS=%ld freq=%ld\n",
+      test_nanos, AC_SEC_IN_NS, freq);
+  error |= AC_TEST(test_nanos == AC_SEC_IN_NS);
+
+  ac_u64 test_ticks = AcTime_nanos_to_ticks(2 * AC_SEC_IN_NS);
+  ac_u64 expected_ticks = 2 * freq;
+  ac_printf("test_ticks=%ld expected_ticks=%ld freq=%ld\n",
+      test_ticks, expected_ticks, freq);
+  error |= AC_TEST(test_ticks == expected_ticks);
+
+  test_ticks = AcTime_nanos_to_ticks(AC_SEC_IN_NS / 100);
+  expected_ticks = AC_U64_DIV_ROUND_UP(freq, 100);
+  ac_printf("test_ticks=%ld expected_ticks=%ld freq=%ld\n",
+      test_ticks, expected_ticks, freq);
+  error |= AC_TEST(test_ticks == expected_ticks);
+
   // For testing we'll assume a 3.3GHz clock
   // This particular value had shown a bug but
   // potentially any value >= 1GHz should work.

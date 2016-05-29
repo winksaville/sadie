@@ -43,6 +43,21 @@ ac_u64 AcTime_nanos_to_ticks(ac_u64 nanos) {
 }
 
 /**
+ * Convert ticks to nano seconds
+ *
+ * @param: ticks
+ *
+ * @return: number of nano seconds
+ */
+ac_u64 AcTime_ticks_to_nanos(ac_u64 ticks) {
+  ac_u64 freq = ac_tsc_freq();
+  ac_u64 secs = ticks / freq;
+  ac_u64 sub_sec_ticks = ticks % freq;
+  return (secs * AC_SEC_IN_NS) +
+    AC_U64_DIV_ROUND_UP(sub_sec_ticks * AC_SEC_IN_NS, freq);
+}
+
+/**
  * Convert ticks to a duration string
  * y:day:min:sec.subsecs
  *
