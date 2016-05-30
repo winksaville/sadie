@@ -36,6 +36,28 @@ void ac_thread_early_init();
 void ac_thread_init(ac_u32 max_threads);
 
 /**
+ * Set the default slice to ticks.
+ *
+ * This is an advisory value and maybe be ignored or
+ * altered by the system.
+ *
+ * @param ticks is the number of ticks for each slice.
+ */
+inline static void AcThread_set_default_slice(ac_u64 ticks) {
+  // AcThread_set_default_slice NOOP for ARCH arvv6 arm1176jzf-s
+}
+
+/**
+ * Get the default slice to ticks.
+ *
+ * @return the default number of ticks for each slice, zero if unknown.
+ */
+inline static ac_u64 AcThread_get_default_slice(void) {
+  // AcThread_get_default_slice NOOP for ARCH arvv6 arm1176jzf-s
+  return 0;
+}
+
+/**
  * The current thread yeilds the CPU to the next
  * ready thread.
  */

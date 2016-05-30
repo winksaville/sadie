@@ -36,6 +36,23 @@ void ac_thread_early_init();
 void ac_thread_init(ac_u32 max_threads);
 
 /**
+ * Set the default slice to ticks.
+ *
+ * This is an advisory value and maybe be ignored or
+ * altered by the system.
+ *
+ * @param ticks is the number of ticks for each slice.
+ */
+void AcThread_set_default_slice(ac_u64 ticks);
+
+/**
+ * Get the default slice to ticks.
+ *
+ * @return the default number of ticks for each slice, zero if unknown.
+ */
+ac_u64 AcThread_get_default_slice(void);
+
+/**
  * The current thread yeilds the CPU to the next
  * ready thread.
  */

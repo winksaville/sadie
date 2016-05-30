@@ -35,6 +35,7 @@
 #include <ac_inttypes.h>
 #include <ac_memmgr.h>
 #include <ac_putchar.h>
+#include <ac_time.h>
 #include <ac_tsc.h>
 
 #include <ac_printf.h>
@@ -511,6 +512,27 @@ tcb_x86* timer_thread_scheduler_intr_disabled(ac_u8* sp, ac_u16 ss) {
 }
 
 /**
+ * Set the default slice to ticks.
+ *
+ * This is an advisory value and maybe be ignored or
+ * altered by the system.
+ *
+ * @param ticks is the number of ticks for each slice.
+ */
+void AcThread_set_default_slice(ac_u64 ticks) {
+  slice_default = ticks;
+}
+
+/**
+ * Get the default slice to ticks.
+ *
+ * @return the default number of ticks for each slice, zero if unknown.
+ */
+ac_u64 AcThread_get_default_slice(void) {
+  return slice_default;
+}
+
+/**
  * The current thread yeilds the CPU to the next
  * ready thread.
  */
@@ -566,7 +588,7 @@ STATIC void init_timer() {
   lvtu.fields.mode = 2;     // TSC-Deadline
   set_apic_timer_lvt(lvtu.fields);
 
-  slice_default = AC_U64_DIV_ROUND_UP(SLICE_DEFAULT_NANOSECS * ac_tsc_freq(), NANOSECS);
+  slice_default = AcTime_nanos_to_ticks(SLICE_DEFAULT_NANOSECS);
 
   __atomic_store_n(&timer_reschedule_isr_counter, 0, __ATOMIC_RELEASE);
   set_apic_timer_tsc_deadline(ac_tscrd() + slice_default);

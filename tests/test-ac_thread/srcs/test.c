@@ -265,12 +265,17 @@ void* yt(void *param) {
   return AC_NULL;
 }
 
-ac_bool perf_yield(void) {
+ac_bool perf_yield(ac_u64 default_slice) {
   ac_printf("py:+\n");
   ac_bool error = AC_FALSE;
   perf_yield_t py;
 
   ac_u64 warm_up_loops = 1000000;
+
+  ac_printf("setting default_slice=%ld(%.9t)\n", default_slice, default_slice);
+  AcThread_set_default_slice(default_slice);
+  default_slice = AcThread_get_default_slice();
+  ac_printf("new     default_slice=%ld(%.9t)\n", default_slice, default_slice);
 
   // Warm up cpu
   ac_printf("py: warm up loops=%ld\n", warm_up_loops);
@@ -340,6 +345,13 @@ int main(void) {
 
   // Increate to 32 threads
   ac_thread_init(32);
+
+  ac_u64 default_slice = AcThread_get_default_slice();
+  AcThread_set_default_slice(default_slice);
+  ac_printf("default_slice=%ld(%.9t)\n", default_slice, default_slice);
+
+  // Test setting the default slice to the default_slice value doesn't change it.
+  error |= AC_TEST(default_slice == AcThread_get_default_slice());
  
   // Test using ac_thread_wait_ticks
   error |= test_thread_wait(1, AC_FALSE, TRIES, REQUIRED_SUCCESSES);
@@ -350,7 +362,21 @@ int main(void) {
   // Test using ac_thread_wait_ns
   error |= test_thread_wait(2, AC_TRUE, TRIES, REQUIRED_SUCCESSES);
 
-  error |= perf_yield();
+  // to 1ms slice
+  ac_printf("test default slice\n");
+  error |= perf_yield(AcThread_get_default_slice());
+
+  // to 1ms slice
+  ac_printf("test 1000us (1ms) default_slice\n");
+  error |= perf_yield(AcTime_nanos_to_ticks(1000000));
+
+  // to 100us slice
+  ac_printf("test 100us default_slice\n");
+  error |= perf_yield(AcTime_nanos_to_ticks(100000));
+
+  // to 10us slice
+  ac_printf("test 10us default_slice\n");
+  error |= perf_yield(AcTime_nanos_to_ticks(10000));
 #endif
 
   if (!error) {
