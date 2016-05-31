@@ -34,20 +34,20 @@
 static ac_bool test_dispatcher_get_ret() {
   ac_bool error = AC_FALSE;
 
-  ac_dispatcher* pd = ac_dispatcher_get(10);
+  AcDispatcher* pd = AcDispatcher_get(10);
   error |= AC_TEST(pd != AC_NULL);
   if (pd != AC_NULL) {
     // We can request to remove a non-existant ac and null must be
     // returned. This must return AC_NULL because nothing has been
     // added.
-    error |= AC_TEST(ac_dispatcher_rmv_ac(pd, (ac*)0x10000) == AC_NULL);
+    error |= AC_TEST(AcDispatcher_rmv_comp(pd, (AcComp*)0x10000) == AC_NULL);
 
     // Any use to pd after this is ILLEGAL
-    ac_dispatcher_ret(pd);
+    AcDispatcher_ret(pd);
   }
 
   // Return AC_NULL should be a NOP
-  ac_dispatcher_ret(AC_NULL);
+  AcDispatcher_ret(AC_NULL);
 
   return error;
 }
@@ -61,43 +61,43 @@ static int test_dispatcher_add_rmv_acq() {
   ac_bool error = AC_FALSE;
 
   // Get a dispatcher
-  ac_dispatcher* pd = ac_dispatcher_get(1);
+  AcDispatcher* pd = AcDispatcher_get(1);
   error |= AC_TEST(pd != AC_NULL);
 
   // Add a acq
-  ac ac1;
-  ac* pac1;
+  AcComp ac1;
+  AcComp* pac1;
   ac_mpscfifo q1;
 
   ac_mpscfifo_init(&q1);
 
-  pac1 = ac_dispatcher_add_acq(pd, &ac1, &q1);
+  pac1 = AcDispatcher_add_comp(pd, &ac1, &q1);
   error |= AC_TEST(pac1 != AC_NULL);
 
   // Test that adding a second acq fails because we
   // only are allowing 1
   ac_mpscfifo q2;
-  ac* pac2 = ac_dispatcher_add_acq(pd, &ac1, &q2);
+  AcComp* pac2 = AcDispatcher_add_comp(pd, &ac1, &q2);
   error |= AC_TEST(pac2 == AC_NULL);
 
   // Test we can remove pac1 and then add it back
-  pac2 = ac_dispatcher_rmv_ac(pd, pac1);
+  pac2 = AcDispatcher_rmv_comp(pd, pac1);
   error |= AC_TEST(pac2 == pac1);
-  pac1 = ac_dispatcher_add_acq(pd, &ac1, &q1);
+  pac1 = AcDispatcher_add_comp(pd, &ac1, &q1);
   error |= AC_TEST(pac1 != AC_NULL);
 
   // And finally remove so we leave with the pd empty
-  pac2 = ac_dispatcher_rmv_ac(pd, pac1);
+  pac2 = AcDispatcher_rmv_comp(pd, pac1);
   error |= AC_TEST(pac2 == pac1);
 
   // Return the dispatcher
-  ac_dispatcher_ret(pd);
+  AcDispatcher_ret(pd);
 
   return error;
 }
 
 
-static ac_bool ac1_process_msg(ac* this, ac_msg* pmsg) {
+static ac_bool ac1_process_msg(AcComp* this, AcMsg* pmsg) {
   ac_bool error = AC_FALSE;
 
   ac_debug_printf("ac1_process_msg:+ pmsg->cmd=%d, pmsg->arg=%d\n",
@@ -114,7 +114,7 @@ static ac_bool ac1_process_msg(ac* this, ac_msg* pmsg) {
   return AC_TRUE;
 }
 
-static ac ac1 = {
+static AcComp ac1 = {
   .process_msg = &ac1_process_msg,
 };
 
@@ -129,16 +129,16 @@ static ac_bool test_dispatching() {
   ac_debug_printf("test_dispatching:+\n");
 
   // Get a dispatcher
-  ac_dispatcher* pd = ac_dispatcher_get(1);
+  AcDispatcher* pd = AcDispatcher_get(1);
   error |= AC_TEST(pd != AC_NULL);
 
   // Add an acq
-  ac* pac1;
+  AcComp* pac1;
   ac_mpscfifo ac1q;
 
   ac_mpscfifo_init(&ac1q);
 
-  pac1 = ac_dispatcher_add_acq(pd, &ac1, &ac1q);
+  pac1 = AcDispatcher_add_comp(pd, &ac1, &ac1q);
   error |= AC_TEST(pac1 != AC_NULL);
 
   // Initialize message and add it to queue
@@ -150,7 +150,7 @@ static ac_bool test_dispatching() {
 
 
   ac_debug_printf("test_dispatching: dispatch now\n");
-  ac_bool processed_msgs = ac_dispatch(pd);
+  ac_bool processed_msgs = AcDispatcher_dispatch(pd);
   ac_debug_printf("test_dispatching: dispatch complete\n");
   error |= AC_TEST(processed_msgs == AC_TRUE);
 
@@ -161,7 +161,7 @@ static ac_bool test_dispatching() {
   ac_mpscfifo_add_msg(&ac1q, &msg2);
 
   ac_debug_printf("test_dispatching: rmv_ac\n");
-  ac* pac2 = ac_dispatcher_rmv_ac(pd, pac1);
+  AcComp* pac2 = AcDispatcher_rmv_comp(pd, pac1);
   error |= AC_TEST(pac2 == pac1);
 
   ac_debug_printf("test_dispatching:- error=%d\n", error);

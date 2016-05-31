@@ -17,42 +17,42 @@
 #ifndef SADIE_LIBS_AC_DISPATCHER_H
 #define SADIE_LIBS_AC_DISPATCHER_H
 
-#include <ac.h>
+#include <ac_comp_mgr.h>
 
 #include <ac_mpscfifo.h>
 
 // The opaque ac_dipatcher
-typedef struct _ac_dispatcher ac_dispatcher;
+typedef struct AcDispatcher AcDispatcher;
 
 /**
  * Dispatch messages to asynchronous components
  */
-ac_bool ac_dispatch(ac_dispatcher* pd);
+ac_bool AcDispatcher_dispatch(AcDispatcher* d);
 
 /**
- * Get a dispatcher able to support max_count ac's.
+ * Get a dispatcher able to support max_count AcComp's.
  */
-ac_dispatcher* ac_dispatcher_get(ac_u32 max_count);
+AcDispatcher* AcDispatcher_get(ac_u32 max_count);
 
 /**
  * Return dispatcher to the system.
  */
-void ac_dispatcher_ret(ac_dispatcher* pd);
+void AcDispatcher_ret(AcDispatcher* d);
 
 /**
- * Add the ac and its queue to this dispatcher.
+ * Add the AcComp and its queue to this dispatcher.
  *
- * return the ac or AC_NULL if this ac was not added
- * this might occur if there are to many ac's registered
- * or the the ac has already been registered.
+ * return the AcComp or AC_NULL if this AcComp was not added
+ * this might occur if there are to many AcComp's registered
+ * or the the AcComp has already been registered.
  */
-ac* ac_dispatcher_add_acq(ac_dispatcher* pd, ac* pac, ac_mpscfifo* pq);
+AcComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp, ac_mpscfifo* fifo);
 
 /**
- * Remove all instances of this ac assoicated with this dispatcher
+ * Remove all instances of this AcComp assoicated with this dispatcher
  *
- * return the ac or AC_NULL if this ac was not added.
+ * return the AcComp or AC_NULL if this AcComp was not added.
  */
-ac* ac_dispatcher_rmv_ac(ac_dispatcher* pd, ac* pac);
+AcComp* AcDispatcher_rmv_comp(AcDispatcher* d, AcComp* comp);
 
 #endif

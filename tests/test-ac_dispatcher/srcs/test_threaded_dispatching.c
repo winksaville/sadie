@@ -28,7 +28,7 @@
 #include <ac_thread.h>
 #include <ac_test.h>
 
-static ac_bool t1_process_msg(ac* this, AcMsg* pmsg) {
+static ac_bool t1_process_msg(AcComp* this, AcMsg* pmsg) {
   ac_bool error = AC_FALSE;
 
   ac_debug_printf("t1_process_msg:+ pmsg->cmd=%d, pmsg->arg=%d\n",
@@ -44,7 +44,7 @@ static ac_bool t1_process_msg(ac* this, AcMsg* pmsg) {
   return AC_TRUE;
 }
 
-static ac t1_ac = {
+static AcComp t1_ac = {
   .process_msg = &t1_process_msg,
 };
 
@@ -58,19 +58,19 @@ void* t1(void *param) {
   ac_bool error = AC_FALSE;
 
   // Add an acq
-  ac_dispatcher* d;
+  AcDispatcher* d;
 
   t1_receptor_waiting = ac_receptor_create();
 
   // Get a dispatcher
-  d = ac_dispatcher_get(1);
+  d = AcDispatcher_get(1);
   error |= AC_TEST(d != AC_NULL);
 
   // Init the queue
   ac_mpscfifo_init(&t1_acq);
 
   // Add ac1 and its Q dispatcher
-  ac_dispatcher_add_acq(d, &t1_ac, &t1_acq);
+  AcDispatcher_add_comp(d, &t1_ac, &t1_acq);
 
   // Not done
   __atomic_store_n(&t1_done, AC_FALSE, __ATOMIC_RELEASE);
@@ -82,7 +82,7 @@ void* t1(void *param) {
   // Continuously dispatch messages until done
   ac_debug_printf("t1: looping\n");
   while (__atomic_load_n(&t1_done, __ATOMIC_ACQUIRE) == AC_FALSE) {
-    if (!ac_dispatch(d)) {
+    if (!AcDispatcher_dispatch(d)) {
       ac_debug_printf("t1: waiting\n");
       ac_receptor_wait(t1_receptor_waiting);
     }
@@ -92,7 +92,7 @@ void* t1(void *param) {
     ac_debug_printf("t1: error\n");
   }
 
-  ac_dispatcher_rmv_ac(d, &t1_ac);
+  AcDispatcher_rmv_comp(d, &t1_ac);
 
   ac_debug_printf("t1: done\n");
 

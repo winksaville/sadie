@@ -64,7 +64,7 @@ struct MsgTsc {
 };
 
 typedef struct {
-  ac comp;
+  AcComp comp;
   ac_mpscfifo q;
   ac_bool stop_processing_msgs;
   ac_receptor_t ready;
@@ -74,7 +74,7 @@ typedef struct {
   struct MsgTsc msg_tsc[MSGS_TSC_COUNT];
 } mptt_params;
 
-static ac_bool mptt_process_msg(ac* this, AcMsg* msg) {
+static ac_bool mptt_process_msg(AcComp* this, AcMsg* msg) {
   ac_u64 recv_tsc = ac_tscrd();
   mptt_params* params = (mptt_params*)this;
 
@@ -103,17 +103,17 @@ static ac_bool mptt_process_msg(ac* this, AcMsg* msg) {
 void* mptt(void *param) {
   ac_bool error = AC_FALSE;
   mptt_params* params = (mptt_params*)param;
-  ac_dispatcher* d;
+  AcDispatcher* d;
 
   ac_debug_printf("mptt:+ starting  params=%p\n", params);
 
   // Get a dispatcher and add a queue and message processor
-  d = ac_dispatcher_get(1);
+  d = AcDispatcher_get(1);
   error |= AC_TEST(d != AC_NULL);
 
   ac_mpscfifo_init(&params->q);
   params->comp.process_msg = mptt_process_msg;
-  ac_dispatcher_add_acq(d, &params->comp, &params->q);
+  AcDispatcher_add_comp(d, &params->comp, &params->q);
 
   // Create the waiting receptor and init our not stopped flag
   params->waiting = ac_receptor_create();
@@ -124,7 +124,7 @@ void* mptt(void *param) {
 
   // Continuously dispatch messages until we're told to stop
   while (__atomic_load_n(&params->stop_processing_msgs, __ATOMIC_ACQUIRE) == AC_FALSE) {
-    if (!ac_dispatch(d)) {
+    if (!AcDispatcher_dispatch(d)) {
       ac_debug_printf("mptt: waiting\n");
       ac_receptor_wait(params->waiting);
       ac_debug_printf("mptt: continuing\n");
@@ -132,8 +132,8 @@ void* mptt(void *param) {
   }
 
   // Cleanup, TODO: cleanup waiting receptor
-  ac_dispatcher_rmv_ac(d, &params->comp);
-  ac_dispatcher_ret(d);
+  AcDispatcher_rmv_comp(d, &params->comp);
+  AcDispatcher_ret(d);
   ac_mpscfifo_deinit(&params->q);
 
   ac_debug_printf("mptt:-done error=%d params=%p\n", error, params);
