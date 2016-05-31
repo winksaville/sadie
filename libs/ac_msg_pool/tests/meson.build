@@ -12,7 +12,7 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-lclSrcs = ['srcs/test_msg_pool.c', 'srcs/test_msg_pool_multiple_threads.c']
+lclSrcs = ['srcs/test_ac_msg_pool.c', 'srcs/test_ac_msg_pool_multiple_threads.c']
 lclIncDirs = [include_directories('../../')]
 
 if Platform == 'VersatilePB'
