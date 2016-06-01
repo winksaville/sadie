@@ -20,33 +20,39 @@
 
 #include <ac_inttypes.h>
 #include <ac_debug_printf.h>
+#include <ac_mpscfifo.h>
 #include <ac_memmgr.h>
 
 // TODO: Subset of AcCompInfo in ac_comp_mgr, fix!!!
-typedef struct queue {
+typedef struct AcDispatchableComp {
     AcComp* comp;
-    ac_mpscfifo* q;
-} queue;
+    ac_mpscfifo q;
+} AcDispatchableComp;
 
 typedef struct AcDispatcher {
   ac_u32 max_count;
-  queue* acqs[];
+  AcDispatchableComp* dcs[];
 } AcDispatcher;
 
-/** d->queue[i] is empty and can be reallocated */
-#define ACQ_EMPTY       ((queue*)(0))
+/** d->AcDispatchableComp[i] is empty and can be reallocated */
+#define DC_EMPTY       ((AcDispatchableComp*)(0))
 
-/** d->queue[i] messages are being processed by AcDispatcher */
-#define ACQ_PROCESSING  ((queue*)(!ACQ_EMPTY))
+/** d->AcDispatchableComp[i] messages are being processed by AcDispatcher */
+#define DC_PROCESSING  ((AcDispatchableComp*)(!DC_EMPTY))
 
-void ret_acq(queue* q) {
-  // Only posix at the momment
-  ac_free(q);
+void ret_dc(AcDispatchableComp* dc) {
+  if (dc != AC_NULL) {
+    ac_mpscfifo_deinit(&dc->q);
+    ac_free(dc);
+  }
 }
 
-queue* get_queue() {
-  // Only posix at the momment
-  return ac_malloc(sizeof(queue));
+AcDispatchableComp* get_dc() {
+  AcDispatchableComp* ret_val = ac_malloc(sizeof(AcDispatchableComp));
+  if (ret_val != AC_NULL) {
+    ac_mpscfifo_init(&ret_val->q);
+  }
+  return ret_val;
 }
 
 /**
@@ -70,7 +76,7 @@ static AcDispatcher* get_dispatcher(ac_u32 max_count) {
   ac_debug_printf("alloc_dispatcher:+ max_count=%d\n", max_count);
 
    AcDispatcher* d = ac_malloc(sizeof(AcDispatcher)
-                          + (max_count * sizeof(queue*)));
+                          + (max_count * sizeof(AcDispatchableComp*)));
   if (d != AC_NULL) {
       d->max_count = max_count;
   } else {
@@ -83,20 +89,20 @@ static AcDispatcher* get_dispatcher(ac_u32 max_count) {
 
 
 /*
- * Process all of the messages on the queue
+ * Process all of the messages on the AcDispatchableComp
  * return AC_TRUE if one or more were processed.
  */
-static ac_bool process_msgs(queue* q) {
+static ac_bool process_msgs(AcDispatchableComp* q) {
   ac_debug_printf("process_msgs:+ q=%p\n", q);
 
   ac_bool processed_a_msg = AC_FALSE;
-  ac_msg* pmsg = ac_mpscfifo_rmv_msg(q->q);
+  ac_msg* pmsg = ac_mpscfifo_rmv_msg(&q->q);
   while (pmsg != AC_NULL) {
     q->comp->process_msg(q->comp, pmsg);
     // TODO: return the message to a pool.
 
     // Get next message
-    pmsg = ac_mpscfifo_rmv_msg(q->q);
+    pmsg = ac_mpscfifo_rmv_msg(&q->q);
     processed_a_msg = AC_TRUE;
   }
 
@@ -106,26 +112,26 @@ static ac_bool process_msgs(queue* q) {
 }
 
 /*
- * Remove the AcComp at d->acqs[ac_idx]
+ * Remove the AcComp at d->dcs[ac_idx]
  */
 static void rmv_acq(AcDispatcher* d, int acq_idx) {
   ac_debug_printf("rmv_acq:+ d=%p cq_idx=%d\n", d, acq_idx);
 
-  // Get q atomically and set to ACQ_EMPTY so no more messages
+  // Get q atomically and set to DC_EMPTY so no more messages
   // will be added.
-  queue** pq = &d->acqs[acq_idx];
-  queue* q = __atomic_exchange_n(pq, ACQ_EMPTY, __ATOMIC_ACQUIRE);
+  AcDispatchableComp** pq = &d->dcs[acq_idx];
+  AcDispatchableComp* q = __atomic_exchange_n(pq, DC_EMPTY, __ATOMIC_ACQUIRE);
 
-  // If q is already empty we're done. If its ACQ_PROCESSING then were
+  // If q is already empty we're done. If its DC_PROCESSING then were
   // racing with ac_dispatch and lost, ac_dispatch will process the
   // messages and all will be well, because we've marked it empty
   // and ac_dispatch will not change it back.
-  if ((q != ACQ_EMPTY) && (q != ACQ_PROCESSING)) {
+  if ((q != DC_EMPTY) && (q != DC_PROCESSING)) {
     // Process the messages as its not empty and ac_dispatch
     // isn't alreday process.
     process_msgs(q);
 
-    ret_acq(q);
+    ret_dc(q);
 
     ac_debug_printf("rmv_acq:- REMOVED d=%p acq_idx=%d\n", d, acq_idx);
     return;
@@ -151,24 +157,24 @@ ac_bool AcDispatcher_dispatch(AcDispatcher* d) {
     return processed_msgs;
   }
 
-  const queue* acq_processing = ACQ_PROCESSING;
+  const AcDispatchableComp* acq_processing = DC_PROCESSING;
   for (int i = 0; i < d->max_count; i++) {
-    // Mark this queue that we're processing
-    queue** pq = &d->acqs[i];
-    queue* q = __atomic_exchange_n(pq, ACQ_PROCESSING,__ATOMIC_ACQUIRE);
+    // Mark this AcDispatchableComp that we're processing
+    AcDispatchableComp** pq = &d->dcs[i];
+    AcDispatchableComp* q = __atomic_exchange_n(pq, DC_PROCESSING,__ATOMIC_ACQUIRE);
 
-    // If q == ACQ_EMPTY then this entry is already removed or
-    // will be so we're just store ACQ_EMPTY
+    // If q == DC_EMPTY then this entry is already removed or
+    // will be so we're just store DC_EMPTY
     //
-    // If q == ACQ_PROCESSING then someone else is processing
+    // If q == DC_PROCESSING then someone else is processing
     // this and we should do nothing.
     //
-    // If q is nither than we're going to process the queue.
-    if (q == ACQ_EMPTY) {
+    // If q is nither than we're going to process the AcDispatchableComp.
+    if (q == DC_EMPTY) {
       ac_debug_printf("ac_dispatch: skip empty entry d=%p acq_idx=%d\n",
           d, i);
-       __atomic_store_n(pq, ACQ_EMPTY, __ATOMIC_RELEASE);
-    } else if (q == ACQ_PROCESSING) {
+       __atomic_store_n(pq, DC_EMPTY, __ATOMIC_RELEASE);
+    } else if (q == DC_PROCESSING) {
       ac_debug_printf("ac_dispatch: skip busy entry d=%p acq_idx=%d\n",
           d, i);
     } else {
@@ -176,17 +182,17 @@ ac_bool AcDispatcher_dispatch(AcDispatcher* d) {
           d, i);
       processed_msgs = process_msgs(q);
 
-      // Now restore the previous q if it is still ACQ_PROCESSING.
+      // Now restore the previous q if it is still DC_PROCESSING.
       ac_bool restored = __atomic_compare_exchange_n(
                           pq, &acq_processing, q,
                           AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
       if (!restored) {
         // It wasn't restored so the only possibility is that while
         // we were processing the messages rmv_acq was invoked and
-        // q is now ACQ_EMPTY so we need to finish the removal.
+        // q is now DC_EMPTY so we need to finish the removal.
         ac_debug_printf("ac_dispatch: ret_acq as we won race with rmv_acq"
             " d=%p acq_idx=%d\n", d, i);
-        ret_acq(q);
+        ret_dc(q);
       }
     }
   }
@@ -198,7 +204,7 @@ ac_bool AcDispatcher_dispatch(AcDispatcher* d) {
 
 /**
  * Get a dispatcher ready to be used and that can support
- * uptor max_count queue's.
+ * uptor max_count AcDispatchableComp's.
  */
 AcDispatcher* AcDispatcher_get(ac_u32 max_count) {
   ac_debug_printf("AcDispatcher_get:+ max_count=%d\n", max_count);
@@ -206,7 +212,7 @@ AcDispatcher* AcDispatcher_get(ac_u32 max_count) {
   AcDispatcher* d = get_dispatcher(max_count);
   if (d != AC_NULL) {
     for (int i = 0; i < d->max_count; i++) {
-      d->acqs[i] = ACQ_EMPTY;
+      d->dcs[i] = DC_EMPTY;
     }
   }
 
@@ -232,47 +238,45 @@ void AcDispatcher_ret(AcDispatcher* d) {
 }
 
 /**
- * Add the AcComp and its queue to this dispatcher
+ * Add the AcComp and its AcDispatchableComp to this dispatcher
  *
  * return the comp or AC_NULL if this AcComp was not added
  * this will occur if there are to many AcComp's registered.
  */
-AcComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp, ac_mpscfifo* fifo) {
-  ac_debug_printf("AcDispatcher_add_acq:+ d=%p comp=%p fifo=%p\n",
-      d, comp, fifo);
+AcDispatchableComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp) {
+  ac_debug_printf("AcDispatcher_add_acq:+ d=%p comp=%p\n", d, comp);
 
   if (d == AC_NULL) {
     ac_debug_printf("AcDispatcher_add_acq:- ERR no d"
-        " d=%p comp=%p fifo=%p\n", d, comp, fifo);
+        " d=%p comp=%p\n", d, comp);
     return AC_NULL;
   }
 
-  // Get the queue and initialize
-  queue* q = get_queue(); 
-  if (q == AC_NULL) {
-    ac_debug_printf("AcDispatcher_add_acq:- ERR no queue's"
-        " d=%p comp=%p fifo=%p\n", d, comp, fifo);
+  // Get the AcDispatchableComp and initialize
+  AcDispatchableComp* dc = get_dc();
+  if (dc == AC_NULL) {
+    ac_debug_printf("AcDispatcher_add_acq:- ERR no AcDispatchableComp's"
+        " d=%p comp=%p\n", d, comp);
     return AC_NULL;
   }
-  q->comp = comp;
-  q->q = fifo;
+  dc->comp = comp;
 
   // Find a slot in the array to save the q
-  const queue* acq_empty = ACQ_EMPTY;
+  const AcDispatchableComp* acq_empty = DC_EMPTY;
   for (int i = 0; i < d->max_count; i++) {
-    queue** fifo = &d->acqs[i];
+    AcDispatchableComp** pdc = &d->dcs[i];
     if (__atomic_compare_exchange_n(
-           fifo, &acq_empty, q,
+           pdc, &acq_empty, dc,
            AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
-      ac_debug_printf("AcDispatcher_add_acq:- OK"
-          " d=%p comp=%p fifo=%p\n", d, comp, fifo);
-      return comp;
+      ac_debug_printf("AcDispatcher_add_acq:- OK d=%p comp=%p dc=%p\n",
+          d, comp, dc);
+      return dc;
     }
   }
 
-  // Couldn't find a slot so return the queue and return AC_NULL
+  // Couldn't find a slot so return the AcDispatchableComp and return AC_NULL
   ac_debug_printf("AcDispatcher_add_acq:- ERR d full\n");
-  ret_acq(q);
+  ret_dc(dc);
   return AC_NULL;
 }
 
@@ -281,47 +285,55 @@ AcComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp, ac_mpscfifo* fifo) 
  *
  * return the AcComp or AC_NULL if this AcComp was not added.
  */
-AcComp* AcDispatcher_rmv_comp(AcDispatcher* d, AcComp* comp) {
-  ac_debug_printf("AcDispatcher_rmv_ac:+ d=%p comp=%p\n", d, comp);
+AcComp* AcDispatcher_rmv_comp(AcDispatcher* d, AcDispatchableComp* dc) {
+  AcComp* ret_val = dc->comp;
+  ac_debug_printf("AcDispatcher_rmv_ac:+ d=%p dc=%p\n", d, dc);
 
   ac_bool ok = AC_FALSE;
 
   if (d == AC_NULL) {
-    ac_debug_printf("AcDispatcher_rmv_ac:- ERR no d"
-        " d=%p comp=%p\n", d, comp);
+    ac_debug_printf("AcDispatcher_rmv_ac:- ERR no d\n");
     return AC_NULL;
   }
 
-  if (comp == AC_NULL) {
-    ac_debug_printf("AcDispatcher_rmv_ac:- ERR no AcComp"
-        " d=%p comp=%p\n", d, comp);
+  if (dc == AC_NULL) {
+    ac_debug_printf("AcDispatcher_rmv_ac:- ERR no dc\n");
     return AC_NULL;
   }
 
   for (int i = 0; i < d->max_count; i++) {
-    queue** pq = &d->acqs[i];
-    queue* q = __atomic_load_n(pq, __ATOMIC_ACQUIRE);
-    if (q == ACQ_EMPTY) {
+    AcDispatchableComp** pcur_dc = &d->dcs[i];
+    AcDispatchableComp* cur_dc = __atomic_load_n(pcur_dc, __ATOMIC_ACQUIRE);
+    if (cur_dc == DC_EMPTY) {
       continue;
     }
     // Not nice but will eventually succeed
-    while (q == ACQ_PROCESSING) {
-        q = __atomic_load_n(pq, __ATOMIC_ACQUIRE);
+    while (cur_dc == DC_PROCESSING) {
+        cur_dc = __atomic_load_n(pcur_dc, __ATOMIC_ACQUIRE);
     }
-    if (q == ACQ_EMPTY) {
+    if (cur_dc == DC_EMPTY) {
       continue;
     }
-    if (comp == q->comp) {
-      ac_debug_printf("AcDispatcher_rmv_ac: OK removing comp=%p pq=%p\n",
-          comp, q->pq);
+    if (ret_val == cur_dc->comp) {
+      ac_debug_printf("AcDispatcher_rmv_ac: OK removing d=%p comp=%p\n", d, ret_val);
       ok = AC_TRUE;
       rmv_acq(d, i);
     }
   }
 
   if (!ok) {
-    comp = AC_NULL;
+    ret_val = AC_NULL;
   }
-  ac_debug_printf("AcDispatcher_rmv_ac:- d=%p comp=%p\n", d, comp);
-  return comp;
+  ac_debug_printf("AcDispatcher_rmv_ac:- d=%p comp=%p\n", d, ret_val);
+  return ret_val;
+}
+
+/**
+ * Send a message to dispatchable component
+ *
+ * @param: dc1 is the dispatchable component previously added.
+ * @param: msg is the message to send
+ */
+void AcDispatcher_send_msg(AcDispatchableComp* dc, AcMsg* msg) {
+  ac_mpscfifo_add_msg(&dc->q, msg);
 }

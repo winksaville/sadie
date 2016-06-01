@@ -65,7 +65,7 @@ struct MsgTsc {
 
 typedef struct {
   AcComp comp;
-  ac_mpscfifo q;
+  AcDispatchableComp* dc;
   ac_bool stop_processing_msgs;
   ac_receptor_t ready;
   ac_receptor_t done;
@@ -111,9 +111,9 @@ void* mptt(void *param) {
   d = AcDispatcher_get(1);
   error |= AC_TEST(d != AC_NULL);
 
-  ac_mpscfifo_init(&params->q);
   params->comp.process_msg = mptt_process_msg;
-  AcDispatcher_add_comp(d, &params->comp, &params->q);
+  params->dc = AcDispatcher_add_comp(d, &params->comp);
+  error |= AC_TEST(params->dc != AC_NULL);
 
   // Create the waiting receptor and init our not stopped flag
   params->waiting = ac_receptor_create();
@@ -132,9 +132,8 @@ void* mptt(void *param) {
   }
 
   // Cleanup, TODO: cleanup waiting receptor
-  AcDispatcher_rmv_comp(d, &params->comp);
+  AcDispatcher_rmv_comp(d, params->dc);
   AcDispatcher_ret(d);
-  ac_mpscfifo_deinit(&params->q);
 
   ac_debug_printf("mptt:-done error=%d params=%p\n", error, params);
 
@@ -147,7 +146,7 @@ void* mptt(void *param) {
  */
 void mptt_send_msg(mptt_params* params, AcMsg* msg) {
   ac_debug_printf("mptt_send_msg:+params=%p msg=%p\n", params, msg);
-  ac_mpscfifo_add_msg(&params->q, msg);
+  AcDispatcher_send_msg(params->dc, msg);
 
 #if 1
   // Calling ac_receptor_signal may not cause a task switch

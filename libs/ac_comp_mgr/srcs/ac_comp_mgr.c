@@ -30,17 +30,21 @@
 
 /**
  * A opaque component info for an AcComp
- *
- * TODO: A superset of queue in ac_dispatcher.c
  */
 typedef struct AcCompInfo {
   AcComp* comp;
-  ac_mpscfifo* queue;
+  AcDispatchableComp* dc;
   ac_u32 idx;
 } AcCompInfo;
 
+/**
+ * Array of AcCompInfo objects being managed across all of the threads
+ */
 static AcCompInfo* comp_infos;
 
+/**
+ * Parameters for each thread to manage its components
+ */
 typedef struct DispatchThreadParams {
   ac_u32 max_comps;
   AcCompInfo** comps;
@@ -50,10 +54,13 @@ typedef struct DispatchThreadParams {
   ac_bool stop_processing_msgs;
 } DispatchThreadParams;
 
+/**
+ * Array of DispathThreadParams, one for each thread
+ */
 static DispatchThreadParams* dtps;
 
 /**
- * Msg Pool Test Thread
+ * A thread which dispatches message to its components.
  */
 static void* dispatch_thread(void *param) {
   DispatchThreadParams* params = (DispatchThreadParams*)(param);
@@ -88,8 +95,8 @@ static void* dispatch_thread(void *param) {
     AcCompInfo* ci = params->comps[j];
     // TODO: cleanup waiting receptors
     if (ci != AC_NULL) {
-      if (ci->queue != AC_NULL) {
-        ac_mpscfifo_deinit(ci->queue);
+      if (ci->dc != AC_NULL) {
+        AcDispatcher_rmv_comp(d, ci->dc);
       }
       ac_free(ci);
       params->comps[j] = AC_NULL;
@@ -111,7 +118,7 @@ done:
  * Initialize the component manager, may only be called once.
  *
  * @param: max_component_threads is the maximum number of threads to manage
- * @param: max_components_thread is the maximum number of components per thread
+ * @param: max_components_per_thread is the maximum number of components per thread
  * @param: stack_size is number of bytes for a threads stack, 0 will provide the default
  */
 void AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_per_thread,
@@ -152,7 +159,7 @@ void AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_per_thre
       AcCompInfo* ci = &comp_infos[ci_idx];
       dtp->comps[j] = ci;
       ci->comp = AC_NULL;
-      ci->queue = AC_NULL;
+      ci->dc = AC_NULL;
     }
     dtp->done = ac_receptor_create();
     dtp->ready = ac_receptor_create();
@@ -171,7 +178,7 @@ void AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_per_thre
 }
 
 /**
- * Deiniti AcCompMsg
+ * Deinitialzie the component manager.
  */
 void AcCompMgr_deinit(void) {
 }

@@ -48,8 +48,8 @@ static AcComp t1_ac = {
   .process_msg = &t1_process_msg,
 };
 
-static ac_mpscfifo t1_acq;
 static ac_bool t1_done;
+static AcDispatchableComp* t1_dc;
 static ac_receptor_t t1_receptor_ready;
 static ac_receptor_t t1_receptor_done;
 static ac_receptor_t t1_receptor_waiting;
@@ -66,11 +66,8 @@ void* t1(void *param) {
   d = AcDispatcher_get(1);
   error |= AC_TEST(d != AC_NULL);
 
-  // Init the queue
-  ac_mpscfifo_init(&t1_acq);
-
   // Add ac1 and its Q dispatcher
-  AcDispatcher_add_comp(d, &t1_ac, &t1_acq);
+  t1_dc = AcDispatcher_add_comp(d, &t1_ac);
 
   // Not done
   __atomic_store_n(&t1_done, AC_FALSE, __ATOMIC_RELEASE);
@@ -92,7 +89,7 @@ void* t1(void *param) {
     ac_debug_printf("t1: error\n");
   }
 
-  AcDispatcher_rmv_comp(d, &t1_ac);
+  AcDispatcher_rmv_comp(d, t1_dc);
 
   ac_debug_printf("t1: done\n");
 
@@ -101,7 +98,7 @@ void* t1(void *param) {
 }
 
 void t1_add_msg(AcMsg* msg) {
-  ac_mpscfifo_add_msg(&t1_acq, msg);
+  AcDispatcher_send_msg(t1_dc, msg);
   ac_receptor_signal(t1_receptor_waiting);
 }
 

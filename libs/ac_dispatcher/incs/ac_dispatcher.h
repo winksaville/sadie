@@ -18,8 +18,9 @@
 #define SADIE_LIBS_AC_DISPATCHER_H
 
 #include <ac_comp_mgr.h>
+#include <ac_msg.h>
 
-#include <ac_mpscfifo.h>
+typedef struct AcDispatchableComp AcDispatchableComp;
 
 // The opaque ac_dipatcher
 typedef struct AcDispatcher AcDispatcher;
@@ -42,17 +43,25 @@ void AcDispatcher_ret(AcDispatcher* d);
 /**
  * Add the AcComp and its queue to this dispatcher.
  *
- * return the AcComp or AC_NULL if this AcComp was not added
+ * return the AcDispatchableComp or AC_NULL if this AcComp was not added
  * this might occur if there are to many AcComp's registered
  * or the the AcComp has already been registered.
  */
-AcComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp, ac_mpscfifo* fifo);
+AcDispatchableComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp);
 
 /**
- * Remove all instances of this AcComp assoicated with this dispatcher
+ * Remove all instances associated with the dispatchable component
  *
- * return the AcComp or AC_NULL if this AcComp was not added.
+ * return the AcComp or AC_NULL if the associated AcComp was not found.
  */
-AcComp* AcDispatcher_rmv_comp(AcDispatcher* d, AcComp* comp);
+AcComp* AcDispatcher_rmv_comp(AcDispatcher* d, AcDispatchableComp* comp);
+
+/**
+ * Send a message to dispatchable component
+ *
+ * @param: dc1 is the dispatchable component previously added.
+ * @param: msg is the message to send
+ */
+void AcDispatcher_send_msg(AcDispatchableComp* dc, AcMsg* msg);
 
 #endif
