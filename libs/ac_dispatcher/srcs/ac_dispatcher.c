@@ -92,22 +92,21 @@ static AcDispatcher* get_dispatcher(ac_u32 max_count) {
  * Process all of the messages on the AcDispatchableComp
  * return AC_TRUE if one or more were processed.
  */
-static ac_bool process_msgs(AcDispatchableComp* q) {
-  ac_debug_printf("process_msgs:+ q=%p\n", q);
+static ac_bool process_msgs(AcDispatchableComp* dc) {
+  ac_debug_printf("process_msgs:+ dc=%p\n", dc);
 
   ac_bool processed_a_msg = AC_FALSE;
-  ac_msg* pmsg = ac_mpscfifo_rmv_msg(&q->q);
+  ac_msg* pmsg = ac_mpscfifo_rmv_msg(&dc->q);
   while (pmsg != AC_NULL) {
-    q->comp->process_msg(q->comp, pmsg);
-    // TODO: return the message to a pool.
+    dc->comp->process_msg(dc->comp, pmsg);
 
     // Get next message
-    pmsg = ac_mpscfifo_rmv_msg(&q->q);
+    pmsg = ac_mpscfifo_rmv_msg(&dc->q);
     processed_a_msg = AC_TRUE;
   }
 
-  ac_debug_printf("process_msgs:- q=%p processed_a_msg=%d\n",
-      q, processed_a_msg);
+  ac_debug_printf("process_msgs:- dc=%p processed_a_msg=%d\n",
+      dc, processed_a_msg);
   return processed_a_msg;
 }
 
