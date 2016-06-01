@@ -30,10 +30,12 @@ ac_bool test_AcCompMgr(void) {
   ac_bool error = AC_FALSE;
   ac_debug_printf("test_ac_comp_mgr:+\n");
 
-  const ac_u32 max_component_threads = 3;
-  const ac_u32 max_components = max_component_threads * 10;
+  const ac_u32 max_component_threads = 1;
+  const ac_u32 max_components = max_component_threads * 1;
 
   AcCompMgr_init(max_component_threads, max_components, 0);
+
+  AcCompMgr_deinit();
 
   ac_debug_printf("test_ac_comp_mgr:-\n");
   return error;
@@ -46,9 +48,11 @@ int main(void) {
   ac_receptor_init(256);
   AcTime_init();
 
-  ac_debug_printf("sizeof(AcMsg)=%d\n", sizeof(AcMsg));
-
-  error |= test_AcCompMgr();
+#if AC_PLATFORM == VersatilePB
+  ac_printf("AC_PLATFORM == VersatilePB, skipping test ac_comp_mgr\n");
+#else
+  error|= test_AcCompMgr();
+#endif
 
   if (!error) {
     ac_printf("OK\n");

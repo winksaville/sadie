@@ -22,6 +22,7 @@
 #include <ac_debug_printf.h>
 #include <ac_memmgr.h>
 
+// TODO: Subset of AcCompInfo in ac_comp_mgr, fix!!!
 typedef struct queue {
     AcComp* comp;
     ac_mpscfifo* q;
@@ -221,7 +222,7 @@ void AcDispatcher_ret(AcDispatcher* d) {
   ac_debug_printf("AcDispatcher_ret:+ d=%p\n", d);
 
   if (d != AC_NULL) {
-    for(int i = 0; i < d->max_count; i++) {
+    for (int i = 0; i < d->max_count; i++) {
       rmv_acq(d, i);
     }
     ret_dispatcher(d);
@@ -258,7 +259,7 @@ AcComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp, ac_mpscfifo* fifo) 
 
   // Find a slot in the array to save the q
   const queue* acq_empty = ACQ_EMPTY;
-  for(int i = 0; i < d->max_count; i++) {
+  for (int i = 0; i < d->max_count; i++) {
     queue** fifo = &d->acqs[i];
     if (__atomic_compare_exchange_n(
            fifo, &acq_empty, q,
@@ -297,7 +298,7 @@ AcComp* AcDispatcher_rmv_comp(AcDispatcher* d, AcComp* comp) {
     return AC_NULL;
   }
 
-  for(int i = 0; i < d->max_count; i++) {
+  for (int i = 0; i < d->max_count; i++) {
     queue** pq = &d->acqs[i];
     queue* q = __atomic_load_n(pq, __ATOMIC_ACQUIRE);
     if (q == ACQ_EMPTY) {

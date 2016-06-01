@@ -32,9 +32,9 @@
 typedef struct AcComp AcComp;
 
 /**
- * A opaque ID for an AcComp
+ * A opaque info for an AcComp
  */
-typedef struct AcCompId AcCompId;
+typedef struct AcCompInfo AcCompInfo;
 
 /**
  * Process a message.
@@ -64,20 +64,25 @@ void AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_per_thre
     ac_u32 stack_size);
 
 /**
+ * Deiniti AcCompMsg
+ */
+void AcCompMgr_deinit(void);
+
+/**
  * Add a component to be managed
  *
  * @param: comp is an initialized component type
  *
- * @return: AcCompId
+ * @return: AcCompInfo
  */
-AcCompId* AcCompMgr_add_comp(AcComp* comp);
+AcCompInfo* AcCompMgr_add_comp(AcComp* comp);
 
 /**
  * Remove a component being managed
  *
  * @param: comp is an initialized component type
  */
-void AcCompMgr_rmv_comp(AcCompId* id);
+void AcCompMgr_rmv_comp(AcCompInfo* comp_info);
 
 
 #endif
