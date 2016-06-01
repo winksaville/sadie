@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-//#define NDEBUG
+#define NDEBUG
 
 #include <ac_comp_mgr.h>
 
@@ -28,13 +28,15 @@
 #include <ac_receptor.h>
 #include <ac_thread.h>
 
+typedef struct DispatchThreadParams DispatchThreadParams;
+
 /**
  * A opaque component info for an AcComp
  */
 typedef struct AcCompInfo {
   AcComp* comp;
   AcDispatchableComp* dc;
-  ac_u32 idx;
+  DispatchThreadParams* dtp;
 } AcCompInfo;
 
 /**
@@ -46,6 +48,7 @@ static AcCompInfo* comp_infos;
  * Parameters for each thread to manage its components
  */
 typedef struct DispatchThreadParams {
+  AcDispatcher* d;
   ac_u32 max_comps;
   AcCompInfo** comps;
   ac_receptor_t done;
@@ -60,17 +63,22 @@ typedef struct DispatchThreadParams {
 static DispatchThreadParams* dtps;
 
 /**
+ * Next thread
+ */
+static ac_u32 max_dtps;
+static ac_u32 next_dtps;
+
+/**
  * A thread which dispatches message to its components.
  */
 static void* dispatch_thread(void *param) {
   DispatchThreadParams* params = (DispatchThreadParams*)(param);
-  AcDispatcher* d;
 
   ac_debug_printf("dispatch_thread:+ starting params=%p\n", params);
 
   // Get a dispatcher and add a queue and message processor
-  d = AcDispatcher_get(params->max_comps);
-  if (d == AC_NULL) {
+  params->d = AcDispatcher_get(params->max_comps);
+  if (params->d == AC_NULL) {
     goto done;
   }
 
@@ -83,7 +91,7 @@ static void* dispatch_thread(void *param) {
 
   // Continuously dispatch messages until we're told to stop
   while (__atomic_load_n(&params->stop_processing_msgs, __ATOMIC_ACQUIRE) == AC_FALSE) {
-    if (!AcDispatcher_dispatch(d)) {
+    if (!AcDispatcher_dispatch(params->d)) {
       ac_debug_printf("dispatch_thread: waiting\n");
       ac_receptor_wait(params->waiting);
       ac_debug_printf("dispatch_thread: continuing\n");
@@ -96,7 +104,7 @@ static void* dispatch_thread(void *param) {
     // TODO: cleanup waiting receptors
     if (ci != AC_NULL) {
       if (ci->dc != AC_NULL) {
-        AcDispatcher_rmv_comp(d, ci->dc);
+        AcDispatcher_rmv_comp(params->d, ci->dc);
       }
       ac_free(ci);
       params->comps[j] = AC_NULL;
@@ -108,9 +116,11 @@ static void* dispatch_thread(void *param) {
   ac_receptor_signal_yield_if_waiting(params->done);
 
 done:
-  if (d != AC_NULL) {
-    AcDispatcher_ret(d);
+  if (params->d != AC_NULL) {
+    AcDispatcher_ret(params->d);
+    params->d = AC_NULL;
   }
+  __atomic_thread_fence(__ATOMIC_RELEASE);
   return AC_NULL;
 }
 
@@ -136,14 +146,15 @@ void AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_per_thre
     return;
   }
 
-  dtps = ac_malloc(max_component_threads * sizeof(DispatchThreadParams));
+  max_dtps = max_component_threads;
+
+  dtps = ac_malloc(max_dtps * sizeof(DispatchThreadParams));
   ac_assert(dtps != AC_NULL);
-  comp_infos = ac_malloc(max_component_threads * max_components_per_thread * sizeof(AcCompInfo));
+  comp_infos = ac_malloc(max_dtps * max_components_per_thread * sizeof(AcCompInfo));
   ac_assert(comp_infos != AC_NULL);
 
-
   ac_debug_printf("AcCompMgr_init: 1\n");
-  for (ac_u32 i = 0; i < max_component_threads; i++) {
+  for (ac_u32 i = 0; i < max_dtps; i++) {
     ac_debug_printf("AcCompMgr_init: i=%d\n", i);
     DispatchThreadParams* dtp = &dtps[i];
     dtp->max_comps = max_components_per_thread;
@@ -154,7 +165,7 @@ void AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_per_thre
       return;
     }
     for (ac_u32 j = 0; j < max_components_per_thread; j++) {
-      ac_u32 ci_idx = (i * max_component_threads) + j;
+      ac_u32 ci_idx = (i * max_dtps) + j;
       ac_debug_printf("AcCompMgr_init: i=%d j=%d ci_idx=%d\n", i, j, ci_idx);
       AcCompInfo* ci = &comp_infos[ci_idx];
       dtp->comps[j] = ci;
@@ -175,6 +186,9 @@ void AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_per_thre
     // Wait until the thread is ready
     ac_receptor_wait(dtp->ready);
   }
+
+  // Initialize the next dt to add a component too
+  next_dtps = 0;
 }
 
 /**
@@ -191,7 +205,29 @@ void AcCompMgr_deinit(void) {
  * @return: AcCompId or AC_NULL if an error
  */
 AcCompInfo* AcCompMgr_add_comp(AcComp* comp) {
-  return AC_NULL;
+  // Use a simple round robin algorithm to choose
+  // the thread.
+  ac_u32 idx = __atomic_fetch_add(&next_dtps, 1, __ATOMIC_RELEASE);
+  if (idx > max_dtps) {
+    idx = 0;
+  }
+  DispatchThreadParams* dtp = &dtps[idx];
+
+  // Search the list threads comps for an unused slot
+  AcCompInfo* ci = AC_NULL;
+  for (ac_u32 i = 0; i < dtp->max_comps; i++) {
+    AcCompInfo** pci = &dtp->comps[i];
+    ci = __atomic_exchange_n(pci, AC_NULL, __ATOMIC_ACQUIRE);
+    if (ci != AC_NULL) {
+      // Found an empty entry add the component
+      ci->comp = comp;
+      ci->dc = AcDispatcher_add_comp(dtp->d, comp);
+      ci->dtp = dtp;
+      break;
+    }
+  }
+
+  return ci;
 }
 
 /**
@@ -200,4 +236,12 @@ AcCompInfo* AcCompMgr_add_comp(AcComp* comp) {
  * @param: comp is an initialized component type
  */
 void AcCompMgr_rmv_comp(AcCompInfo* info) {
+}
+
+/**
+ * Send a message to the comp
+ */
+void AcCompMgr_send_msg(AcCompInfo* info, AcMsg* msg) {
+  AcDispatcher_send_msg(info->dc, msg);
+  ac_receptor_signal(info->dtp->waiting);
 }

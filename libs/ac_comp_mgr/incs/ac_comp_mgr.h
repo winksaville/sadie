@@ -39,9 +39,9 @@ typedef struct AcCompInfo AcCompInfo;
 /**
  * Process a message.
  *
- * return AC_FALSE if the message was NOT fully handled in which
- * case the parent component will be called otherwise processing
- * is complete.
+ * @return AC_FALSE if the message was NOT fully handled in which
+ * case the parent component will be called, otherwise processing
+ * is complete. TODO: Add support for Hierarchical Processing
  */
 typedef ac_bool (*AcCompMsgProcessor)(AcComp* this, ac_msg* pmsg);
 
@@ -84,5 +84,9 @@ AcCompInfo* AcCompMgr_add_comp(AcComp* comp);
  */
 void AcCompMgr_rmv_comp(AcCompInfo* comp_info);
 
+/**
+ * Send a message to the comp
+ */
+void AcCompMgr_send_msg(AcCompInfo* info, AcMsg* msg);
 
 #endif
