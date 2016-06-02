@@ -23,12 +23,17 @@
 #include <ac_mpscfifo.h>
 #include <ac_memmgr.h>
 
-// TODO: Subset of AcCompInfo in ac_comp_mgr, fix!!!
+/**
+ * A Dispatchable Component
+ */
 typedef struct AcDispatchableComp {
     AcComp* comp;
     ac_mpscfifo q;
 } AcDispatchableComp;
 
+/**
+ * A dispatcher
+ */
 typedef struct AcDispatcher {
   ac_u32 max_count;
   AcDispatchableComp* dcs[];
@@ -40,19 +45,27 @@ typedef struct AcDispatcher {
 /** d->AcDispatchableComp[i] messages are being processed by AcDispatcher */
 #define DC_PROCESSING  ((AcDispatchableComp*)(!DC_EMPTY))
 
-void ret_dc(AcDispatchableComp* dc) {
-  if (dc != AC_NULL) {
-    ac_mpscfifo_deinit(&dc->q);
-    ac_free(dc);
-  }
-}
-
+/**
+ * Get a AcDispatchableComp aka dc
+ */
 AcDispatchableComp* get_dc() {
+  // TODO: Pre allocate??
   AcDispatchableComp* ret_val = ac_malloc(sizeof(AcDispatchableComp));
   if (ret_val != AC_NULL) {
     ac_mpscfifo_init(&ret_val->q);
   }
   return ret_val;
+}
+
+/**
+ * Return a AcDispatchableComp aka dc
+ */
+void ret_dc(AcDispatchableComp* dc) {
+  // TODO: Pre allocate??
+  if (dc != AC_NULL) {
+    ac_mpscfifo_deinit(&dc->q);
+    ac_free(dc);
+  }
 }
 
 /**
@@ -111,33 +124,33 @@ static ac_bool process_msgs(AcDispatchableComp* dc) {
 }
 
 /*
- * Remove the AcComp at d->dcs[ac_idx]
+ * Remove the dc aka AcDispacableComponent at d->dcs[ac_idx]
  */
-static void rmv_acq(AcDispatcher* d, int acq_idx) {
-  ac_debug_printf("rmv_acq:+ d=%p cq_idx=%d\n", d, acq_idx);
+static void rmv_dc(AcDispatcher* d, int dc_idx) {
+  ac_debug_printf("rmv_dc:+ d=%p dc_idx=%d\n", d, dc_idx);
 
-  // Get q atomically and set to DC_EMPTY so no more messages
+  // Get dc atomically and set to DC_EMPTY so no more messages
   // will be added.
-  AcDispatchableComp** pq = &d->dcs[acq_idx];
-  AcDispatchableComp* q = __atomic_exchange_n(pq, DC_EMPTY, __ATOMIC_ACQUIRE);
+  AcDispatchableComp** pdc = &d->dcs[dc_idx];
+  AcDispatchableComp* dc = __atomic_exchange_n(pdc, DC_EMPTY, __ATOMIC_ACQUIRE);
 
-  // If q is already empty we're done. If its DC_PROCESSING then were
+  // If dc is already empty we're done. If it's DC_PROCESSING then were
   // racing with ac_dispatch and lost, ac_dispatch will process the
   // messages and all will be well, because we've marked it empty
   // and ac_dispatch will not change it back.
-  if ((q != DC_EMPTY) && (q != DC_PROCESSING)) {
+  if ((dc != DC_EMPTY) && (dc != DC_PROCESSING)) {
     // Process the messages as its not empty and ac_dispatch
     // isn't alreday process.
-    process_msgs(q);
+    process_msgs(dc);
 
-    ret_dc(q);
+    ret_dc(dc);
 
-    ac_debug_printf("rmv_acq:- REMOVED d=%p acq_idx=%d\n", d, acq_idx);
+    ac_debug_printf("rmv_dc:- REMOVED d=%p dc_idx=%d\n", d, dc_idx);
     return;
   }
 
-  ac_debug_printf("rmv_ac:- ALREADY removed d=%p ac_idx=%d\n",
-      d, acq_idx);
+  ac_debug_printf("rmv_ac:- ALREADY removed d=%p dc_idx=%d\n",
+      d, dc_idx);
 }
 
 /**
@@ -187,9 +200,9 @@ ac_bool AcDispatcher_dispatch(AcDispatcher* d) {
                           AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
       if (!restored) {
         // It wasn't restored so the only possibility is that while
-        // we were processing the messages rmv_acq was invoked and
+        // we were processing the messages rmv_dc was invoked and
         // q is now DC_EMPTY so we need to finish the removal.
-        ac_debug_printf("ac_dispatch: ret_acq as we won race with rmv_acq"
+        ac_debug_printf("ac_dispatch: ret_acq as we won race with rmv_dc"
             " d=%p acq_idx=%d\n", d, i);
         ret_dc(q);
       }
@@ -228,7 +241,7 @@ void AcDispatcher_ret(AcDispatcher* d) {
 
   if (d != AC_NULL) {
     for (int i = 0; i < d->max_count; i++) {
-      rmv_acq(d, i);
+      rmv_dc(d, i);
     }
     ret_dispatcher(d);
   }
@@ -243,10 +256,10 @@ void AcDispatcher_ret(AcDispatcher* d) {
  * this will occur if there are to many AcComp's registered.
  */
 AcDispatchableComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp) {
-  ac_debug_printf("AcDispatcher_add_acq:+ d=%p comp=%p\n", d, comp);
+  ac_debug_printf("AcDispatcher_add_comp:+ d=%p comp=%p\n", d, comp);
 
   if (d == AC_NULL) {
-    ac_debug_printf("AcDispatcher_add_acq:- ERR no d"
+    ac_debug_printf("AcDispatcher_add_comp:- ERR no d"
         " d=%p comp=%p\n", d, comp);
     return AC_NULL;
   }
@@ -254,7 +267,7 @@ AcDispatchableComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp) {
   // Get the AcDispatchableComp and initialize
   AcDispatchableComp* dc = get_dc();
   if (dc == AC_NULL) {
-    ac_debug_printf("AcDispatcher_add_acq:- ERR no AcDispatchableComp's"
+    ac_debug_printf("AcDispatcher_add_comp:- ERR no AcDispatchableComp's"
         " d=%p comp=%p\n", d, comp);
     return AC_NULL;
   }
@@ -267,14 +280,14 @@ AcDispatchableComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp) {
     if (__atomic_compare_exchange_n(
            pdc, &acq_empty, dc,
            AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
-      ac_debug_printf("AcDispatcher_add_acq:- OK d=%p comp=%p dc=%p\n",
+      ac_debug_printf("AcDispatcher_add_comp:- OK d=%p comp=%p dc=%p\n",
           d, comp, dc);
       return dc;
     }
   }
 
   // Couldn't find a slot so return the AcDispatchableComp and return AC_NULL
-  ac_debug_printf("AcDispatcher_add_acq:- ERR d full\n");
+  ac_debug_printf("AcDispatcher_add_comp:- ERR d full\n");
   ret_dc(dc);
   return AC_NULL;
 }
@@ -286,17 +299,17 @@ AcDispatchableComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp) {
  */
 AcComp* AcDispatcher_rmv_comp(AcDispatcher* d, AcDispatchableComp* dc) {
   AcComp* ret_val = dc->comp;
-  ac_debug_printf("AcDispatcher_rmv_ac:+ d=%p dc=%p\n", d, dc);
+  ac_debug_printf("AcDispatcher_rmv_comp:+ d=%p dc=%p\n", d, dc);
 
   ac_bool ok = AC_FALSE;
 
   if (d == AC_NULL) {
-    ac_debug_printf("AcDispatcher_rmv_ac:- ERR no d\n");
+    ac_debug_printf("AcDispatcher_rmv_comp:- ERR no d\n");
     return AC_NULL;
   }
 
   if (dc == AC_NULL) {
-    ac_debug_printf("AcDispatcher_rmv_ac:- ERR no dc\n");
+    ac_debug_printf("AcDispatcher_rmv_comp:- ERR no dc\n");
     return AC_NULL;
   }
 
@@ -314,16 +327,16 @@ AcComp* AcDispatcher_rmv_comp(AcDispatcher* d, AcDispatchableComp* dc) {
       continue;
     }
     if (ret_val == cur_dc->comp) {
-      ac_debug_printf("AcDispatcher_rmv_ac: OK removing d=%p comp=%p\n", d, ret_val);
+      ac_debug_printf("AcDispatcher_rmv_comp: OK removing d=%p comp=%p\n", d, ret_val);
       ok = AC_TRUE;
-      rmv_acq(d, i);
+      rmv_dc(d, i);
     }
   }
 
   if (!ok) {
     ret_val = AC_NULL;
   }
-  ac_debug_printf("AcDispatcher_rmv_ac:- d=%p comp=%p\n", d, ret_val);
+  ac_debug_printf("AcDispatcher_rmv_comp:- d=%p comp=%p\n", d, ret_val);
   return ret_val;
 }
 
