@@ -26,6 +26,8 @@
 #include <ac_mpscfifo.h>
 #include <ac_msg.h>
 
+typedef struct AcCompMgr AcCompMgr;
+
 /**
  * Forward declaration of an asynchronous component
  */
@@ -54,28 +56,13 @@ typedef struct AcComp {
 } AcComp;
 
 /**
- * Initialize the component manager, may only be called once.
- *
- * @param: max_component_threads is the maximum number of threads to manage
- * @param: max_components_thread is the maximum number of components per thread
- * @param: stack_size is number of bytes for a threads stack, 0 will provide the default
- */
-void AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_per_thread,
-    ac_u32 stack_size);
-
-/**
- * Deiniti AcCompMsg
- */
-void AcCompMgr_deinit(void);
-
-/**
  * Add a component to be managed
  *
  * @param: comp is an initialized component type
  *
  * @return: AcCompInfo or AC_NULL if an error
  */
-AcCompInfo* AcCompMgr_add_comp(AcComp* comp);
+AcCompInfo* AcCompMgr_add_comp(AcCompMgr* mgr, AcComp* comp);
 
 /**
  * Remove a component being managed
@@ -84,11 +71,28 @@ AcCompInfo* AcCompMgr_add_comp(AcComp* comp);
  *
  * @return: AcComp passed to AcCompMgr_add_comp.
  */
-AcComp* AcCompMgr_rmv_comp(AcCompInfo* comp_info);
+AcComp* AcCompMgr_rmv_comp(AcCompMgr* mgr, AcCompInfo* comp_info);
 
 /**
  * Send a message to the comp
  */
-void AcCompMgr_send_msg(AcCompInfo* info, AcMsg* msg);
+void AcCompMgr_send_msg(AcCompMgr* mgr, AcCompInfo* info, AcMsg* msg);
+
+/**
+ * Deiniti AcCompMsg
+ */
+void AcCompMgr_deinit(AcCompMgr* mgr);
+
+/**
+ * Initialize the component manager, may only be called once.
+ *
+ * @param: max_component_threads is the maximum number of threads to manage
+ * @param: max_components_thread is the maximum number of components per thread
+ * @param: stack_size is number of bytes for a threads stack, 0 will provide the default
+ *
+ * @return: AcCompMgr* or AC_NULL if an error
+ */
+AcCompMgr* AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_per_thread,
+    ac_u32 stack_size);
 
 #endif

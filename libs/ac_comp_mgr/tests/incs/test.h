@@ -14,35 +14,11 @@
  * limitations under the License.
  */
 
-//#define NDEBUG
+#ifndef LIBS_AC_MSG_POOL_TESTS_INCS_TEST_H
+#define LIBS_AC_MSG_POOL_TESTS_INCS_TEST_H
 
-#include <ac_comp_mgr.h>
-#include <ac_comp_mgr/tests/incs/test.h>
+#include <ac_inttypes.h>
 
-#include <ac_msg_pool.h>
-#include <ac_debug_printf.h>
-#include <ac_printf.h>
-#include <ac_receptor.h>
-#include <ac_test.h>
-#include <ac_time.h>
-#include <ac_thread.h>
+ac_bool test_1x1(void);
 
-int main(void) {
-  ac_bool error = AC_FALSE;
-
-  ac_thread_init(10);
-  ac_receptor_init(256);
-  AcTime_init();
-
-#if AC_PLATFORM == VersatilePB
-  ac_printf("AC_PLATFORM == VersatilePB, skipping test ac_comp_mgr\n");
-#else
-  error|= test_1x1();
 #endif
-
-  if (!error) {
-    ac_printf("OK\n");
-  }
-
-  return error;
-}

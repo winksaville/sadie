@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define NDEBUG
+//#define NDEBUG
 
 #include <ac_comp_mgr.h>
 
@@ -34,6 +34,7 @@ typedef struct DispatchThreadParams DispatchThreadParams;
  * A opaque component info for an AcComp
  */
 typedef struct AcCompInfo {
+  AcCompMgr* mgr;
   AcComp* comp;
   AcDispatchableComp* dc;
   ac_u32 comp_idx;
@@ -41,14 +42,11 @@ typedef struct AcCompInfo {
 } AcCompInfo;
 
 /**
- * Array of AcCompInfo objects being managed across all of the threads
- */
-static AcCompInfo* comp_infos;
-
-/**
  * Parameters for each thread to manage its components
  */
 typedef struct DispatchThreadParams {
+  ac_bool thread_started;
+  ac_thread_hdl_t thread_hdl;
   AcDispatcher* d;
   ac_u32 max_comps;
   AcCompInfo** cis;
@@ -58,16 +56,13 @@ typedef struct DispatchThreadParams {
   ac_bool stop_processing_msgs;
 } DispatchThreadParams;
 
-/**
- * Array of DispathThreadParams, one for each thread
- */
-static DispatchThreadParams* dtps;
-
-/**
- * Next thread
- */
-static ac_u32 max_dtps;
-static ac_u32 next_dtps;
+typedef struct AcCompMgr {
+  AcCompInfo* comp_infos;     // Array of AcCompInfo objects being managed
+                              // across all of the threads
+  DispatchThreadParams* dtps; // Array of DispathThreadParams, one for each thread
+  ac_u32 max_dtps;            // Number of threads in the dtps array
+  ac_u32 next_dtps;           // Next thread
+} AcCompMgr;
 
 /**
  * A thread which dispatches message to its components.
@@ -75,7 +70,7 @@ static ac_u32 next_dtps;
 static void* dispatch_thread(void *param) {
   DispatchThreadParams* params = (DispatchThreadParams*)(param);
 
-  ac_debug_printf("dispatch_thread:+ starting params=%p\n", params);
+  ac_debug_printf("dispatch_thread:+starting params=%p\n", params);
 
   // Get a dispatcher and add a queue and message processor
   params->d = AcDispatcher_get(params->max_comps);
@@ -103,104 +98,32 @@ static void* dispatch_thread(void *param) {
   // Cleanup
   for (ac_u32 j = 0; j < params->max_comps; j++) {
     AcCompInfo* ci = params->cis[j];
-    // TODO: cleanup waiting receptors
     if (ci != AC_NULL) {
       if (ci->dc != AC_NULL) {
         AcDispatcher_rmv_comp(params->d, ci->dc);
       }
-      ac_free(ci);
       params->cis[j] = AC_NULL;
     }
   }
 
+  //TODO: cleanup waiting receptor
+  //ac_receptor_ret(dtp->waiting);
+
 done:
-  ac_debug_printf("disptach_thread:- done params=%p\n", params);
+  ac_debug_printf("disptach_thread:-done params=%p\n", params);
 
   ac_receptor_signal_yield_if_waiting(params->done);
 
   if (params->d != AC_NULL) {
     AcDispatcher_ret(params->d);
     params->d = AC_NULL;
-    ac_debug_printf("disptach_thread:- params->d = AC_NULL ************\n");
+    ac_debug_printf("disptach_thread:-params->d = AC_NULL ************\n");
   }
+
   __atomic_thread_fence(__ATOMIC_RELEASE);
   return AC_NULL;
 }
 
-/**
- * Initialize the component manager, may only be called once.
- *
- * @param: max_component_threads is the maximum number of threads to manage
- * @param: max_components_per_thread is the maximum number of components per thread
- * @param: stack_size is number of bytes for a threads stack, 0 will provide the default
- */
-void AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_per_thread,
-    ac_u32 stack_size) {
-  ac_debug_printf("AcCompMgr_init:+ max_component_threads=%d max_components_per_thread=%d stack_size=%d\n",
-      max_component_threads, max_components_per_thread, stack_size);
-      
-  if (max_component_threads == 0) {
-    ac_printf("Counld not create the AcCompMgr max_component_threads is 0\n");
-    return;
-  }
-
-  if (max_components_per_thread == 0) {
-    ac_printf("Counld not create the AcCompMgr max_components_per_thread is 0\n");
-    return;
-  }
-
-  max_dtps = max_component_threads;
-
-  dtps = ac_malloc(max_dtps * sizeof(DispatchThreadParams));
-  ac_assert(dtps != AC_NULL);
-  comp_infos = ac_malloc(max_dtps * max_components_per_thread * sizeof(AcCompInfo));
-  ac_assert(comp_infos != AC_NULL);
-
-  ac_debug_printf("AcCompMgr_init: loop\n");
-  for (ac_u32 i = 0; i < max_dtps; i++) {
-    DispatchThreadParams* dtp = &dtps[i];
-    ac_debug_printf("AcCompMgr_init: dtps[%d]=%p\n", i, dtp);
-    dtp->max_comps = max_components_per_thread;
-    dtp->cis = ac_malloc(max_components_per_thread * sizeof(AcCompInfo*));
-    if (dtp->cis == AC_NULL) {
-      ac_debug_printf("AcCompMgr_init: i=%d\n dtp->cis == AC_NULL", i);
-      // TODO: Better cleanup
-      return;
-    }
-    for (ac_u32 j = 0; j < max_components_per_thread; j++) {
-      ac_u32 ci_idx = (i * max_dtps) + j;
-      AcCompInfo* ci = &comp_infos[ci_idx];
-      ac_debug_printf("AcCompMgr_init: i=%d j=%d ci_idx=%d ci=%p\n", i, j, ci_idx, ci);
-      dtp->cis[j] = ci;
-      ci->comp_idx = ci_idx;
-      ci->dtp = dtp;
-      ci->comp = AC_NULL;
-      ci->dc = AC_NULL;
-    }
-    dtp->done = ac_receptor_create();
-    dtp->ready = ac_receptor_create();
-
-    ac_thread_rslt_t result = ac_thread_create(stack_size, dispatch_thread, dtp);
-    if (result.status != 0) {
-      ac_printf("Counld not create the dispatch_thread %d result.status=%d\n",
-          i, result.status);
-      // TODO: Better cleanup
-      return;
-    }
-
-    // Wait until the thread is ready
-    ac_receptor_wait(dtp->ready);
-  }
-
-  // Initialize the next dt to add a component too
-  next_dtps = 0;
-}
-
-/**
- * Deinitialzie the component manager.
- */
-void AcCompMgr_deinit(void) {
-}
 
 /**
  * Add a component to be managed
@@ -209,15 +132,15 @@ void AcCompMgr_deinit(void) {
  *
  * @return: AcCompInfo or AC_NULL if an error
  */
-AcCompInfo* AcCompMgr_add_comp(AcComp* comp) {
+AcCompInfo* AcCompMgr_add_comp(AcCompMgr* mgr, AcComp* comp) {
   // Use a simple round robin algorithm to choose
   // the thread.
-  ac_u32 idx = __atomic_fetch_add(&next_dtps, 1, __ATOMIC_RELEASE);
-  if (idx >= max_dtps) {
+  ac_u32 idx = __atomic_fetch_add(&mgr->next_dtps, 1, __ATOMIC_RELEASE);
+  if (idx >= mgr->max_dtps) {
     idx = 0;
   }
-  DispatchThreadParams* dtp = &dtps[idx];
-  ac_debug_printf("AcCompMgr_add_comp:+ comp=%p idx=%d dtp=%p dtp->d=%p\n", comp, idx, dtp, dtp->d);
+  DispatchThreadParams* dtp = &mgr->dtps[idx];
+  ac_debug_printf("AcCompMgr_add_comp:+comp=%p idx=%d dtp=%p dtp->d=%p\n", comp, idx, dtp, dtp->d);
 
   // Search the list CompInfos for an unused slot,
   // i.e. ci->comp == AC_NULL
@@ -240,7 +163,7 @@ AcCompInfo* AcCompMgr_add_comp(AcComp* comp) {
     }
   }
 
-  ac_debug_printf("AcCompMgr_add_comp:- comp=%p ci=%p\n", comp, ci);
+  ac_debug_printf("AcCompMgr_add_comp:-comp=%p ci=%p\n", comp, ci);
   return ci;
 }
 
@@ -251,23 +174,166 @@ AcCompInfo* AcCompMgr_add_comp(AcComp* comp) {
  *
  * @return: AcComp passed to AcCompMgr_add_comp.
  */
-AcComp* AcCompMgr_rmv_comp(AcCompInfo* ci) {
+AcComp* AcCompMgr_rmv_comp(AcCompMgr* mgr, AcCompInfo* ci) {
+  AC_UNUSED(mgr);
+
   AcComp* comp = ci->comp;
-  ac_debug_printf("AcCompMgr_rmv_comp:+ ci=%p ci->dtp-d=%p comp=%p\n", ci, ci->dtp->d, comp);
+  ac_debug_printf("AcCompMgr_rmv_comp:+ci=%p ci->dtp-d=%p comp=%p\n", ci, ci->dtp->d, comp);
   AcComp** pcomp = &ci->comp;
   if (__atomic_compare_exchange_n(pcomp, pcomp, AC_NULL, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
     ac_debug_printf("AcCompMgr_rmv_comp: removing comp=%p\n", comp);
     AcDispatcher_rmv_comp(ci->dtp->d, ci->dc);
     ci->dc = AC_NULL;
   }
-  ac_debug_printf("AcCompMgr_rmv_comp:- ci=%p ret comp=%p\n", ci, comp);
+  ac_debug_printf("AcCompMgr_rmv_comp:-ci=%p ret comp=%p\n", ci, comp);
   return comp;
 }
 
 /**
  * Send a message to the comp
  */
-void AcCompMgr_send_msg(AcCompInfo* info, AcMsg* msg) {
+void AcCompMgr_send_msg(AcCompMgr* mgr, AcCompInfo* info, AcMsg* msg) {
+  AC_UNUSED(mgr);
+
   AcDispatcher_send_msg(info->dc, msg);
   ac_receptor_signal(info->dtp->waiting);
+}
+
+/**
+ * Deinitialzie the component manager.
+ */
+void AcCompMgr_deinit(AcCompMgr* mgr) {
+  ac_debug_printf("AcCompMgr_deinit:+mgr=%p\n", mgr);
+  if (mgr != AC_NULL) {
+    for (ac_u32 i = 0; i < mgr->max_dtps; i++) {
+      DispatchThreadParams* dtp = &mgr->dtps[i];
+
+      if (dtp->thread_started) {
+        // Stop the thread and kick it so it stops
+        __atomic_store_n(&dtp->stop_processing_msgs, AC_TRUE, __ATOMIC_RELEASE);
+        ac_receptor_signal(dtp->waiting);
+
+        // Wait until the thread is done
+        ac_receptor_wait(dtp->done);
+
+        dtp->thread_started = AC_FALSE;
+      }
+
+      if (dtp->cis != AC_NULL) {
+        ac_debug_printf("AcCompMgr_deinit: mgr=%p free dtp->cis=%p\n", mgr, dtp->cis);
+        ac_free(dtp->cis);
+        dtp->cis = AC_NULL;
+      }
+
+      //TODO: cleanup receptor
+      //ac_receptor_ret(dtp->done);
+      //ac_receptor_ret(dtp->ready);
+    }
+
+    if (mgr->comp_infos != AC_NULL) {
+      ac_debug_printf("AcCompMgr_deinit: mgr=%p free mgr->comp_infos=%p\n", mgr, mgr->comp_infos);
+      ac_free(mgr->comp_infos);
+      mgr->comp_infos = AC_NULL;
+    }
+
+    if (mgr->dtps != AC_NULL) {
+      ac_debug_printf("AcCompMgr_deinit: mgr=%p free mgr->dtps=%p\n", mgr, mgr->dtps);
+      ac_free(mgr->dtps);
+      mgr->dtps = AC_NULL;
+    }
+
+    ac_debug_printf("AcCompMgr_deinit: free mgr=%p\n", mgr);
+    ac_free(mgr);
+  }
+  ac_debug_printf("AcCompMgr_deinit:-mgr=%p\n", mgr);
+}
+
+/**
+ * Initialize the component manager, may only be called once.
+ *
+ * @param: max_component_threads is the maximum number of threads to manage
+ * @param: max_components_per_thread is the maximum number of components per thread
+ * @param: stack_size is number of bytes for a threads stack, 0 will provide the default
+ */
+AcCompMgr* AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_per_thread,
+    ac_u32 stack_size) {
+  ac_bool error = AC_FALSE;
+  AcCompMgr* mgr = ac_calloc(1, sizeof(AcCompMgr));
+  mgr->dtps = AC_NULL;
+  mgr->comp_infos = AC_NULL;
+  mgr->max_dtps = max_component_threads;
+  
+
+  ac_debug_printf("AcCompMgr_init:+max_component_threads=%d max_components_per_thread=%d stack_size=%d\n",
+      max_component_threads, max_components_per_thread, stack_size);
+      
+  if (max_component_threads == 0) {
+    ac_printf("Counld not create the AcCompMgr max_component_threads is 0\n");
+    error = AC_TRUE;
+    goto done;
+  }
+
+  if (max_components_per_thread == 0) {
+    ac_printf("Counld not create the AcCompMgr max_components_per_thread is 0\n");
+    error = AC_TRUE;
+    goto done;
+  }
+
+  mgr->dtps = ac_calloc(mgr->max_dtps, sizeof(DispatchThreadParams));
+  if (mgr->dtps == AC_NULL) {
+    error = AC_TRUE;
+    goto done;
+  }
+  mgr->comp_infos = ac_calloc(mgr->max_dtps * max_components_per_thread, sizeof(AcCompInfo));
+  if (mgr->comp_infos == AC_NULL) {
+    error = AC_TRUE;
+    goto done;
+  }
+
+  ac_debug_printf("AcCompMgr_init: loop\n");
+  for (ac_u32 i = 0; i < mgr->max_dtps; i++) {
+    DispatchThreadParams* dtp = &mgr->dtps[i];
+    ac_debug_printf("AcCompMgr_init: dtps[%d]=%p\n", i, dtp);
+    dtp->max_comps = max_components_per_thread;
+    dtp->cis = ac_calloc(max_components_per_thread, sizeof(AcCompInfo*));
+    if (dtp->cis == AC_NULL) {
+      ac_debug_printf("AcCompMgr_init: i=%d\n dtp->cis == AC_NULL", i);
+      error = AC_TRUE;
+      goto done;
+    }
+    for (ac_u32 j = 0; j < max_components_per_thread; j++) {
+      ac_u32 ci_idx = (i * mgr->max_dtps) + j;
+      AcCompInfo* ci = &mgr->comp_infos[ci_idx];
+      ac_debug_printf("AcCompMgr_init: i=%d j=%d ci_idx=%d ci=%p\n", i, j, ci_idx, ci);
+      dtp->cis[j] = ci;
+      ci->comp_idx = ci_idx;
+      ci->dtp = dtp;
+      ci->comp = AC_NULL;
+      ci->dc = AC_NULL;
+    }
+    dtp->done = ac_receptor_create();
+    dtp->ready = ac_receptor_create();
+
+    ac_thread_rslt_t rslt = ac_thread_create(stack_size, dispatch_thread, dtp);
+    dtp->thread_started = rslt.status == 0;
+    if (!dtp->thread_started) {
+      ac_printf("AcCompMgr_init: Counld not create the dispatch_thread %d rslt.status=%d\n",
+          i, rslt.status);
+      error = AC_TRUE;
+      goto done;
+    }
+
+    // Wait until the thread is ready
+    ac_receptor_wait(dtp->ready);
+  }
+
+  // Initialize the next dt to add a component too
+  mgr->next_dtps = 0;
+
+done:
+  if (error) {
+    AcCompMgr_deinit(mgr);
+    mgr = AC_NULL;
+  }
+  return mgr;
 }

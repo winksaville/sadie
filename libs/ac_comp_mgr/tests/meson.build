@@ -12,7 +12,7 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-lclSrcs = ['srcs/test.c']
+lclSrcs = ['srcs/test.c', 'srcs/test_1x1.c']
 lclIncDirs = [include_directories('../../')]
 
 if Platform == 'VersatilePB'
