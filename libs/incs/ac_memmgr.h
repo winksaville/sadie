@@ -14,13 +14,40 @@
  * limitations under the License.
  */
 
+/**
+ * WARNING/TODO: ac_malloc/ac_calloc do NOT free memory
+ */
+
 #ifndef SADIE_LIBS_INCS_AC_MEMMGR_H
 #define SADIE_LIBS_INCS_AC_MEMMGR_H
 
 #include <ac_inttypes.h>
 
+/**
+ * Allocate size bytes
+ *
+ * @param: size is the number of bytes in each item
+ *
+ * @return: pointer to the memory
+ */
 void* ac_malloc(ac_size_t size);
 
+/**
+ * Allocate num_members * size bytes and initialize to 0.
+ *
+ * @param: count is number of items of size to create
+ * @param: size is the number of bytes in each item
+ *
+ * @return: pointer to the items
+ */
+void* ac_calloc(ac_size_t num_members, ac_size_t size);
+
+/**
+ * Free memory previously allocated with ac_malloc or ac_calloc
+ *
+ * @param: p is the pointer to the memory as returned by ac_malloc
+ *         or ac_calloc.
+ */
 void ac_free(void* p);
 
 #endif

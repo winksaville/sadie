@@ -15,6 +15,7 @@
  */
 
 #include <ac_memmgr.h>
+#include <ac_memset.h>
 
 static ac_size_t idx = 0;
 
@@ -23,7 +24,13 @@ static ac_size_t idx = 0;
 
 static ac_u8 mem_array[MAX_IDX] __attribute__ ((aligned (MEM_ALIGN)));
 
-/** For the moment we allocate but don't free */
+/**
+ * Allocate size bytes
+ *
+ * @param: size is the number of bytes in each item
+ *
+ * @return: pointer to the memory
+ */
 void* ac_malloc(ac_size_t size) {
   ac_size_t cur_idx;
   ac_size_t next_idx;
@@ -52,6 +59,35 @@ void* ac_malloc(ac_size_t size) {
   return &mem_array[cur_idx];
 }
 
+/**
+ * Allocate num_members * size bytes and initialize to 0.
+ *
+ * @param: count is number of items of size to create
+ * @param: size is the number of bytes in each item
+ *
+ * @return: pointer to the items
+ */
+void* ac_calloc(ac_size_t count, ac_size_t size) {
+  ac_size_t total_size = count * size;
+  if (total_size == 0) {
+    // Standard C99 implementations may return AC_NULL or other value
+    // but its undefined behavior if the returned value is used.
+    // Therefore we require ac_calloc(0) to always return AC_NULL
+    return AC_NULL;
+  } else {
+    void* p = ac_malloc(total_size);
+    ac_memset(p, 0, total_size);
+    return p;
+  }
+}
+
+
+/**
+ * Free memory previously allocated with ac_malloc or ac_calloc
+ *
+ * @param: p is the pointer to the memory as returned by ac_malloc
+ *         or ac_calloc.
+ */
 void ac_free(void* p) {
   /** do nothing for now */
 }
