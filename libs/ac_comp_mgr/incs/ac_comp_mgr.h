@@ -73,16 +73,18 @@ void AcCompMgr_deinit(void);
  *
  * @param: comp is an initialized component type
  *
- * @return: AcCompInfo
+ * @return: AcCompInfo or AC_NULL if an error
  */
 AcCompInfo* AcCompMgr_add_comp(AcComp* comp);
 
 /**
  * Remove a component being managed
  *
- * @param: comp is an initialized component type
+ * @param: info an AcCompInfo returned by AcCompMgr_add_comp.
+ *
+ * @return: AcComp passed to AcCompMgr_add_comp.
  */
-void AcCompMgr_rmv_comp(AcCompInfo* comp_info);
+AcComp* AcCompMgr_rmv_comp(AcCompInfo* comp_info);
 
 /**
  * Send a message to the comp

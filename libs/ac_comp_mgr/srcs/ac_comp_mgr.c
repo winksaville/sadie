@@ -36,6 +36,7 @@ typedef struct DispatchThreadParams DispatchThreadParams;
 typedef struct AcCompInfo {
   AcComp* comp;
   AcDispatchableComp* dc;
+  ac_u32 comp_idx;
   DispatchThreadParams* dtp;
 } AcCompInfo;
 
@@ -50,7 +51,7 @@ static AcCompInfo* comp_infos;
 typedef struct DispatchThreadParams {
   AcDispatcher* d;
   ac_u32 max_comps;
-  AcCompInfo** comps;
+  AcCompInfo** cis;
   ac_receptor_t done;
   ac_receptor_t ready;
   ac_receptor_t waiting;
@@ -79,6 +80,7 @@ static void* dispatch_thread(void *param) {
   // Get a dispatcher and add a queue and message processor
   params->d = AcDispatcher_get(params->max_comps);
   if (params->d == AC_NULL) {
+    ac_debug_printf("dispatch_thread: no AcDispatcher params=%p\n", params);
     goto done;
   }
 
@@ -100,25 +102,26 @@ static void* dispatch_thread(void *param) {
 
   // Cleanup
   for (ac_u32 j = 0; j < params->max_comps; j++) {
-    AcCompInfo* ci = params->comps[j];
+    AcCompInfo* ci = params->cis[j];
     // TODO: cleanup waiting receptors
     if (ci != AC_NULL) {
       if (ci->dc != AC_NULL) {
         AcDispatcher_rmv_comp(params->d, ci->dc);
       }
       ac_free(ci);
-      params->comps[j] = AC_NULL;
+      params->cis[j] = AC_NULL;
     }
   }
 
+done:
   ac_debug_printf("disptach_thread:- done params=%p\n", params);
 
   ac_receptor_signal_yield_if_waiting(params->done);
 
-done:
   if (params->d != AC_NULL) {
     AcDispatcher_ret(params->d);
     params->d = AC_NULL;
+    ac_debug_printf("disptach_thread:- params->d = AC_NULL ************\n");
   }
   __atomic_thread_fence(__ATOMIC_RELEASE);
   return AC_NULL;
@@ -153,22 +156,24 @@ void AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_per_thre
   comp_infos = ac_malloc(max_dtps * max_components_per_thread * sizeof(AcCompInfo));
   ac_assert(comp_infos != AC_NULL);
 
-  ac_debug_printf("AcCompMgr_init: 1\n");
+  ac_debug_printf("AcCompMgr_init: loop\n");
   for (ac_u32 i = 0; i < max_dtps; i++) {
-    ac_debug_printf("AcCompMgr_init: i=%d\n", i);
     DispatchThreadParams* dtp = &dtps[i];
+    ac_debug_printf("AcCompMgr_init: dtps[%d]=%p\n", i, dtp);
     dtp->max_comps = max_components_per_thread;
-    dtp->comps = ac_malloc(max_components_per_thread * sizeof(AcCompInfo*));
-    if (dtp->comps == AC_NULL) {
-      ac_debug_printf("AcCompMgr_init: i=%d\n dtp->comps == AC_NULL", i);
+    dtp->cis = ac_malloc(max_components_per_thread * sizeof(AcCompInfo*));
+    if (dtp->cis == AC_NULL) {
+      ac_debug_printf("AcCompMgr_init: i=%d\n dtp->cis == AC_NULL", i);
       // TODO: Better cleanup
       return;
     }
     for (ac_u32 j = 0; j < max_components_per_thread; j++) {
       ac_u32 ci_idx = (i * max_dtps) + j;
-      ac_debug_printf("AcCompMgr_init: i=%d j=%d ci_idx=%d\n", i, j, ci_idx);
       AcCompInfo* ci = &comp_infos[ci_idx];
-      dtp->comps[j] = ci;
+      ac_debug_printf("AcCompMgr_init: i=%d j=%d ci_idx=%d ci=%p\n", i, j, ci_idx, ci);
+      dtp->cis[j] = ci;
+      ci->comp_idx = ci_idx;
+      ci->dtp = dtp;
       ci->comp = AC_NULL;
       ci->dc = AC_NULL;
     }
@@ -202,40 +207,61 @@ void AcCompMgr_deinit(void) {
  *
  * @param: comp is an initialized component type
  *
- * @return: AcCompId or AC_NULL if an error
+ * @return: AcCompInfo or AC_NULL if an error
  */
 AcCompInfo* AcCompMgr_add_comp(AcComp* comp) {
   // Use a simple round robin algorithm to choose
   // the thread.
   ac_u32 idx = __atomic_fetch_add(&next_dtps, 1, __ATOMIC_RELEASE);
-  if (idx > max_dtps) {
+  if (idx >= max_dtps) {
     idx = 0;
   }
   DispatchThreadParams* dtp = &dtps[idx];
+  ac_debug_printf("AcCompMgr_add_comp:+ comp=%p idx=%d dtp=%p dtp->d=%p\n", comp, idx, dtp, dtp->d);
 
-  // Search the list threads comps for an unused slot
+  // Search the list CompInfos for an unused slot,
+  // i.e. ci->comp == AC_NULL
   AcCompInfo* ci = AC_NULL;
   for (ac_u32 i = 0; i < dtp->max_comps; i++) {
-    AcCompInfo** pci = &dtp->comps[i];
-    ci = __atomic_exchange_n(pci, AC_NULL, __ATOMIC_ACQUIRE);
-    if (ci != AC_NULL) {
-      // Found an empty entry add the component
-      ci->comp = comp;
+    ci = dtp->cis[i];
+    AcComp** pcomp = &ci->comp;
+    AcComp* null_comp = AC_NULL;
+
+    ac_debug_printf("AcCompMgr_add_comp: *pcomp=%p comp=%p\n", *pcomp, comp);
+    if (__atomic_compare_exchange_n(pcomp, &null_comp, comp, AC_TRUE,
+          __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
+      ac_debug_printf("AcCompMgr_add_comp: found slot *pcomp=%p comp=%p\n", *pcomp, comp);
+      // Found an empty entry add the component to the dispatcher
       ci->dc = AcDispatcher_add_comp(dtp->d, comp);
-      ci->dtp = dtp;
       break;
+    } else {
+      // Didn't find it
+      ci = AC_NULL;
     }
   }
 
+  ac_debug_printf("AcCompMgr_add_comp:- comp=%p ci=%p\n", comp, ci);
   return ci;
 }
 
 /**
  * Remove a component being managed
  *
- * @param: comp is an initialized component type
+ * @param: info an AcCompInfo returned by AcCompMgr_add_comp.
+ *
+ * @return: AcComp passed to AcCompMgr_add_comp.
  */
-void AcCompMgr_rmv_comp(AcCompInfo* info) {
+AcComp* AcCompMgr_rmv_comp(AcCompInfo* ci) {
+  AcComp* comp = ci->comp;
+  ac_debug_printf("AcCompMgr_rmv_comp:+ ci=%p ci->dtp-d=%p comp=%p\n", ci, ci->dtp->d, comp);
+  AcComp** pcomp = &ci->comp;
+  if (__atomic_compare_exchange_n(pcomp, pcomp, AC_NULL, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
+    ac_debug_printf("AcCompMgr_rmv_comp: removing comp=%p\n", comp);
+    AcDispatcher_rmv_comp(ci->dtp->d, ci->dc);
+    ci->dc = AC_NULL;
+  }
+  ac_debug_printf("AcCompMgr_rmv_comp:- ci=%p ret comp=%p\n", ci, comp);
+  return comp;
 }
 
 /**
