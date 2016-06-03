@@ -60,6 +60,7 @@ int main(void) {
   ac_bool error = AC_FALSE;
 
   ac_thread_init(3);
+  //ac_receptor_init(256); // Corrupted double-link list error when AC_PLATFORM == Posix
   //ac_receptor_init(440); // Futex error when AC_PLATFORM == Posix
   ac_receptor_init(441); // OK
   AcTime_init();
