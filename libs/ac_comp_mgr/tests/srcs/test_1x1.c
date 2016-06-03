@@ -32,7 +32,7 @@ typedef struct T1Comp {
   ac_receptor_t done;
 } T1Comp;
 
-ac_bool t1mp(AcComp* ac, ac_msg* msg) {
+static ac_bool t1mp(AcComp* ac, ac_msg* msg) {
   T1Comp* this = (T1Comp*)ac;
 
   ac_debug_printf("t1mp:+ this=%p\n", this);
@@ -56,7 +56,7 @@ ac_bool t1mp(AcComp* ac, ac_msg* msg) {
  *
  * @return: AC_TRUE if an error
  */
-ac_bool test_t1mp(AcCompMgr* cm, AcMsgPool* mp) {
+static ac_bool test_t1mp(AcCompMgr* cm, AcMsgPool* mp) {
   ac_debug_printf("test_t1mp:+ mp=%p\n", mp);
   ac_bool error = AC_FALSE;
 
@@ -102,14 +102,14 @@ ac_bool test_1x1(void) {
   ac_debug_printf("test_1x1:+\n");
 
   const ac_u32 max_component_threads = 1;
-  const ac_u32 max_components = max_component_threads * 1;
+  const ac_u32 max_components_per_thread = 1;
 
-  ac_debug_printf("test_t1mp: create msg pool\n");
+  ac_debug_printf("test_1x1: create msg pool\n");
   AcMsgPool* mp = AcMsgPool_create(1);
 
   ac_debug_printf("test_1x1: init comp mgr\n");
   ac_u32 stack_size = 0;
-  AcCompMgr* cm = AcCompMgr_init(max_component_threads, max_components, stack_size);
+  AcCompMgr* cm = AcCompMgr_init(max_component_threads, max_components_per_thread, stack_size);
 
   ac_debug_printf("test_1x1: first test_t1mp invocation\n");
   error |= AC_TEST(test_t1mp(cm, mp) == AC_FALSE);

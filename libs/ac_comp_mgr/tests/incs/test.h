@@ -19,6 +19,15 @@
 
 #include <ac_inttypes.h>
 
-ac_bool test_1x1(void);
+/**
+ * Test we can create, send a message and remove components.
+ *
+ * @param: cm is AcCompMgr to use
+ * @param: mp is AcMsgPool to use
+ * @param: comp_count is number of components to create
+ *
+ * @return: AC_TRUE if an error
+ */
+ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count);
 
 #endif

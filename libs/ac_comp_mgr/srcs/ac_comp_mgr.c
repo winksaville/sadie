@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-//#define NDEBUG
+#define NDEBUG
 
 #include <ac_comp_mgr.h>
 
@@ -27,6 +27,10 @@
 #include <ac_debug_printf.h>
 #include <ac_receptor.h>
 #include <ac_thread.h>
+
+#if AC_PLATFORM == pc_x86_64
+extern void remove_zombies(void);
+#endif
 
 typedef struct DispatchThreadParams DispatchThreadParams;
 
@@ -133,33 +137,42 @@ done:
  * @return: AcCompInfo or AC_NULL if an error
  */
 AcCompInfo* AcCompMgr_add_comp(AcCompMgr* mgr, AcComp* comp) {
-  // Use a simple round robin algorithm to choose
-  // the thread.
-  ac_u32 idx = __atomic_fetch_add(&mgr->next_dtps, 1, __ATOMIC_RELEASE);
-  if (idx >= mgr->max_dtps) {
-    idx = 0;
-  }
-  DispatchThreadParams* dtp = &mgr->dtps[idx];
-  ac_debug_printf("AcCompMgr_add_comp:+comp=%p idx=%d dtp=%p dtp->d=%p\n", comp, idx, dtp, dtp->d);
-
-  // Search the list CompInfos for an unused slot,
-  // i.e. ci->comp == AC_NULL
   AcCompInfo* ci = AC_NULL;
-  for (ac_u32 i = 0; i < dtp->max_comps; i++) {
-    ci = dtp->cis[i];
-    AcComp** pcomp = &ci->comp;
-    AcComp* null_comp = AC_NULL;
+  ac_bool found = AC_FALSE;
 
-    ac_debug_printf("AcCompMgr_add_comp: *pcomp=%p comp=%p\n", *pcomp, comp);
-    if (__atomic_compare_exchange_n(pcomp, &null_comp, comp, AC_TRUE,
-          __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
-      ac_debug_printf("AcCompMgr_add_comp: found slot *pcomp=%p comp=%p\n", *pcomp, comp);
-      // Found an empty entry add the component to the dispatcher
-      ci->dc = AcDispatcher_add_comp(dtp->d, comp);
-      break;
-    } else {
-      // Didn't find it
-      ci = AC_NULL;
+  for (ac_u32 thrd = 0; !found && (thrd < mgr->max_dtps); thrd++) {
+    // Use a simple round robin algorithm to choose the thread.
+    ac_u32 idx = __atomic_fetch_add(&mgr->next_dtps, 1, __ATOMIC_RELEASE);
+    idx %= mgr->max_dtps;
+
+    DispatchThreadParams* dtp = &mgr->dtps[idx];
+    ac_debug_printf("AcCompMgr_add_comp:+comp=%p idx=%d dtp=%p dtp->d=%p dtp->max_comps=%d\n",
+        comp, idx, dtp, dtp->d, dtp->max_comps);
+
+    // Search the list CompInfos for an unused slot,
+    // i.e. ci->comp == AC_NULL
+    for (ac_u32 i = 0; i < dtp->max_comps; i++) {
+      ci = dtp->cis[i];
+      AcComp** pcomp = &ci->comp;
+      AcComp* null_comp = AC_NULL;
+
+      ac_debug_printf("AcCompMgr_add_comp: i=%d *pcomp=%p comp=%p\n", i, *pcomp, comp);
+      if (__atomic_compare_exchange_n(pcomp, &null_comp, comp, AC_TRUE,
+            __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
+        ac_debug_printf("AcCompMgr_add_comp: i=%d found empty *pcomp=%p comp=%p\n", i, *pcomp, comp);
+        // Found an empty entry add the component to the dispatcher
+        ci->dc = AcDispatcher_add_comp(dtp->d, comp);
+        if (ci->dc == AC_NULL) {
+          ac_debug_printf("AcCompMgr_add_comp: dtp->d=%p, could not add comp=%p\n", dtp->d, comp);
+          ci = AC_NULL;
+        } else {
+          found = AC_TRUE;
+          break;
+        }
+      } else {
+        // Not empty
+        ci = AC_NULL;
+      }
     }
   }
 
@@ -230,6 +243,12 @@ void AcCompMgr_deinit(AcCompMgr* mgr) {
       //ac_receptor_ret(dtp->ready);
     }
 
+    // TODO: Shouldn't have to remove_zombies
+#if AC_PLATFORM == pc_x86_64
+    ac_thread_yield();
+    remove_zombies();
+#endif
+
     if (mgr->comp_infos != AC_NULL) {
       ac_debug_printf("AcCompMgr_deinit: mgr=%p free mgr->comp_infos=%p\n", mgr, mgr->comp_infos);
       ac_free(mgr->comp_infos);
@@ -295,14 +314,14 @@ AcCompMgr* AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_pe
     DispatchThreadParams* dtp = &mgr->dtps[i];
     ac_debug_printf("AcCompMgr_init: dtps[%d]=%p\n", i, dtp);
     dtp->max_comps = max_components_per_thread;
-    dtp->cis = ac_calloc(max_components_per_thread, sizeof(AcCompInfo*));
+    dtp->cis = ac_calloc(dtp->max_comps, sizeof(AcCompInfo*));
     if (dtp->cis == AC_NULL) {
       ac_debug_printf("AcCompMgr_init: i=%d\n dtp->cis == AC_NULL", i);
       error = AC_TRUE;
       goto done;
     }
-    for (ac_u32 j = 0; j < max_components_per_thread; j++) {
-      ac_u32 ci_idx = (i * mgr->max_dtps) + j;
+    for (ac_u32 j = 0; j < dtp->max_comps; j++) {
+      ac_u32 ci_idx = (i * dtp->max_comps) + j;
       AcCompInfo* ci = &mgr->comp_infos[ci_idx];
       ac_debug_printf("AcCompMgr_init: i=%d j=%d ci_idx=%d ci=%p\n", i, j, ci_idx, ci);
       dtp->cis[j] = ci;

@@ -41,11 +41,10 @@ AcDispatcher* AcDispatcher_get(ac_u32 max_count);
 void AcDispatcher_ret(AcDispatcher* d);
 
 /**
- * Add the AcComp and its queue to this dispatcher.
+ * Add the AcComp to this dispatcher
  *
- * return the AcDispatchableComp or AC_NULL if this AcComp was not added
- * this might occur if there are to many AcComp's registered
- * or the the AcComp has already been registered.
+ * @return: AcDispatableComp* or AC_NULL if an error,
+ * this will occur if there are to many AcComp's registered.
  */
 AcDispatchableComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp);
 

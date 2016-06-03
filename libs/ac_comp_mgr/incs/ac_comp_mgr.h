@@ -51,7 +51,7 @@ typedef ac_bool (*AcCompMsgProcessor)(AcComp* this, ac_msg* pmsg);
  * An Asynchronouse Component
  */
 typedef struct AcComp {
-  char* name;                      // Name of component, must be unique
+  ac_u8* name;                     // Name of component, must be unique
   AcCompMsgProcessor process_msg;  // Process a message
 } AcComp;
 

@@ -169,7 +169,6 @@ ac_bool AcDispatcher_dispatch(AcDispatcher* d) {
     return processed_msgs;
   }
 
-  const AcDispatchableComp* acq_processing = DC_PROCESSING;
   for (int i = 0; i < d->max_count; i++) {
     // Mark this AcDispatchableComp that we're processing
     AcDispatchableComp** pq = &d->dcs[i];
@@ -183,27 +182,28 @@ ac_bool AcDispatcher_dispatch(AcDispatcher* d) {
     //
     // If q is nither than we're going to process the AcDispatchableComp.
     if (q == DC_EMPTY) {
-      ac_debug_printf("ac_dispatch: skip empty entry d=%p acq_idx=%d\n",
+      ac_debug_printf("ac_dispatch: skip empty entry d=%p i=%d\n",
           d, i);
        __atomic_store_n(pq, DC_EMPTY, __ATOMIC_RELEASE);
     } else if (q == DC_PROCESSING) {
-      ac_debug_printf("ac_dispatch: skip busy entry d=%p acq_idx=%d\n",
+      ac_debug_printf("ac_dispatch: skip busy entry d=%p i=%d\n",
           d, i);
     } else {
-      ac_debug_printf("ac_dispatch: process msgs d=%p acq_idx=%d\n",
+      ac_debug_printf("ac_dispatch: process msgs d=%p i=%d\n",
           d, i);
       processed_msgs = process_msgs(q);
+      const AcDispatchableComp* dc_processing = DC_PROCESSING;
 
       // Now restore the previous q if it is still DC_PROCESSING.
       ac_bool restored = __atomic_compare_exchange_n(
-                          pq, &acq_processing, q,
+                          pq, &dc_processing, q,
                           AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
       if (!restored) {
         // It wasn't restored so the only possibility is that while
         // we were processing the messages rmv_dc was invoked and
         // q is now DC_EMPTY so we need to finish the removal.
         ac_debug_printf("ac_dispatch: ret_acq as we won race with rmv_dc"
-            " d=%p acq_idx=%d\n", d, i);
+            " d=%p i=%d\n", d, i);
         ret_dc(q);
       }
     }
@@ -216,7 +216,7 @@ ac_bool AcDispatcher_dispatch(AcDispatcher* d) {
 
 /**
  * Get a dispatcher ready to be used and that can support
- * uptor max_count AcDispatchableComp's.
+ * upto max_count AcDispatchableComp's.
  */
 AcDispatcher* AcDispatcher_get(ac_u32 max_count) {
   ac_debug_printf("AcDispatcher_get:+ max_count=%d\n", max_count);
@@ -250,13 +250,14 @@ void AcDispatcher_ret(AcDispatcher* d) {
 }
 
 /**
- * Add the AcComp and its AcDispatchableComp to this dispatcher
+ * Add the AcComp to this dispatcher
  *
- * return the comp or AC_NULL if this AcComp was not added
+ * @return: AcDispatableComp* or AC_NULL if an error,
  * this will occur if there are to many AcComp's registered.
  */
 AcDispatchableComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp) {
-  ac_debug_printf("AcDispatcher_add_comp:+ d=%p comp=%p\n", d, comp);
+  ac_debug_printf("AcDispatcher_add_comp:+ d=%p d->max_count=%d comp=%p\n",
+      d, d->max_count, comp);
 
   if (d == AC_NULL) {
     ac_debug_printf("AcDispatcher_add_comp:- ERR no d"
@@ -273,12 +274,14 @@ AcDispatchableComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp) {
   }
   dc->comp = comp;
 
-  // Find a slot in the array to save the q
-  const AcDispatchableComp* acq_empty = DC_EMPTY;
+  // Find a slot in the array to save the dc
   for (int i = 0; i < d->max_count; i++) {
     AcDispatchableComp** pdc = &d->dcs[i];
+    AcDispatchableComp* dc_empty = DC_EMPTY;
+    ac_debug_printf("AcDispatcher_add_comp: i=%d *pdc=%p dc_empty=%p\n",
+          i, *pdc, dc_empty);
     if (__atomic_compare_exchange_n(
-           pdc, &acq_empty, dc,
+           pdc, &dc_empty, dc,
            AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
       ac_debug_printf("AcDispatcher_add_comp:- OK d=%p comp=%p dc=%p\n",
           d, comp, dc);
