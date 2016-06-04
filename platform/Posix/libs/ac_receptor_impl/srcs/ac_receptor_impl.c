@@ -14,6 +14,8 @@
  * limitations under the license.
  */
 
+#define NDEBUG
+
 /**
  * CAUTION: There is a RACE between entities which create/destroy receptors
  * and users that wait/signal. I'm using state to handle racing between
@@ -36,7 +38,6 @@
 #include <ac_printf.h>
 #include <ac_thread.h>
 
-#define NDEBUG
 #include <ac_debug_printf.h>
 
 #include <semaphore.h>
@@ -46,40 +47,48 @@
 #define RECEPTOR_STATE_ACTIVE         2
 #define RECEPTOR_STATE_DEINITIALIZING 3
 
+/**
+ * Receptor structure
+ */
+typedef struct AcReceptor {
+  sem_t semaphore;      // Posix semaphore
+  ac_uint state;        // Current state
+} AcReceptor;
+
 typedef struct {
   ac_u32 max_count;
-  posix_receptor_t receptors[];
-} posix_receptors_t;
+  AcReceptor receptors[];
+} PosixAcReceptors;
 
-posix_receptors_t* preceptors;
+PosixAcReceptors* receptor_array;
 
 /**
- * Create a receptor and set its state to signaled
+ * Get a receptor and set its state to signaled
  *
  * @return AC_NULL if unable to allocate a receptor
  */
-ac_receptor_t ac_receptor_create(void) {
+AcReceptor* AcReceptor_get(void) {
   // Find an empty slot
-  for (ac_uint i = 0; i < preceptors->max_count; i++) {
-    posix_receptor_t* preceptor = &preceptors->receptors[i];
+  for (ac_uint i = 0; i < receptor_array->max_count; i++) {
+    AcReceptor* preceptor = &receptor_array->receptors[i];
     ac_uint* pstate = &preceptor->state;
     ac_uint expected = RECEPTOR_STATE_UNUSED;
     if (__atomic_compare_exchange_n(pstate, &expected,
         RECEPTOR_STATE_INITIALIZING, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
-      sem_init(&preceptors->receptors[i].semaphore, 0, 0);
+      sem_init(&receptor_array->receptors[i].semaphore, 0, 0);
       __atomic_store_n(pstate, RECEPTOR_STATE_ACTIVE, __ATOMIC_RELEASE);
       return preceptor;
     }
   }
 
-  ac_printf("ac_receptor_create:-No receptors available\n");
+  ac_printf("AcReceptor_create:-No receptors available\n");
   return AC_NULL;
 }
 
 /**
- * Destroy a receptor
+ * Return a receptor
  */
-void ac_receptor_destroy(ac_receptor_t receptor) {
+void AcReceptor_ret(AcReceptor* receptor) {
   ac_uint* pstate = &receptor->state;
   while (__atomic_load_n(pstate, __ATOMIC_ACQUIRE) == RECEPTOR_STATE_INITIALIZING) {
     ac_thread_yield();
@@ -95,15 +104,15 @@ void ac_receptor_destroy(ac_receptor_t receptor) {
 /**
  * Wait for the receptor to be signaled only one entity can wait
  * on a receptor at a time. If the receptor has already been signaled
- * ac_receptor_wait will return immediately.
+ * AcReceptor_wait will return immediately.
  *
  * @return 0 if successfully waited, !0 indicates an error such as
  * another thread was already waiting. This only happens if a program
  * error and there is more than one entity trying to wait.
  */
-ac_uint ac_receptor_wait(ac_receptor_t receptor) {
+ac_u32 AcReceptor_wait(AcReceptor* receptor) {
   // RACE with create/destroy, user beware.
-  return (ac_uint)sem_wait(&receptor->semaphore);
+  return (ac_u32)sem_wait(&receptor->semaphore);
 }
 
 /**
@@ -111,7 +120,7 @@ ac_uint ac_receptor_wait(ac_receptor_t receptor) {
  *
  * @param receptor to signal
  */
-void ac_receptor_signal(ac_receptor_t receptor) {
+void AcReceptor_signal(AcReceptor* receptor) {
   // RACE with create/destroy, user beware.
   sem_post(&receptor->semaphore);
 }
@@ -122,7 +131,7 @@ void ac_receptor_signal(ac_receptor_t receptor) {
  *
  * @param receptor to signal
  */
-void ac_receptor_signal_yield_if_waiting(ac_receptor_t receptor) {
+void AcReceptor_signal_yield_if_waiting(AcReceptor* receptor) {
   sem_post(&receptor->semaphore);
   ac_thread_yield();
 }
@@ -133,23 +142,23 @@ void ac_receptor_signal_yield_if_waiting(ac_receptor_t receptor) {
  * called before receptor_init
  */
 __attribute__((__constructor__))
-void ac_receptor_early_init(void) {
+void AcReceptor_early_init(void) {
 }
 
 /**
  * Initialize this module
  */
-void ac_receptor_init(ac_uint max_receptors) {
+void AcReceptor_init(ac_u32 max_receptors) {
   ac_assert(max_receptors > 0);
 
-  ac_u32 size = sizeof(posix_receptors_t) + (max_receptors * sizeof(ac_receptor_t));
-  preceptors = ac_malloc(size);
-  ac_assert(preceptors != AC_NULL);
+  ac_u32 size = sizeof(PosixAcReceptors) + (max_receptors * sizeof(AcReceptor));
+  receptor_array = ac_malloc(size);
+  ac_assert(receptor_array != AC_NULL);
 
-  preceptors->max_count = max_receptors;
-  for (ac_u32 i = 0; i < preceptors->max_count; i++) {
-    //sem_init(&preceptors->receptors[i].semaphore, 0, 0);
-    ac_uint* pstate = &preceptors->receptors[i].state;
+  receptor_array->max_count = max_receptors;
+  for (ac_u32 i = 0; i < receptor_array->max_count; i++) {
+    //sem_init(&receptor_array->receptors[i].semaphore, 0, 0);
+    ac_uint* pstate = &receptor_array->receptors[i].state;
     __atomic_store_n(pstate, RECEPTOR_STATE_UNUSED, __ATOMIC_RELEASE);
   }
 }

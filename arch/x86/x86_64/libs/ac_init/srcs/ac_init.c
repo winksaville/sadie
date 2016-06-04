@@ -236,7 +236,7 @@ void ac_init(ac_uptr ptr, ac_uint word) {
   initialize_intr_descriptor_table();
 
   // Initialize receptor module
-  ac_receptor_early_init();
+  AcReceptor_early_init();
 
   // Initialize Advanced Programmable Interrupt Controller
   if (apic_early_init() != 0) {

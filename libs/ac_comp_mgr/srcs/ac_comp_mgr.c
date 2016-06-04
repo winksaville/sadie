@@ -54,9 +54,9 @@ typedef struct DispatchThreadParams {
   AcDispatcher* d;
   ac_u32 max_comps;
   AcCompInfo** cis;
-  ac_receptor_t done;
-  ac_receptor_t ready;
-  ac_receptor_t waiting;
+  AcReceptor* done;
+  AcReceptor* ready;
+  AcReceptor* waiting;
   ac_bool stop_processing_msgs;
 } DispatchThreadParams;
 
@@ -84,17 +84,17 @@ static void* dispatch_thread(void *param) {
   }
 
   // Create the waiting receptor and init our not stopped flag
-  params->waiting = ac_receptor_create();
+  params->waiting = AcReceptor_get();
   __atomic_store_n(&params->stop_processing_msgs, AC_FALSE, __ATOMIC_RELEASE);
 
   // Signal dispatch_thread is ready
-  ac_receptor_signal(params->ready);
+  AcReceptor_signal(params->ready);
 
   // Continuously dispatch messages until we're told to stop
   while (__atomic_load_n(&params->stop_processing_msgs, __ATOMIC_ACQUIRE) == AC_FALSE) {
     if (!AcDispatcher_dispatch(params->d)) {
       ac_debug_printf("dispatch_thread: waiting\n");
-      ac_receptor_wait(params->waiting);
+      AcReceptor_wait(params->waiting);
       ac_debug_printf("dispatch_thread: continuing\n");
     }
   }
@@ -109,14 +109,12 @@ static void* dispatch_thread(void *param) {
       params->cis[j] = AC_NULL;
     }
   }
-
-  //TODO: cleanup waiting receptor
-  //ac_receptor_ret(dtp->waiting);
+  AcReceptor_ret(params->waiting);
 
 done:
   ac_debug_printf("disptach_thread:-done params=%p\n", params);
 
-  ac_receptor_signal_yield_if_waiting(params->done);
+  AcReceptor_signal_yield_if_waiting(params->done);
 
   if (params->d != AC_NULL) {
     AcDispatcher_ret(params->d);
@@ -209,7 +207,7 @@ void AcCompMgr_send_msg(AcCompMgr* mgr, AcCompInfo* info, AcMsg* msg) {
   AC_UNUSED(mgr);
 
   AcDispatcher_send_msg(info->dc, msg);
-  ac_receptor_signal(info->dtp->waiting);
+  AcReceptor_signal(info->dtp->waiting);
 }
 
 /**
@@ -224,10 +222,10 @@ void AcCompMgr_deinit(AcCompMgr* mgr) {
       if (dtp->thread_started) {
         // Stop the thread and kick it so it stops
         __atomic_store_n(&dtp->stop_processing_msgs, AC_TRUE, __ATOMIC_RELEASE);
-        ac_receptor_signal(dtp->waiting);
+        AcReceptor_signal(dtp->waiting);
 
         // Wait until the thread is done
-        ac_receptor_wait(dtp->done);
+        AcReceptor_wait(dtp->done);
 
         dtp->thread_started = AC_FALSE;
       }
@@ -238,9 +236,8 @@ void AcCompMgr_deinit(AcCompMgr* mgr) {
         dtp->cis = AC_NULL;
       }
 
-      //TODO: cleanup receptor
-      //ac_receptor_ret(dtp->done);
-      //ac_receptor_ret(dtp->ready);
+      AcReceptor_ret(dtp->done);
+      AcReceptor_ret(dtp->ready);
     }
 
     // TODO: Shouldn't have to remove_zombies
@@ -330,8 +327,8 @@ AcCompMgr* AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_pe
       ci->comp = AC_NULL;
       ci->dc = AC_NULL;
     }
-    dtp->done = ac_receptor_create();
-    dtp->ready = ac_receptor_create();
+    dtp->done = AcReceptor_get();
+    dtp->ready = AcReceptor_get();
 
     ac_thread_rslt_t rslt = ac_thread_create(stack_size, dispatch_thread, dtp);
     dtp->thread_started = rslt.status == 0;
@@ -343,7 +340,7 @@ AcCompMgr* AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_pe
     }
 
     // Wait until the thread is ready
-    ac_receptor_wait(dtp->ready);
+    AcReceptor_wait(dtp->ready);
   }
 
   // Initialize the next dt to add a component too

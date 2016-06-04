@@ -29,7 +29,7 @@ ac_uint test_receptor(void) {
 int main(void) {
   ac_uint error = AC_FALSE;
 
-  ac_receptor_init(256);
+  AcReceptor_init(256);
 
   if (!error) {
     error |= test_receptor();

@@ -31,7 +31,7 @@ typedef struct T1Comp {
   AcComp comp;
   AcCompInfo* ci;
   ac_bool error;
-  ac_receptor_t done;
+  AcReceptor* done;
   ac_u8 name_buf[10];
 } T1Comp;
 
@@ -46,7 +46,7 @@ static ac_bool msg_proc(AcComp* ac, ac_msg* msg) {
 
   AcMsg_ret(msg);
 
-  ac_receptor_signal(this->done);
+  AcReceptor_signal(this->done);
 
   ac_debug_printf("msg_proc:-%s\n", this->comp.name);
   return AC_TRUE;
@@ -72,7 +72,7 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
     ac_sprintf(c->name_buf, sizeof(c->name_buf), "t%d", i);
     c->comp.name = c->name_buf;
     c->comp.process_msg = msg_proc;
-    c->done = ac_receptor_create(),
+    c->done = AcReceptor_get(),
 
     ac_debug_printf("test_comps: adding %s\n", c->comp.name);
     c->ci = AcCompMgr_add_comp(cm, &c->comp);
@@ -95,7 +95,7 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
     ac_debug_printf("test_comps: wait until all messages are received\n");
     for (ac_u32 i = 0; !error && (i < comp_count); i++) {
       c = &comps[i];
-      ac_receptor_wait(c->done);
+      AcReceptor_wait(c->done);
       ac_debug_printf("test_comps: %s error=%d\n", c->comp.name, c->error);
       error |= c->error;
     }
@@ -104,6 +104,7 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
     for (ac_u32 i = 0; !error && (i < comp_count); i++) {
       c = &comps[i];
       ac_debug_printf("test_comps: remove %s ci=%p\n", c->comp.name, c->ci);
+      AcReceptor_ret(c->done);
       AcComp* pt1 = AcCompMgr_rmv_comp(cm, c->ci);
       error |= AC_TEST(pt1 == &c->comp);
       error |= AC_TEST((T1Comp*)pt1 == c);

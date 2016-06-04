@@ -84,7 +84,7 @@ int main(void) {
   ac_bool error = AC_FALSE;
 
   ac_thread_init(10);
-  ac_receptor_init(256);
+  AcReceptor_init(256);
   AcTime_init();
 
   ac_debug_printf("sizeof(AcMsg)=%d\n", sizeof(AcMsg));

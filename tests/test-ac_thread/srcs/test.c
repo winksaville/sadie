@@ -98,7 +98,7 @@ typedef struct {
   ac_u64 time;
   ac_u64 start;
   ac_u64 stop;
-  ac_receptor_t done;
+  AcReceptor* done;
 } waiter_params_t;
 
 void* wait_ns(void* p) {
@@ -109,7 +109,7 @@ void* wait_ns(void* p) {
   ac_thread_wait_ns(params->time);
   params->stop = ac_tscrd();
 
-  ac_receptor_signal_yield_if_waiting(params->done);
+  AcReceptor_signal_yield_if_waiting(params->done);
 
   //ac_printf("wait_ns:-time=%ld ticks=%ld\n", params->time, params->stop - params->start);
   return AC_NULL;
@@ -123,7 +123,7 @@ void* wait_ticks(void* p) {
   ac_thread_wait_ticks(params->time);
   params->stop = ac_tscrd();
 
-  ac_receptor_signal_yield_if_waiting(params->done);
+  AcReceptor_signal_yield_if_waiting(params->done);
 
   //ac_printf("wait_ticks:-time=%ld ticks=%ld\n", params->time, params->stop - params->start);
   return AC_NULL;
@@ -148,14 +148,14 @@ ac_bool test_thread_wait(ac_uint simultaneous_threads, ac_bool ns,
   ac_u64 wait_timems;
   ac_u64 waiting_ticks = 0;
   ac_uint successes = 0;
-  ac_u64 ac_receptor_waiting_ticks = 0;
-  ac_uint ac_receptor_waiting_successes = 0;
+  ac_u64 AcReceptor_waiting_ticks = 0;
+  ac_uint AcReceptor_waiting_successes = 0;
 
   // Number of attempts
   successes = 0;
   waiting_ticks = 0;
-  ac_receptor_waiting_successes = 0;
-  ac_receptor_waiting_ticks = 0;
+  AcReceptor_waiting_successes = 0;
+  AcReceptor_waiting_ticks = 0;
   for (ac_uint tries = num_tries; tries > 0; tries--) {
     wait_timems = 10;
 
@@ -176,7 +176,7 @@ ac_bool test_thread_wait(ac_uint simultaneous_threads, ac_bool ns,
       params[i].start = 0;
       params[i].stop = 0;
 
-      params[i].done = ac_receptor_create();
+      params[i].done = AcReceptor_get();
       error |= AC_TEST(params[0].done != AC_NULL);
 
       ac_thread_rslt_t trslt = ac_thread_create(0, thread_entry, (void*)&params[i]);
@@ -186,7 +186,7 @@ ac_bool test_thread_wait(ac_uint simultaneous_threads, ac_bool ns,
     // Wait until waiting is done.
     ac_u64 start = ac_tscrd();
     for (ac_uint i = 0; i < simultaneous_threads; i++) {
-      ac_uint rslt = ac_receptor_wait(params[i].done);
+      ac_uint rslt = AcReceptor_wait(params[i].done);
       error |= AC_TEST(rslt == 0);
     }
     ac_u64 stop = ac_tscrd();
@@ -195,8 +195,8 @@ ac_bool test_thread_wait(ac_uint simultaneous_threads, ac_bool ns,
     ticks = stop - start;
     timems = AC_U64_DIV_ROUND_UP(ticks * 1000ll, ac_tsc_freq());
     if (timems == wait_timems) {
-      ac_receptor_waiting_ticks += ticks;
-      ac_receptor_waiting_successes += 1;
+      AcReceptor_waiting_ticks += ticks;
+      AcReceptor_waiting_successes += 1;
     }
 
     for (ac_uint i = 0; i < simultaneous_threads; i++) {
@@ -209,14 +209,14 @@ ac_bool test_thread_wait(ac_uint simultaneous_threads, ac_bool ns,
       ac_printf("test_thread_wait(%d, %s): %d waiting %s=%ld ticks=%ld timems=%ld successes=%d\n",
           simultaneous_threads, name, i, name, params[i].time, ticks, timems, successes);
 
-      ac_receptor_destroy(params[i].done);
+      AcReceptor_ret(params[i].done);
     }
   }
-  ac_printf("test_thread_wait(%d, %s): waiting %s avg ticks=%ld ac_receptor_wait avg ticks=%ld\n",
+  ac_printf("test_thread_wait(%d, %s): waiting %s avg ticks=%ld AcReceptor_wait avg ticks=%ld\n",
       simultaneous_threads, name, name,
       AC_U64_DIV_ROUND_UP(waiting_ticks, successes == 0 ? 1 : successes),
-      AC_U64_DIV_ROUND_UP(ac_receptor_waiting_ticks,
-        ac_receptor_waiting_successes == 0 ? 1 : ac_receptor_waiting_successes));
+      AC_U64_DIV_ROUND_UP(AcReceptor_waiting_ticks,
+        AcReceptor_waiting_successes == 0 ? 1 : AcReceptor_waiting_successes));
   // We have to allow some failures as we can't demand 100% success
   // rate because on Linux the time stamp counts are not synchronized
   // across CPU's.
@@ -225,8 +225,8 @@ ac_bool test_thread_wait(ac_uint simultaneous_threads, ac_bool ns,
   error |= AC_TEST(successes >= (required_successes * simultaneous_threads));
 
   ac_printf("test_thread_wait(%d, %s): waiting %s receptor_waiting_successes=%d required_successes=%d\n",
-      simultaneous_threads, name, name, ac_receptor_waiting_successes, required_successes);
-  error |= AC_TEST(ac_receptor_waiting_successes >= required_successes);
+      simultaneous_threads, name, name, AcReceptor_waiting_successes, required_successes);
+  error |= AC_TEST(AcReceptor_waiting_successes >= required_successes);
 
   ac_free(params);
 
@@ -335,7 +335,7 @@ int main(void) {
 
   // Start with only one thread
   ac_thread_init(1);
-  ac_receptor_init(256);
+  AcReceptor_init(256);
   AcTime_init();
 
   error |= test_simple();

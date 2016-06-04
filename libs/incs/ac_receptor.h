@@ -17,35 +17,40 @@
 #ifndef SADIE_LIBS_INCS_AC_RECEPTOR_H
 #define SADIE_LIBS_INCS_AC_RECEPTOR_h
 
+#include <ac_inttypes.h>
+
 /**
- * Receptor structure
+ * A AcReceptor type
  */
-//typedef ac_receptor_t;
-
-// The following will be defined in ac_receptor_impl.h
+typedef struct AcReceptor AcReceptor;
 
 /**
- * Create a receptor and set its state to NOT signaled
+ * Get a receptor and set its state to NOT signaled
  *
- * @return AC_NULL if failed.
+ * @return AC_NULL if unable to get a receptor
  */
-//ac_receptor_t ac_receptor_create(void);
+AcReceptor* AcReceptor_get(void);
+
+/**
+ * Return a receptor
+ */
+void AcReceptor_ret(AcReceptor* receptor);
 
 /**
  * Wait for the receptor to be signaled only one entity can wait
  * on a receptor at a time. If the receptor has already been signaled
  * ac_receptor_wait will return immediately.
  *
- * @return 0 if successfull !0 indicates an error
+ * @return 0 if successfull !0 if an error.
  */
-//ac_uint ac_receptor_wait(ac_receptor_t receptor);
+ac_u32 AcReceptor_wait(AcReceptor* receptor);
 
 /**
  * Signal the receptor.
  *
  * @param receptor to signal
  */
-//void ac_receptor_signal(ac_receptor_t receptor);
+void AcReceptor_signal(AcReceptor* receptor);
 
 /**
  * Signal the receptor and if there is another thread waiting
@@ -53,9 +58,18 @@
  *
  * @param receptor to signal
  */
-//void ac_receptor_signal_yield_if_waiting(ac_receptor_t receptor);
+void AcReceptor_signal_yield_if_waiting(AcReceptor* receptor);
 
+/**
+ * Initialize this module early, must be
+ * called before receptor_init
+ */
+void AcReceptor_early_init(void);
 
-#include <ac_receptor_impl.h>
+/**
+ * Initialize this module defining the number of
+ * sensors to support.
+ */
+void AcReceptor_init(ac_u32 max_receptors);
 
 #endif

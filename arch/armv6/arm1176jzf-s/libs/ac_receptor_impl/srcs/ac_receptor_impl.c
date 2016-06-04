@@ -14,38 +14,37 @@
  * limitations under the license.
  */
 
+#define NDEBUG
+
 #include <ac_receptor.h>
 
 #include <ac_inttypes.h>
-
 #include <ac_printf.h>
-
-#define NDEBUG
 #include <ac_debug_printf.h>
 
 /**
- * Create a receptor and set its state to NOT signaled
+ * Get a receptor and set its state to NOT signaled
  *
  * @return AC_NULL if unable to allocate a receptor
  */
-ac_receptor_t ac_receptor_create(void) {
+AcReceptor* AcReceptor_get(void) {
   return AC_NULL;
 }
 
 /**
- * Destroy a receptor
+ * Return a receptor
  */
-void ac_receptor_destroy(ac_receptor_t receptor) {
+void AcReceptor_ret(AcReceptor* receptor) {
 }
 
 /**
  * Wait for the receptor to be signaled only one entity can wait
  * on a receptor at a time. If the receptor has already been signaled
- * ac_receptor_wait will return immediately.
+ * AcReceptor_wait will return immediately.
  *
  * @return 0 if successfully waited, !0 indicates an error
  */
-ac_uint ac_receptor_wait(ac_receptor_t receptor) {
+ac_u32 AcReceptor_wait(AcReceptor* receptor) {
   return 1;
 }
 
@@ -54,7 +53,7 @@ ac_uint ac_receptor_wait(ac_receptor_t receptor) {
  *
  * @param receptor to signal
  */
-void ac_receptor_signal(ac_receptor_t receptor) {
+void AcReceptor_signal(AcReceptor* receptor) {
 }
 
 /**
@@ -63,21 +62,21 @@ void ac_receptor_signal(ac_receptor_t receptor) {
  *
  * @param receptor to signal
  */
-void ac_receptor_signal_yield_if_waiting(ac_receptor_t receptor) {
+void AcReceptor_signal_yield_if_waiting(AcReceptor* receptor) {
 }
 
 /**
  * Initialize this module early, must be
  * called before receptor_init
  */
-void ac_receptor_early_init(void) {
-  ac_printf("ac_receptor_early_init:-does nothing\n");
+void AcReceptor_early_init(void) {
+  ac_printf("AcReceptor_early_init:-does nothing\n");
 }
 
 /**
  * Initialize this module
  */
-void ac_receptor_init(ac_uint number_receptors) {
-  ac_printf("ac_receptor_init:-does nothing number_receptors=%d\n", number_receptors);
+void AcReceptor_init(ac_u32 number_receptors) {
+  ac_printf("AcReceptor_init:-does nothing number_receptors=%d\n", number_receptors);
 }
 

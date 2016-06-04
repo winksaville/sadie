@@ -67,9 +67,9 @@ typedef struct {
   AcComp comp;
   AcDispatchableComp* dc;
   ac_bool stop_processing_msgs;
-  ac_receptor_t ready;
-  ac_receptor_t done;
-  ac_receptor_t waiting;
+  AcReceptor* ready;
+  AcReceptor* done;
+  AcReceptor* waiting;
   ac_u64 count;
   struct MsgTsc msg_tsc[MSGS_TSC_COUNT];
 } mptt_params;
@@ -116,17 +116,17 @@ void* mptt(void *param) {
   error |= AC_TEST(params->dc != AC_NULL);
 
   // Create the waiting receptor and init our not stopped flag
-  params->waiting = ac_receptor_create();
+  params->waiting = AcReceptor_get();
   __atomic_store_n(&params->stop_processing_msgs, AC_FALSE, __ATOMIC_RELEASE);
 
   // Signal mptt is ready
-  ac_receptor_signal(params->ready);
+  AcReceptor_signal(params->ready);
 
   // Continuously dispatch messages until we're told to stop
   while (__atomic_load_n(&params->stop_processing_msgs, __ATOMIC_ACQUIRE) == AC_FALSE) {
     if (!AcDispatcher_dispatch(d)) {
       ac_debug_printf("mptt: waiting\n");
-      ac_receptor_wait(params->waiting);
+      AcReceptor_wait(params->waiting);
       ac_debug_printf("mptt: continuing\n");
     }
   }
@@ -137,7 +137,10 @@ void* mptt(void *param) {
 
   ac_debug_printf("mptt:-done error=%d params=%p\n", error, params);
 
-  ac_receptor_signal_yield_if_waiting(params->done);
+  AcReceptor_signal_yield_if_waiting(params->done);
+
+  AcReceptor_ret(params->waiting);
+
   return AC_NULL;
 }
 
@@ -149,7 +152,7 @@ void mptt_send_msg(mptt_params* params, AcMsg* msg) {
   AcDispatcher_send_msg(params->dc, msg);
 
 #if 1
-  // Calling ac_receptor_signal may not cause a task switch
+  // Calling AcReceptor_signal may not cause a task switch
   // on some implementations, such as a single cpu pc_x86_64.
   // This means there is less task switching and faster total
   // time but a longer "travel" time processing is delayed until
@@ -157,11 +160,11 @@ void mptt_send_msg(mptt_params* params, AcMsg* msg) {
   // main thread sends all of the messages and then yields waiting
   // for messages to be returned to the pool it created and it
   // gets to run again.
-  ac_receptor_signal(params->waiting);
+  AcReceptor_signal(params->waiting);
 #else
-  // Calling ac_receptor_signal_yield_if_wating may cause a
+  // Calling AcReceptor_signal_yield_if_wating may cause a
   // task switch before returning, such as a single cpu pc_x86_64.
-  ac_receptor_signal_yield_if_waiting(params->waiting);
+  AcReceptor_signal_yield_if_waiting(params->waiting);
 #endif
   ac_debug_printf("mptt_send_msg:-params=%p\n", params);
 }
@@ -172,8 +175,8 @@ void mptt_send_msg(mptt_params* params, AcMsg* msg) {
 void mptt_stop_and_wait_until_done(mptt_params* params) {
   ac_debug_printf("mptt_stop_wait_until_done:+params=%p\n", params);
   __atomic_store_n(&params->stop_processing_msgs, AC_TRUE, __ATOMIC_RELEASE);
-  ac_receptor_signal_yield_if_waiting(params->waiting);
-  ac_receptor_wait(params->done);
+  AcReceptor_signal_yield_if_waiting(params->waiting);
+  AcReceptor_wait(params->done);
 }
 
 /**
@@ -246,16 +249,17 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count) {
       return error;
     }
 
-    params[i]->ready = ac_receptor_create();
-    params[i]->done = ac_receptor_create();
+    params[i]->ready = AcReceptor_get();
+    params[i]->done = AcReceptor_get();
 
     ac_thread_rslt_t result = ac_thread_create(0, mptt, params[i]);
     error |= AC_TEST(result.status == 0);
     if (error) {
       return error;
     }
+
     // Wait until the thread is ready
-    ac_receptor_wait(params[i]->ready);
+    AcReceptor_wait(params[i]->ready);
   }
 
   // Send the threads messages which they will return to our pool
@@ -336,6 +340,15 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count) {
           msg_tsc->done_tsc - msg_tsc->recv_tsc);
     }
   }
+
+  // Cleanup
+  for (ac_u32 thrd = 0; thrd < thread_count; thrd++) {
+    AcReceptor_ret(params[thrd]->ready);
+    AcReceptor_ret(params[thrd]->done);
+    ac_free(params[thrd]);
+  }
+
+  ac_free(params);
 
 #endif
 

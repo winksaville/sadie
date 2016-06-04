@@ -30,10 +30,10 @@
 ac_u32 t1_count;
 
 struct test_params {
-  ac_receptor_t receptor;
+  AcReceptor* receptor;
   ac_uint loops;
   ac_uint counter;
-  ac_receptor_t done_receptor;
+  AcReceptor* done_receptor;
 };
 
 void* t1(void *param) {
@@ -44,11 +44,11 @@ void* t1(void *param) {
 
     //ac_thread_yield();
 
-    ac_receptor_wait(params->receptor);
+    AcReceptor_wait(params->receptor);
   }
 
   ac_debug_printf("t1: signal done_receptor\n");
-  ac_receptor_signal(params->done_receptor);
+  AcReceptor_signal(params->done_receptor);
   return AC_NULL;
 }
 
@@ -59,9 +59,9 @@ ac_uint test_receptor(void) {
 #if AC_PLATFORM == Posix || AC_PLATFORM == pc_x86_64
   struct test_params params;
 
-  ac_printf("test_receptor: call ac_receptor_create\n");
-  params.receptor = ac_receptor_create();
-  params.done_receptor = ac_receptor_create();
+  ac_printf("test_receptor: call AcReceptor_get\n");
+  params.receptor = AcReceptor_get();
+  params.done_receptor = AcReceptor_get();
   params.counter = 0;
 #ifdef NDEBUG
   params.loops = 1000000;
@@ -82,7 +82,7 @@ ac_uint test_receptor(void) {
     // and is waiting for the signal
     while (__atomic_load_n(&params.counter, __ATOMIC_ACQUIRE) <= i) {
     }
-    ac_receptor_signal_yield_if_waiting(params.receptor);
+    AcReceptor_signal_yield_if_waiting(params.receptor);
 #else
     // Wait for params.counter to change, i.e. t1 and incremented the counter
     // and is waiting for the signal
@@ -104,13 +104,13 @@ ac_uint test_receptor(void) {
 
     //ac_printf("test_receptor: signal\n");
     ac_u64 signal_start = ac_tscrd();
-    ac_receptor_signal_yield_if_waiting(params.receptor);
+    AcReceptor_signal_yield_if_waiting(params.receptor);
     ac_u64 ticks = ac_tscrd() - signal_start;
     ac_printf("test_receptor: signal time=%.9t\n", ticks);
 #endif
   }
   ac_debug_printf("test_receptor: wait on done_receptor x=%d\n", x);
-  ac_receptor_wait(params.done_receptor);
+  AcReceptor_wait(params.done_receptor);
   ac_debug_printf("test_receptor: continuing done_receptor\n");
 
   ac_u64 stop = ac_tscrd();
@@ -122,7 +122,7 @@ ac_uint test_receptor(void) {
 
   ac_printf("test_receptor: time=%.9t\n", ticks);
 
-  ac_receptor_destroy(params.receptor);
+  AcReceptor_ret(params.receptor);
 #endif
 
   ac_printf("test_receptor:-error=%d\n", error);
@@ -133,7 +133,7 @@ int main(void) {
   ac_uint error = AC_FALSE;
 
   ac_thread_init(8);
-  ac_receptor_init(256);
+  AcReceptor_init(256);
 
   AcTime_init();
 

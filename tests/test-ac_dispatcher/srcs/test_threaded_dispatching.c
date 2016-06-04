@@ -50,9 +50,9 @@ static AcComp t1_ac = {
 
 static ac_bool t1_done;
 static AcDispatchableComp* t1_dc;
-static ac_receptor_t t1_receptor_ready;
-static ac_receptor_t t1_receptor_done;
-static ac_receptor_t t1_receptor_waiting;
+static AcReceptor* t1_receptor_ready;
+static AcReceptor* t1_receptor_done;
+static AcReceptor* t1_receptor_waiting;
 
 void* t1(void *param) {
   ac_bool error = AC_FALSE;
@@ -60,7 +60,7 @@ void* t1(void *param) {
   // Add an acq
   AcDispatcher* d;
 
-  t1_receptor_waiting = ac_receptor_create();
+  t1_receptor_waiting = AcReceptor_get();
 
   // Get a dispatcher
   d = AcDispatcher_get(1);
@@ -74,14 +74,14 @@ void* t1(void *param) {
 
   // Signal t1 is ready
   ac_debug_printf("t1: ready\n");
-  ac_receptor_signal(t1_receptor_ready);
+  AcReceptor_signal(t1_receptor_ready);
 
   // Continuously dispatch messages until done
   ac_debug_printf("t1: looping\n");
   while (__atomic_load_n(&t1_done, __ATOMIC_ACQUIRE) == AC_FALSE) {
     if (!AcDispatcher_dispatch(d)) {
       ac_debug_printf("t1: waiting\n");
-      ac_receptor_wait(t1_receptor_waiting);
+      AcReceptor_wait(t1_receptor_waiting);
     }
   }
 
@@ -91,20 +91,22 @@ void* t1(void *param) {
 
   AcDispatcher_rmv_comp(d, t1_dc);
 
+  AcReceptor_ret(t1_receptor_waiting);
+
   ac_debug_printf("t1: done\n");
 
-  ac_receptor_signal_yield_if_waiting(t1_receptor_done);
+  AcReceptor_signal_yield_if_waiting(t1_receptor_done);
   return AC_NULL;
 }
 
 void t1_add_msg(AcMsg* msg) {
   AcDispatcher_send_msg(t1_dc, msg);
-  ac_receptor_signal(t1_receptor_waiting);
+  AcReceptor_signal(t1_receptor_waiting);
 }
 
 void t1_mark_done(void) {
   __atomic_store_n(&t1_done, AC_TRUE, __ATOMIC_RELEASE);
-  ac_receptor_signal_yield_if_waiting(t1_receptor_waiting);
+  AcReceptor_signal_yield_if_waiting(t1_receptor_waiting);
 }
 
 /**
@@ -119,19 +121,19 @@ ac_bool test_threaded_dispatching() {
   ac_debug_printf("test_threaded_dispatching: VersatilePB threading not working, skipping\n");
 #else
   ac_thread_init(1);
-  ac_receptor_init(256);
+  AcReceptor_init(256);
   AcMsgPool* mp = AcMsgPool_create(1);
 
   error |= AC_TEST(mp != AC_NULL);
 
-  t1_receptor_ready = ac_receptor_create();
-  t1_receptor_done = ac_receptor_create();
+  t1_receptor_ready = AcReceptor_get();
+  t1_receptor_done = AcReceptor_get();
 
   ac_thread_rslt_t result = ac_thread_create(AC_THREAD_STACK_MIN, t1, AC_NULL);
   error |= AC_TEST(result.status == 0);
 
   ac_debug_printf("test_threaded_dispatching: wait until t1 is ready\n");
-  ac_receptor_wait(t1_receptor_ready);
+  AcReceptor_wait(t1_receptor_ready);
 
   ac_debug_printf("test_threaded_dispatching: send msg\n");
   AcMsg* msg1 = AcMsg_get(mp);
@@ -146,9 +148,12 @@ ac_bool test_threaded_dispatching() {
   t1_mark_done();
 
   ac_debug_printf("test_threaded_dispatching: wait until done\n");
-  ac_receptor_wait(t1_receptor_done);
+  AcReceptor_wait(t1_receptor_done);
 
   ac_debug_printf("test_threaded_dispatching:- error=%d\n", error);
+
+  AcReceptor_ret(t1_receptor_ready);
+  AcReceptor_ret(t1_receptor_done);
 
 #endif
   return error;
