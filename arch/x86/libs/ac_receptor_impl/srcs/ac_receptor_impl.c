@@ -40,6 +40,7 @@
 #include <ac_debug_printf.h>
 #include <ac_inttypes.h>
 #include <ac_memmgr.h>
+#include <ac_printf.h>
 #include <ac_thread.h>
 
 #define RECEPTOR_STATE_UNUSED         0
@@ -87,7 +88,7 @@ AcReceptor* AcReceptor_get(void) {
     }
   }
 
-  ac_debug_printf("AcReceptor_create:-No receptors available\n");
+  ac_printf("AcReceptor_create:-No receptors available\n");
   return AC_NULL;
 }
 

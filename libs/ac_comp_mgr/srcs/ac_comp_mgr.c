@@ -85,6 +85,7 @@ static void* dispatch_thread(void *param) {
 
   // Create the waiting receptor and init our not stopped flag
   params->waiting = AcReceptor_get();
+  ac_assert(params->waiting != AC_NULL);
   __atomic_store_n(&params->stop_processing_msgs, AC_FALSE, __ATOMIC_RELEASE);
 
   // Signal dispatch_thread is ready
@@ -328,7 +329,9 @@ AcCompMgr* AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_pe
       ci->dc = AC_NULL;
     }
     dtp->done = AcReceptor_get();
+    ac_assert(dtp->done != AC_NULL);
     dtp->ready = AcReceptor_get();
+    ac_assert(dtp->ready != AC_NULL);
 
     ac_thread_rslt_t rslt = ac_thread_create(stack_size, dispatch_thread, dtp);
     dtp->thread_started = rslt.status == 0;

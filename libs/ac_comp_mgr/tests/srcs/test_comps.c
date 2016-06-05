@@ -18,6 +18,7 @@
 
 #include <ac_comp_mgr.h>
 
+#include <ac_assert.h>
 #include <ac_memmgr.h>
 #include <ac_msg_pool.h>
 #include <ac_debug_printf.h>
@@ -72,7 +73,8 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
     ac_sprintf(c->name_buf, sizeof(c->name_buf), "t%d", i);
     c->comp.name = c->name_buf;
     c->comp.process_msg = msg_proc;
-    c->done = AcReceptor_get(),
+    c->done = AcReceptor_get();
+    ac_assert(c->done != AC_NULL);
 
     ac_debug_printf("test_comps: adding %s\n", c->comp.name);
     c->ci = AcCompMgr_add_comp(cm, &c->comp);
