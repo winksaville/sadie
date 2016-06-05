@@ -18,8 +18,7 @@
 
 #include <ac_msg_pool/tests/incs/test.h>
 
-#include <ac_dispatcher.h>
-
+#include <ac_comp_mgr.h>
 #include <ac_debug_printf.h>
 #include <ac_inttypes.h>
 #include <ac_memmgr.h>
@@ -49,12 +48,6 @@ ac_u32 ready_length(void) {
 #endif
 }
 
-void rmv_zombies(void) {
-#if AC_PLATFORM == pc_x86_64
-  remove_zombies();
-#endif
-}
-
 struct MsgTsc {
   ac_u32 waiting_count;
   ac_u32 ready_length;
@@ -65,11 +58,9 @@ struct MsgTsc {
 
 typedef struct {
   AcComp comp;
-  AcDispatchableComp* dc;
+  AcCompMgr* cm;
+  AcCompInfo* ci;
   ac_bool stop_processing_msgs;
-  AcReceptor* ready;
-  AcReceptor* done;
-  AcReceptor* waiting;
   ac_u64 count;
   struct MsgTsc msg_tsc[MSGS_TSC_COUNT];
 } mptt_params;
@@ -95,88 +86,6 @@ static ac_bool mptt_process_msg(AcComp* this, AcMsg* msg) {
 
   __atomic_thread_fence(__ATOMIC_RELEASE);
   return AC_TRUE;
-}
-
-/**
- * Msg Pool Test Thread
- */
-void* mptt(void *param) {
-  ac_bool error = AC_FALSE;
-  mptt_params* params = (mptt_params*)param;
-  AcDispatcher* d;
-
-  ac_debug_printf("mptt:+ starting  params=%p\n", params);
-
-  // Get a dispatcher and add a queue and message processor
-  d = AcDispatcher_get(1);
-  error |= AC_TEST(d != AC_NULL);
-
-  params->comp.process_msg = mptt_process_msg;
-  params->dc = AcDispatcher_add_comp(d, &params->comp);
-  error |= AC_TEST(params->dc != AC_NULL);
-
-  // Create the waiting receptor and init our not stopped flag
-  params->waiting = AcReceptor_get();
-  __atomic_store_n(&params->stop_processing_msgs, AC_FALSE, __ATOMIC_RELEASE);
-
-  // Signal mptt is ready
-  AcReceptor_signal(params->ready);
-
-  // Continuously dispatch messages until we're told to stop
-  while (__atomic_load_n(&params->stop_processing_msgs, __ATOMIC_ACQUIRE) == AC_FALSE) {
-    if (!AcDispatcher_dispatch(d)) {
-      ac_debug_printf("mptt: waiting\n");
-      AcReceptor_wait(params->waiting);
-      ac_debug_printf("mptt: continuing\n");
-    }
-  }
-
-  // Cleanup, TODO: cleanup waiting receptor
-  AcDispatcher_rmv_comp(d, params->dc);
-  AcDispatcher_ret(d);
-
-  ac_debug_printf("mptt:-done error=%d params=%p\n", error, params);
-
-  AcReceptor_signal_yield_if_waiting(params->done);
-
-  AcReceptor_ret(params->waiting);
-
-  return AC_NULL;
-}
-
-/**
- * Send a message to mptt
- */
-void mptt_send_msg(mptt_params* params, AcMsg* msg) {
-  ac_debug_printf("mptt_send_msg:+params=%p msg=%p\n", params, msg);
-  AcDispatcher_send_msg(params->dc, msg);
-
-#if 1
-  // Calling AcReceptor_signal may not cause a task switch
-  // on some implementations, such as a single cpu pc_x86_64.
-  // This means there is less task switching and faster total
-  // time but a longer "travel" time processing is delayed until
-  // there is a task switch. Generally this will occur when the
-  // main thread sends all of the messages and then yields waiting
-  // for messages to be returned to the pool it created and it
-  // gets to run again.
-  AcReceptor_signal(params->waiting);
-#else
-  // Calling AcReceptor_signal_yield_if_wating may cause a
-  // task switch before returning, such as a single cpu pc_x86_64.
-  AcReceptor_signal_yield_if_waiting(params->waiting);
-#endif
-  ac_debug_printf("mptt_send_msg:-params=%p\n", params);
-}
-
-/**
- * Stop the mptt and wait until its done
- */
-void mptt_stop_and_wait_until_done(mptt_params* params) {
-  ac_debug_printf("mptt_stop_wait_until_done:+params=%p\n", params);
-  __atomic_store_n(&params->stop_processing_msgs, AC_TRUE, __ATOMIC_RELEASE);
-  AcReceptor_signal_yield_if_waiting(params->waiting);
-  AcReceptor_wait(params->done);
 }
 
 /**
@@ -213,35 +122,42 @@ ac_u32 count_msgs(AcMsgPool* mp, ac_u32 msg_count) {
  *
  * return AC_TRUE if an error.
  */
-ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count) {
+ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count, ac_u32 comps_per_thread) {
   ac_bool error = AC_FALSE;
-  ac_printf("test_msg_pool_multiple_threads:+ thread_count=%d rl=%d\n", thread_count,
-      ready_length());
+  ac_printf("test_msg_pool_multiple_threads:+ thread_count=%d comps_per_thread=%d rl=%d\n",
+      thread_count, comps_per_thread, ready_length());
 #if AC_PLATFORM == VersatilePB
   ac_printf("test_msg_pool_multiple_threads: VersatilePB threading not working, skipping\n");
 #else
 
+  ac_u32 total_comp_count = thread_count * comps_per_thread;
+
   // Create a msg pool. The msg_count must be at
-  // at least twice the number of queues we're
-  // going to be sending messages too because
-  // of our fifo implementation the first message
-  // returned by the queue will be a stub created
-  // when the fifo was created. Hence we loose the
-  // use of one message until the fifo is deinited.
+  // at least twice the number of total components
+  // because each component has a fifo and the first
+  // message returned by the queue will be a stub
+  // created when the fifo was created. Hence we loose
+  // the use of one message until the fifo is deinited.
   //
   // Since there is one queue per thread in this
   // test we create a message pool with twice the
   // number threads as the msg_count
-  ac_u32 msg_count = thread_count * 2;
+  ac_u32 msg_count = total_comp_count * 2;
   AcMsgPool* mp = AcMsgPool_create(msg_count);
   error |= AC_TEST(mp != AC_NULL);
   error |= AC_TEST(count_msgs(mp, msg_count) == msg_count);
-  ac_debug_printf("test_msg_pool_multiple_threads:+thread_count=%d msg_count=%d\n", thread_count, msg_count);
+  ac_debug_printf("test_msg_pool_multiple_threads:+total_comp_count=%d msg_count=%d\n",
+      total_comp_count, msg_count);
 
   mptt_params** params = ac_malloc(sizeof(mptt_params) * thread_count);
 
-  // Create the threads waiting until each is ready
-  for (ac_u32 i = 0; i < thread_count; i++) {
+  // Create the component manager with appropriate
+  // number of theads and comps_per_thread
+  AcCompMgr* cm = AcCompMgr_init(thread_count, comps_per_thread, 0);
+  error |= AC_TEST(cm != AC_NULL);
+
+  // Add the components to the component manager
+  for (ac_u32 i = 0; i < total_comp_count; i++) {
     ac_debug_printf("test_msg_pool_multiple_threads: init %d\n", i);
     params[i] = ac_malloc(sizeof(mptt_params));
     error |= AC_TEST(params[i] != AC_NULL);
@@ -249,17 +165,10 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count) {
       return error;
     }
 
-    params[i]->ready = AcReceptor_get();
-    params[i]->done = AcReceptor_get();
-
-    ac_thread_rslt_t result = ac_thread_create(0, mptt, params[i]);
-    error |= AC_TEST(result.status == 0);
-    if (error) {
-      return error;
-    }
-
-    // Wait until the thread is ready
-    AcReceptor_wait(params[i]->ready);
+    params[i]->cm = cm;
+    params[i]->comp.process_msg = mptt_process_msg;
+    params[i]->ci = AcCompMgr_add_comp(cm, &params[i]->comp);
+    error |= AC_TEST(params[i]->ci != AC_NULL);
   }
 
   // Send the threads messages which they will return to our pool
@@ -292,24 +201,17 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count) {
         msg->cmd = message;
         msg->arg = waiting_count;
         msg->arg_u64 = ac_tscrd();
-        mptt_send_msg(params[i], msg);
+        AcCompMgr_send_msg(params[i]->cm, params[i]->ci, msg);
       }
     }
   }
 
-  // Tell each mptt to stop and wait until its done
-  for (ac_u32 i = 0; i < thread_count; i++) {
-    mptt_stop_and_wait_until_done(params[i]);
-  }
+  // Deinit the component manager which will stop and wait until
+  // they are done.
+  AcCompMgr_deinit(cm);
 
   ac_u64 stop = ac_tscrd();
   ac_printf("test_msg_pool_multiple_threads: done in %.9t\n", stop - start);
-
-  // Yield to give other threads a little more time to cleanup
-  ac_thread_yield();
-
-  // TODO: Remove zombies thread, we shouldn't have to do this!
-  rmv_zombies();
 
   // If we cleaned up the threads then all of the messages should be back
   error |= AC_TEST(count_msgs(mp, msg_count) == msg_count);
@@ -343,8 +245,6 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count) {
 
   // Cleanup
   for (ac_u32 thrd = 0; thrd < thread_count; thrd++) {
-    AcReceptor_ret(params[thrd]->ready);
-    AcReceptor_ret(params[thrd]->done);
     ac_free(params[thrd]);
   }
 

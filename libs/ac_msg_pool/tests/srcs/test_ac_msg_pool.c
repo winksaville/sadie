@@ -26,7 +26,7 @@
 #include <ac_time.h>
 #include <ac_thread.h>
 
-ac_bool test_msg_pool(void) {
+ac_bool simple_msg_pool_test(void) {
   ac_bool error = AC_FALSE;
   ac_debug_printf("test_msg_pool:+\n");
 
@@ -89,9 +89,10 @@ int main(void) {
 
   ac_debug_printf("sizeof(AcMsg)=%d\n", sizeof(AcMsg));
 
-  error |= test_msg_pool();
-  error |= test_msg_pool_multiple_threads(1);
-  error |= test_msg_pool_multiple_threads(10);
+  error |= simple_msg_pool_test();
+  error |= test_msg_pool_multiple_threads(1, 1);
+  error |= test_msg_pool_multiple_threads(1, 10);
+  error |= test_msg_pool_multiple_threads(10, 1);
 
   if (!error) {
     ac_printf("OK\n");
