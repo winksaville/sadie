@@ -45,7 +45,7 @@ typedef struct AcCompInfo AcCompInfo;
  * case the parent component will be called, otherwise processing
  * is complete. TODO: Add support for Hierarchical Processing
  */
-typedef ac_bool (*AcCompMsgProcessor)(AcComp* this, ac_msg* pmsg);
+typedef ac_bool (*AcCompMsgProcessor)(AcComp* this, AcMsg* pmsg);
 
 /**
  * An Asynchronouse Component

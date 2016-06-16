@@ -24,9 +24,9 @@
 #include <ac_mpscfifo.h>
 
 /**
- * Print a ac_msg
+ * Print a AcMsg
  */
-void ac_msg_print(ac_msg *pmsg);
+void ac_msg_print(AcMsg *pmsg);
 
 /**
  * Print a ac_mpscfifo

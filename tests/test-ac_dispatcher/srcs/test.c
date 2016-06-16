@@ -129,7 +129,7 @@ static ac_bool test_dispatching() {
   error |= AC_TEST(dc1 != AC_NULL);
 
   // Initialize message and add it to queue
-  ac_msg msg1 = {
+  AcMsg msg1 = {
     .cmd = 1,
     .arg = 2
   };
@@ -141,7 +141,7 @@ static ac_bool test_dispatching() {
   ac_debug_printf("test_dispatching: dispatch complete\n");
   error |= AC_TEST(processed_msgs == AC_TRUE);
 
-  ac_msg msg2 = {
+  AcMsg msg2 = {
     .cmd = 1,
     .arg = 3
   };

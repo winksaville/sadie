@@ -27,7 +27,7 @@
 /**
  * @see ac_mpscfifo_dbg.h
  */
-void ac_msg_print(ac_msg* pmsg) {
+void ac_msg_print(AcMsg* pmsg) {
   if (pmsg != AC_NULL) {
     ac_printf("pmsg=%p pnext=%p pool=%p cmd=0x%x arg=0x%x arg=0x%ld\n", (void *)pmsg,
            (void *)(pmsg->pnext), pmsg->pool, pmsg->cmd, pmsg->arg, pmsg->arg_u64);
@@ -47,7 +47,7 @@ void ac_mpscfifo_print(ac_mpscfifo* pq) {
     ac_printf("pq->ptail: ");
     ac_msg_print(pq->ptail);
 #endif
-    ac_msg* ptail = pq->ptail->pnext;
+    AcMsg* ptail = pq->ptail->pnext;
     if (ptail == AC_NULL) {
       ac_printf("empty h/t: ");
       ac_msg_print(pq->phead);

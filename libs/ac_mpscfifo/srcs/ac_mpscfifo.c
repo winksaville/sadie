@@ -41,31 +41,31 @@
  *
  * A ac_mpscfifo has two fields phead and ptail:
  *   typedef struct _ac_mpscfifo {
- *     ac_msg *phead;
- *     ac_msg *ptail;
+ *     AcMsg *phead;
+ *     AcMsg *ptail;
  *   } ac_mpscfifo;
  *
- * A ac_msg is declared as:
+ * A AcMsg is declared as:
  * typedef struct _ac_msg {
  *   struct _ac_msg *pnext; // Next message
  *   ....
  * }
  *
  * When ac_mpscfifo_initialized an empty fifo is created
- * with one stub ac_msg whose pnext field is AC_NULL and
+ * with one stub AcMsg whose pnext field is AC_NULL and
  * ac_mpscfifo.phead and .ptail both point at this stub msg.
  *
- * The pq->phead is where ac_msg's are added to the queue and
+ * The pq->phead is where AcMsg's are added to the queue and
  * points to the most recent element and is at the end of
  * the list thus this element always has its pnext == AC_NULL.
  *
- * pq->ptail->pnext is the oldest ac_msg and is the next
+ * pq->ptail->pnext is the oldest AcMsg and is the next
  * element that will be removed and is only AC_NULL when the
  * FIFO is empty.
  *
  *
  *
- * Add an ac_msg to the FIFO, invoked by multiple threads
+ * Add an AcMsg to the FIFO, invoked by multiple threads
  * (Multiple Producers):
  *
  *  Step 1) Set pmsg's pnext to AC_NULL as this is the end
@@ -73,7 +73,7 @@
  *      pmsg->pnext = AC_NULL
  *
  *  Step 2) Exchange pq->phead and pmsg so pq->phead now
- *  points at the new newest ac_msg and pprev_head points
+ *  points at the new newest AcMsg and pprev_head points
  *  at the previous head.
  *      pprev_head = exchange(&pq->phead, pmsg)
  *
@@ -83,14 +83,14 @@
  *
  *
  *
- * Remove an ac_msg from the FIFO, invoked by one thread
+ * Remove an AcMsg from the FIFO, invoked by one thread
  * (Single Consumer):
  *
  * Step 1) Use the current stub value to return the result
- *     ac_msg *presult = pq->ptail;
+ *     AcMsg *presult = pq->ptail;
  *
  * Step 2) Get the oldest element, serialize with Step 3 in add_msg
- *     ac_msg *poldest = __atomic_load_n(&presult->pnext, __ATOMIC_ACQUIRE);
+ *     AcMsg *poldest = __atomic_load_n(&presult->pnext, __ATOMIC_ACQUIRE);
  *
  * Step 3) If list is empty return AC_NULL
  *     if (poldest == AC_NULL) {
@@ -102,7 +102,7 @@
  * made it so.
  *     pq->ptail = poldest;
  *
- * Step 5) Copy the contents of poldest ac_msg to presult, although
+ * Step 5) Copy the contents of poldest AcMsg to presult, although
  * not strictly necessary we set presult->pnext to AC_NULL so we
  * fail fast is someone uses it.
  *     presult->pnext = AC_NULL;
@@ -127,7 +127,7 @@ AcMsgPool* pstubs = AC_NULL;
 /**
  * @see mpscifo.h
  */
-void ac_mpscfifo_add_msg(ac_mpscfifo* pq, ac_msg* pmsg) {
+void ac_mpscfifo_add_msg(ac_mpscfifo* pq, AcMsg* pmsg) {
   ac_assert(pq != AC_NULL);
   if (pmsg != AC_NULL) {
     // Step 1) Set pmsg's pnext to AC_NULL as this is the end
@@ -136,7 +136,7 @@ void ac_mpscfifo_add_msg(ac_mpscfifo* pq, ac_msg* pmsg) {
 
     // Step 2) Exchange pq->phead and pmsg so pq->phead now
     // points at the new newest. Serialize with other producers.
-    ac_msg *pprev_head = __atomic_exchange_n(&pq->phead, pmsg, __ATOMIC_ACQ_REL);
+    AcMsg *pprev_head = __atomic_exchange_n(&pq->phead, pmsg, __ATOMIC_ACQ_REL);
 
     // Step 3) Store pmsg into the pnext of the previous head
     // which actually adds the new msg to the FIFO. Serialize
@@ -148,13 +148,13 @@ void ac_mpscfifo_add_msg(ac_mpscfifo* pq, ac_msg* pmsg) {
 /**
  * @see mpscifo.h
  */
-ac_msg* ac_mpscfifo_rmv_msg(ac_mpscfifo* pq) {
+AcMsg* ac_mpscfifo_rmv_msg(ac_mpscfifo* pq) {
   ac_assert(pq != AC_NULL);
   // Step 1) Use the current stub value to return the result
-  ac_msg *presult = pq->ptail;
+  AcMsg *presult = pq->ptail;
 
   // Step 2) Get the oldest element, serialize with Step 3 in add_msg
-  ac_msg *poldest = __atomic_load_n(&presult->pnext, __ATOMIC_ACQUIRE);
+  AcMsg *poldest = __atomic_load_n(&presult->pnext, __ATOMIC_ACQUIRE);
 
   // Step 3) If list is empty return AC_NULL
   if (poldest == AC_NULL) {
@@ -166,7 +166,7 @@ ac_msg* ac_mpscfifo_rmv_msg(ac_mpscfifo* pq) {
   // made it so.
   pq->ptail = poldest;
 
-  // Step 5) Copy the contents of poldest ac_msg to presult, although
+  // Step 5) Copy the contents of poldest AcMsg to presult, although
   // not strictly necessary we set presult->pnext to AC_NULL so we
   // fail fast is someone uses it.
   presult->pnext = AC_NULL;
@@ -183,13 +183,13 @@ ac_msg* ac_mpscfifo_rmv_msg(ac_mpscfifo* pq) {
 /**
  * @see mpscifo.h
  */
-ac_msg* ac_mpscfifo_rmv_msg_raw(ac_mpscfifo* pq) {
+AcMsg* ac_mpscfifo_rmv_msg_raw(ac_mpscfifo* pq) {
   ac_assert(pq != AC_NULL);
   // Step 1) Use the current stub value to return the result
-  ac_msg *presult = pq->ptail;
+  AcMsg *presult = pq->ptail;
 
   // Step 2) Get the oldest element, serialize with Step 3 in add_msg
-  ac_msg *poldest = __atomic_load_n(&presult->pnext, __ATOMIC_ACQUIRE);
+  AcMsg *poldest = __atomic_load_n(&presult->pnext, __ATOMIC_ACQUIRE);
 
   // Step 3) If list is empty return AC_NULL
   if (poldest == AC_NULL) {

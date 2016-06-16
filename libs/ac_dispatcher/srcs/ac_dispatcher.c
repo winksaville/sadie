@@ -109,7 +109,7 @@ static ac_bool process_msgs(AcDispatchableComp* dc) {
   ac_debug_printf("process_msgs:+ dc=%p\n", dc);
 
   ac_bool processed_a_msg = AC_FALSE;
-  ac_msg* pmsg = ac_mpscfifo_rmv_msg(&dc->q);
+  AcMsg* pmsg = ac_mpscfifo_rmv_msg(&dc->q);
   while (pmsg != AC_NULL) {
     dc->comp->process_msg(dc->comp, pmsg);
 

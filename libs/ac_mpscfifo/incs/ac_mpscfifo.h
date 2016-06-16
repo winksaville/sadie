@@ -39,29 +39,29 @@
 #include <ac_msg.h>
 
 typedef struct ac_mpscfifo {
-  ac_msg *phead;
-  ac_msg *ptail;
+  AcMsg *phead;
+  AcMsg *ptail;
 } ac_mpscfifo;
 
 /**
- * Add a ac_msg to the FIFo. This maybe used by multiple
+ * Add a AcMsg to the FIFo. This maybe used by multiple
  * threads and never blocks.
  */
-void ac_mpscfifo_add_msg(ac_mpscfifo* pq, ac_msg* pmsg);
+void ac_mpscfifo_add_msg(ac_mpscfifo* pq, AcMsg* pmsg);
 
 /**
- * Remove a ac_msg from the FIFO. This maybe used only by
+ * Remove a AcMsg from the FIFO. This maybe used only by
  * a single thread and returns AC_NULL if the FIFO is empty.
  */
-ac_msg* ac_mpscfifo_rmv_msg(ac_mpscfifo* pq);
+AcMsg* ac_mpscfifo_rmv_msg(ac_mpscfifo* pq);
 
 /**
- * Remove a raw ac_msg from the FIFO. A raw message contents
+ * Remove a raw AcMsg from the FIFO. A raw message contents
  * are NOT preserved and the caller will be initializing the
  * contents after removal. This is useful in managing a pool
  * of empty messages.
  */
-ac_msg* ac_mpscfifo_rmv_msg_raw(ac_mpscfifo* pq);
+AcMsg* ac_mpscfifo_rmv_msg_raw(ac_mpscfifo* pq);
 
 /**
  * Deinitialize the ac_mpscfifo and return the stub which

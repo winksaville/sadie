@@ -36,7 +36,7 @@ typedef struct T1Comp {
   ac_u8 name_buf[10];
 } T1Comp;
 
-static ac_bool msg_proc(AcComp* ac, ac_msg* msg) {
+static ac_bool msg_proc(AcComp* ac, AcMsg* msg) {
   T1Comp* this = (T1Comp*)ac;
 
   ac_debug_printf("msg_proc:+%s\n", this->comp.name);
