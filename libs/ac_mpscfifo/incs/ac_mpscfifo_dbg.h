@@ -26,11 +26,11 @@
 /**
  * Print a AcMsg
  */
-void ac_msg_print(AcMsg *pmsg);
+void ac_msg_print(const char* leader, AcMsg* msg);
 
 /**
  * Print a ac_mpscfifo
  */
-void ac_mpscfifo_print(ac_mpscfifo *pq);
+void ac_mpscfifo_print(ac_mpscfifo* q);
 
 #endif

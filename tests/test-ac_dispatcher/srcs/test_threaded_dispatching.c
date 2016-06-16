@@ -31,11 +31,11 @@
 static ac_bool t1_process_msg(AcComp* this, AcMsg* pmsg) {
   ac_bool error = AC_FALSE;
 
-  ac_debug_printf("t1_process_msg:+ pmsg->cmd=%d, pmsg->arg=%d\n",
-      pmsg->cmd, pmsg->arg);
+  ac_debug_printf("t1_process_msg:+ pmsg->arg1=%ld, pmsg->arg2=%ld\n",
+      pmsg->arg1, pmsg->arg2);
 
-  error |= AC_TEST(pmsg->cmd == 1);
-  error |= AC_TEST(pmsg->arg > 1);
+  error |= AC_TEST(pmsg->arg1 == 1);
+  error |= AC_TEST(pmsg->arg2 > 1);
 
   ac_debug_printf("t1_process_msg:- error=%d\n", error);
 
@@ -137,8 +137,8 @@ ac_bool test_threaded_dispatching() {
 
   ac_debug_printf("test_threaded_dispatching: send msg\n");
   AcMsg* msg1 = AcMsg_get(mp);
-  msg1->cmd = 1;
-  msg1->arg = 2;
+  msg1->arg1 = 1;
+  msg1->arg2 = 2;
   t1_add_msg(msg1);
 
   ac_debug_printf("test_threaded_dispatching: wait 100ms\n");

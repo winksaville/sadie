@@ -27,10 +27,13 @@
 /**
  * @see ac_mpscfifo_dbg.h
  */
-void ac_msg_print(AcMsg* pmsg) {
+void ac_msg_print(const char* leader, AcMsg* pmsg) {
+  if (leader != AC_NULL) {
+    ac_printf(leader);
+  }
   if (pmsg != AC_NULL) {
-    ac_printf("pmsg=%p pnext=%p pool=%p cmd=0x%x arg=0x%x arg=0x%ld\n", (void *)pmsg,
-           (void *)(pmsg->pnext), pmsg->pool, pmsg->cmd, pmsg->arg, pmsg->arg_u64);
+    ac_printf("pmsg=%p pnext=%p pool=%p arg1=0x%lx arg2=0x%lx\n",
+        (void *)pmsg, (void *)(pmsg->pnext), pmsg->pool, pmsg->arg1, pmsg->arg2);
   } else {
     ac_printf("pmsg == AC_NULL\n");
   }
@@ -42,18 +45,14 @@ void ac_msg_print(AcMsg* pmsg) {
 void ac_mpscfifo_print(ac_mpscfifo* pq) {
   if (pq != AC_NULL) {
 #ifndef NDEBUG
-    ac_printf("pq->phead: ");
-    ac_msg_print(pq->phead);
-    ac_printf("pq->ptail: ");
-    ac_msg_print(pq->ptail);
+    ac_msg_print("pq->phead: ", pq->phead);
+    ac_msg_print("pq->ptail: ", AC_NULL, pq->ptail);
 #endif
     AcMsg* ptail = pq->ptail->pnext;
     if (ptail == AC_NULL) {
-      ac_printf("empty h/t: ");
-      ac_msg_print(pq->phead);
+      ac_msg_print("empty h/t: ", pq->phead);
     } else if (ptail == pq->phead) {
-      ac_printf("one h/t:   ");
-      ac_msg_print(pq->phead);
+      ac_msg_print("one h/t:   ", pq->phead);
     } else {
       ac_bool first_time = AC_TRUE;
       while (ptail != AC_NULL) {
@@ -63,7 +62,7 @@ void ac_mpscfifo_print(ac_mpscfifo* pq) {
         } else {
           ac_printf("           ");
         }
-        ac_msg_print(ptail);
+        ac_msg_print(AC_NULL, ptail);
         ptail = ptail->pnext;
       }
     }

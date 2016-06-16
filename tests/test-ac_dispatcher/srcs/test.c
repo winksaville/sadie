@@ -90,16 +90,16 @@ static int test_dispatcher_add_rmv_acq() {
 static ac_bool ac1_process_msg(AcComp* this, AcMsg* pmsg) {
   ac_bool error = AC_FALSE;
 
-  ac_debug_printf("ac1_process_msg:+ pmsg->cmd=%d, pmsg->arg=%d\n",
-      pmsg->cmd, pmsg->arg);
+  ac_debug_printf("ac1_process_msg:+ pmsg->arg1=%ld, pmsg->arg2=%ld\n",
+      pmsg->arg1, pmsg->arg2);
 
-  error |= AC_TEST(pmsg->cmd == 1);
-  error |= AC_TEST(pmsg->arg > 1);
+  error |= AC_TEST(pmsg->arg1 == 1);
+  error |= AC_TEST(pmsg->arg2 > 1);
 
-  pmsg->arg = (ac_u32)error;
+  pmsg->arg2 = error;
 
-  ac_debug_printf("ac1_process_msg:- pmsg->cmd=%d, pmsg->arg=%d\n",
-      pmsg->cmd, pmsg->arg);
+  ac_debug_printf("ac1_process_msg:- pmsg->arg1=%ld, pmsg->arg2=%ld\n",
+      pmsg->arg1, pmsg->arg2);
 
   return AC_TRUE;
 }
@@ -130,8 +130,8 @@ static ac_bool test_dispatching() {
 
   // Initialize message and add it to queue
   AcMsg msg1 = {
-    .cmd = 1,
-    .arg = 2
+    .arg1 = 1,
+    .arg2 = 2
   };
   AcDispatcher_send_msg(dc1, &msg1);
 
@@ -142,8 +142,8 @@ static ac_bool test_dispatching() {
   error |= AC_TEST(processed_msgs == AC_TRUE);
 
   AcMsg msg2 = {
-    .cmd = 1,
-    .arg = 3
+    .arg1 = 1,
+    .arg2 = 3
   };
   AcDispatcher_send_msg(dc1, &msg2);
 

@@ -41,9 +41,8 @@ static ac_bool msg_proc(AcComp* ac, AcMsg* msg) {
 
   ac_debug_printf("msg_proc:+%s\n", this->comp.name);
 
-  this->error |= AC_TEST(msg->cmd == 1);
-  this->error |= AC_TEST(msg->arg == 2);
-  this->error |= AC_TEST(msg->arg_u64 == 3);
+  this->error |= AC_TEST(msg->arg1 == 1);
+  this->error |= AC_TEST(msg->arg2 == 2);
 
   AcMsg_ret(msg);
 
@@ -87,9 +86,8 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
     for (ac_u32 i = 0; i < comp_count; i++) {
       c = &comps[i];
       AcMsg* msg = AcMsg_get(mp);
-      msg->cmd = 1;
-      msg->arg = 2;
-      msg->arg_u64 = 3;
+      msg->arg1 = 1;
+      msg->arg2 = 2;
       ac_debug_printf("test_comps: send msg %s ci=%p\n", c->comp.name, c->ci);
       AcCompMgr_send_msg(cm, c->ci, msg);
     }

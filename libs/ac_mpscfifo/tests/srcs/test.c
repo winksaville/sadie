@@ -61,7 +61,8 @@ static ac_bool test_add_rmv_msg() {
   ac_mpscfifo_init(&q);
 
   // Add msg1
-  AcMsg msg1 = { .cmd = 1, .arg = 0x111, .arg_u64 = 0x1111 };
+  AcMsg msg1 = { .arg1 = 1, .arg2 = 0x111 };
+  ac_msg_print("test_add_rmv_msg: msg1=", &msg1);
   ac_mpscfifo_add_msg(&q, &msg1);
   ac_printf("test_add_rmv_msg: add msg1\n");
   ac_mpscfifo_print(&q);
@@ -70,7 +71,7 @@ static ac_bool test_add_rmv_msg() {
   error |= AC_TEST(q.ptail->pnext == &msg1);
 
   // Add msg2
-  AcMsg msg2 = { .cmd = 2, .arg = 0x222, .arg_u64 = 0x2222 };
+  AcMsg msg2 = { .arg1 = 2, .arg2 = 0x222 };
   ac_mpscfifo_add_msg(&q, &msg2);
   ac_printf("test_add_rmv_msg: add msg2\n");
   ac_mpscfifo_print(&q);
@@ -81,28 +82,24 @@ static ac_bool test_add_rmv_msg() {
   // Remove msg1
   presult = ac_mpscfifo_rmv_msg(&q);
   ac_printf("test_add_rmv_msg: 1\n");
-  ac_printf("presult:   ");
-  ac_msg_print(presult);
+  ac_msg_print("presult:   ", presult);
   ac_mpscfifo_print(&q);
 
   error |= AC_TEST(presult != AC_NULL);
   error |= AC_TEST(presult->pnext == AC_NULL);
-  error |= AC_TEST(presult->cmd == 1);
-  error |= AC_TEST(presult->arg == 0x111);
-  error |= AC_TEST(presult->arg_u64 == 0x1111);
+  error |= AC_TEST(presult->arg1 == 1);
+  error |= AC_TEST(presult->arg2 == 0x111);
 
   // Remove msg2
   presult = ac_mpscfifo_rmv_msg(&q);
   ac_printf("test_add_rmv_msg: 2\n");
-  ac_printf("presult:   ");
-  ac_msg_print(presult);
+  ac_msg_print("presult:   ", presult);
   ac_mpscfifo_print(&q);
 
   error |= AC_TEST(presult != AC_NULL);
   error |= AC_TEST(presult->pnext == AC_NULL);
-  error |= AC_TEST(presult->cmd == 2);
-  error |= AC_TEST(presult->arg == 0x222);
-  error |= AC_TEST(presult->arg_u64 == 0x2222);
+  error |= AC_TEST(presult->arg1 == 2);
+  error |= AC_TEST(presult->arg2 == 0x222);
 
   // Remove from empty
   presult = ac_mpscfifo_rmv_msg(&q);
@@ -129,16 +126,16 @@ static ac_bool test_add_rmv_msg_raw() {
   ac_mpscfifo_init(&q);
 
   // Add msg1
-  AcMsg msg1 = { .cmd = 1, .arg = 0x111, .arg_u64 = 0x1111 };
-  ac_mpscfifo_add_msg(&q, &msg1);
+  AcMsg msg1 = { .arg1 = 1, .arg2 = 0x111 };
   ac_printf("test_add_rmv_msg_raw: add msg1\n");
+  ac_mpscfifo_add_msg(&q, &msg1);
   ac_mpscfifo_print(&q);
   error |= AC_TEST(q.phead == &msg1);
   error |= AC_TEST(q.phead->pnext == AC_NULL);
   error |= AC_TEST(q.ptail->pnext == &msg1);
 
   // Add msg2
-  AcMsg msg2 = { .cmd = 2, .arg = 0x222, .arg_u64 = 0x2222 };
+  AcMsg msg2 = { .arg1 = 2, .arg2 = 0x222 };
   ac_mpscfifo_add_msg(&q, &msg2);
   ac_printf("test_add_rmv_msg_raw: add msg2\n");
   ac_mpscfifo_print(&q);
@@ -149,8 +146,7 @@ static ac_bool test_add_rmv_msg_raw() {
   // Remove stub
   presult = ac_mpscfifo_rmv_msg_raw(&q);
   ac_printf("test_add_rmv_msg_raw: stub\n");
-  ac_printf("presult:   ");
-  ac_msg_print(presult);
+  ac_msg_print("presult:   ", presult);
   ac_mpscfifo_print(&q);
 
   error |= AC_TEST(presult != AC_NULL);
@@ -158,14 +154,12 @@ static ac_bool test_add_rmv_msg_raw() {
   // Remove msg1
   presult = ac_mpscfifo_rmv_msg_raw(&q);
   ac_printf("test_add_rmv_msg_raw: 1\n");
-  ac_printf("presult:   ");
-  ac_msg_print(presult);
+  ac_msg_print("presult:   ", presult);
   ac_mpscfifo_print(&q);
 
   error |= AC_TEST(presult != AC_NULL);
-  error |= AC_TEST(presult->cmd == 1);
-  error |= AC_TEST(presult->arg == 0x111);
-  error |= AC_TEST(presult->arg_u64 == 0x1111);
+  error |= AC_TEST(presult->arg1 == 1);
+  error |= AC_TEST(presult->arg2 == 0x111);
 
   // Remove from empty
   presult = ac_mpscfifo_rmv_msg(&q);

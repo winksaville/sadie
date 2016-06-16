@@ -71,13 +71,13 @@ static ac_bool mptt_process_msg(AcComp* this, AcMsg* msg) {
 
   ac_uint idx = params->count++ % AC_ARRAY_COUNT(params->msg_tsc);
   struct MsgTsc* mt = &params->msg_tsc[idx];
-  mt->waiting_count = msg->arg;
+  mt->waiting_count = msg->arg1;
   mt->ready_length = ready_length();
-  mt->sent_tsc = msg->arg_u64;
+  mt->sent_tsc = msg->arg2;
   mt->recv_tsc = recv_tsc;
 
-  ac_debug_printf("mptt_process_msg:- msg->cmd=%d, msg->arg=%d count=%ld\n",
-      msg->cmd, msg->arg, params->count);
+  ac_debug_printf("mptt_process_msg:- msg->arg1=%ld msg->arg2=%ld count=%ld\n",
+      msg->arg1, msg->arg2, params->count);
 
   // Return message
   AcMsg_ret(msg);
@@ -198,9 +198,8 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count, ac_u32 comps_per_thr
         msg = AcMsg_get(mp);
       }
       if (msg != AC_NULL) {
-        msg->cmd = message;
-        msg->arg = waiting_count;
-        msg->arg_u64 = ac_tscrd();
+        msg->arg1 = waiting_count;
+        msg->arg2 = ac_tscrd();
         AcCompMgr_send_msg(params[i]->cm, params[i]->ci, msg);
       }
     }
