@@ -82,34 +82,6 @@ void AcMsg_ret(AcMsg* msg) {
 }
 
 /**
- * Initialize a msg pool. This is used primarly by mpscfifo to initialize
- * its stub pool, PREFER using AcMsgPool_create.
- *
- * @params pool to initialize with mpscfifo already initialized
- * @params msg_count is number of messages for this pool
- *
- * @return AC_NULL if no pool
- */
-void AcMsgPool_init(AcMsgPool* pool, ac_u32 msg_count) {
-  ac_assert(pool != AC_NULL);
-
-  // Allocate the AcMsg's
-  AcMsg* arena = ac_malloc(sizeof(AcMsg) * msg_count);
-  ac_debug_printf("AcMsgPool_init:+ pool=%p arena=%p\n", pool, arena);
-
-  // Add them to the pool
-  for (ac_u32 i = 0; i < msg_count; i++) {
-    ac_mpscfifo_add_msg(&pool->mpscfifo, &arena[i]);
-    arena[i].pool = pool;
-    ac_debug_printf("AcMsgPool_init: adding &arena[%d]=%p pool=%p\n",
-        i, &arena[i], arena[i].pool);
-  }
-
-  ac_debug_printf("AcMsgPool_init:- pool=%p msg_count=%d\n",
-      pool, msg_count);
-}
-
-/**
  * Create a msg pool
  *
  * @params msg_count is number of messages for this pool
