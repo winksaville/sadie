@@ -26,8 +26,6 @@
 #include <ac_mpscfifo.h>
 #include <ac_msg.h>
 
-typedef void (*AcMsgRet)(AcMsgPool* mp, AcMsg* msg);
-
 typedef struct AcMsgPool AcMsgPool;
 
 /**

@@ -25,7 +25,6 @@
 #include <ac_debug_printf.h>
 
 typedef struct AcMsgPool {
-  AcMsgRet AcMsg_ret;
   ac_mpscfifo mpscfifo;
 } AcMsgPool;
 
