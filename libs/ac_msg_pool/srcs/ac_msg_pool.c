@@ -57,7 +57,7 @@ AcMsg* AcMsg_get(AcMsgPool* mp) {
 
   if (mp == AC_NULL) {
     msg = AC_NULL;
-    ac_debug_printf("AcMsg_get:-mp is AC_NULL msg=%p\n", msg);
+    ac_debug_printf("AcMsg_get:-err mp == AC_NULL msg=%p\n", msg);
   } else {
     ac_debug_printf("AcMsg_get:+mp=%p\n", mp);
     msg = ac_mpscfifo_rmv_msg_raw(&mp->mpscfifo);
@@ -76,7 +76,7 @@ void AcMsg_ret(AcMsg* msg) {
     ac_mpscfifo_add_msg(&msg->pool->mpscfifo, msg);
     ac_debug_printf("AcMsg_ret:-msg=%p msg->pool=%p\n", msg, msg->pool);
   } else {
-    ac_debug_printf("AcMsg_ret:+msg=%p msg->pool=%p\n", msg, msg != AC_NULL ? msg->pool : AC_NULL );
+    ac_debug_printf("AcMsg_ret:-msg=%p msg->pool=%p\n", msg, msg != AC_NULL ? msg->pool : AC_NULL );
   }
 }
 
@@ -88,12 +88,13 @@ void AcMsg_ret(AcMsg* msg) {
  * @return AC_NULL if no pool is created
  */
 AcMsgPool* AcMsgPool_create(ac_u32 msg_count) {
-  ac_bool error = AC_FALSE;
+  ac_bool error;
   AcMsgPool* pool = AC_NULL;
   AcMsg* arena = AC_NULL;
 
   if (msg_count == 0) {
     ac_debug_printf("AcMsgPool_create:-msg_count is 0 return pool=AC_NULL\n");
+    error = AC_TRUE;
     goto done;
   }
 
@@ -101,12 +102,14 @@ AcMsgPool* AcMsgPool_create(ac_u32 msg_count) {
   pool = AcMsgPool_alloc();
   ac_debug_printf("AcMsgPool_create:+pool=%p\n", pool);
   if (pool == AC_NULL) {
+    error = AC_TRUE;
     goto done;
   }
 
   // Allocate the AcMsg's and the stub
   arena = ac_malloc(sizeof(AcMsg) * (msg_count + 1));
   if (arena == AC_NULL) {
+    error = AC_TRUE;
     goto done;
   }
   arena[0].pool = pool;
@@ -122,6 +125,8 @@ AcMsgPool* AcMsgPool_create(ac_u32 msg_count) {
     ac_debug_printf("AcMsgPool_create: adding &arena[%d]=%p pool=%p\n",
         i, &arena[i], arena[i].pool);
   }
+
+  error = AC_FALSE;
 
 done:
   ac_debug_printf("AcMsgPool_create:- pool=%p msg_count=%d\n",
