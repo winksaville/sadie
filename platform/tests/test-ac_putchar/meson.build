@@ -100,6 +100,6 @@ if Platform == 'pc_x86_64'
     depends : [test_ac_putchar])
 
   run_target('run-test-ac_putchar', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              test_ac_putchar_bin)
+              test_ac_putchar_bin, '-enable-kvm', '-cpu', 'host,+tsc-deadline')
 endif
 
