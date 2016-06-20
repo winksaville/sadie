@@ -13,7 +13,7 @@ param1_filename=$1
 shift
 tmpfile=$(mktemp /tmp/sadie-qemu-system-x86_64.runner.XXX)
 qemu-system-x86_64 $@ -nographic -no-reboot -drive format=raw,file=$param1_filename </dev/null 2>&1 | tee ${tmpfile}
-err_count=$(grep -c -e 'ERROR: expr' ${tmpfile})
+err_count=$(grep -c -e 'ERROR:+: ' ${tmpfile})
 #echo err_count=${err_count}
 ((${err_count} == 0)) && rm ${tmpfile}
 exit ${err_count}

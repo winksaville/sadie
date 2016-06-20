@@ -11,7 +11,7 @@
 #   $2 is the bin file to execute
 tmpfile=$(mktemp /tmp/sadie-qemu-system-arm.runner.XXX)
 qemu-system-arm -cpu arm1176 -M $1 -m 128M -nographic -no-reboot -kernel $2 </dev/null 2>&1 | tee ${tmpfile}
-err_count=$(grep -c -e 'ERROR: expr' ${tmpfile})
+err_count=$(grep -c -e 'ERROR:+: ' ${tmpfile})
 #echo err_count=${err_count}
 ((${err_count} == 0)) && rm ${tmpfile}
 exit ${err_count}

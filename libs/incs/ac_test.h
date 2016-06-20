@@ -27,7 +27,7 @@
 #define AC_TEST(expr) ({                                         \
   ac_bool __result__ = (expr) ? AC_FALSE : AC_TRUE;              \
   if (__result__) {                                              \
-    ac_printf("ERROR: expr '" #expr "' failed in %s:%d FN %s\n", \
+    ac_printf("ERROR:+: expr '" #expr "' failed in %s:%d FN %s\n", \
            __FILE__, __LINE__, __func__);                        \
   }                                                              \
   __result__;                                                    \
@@ -40,7 +40,7 @@
 #define AC_TEST_EM(expr, err_msg) ({                             \
   ac_bool __result__ = (expr) ? AC_FALSE : AC_TRUE;              \
   if (__result__) {                                              \
-    ac_printf("ERROR: '" err_msg "' in %s:%d FN %s\n",           \
+    ac_printf("ERROR:+: msg '" err_msg "' in %s:%d FN %s\n",           \
            __FILE__, __LINE__, __func__);                        \
   }                                                              \
   __result__;                                                    \
