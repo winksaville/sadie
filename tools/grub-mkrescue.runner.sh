@@ -11,7 +11,6 @@ tmpdir=$(mktemp -d /tmp/grub-mkrescue.isofiles.XXX)
 mkdir -p ${tmpdir}/boot/grub
 cp $1 ${tmpdir}/boot/
 cp $2 ${tmpdir}/boot/grub/grub.cfg
-tmpdir="xxxx"
 # Turns out grub-mkresule doesn't report an error if the input file doesn't
 # exist. I posted an email to help-grub@gnu.org to find out why, but that
 # probably means ther might be other reasons a failure won't be reported
