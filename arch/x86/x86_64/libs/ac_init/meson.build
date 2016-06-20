@@ -12,7 +12,7 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-runtimeIncDirs += include_directories('incs')
+#runtimeIncDirs += include_directories('incs')
 
 compilerArgs += [
  '-mno-red-zone',
