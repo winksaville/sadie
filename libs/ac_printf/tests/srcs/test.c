@@ -35,10 +35,10 @@ static inline ac_bool test_failure(
   ac_bool failure = !expr;
   if (failure) {
     if (ac_strlen(exprStrg) == 0) {
-      ac_printf("FAILURE at func=%s file=%s:%d\n",
+      ac_printf("ERROR:+: at func=%s file=%s:%d\n",
                   function, file, lineNumber);
     } else {
-      ac_printf("FAILURE '%s'.  func=%s file=%s:%d\n",
+      ac_printf("ERROR:+: '%s'.  func=%s file=%s:%d\n",
                   exprStrg, function, file, lineNumber);
     }
     failure = AC_TRUE;
@@ -448,4 +448,3 @@ int main(void) {
   }
   return failure;
 }
-
