@@ -115,13 +115,13 @@ static void* dispatch_thread(void *param) {
 done:
   ac_debug_printf("disptach_thread:-done params=%p\n", params);
 
-  AcReceptor_signal_yield_if_waiting(params->done);
-
   if (params->d != AC_NULL) {
     AcDispatcher_ret(params->d);
     params->d = AC_NULL;
     ac_debug_printf("disptach_thread:-params->d = AC_NULL ************\n");
   }
+
+  AcReceptor_signal_yield_if_waiting(params->done);
 
   __atomic_thread_fence(__ATOMIC_RELEASE);
   return AC_NULL;
