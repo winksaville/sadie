@@ -67,13 +67,14 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
 
   T1Comp* comps= ac_malloc(comp_count * sizeof(T1Comp));
   T1Comp* c;
-  for (ac_u32 i = 0; !error && (i < comp_count); i++) {
+  for (ac_u32 i = 0; i < comp_count; i++) {
     c = &comps[i];
     ac_sprintf(c->name_buf, sizeof(c->name_buf), "t%d", i);
     c->comp.name = c->name_buf;
     c->comp.process_msg = msg_proc;
     c->done = AcReceptor_get();
     ac_assert(c->done != AC_NULL);
+    c->error = AC_FALSE;
 
     ac_debug_printf("test_comps: adding %s\n", c->comp.name);
     c->ci = AcCompMgr_add_comp(cm, &c->comp);
@@ -93,7 +94,7 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
     }
 
     ac_debug_printf("test_comps: wait until all messages are received\n");
-    for (ac_u32 i = 0; !error && (i < comp_count); i++) {
+    for (ac_u32 i = 0; i < comp_count; i++) {
       c = &comps[i];
       AcReceptor_wait(c->done);
       ac_debug_printf("test_comps: %s error=%d\n", c->comp.name, c->error);
@@ -101,7 +102,7 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
     }
 
     ac_debug_printf("test_comps: remove comps\n");
-    for (ac_u32 i = 0; !error && (i < comp_count); i++) {
+    for (ac_u32 i = 0; i < comp_count; i++) {
       c = &comps[i];
       ac_debug_printf("test_comps: remove %s ci=%p\n", c->comp.name, c->ci);
       AcReceptor_ret(c->done);
