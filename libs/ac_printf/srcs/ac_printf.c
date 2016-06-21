@@ -319,7 +319,19 @@ static void formatter(ac_writer* writer, char const* format, ac_va_list args) {
                     ac_bool processed_format_ch = AC_FALSE;
                     for (ac_uint i = 0; i < ac_printf_ts_max; i++) {
                         if (ac_printf_ts[i].ch == next_ch) {
-                            ac_printf_ts[i].format_proc(writer, next_ch, args);
+                            // Copy the args and pass the copy to format_proc
+                            ac_va_list args_copy;
+                            ac_va_copy(args_copy, args);
+
+                            // Invoke format_proc
+                            ac_u32 consumed = ac_printf_ts[i].format_proc(
+                                writer, next_ch, args_copy);
+
+                            // Consume the args
+                            while (consumed-- != 0) {
+                              ac_va_arg(args, ac_uint);
+                            }
+
                             processed_format_ch = AC_TRUE;
                             break;
                         }

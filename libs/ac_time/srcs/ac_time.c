@@ -176,12 +176,13 @@ ac_uint AcTime_ticks_to_duration_str(ac_u64 ticks, ac_bool leading_0, ac_uint pr
 /**
  * Add 't' as a ac_printf format character for time.
  */
-static void ac_printf_time_format_proc(ac_writer* writer, ac_u8 ch, ac_va_list args) {
+static ac_u32 ac_printf_time_format_proc(ac_writer* writer, ac_u8 ch, ac_va_list args) {
   ac_u8 buff[64];
 
   AcTime_ticks_to_duration_str(ac_va_arg(args, ac_u64), writer->leading_0,
         writer->precision, buff, AC_ARRAY_COUNT(buff));
   ac_printf_write_str(writer, (char*)buff);
+  return sizeof(ac_u64) / sizeof(ac_uint);
 }
 
 static ac_bool early_init = AC_FALSE;

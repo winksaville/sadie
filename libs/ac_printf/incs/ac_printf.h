@@ -62,8 +62,32 @@ typedef struct _ac_writer {
 
 /**
  * A procedure invoked when a format ch is processed
+ *
+ * Below is an example which assumes writes a signed
+ * value in decimal that is a ac_u64. It returns
+ * sizeof(ac_u64) / sizeof(ac_uint) if it had consumed
+ * a ac_u64 and an ac_u32 than the value returned
+ * should be (sizeof(ac_u64) + sizeof(ac_uint)) / sizeof(ac_uint).
+ *
+ * Of course this assumes sizeof(ac_uint) is the size of an ac_u32
+ * on the stack!  if maybe necessary to use conditional compiliation to
+ * get this correct, so BE CAREFUL.
+ *
+ * <code>
+ *   static ac_u32 printf_ff_format_proc(ac_writer* writer, ac_u8 ch, ac_va_list args) {
+ *     ac_u64 value = ac_va_arg(args, ac_u64);
+ *     ac_printf_write_sval(writer, value, sizeof(ac_u64), 10);
+ *     return sizeof(ac_u64) / sizeof(ac_uint);
+ *   }
+ * </code>
+ *
+ * @params writer to use for writing
+ * @params ch is the format character invoking this call
+ * @params args is a ac_va_list of arguments
+ *
+ * @return number of ac_uint args consumed during the invocation.
  */
-typedef void (*ac_printf_format_proc)(ac_writer* writer, ac_u8 ch, ac_va_list args);
+typedef ac_u32 (*ac_printf_format_proc)(ac_writer* writer, ac_u8 ch, ac_va_list args);
 
 /**
  *  Write a character

@@ -21,5 +21,6 @@
 #define ac_va_start(list, last_param) __builtin_va_start(list, last_param)
 #define ac_va_end(list) __builtin_va_end(list)
 #define ac_va_arg(list, type) __builtin_va_arg(list, type)
+#define ac_va_copy(list_dst, list_src) __builtin_va_copy(list_dst, list_src)
 
 #endif

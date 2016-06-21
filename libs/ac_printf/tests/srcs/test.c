@@ -98,12 +98,12 @@ static inline ac_bool test_printing_result(
     const char* function, const char* file, const int lineNumber) {
   ac_bool failure = AC_FALSE;
   if (pBuffer->idx != ac_strlen(expected)) {
-    ac_printf("buff:%s != expected:%s idx=%d\n",
+    ac_printf("buff:'%s' != expected:'%s' idx=%d\n",
         pBuffer->buff, expected, pBuffer->idx);
     failure |= test_failure(pBuffer->idx == ac_strlen(expected),
         "", function, file, lineNumber);
   } else if (ac_strncmp(expected, pBuffer->buff, pBuffer->idx) != 0) {
-    ac_printf("buff:%s != expected:%s idx=%d\n",
+    ac_printf("buff:'%s' != expected:'%s' idx=%d\n",
         pBuffer->buff, expected, pBuffer->idx);
     failure |= test_failure(ac_strncmp(expected, pBuffer->buff,
           pBuffer->idx) == 0, "", function, file, lineNumber);
@@ -144,9 +144,12 @@ static inline ac_bool test_printing_result(
 })
 
 
-static void printf_ff_format_proc(ac_writer* writer, ac_u8 ch, ac_va_list args) {
+static ac_u32 printf_ff_format_proc(ac_writer* writer, ac_u8 ch, ac_va_list args) {
   ac_printf_write_sval(writer, ac_va_arg(args, ac_u64), sizeof(ac_u64), 10);
-  ac_debug_printf("printf_ff_format_proc ch=%c count=%d\n", ch, writer->count);
+  ac_u32 consumed = sizeof(ac_u64) / sizeof(ac_uint);
+  ac_debug_printf("printf_ff_format_proc ch=%c count=%d consumed=%d\n",
+      ch, writer->count, consumed);
+  return consumed;
 }
 
 int main(void) {
