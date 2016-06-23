@@ -64,6 +64,8 @@
 -I
 /home/wink/prgs/sadie/libs/ac_bits/incs
 -I
+/home/wink/prgs/sadie/libs/ac_buff/incs
+-I
 /home/wink/prgs/sadie/libs/ac_check_sum/incs
 -I
 /home/wink/prgs/sadie/libs/ac_comp_mgr/incs
@@ -75,6 +77,8 @@
 /home/wink/prgs/sadie/libs/ac_memcpy/incs
 -I
 /home/wink/prgs/sadie/libs/ac_memset/incs
+-I
+/home/wink/prgs/sadie/libs/ac_mpsc_fifo/incs
 -I
 /home/wink/prgs/sadie/libs/ac_mpscfifo/incs
 -I
