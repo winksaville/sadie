@@ -29,7 +29,7 @@ int main(void) {
   AcBuff_print(AC_NULL, AC_NULL);
 
   ac_u32 count = 2;
-  ac_u32 buff_size = 16;
+  ac_u32 data_size = 16;
   ac_u32 user_size = 8;
 
   AcBuff* buffs;
@@ -37,44 +37,44 @@ int main(void) {
   error |= AC_TEST(AcBuff_alloc(AC_NULL, 0, 8, 8, &buffs) == AC_STATUS_BAD_PARAM);
   error |= AC_TEST(buffs == AC_NULL);
 
-  /** test buff_size == 0 is an error */
+  /** test data_size == 0 is an error */
   error |= AC_TEST(AcBuff_alloc(AC_NULL, count, 0, user_size, &buffs) == AC_STATUS_BAD_PARAM);
   error |= AC_TEST(buffs == AC_NULL);
 
-  /** test buff_size < user_size is an error */
+  /** test data_size < user_size is an error */
   error |= AC_TEST(
       AcBuff_alloc(AC_NULL, count, user_size - 1, user_size, &buffs) == AC_STATUS_BAD_PARAM);
   error |= AC_TEST(buffs == AC_NULL);
 
   // Success full test
-  error |= AC_TEST(AcBuff_alloc(AC_NULL, count, buff_size, user_size, &buffs) == AC_STATUS_OK);
+  error |= AC_TEST(AcBuff_alloc(AC_NULL, count, data_size, user_size, &buffs) == AC_STATUS_OK);
   error |= AC_TEST(buffs != AC_NULL);
 
   // Initialize data area
   for (ac_u32 i = 0; i < count; i++) {
-    AcBuff* buff = AcBuff_get_nth(buffs, i, buff_size);
-    ac_memset(buff->data, 0xa5, buff->hdr.buff_size);
+    AcBuff* buff = AcBuff_get_nth(buffs, i, data_size);
+    ac_memset(buff->data, 0xa5, buff->hdr.data_size);
     ac_memset(buff->data, i, buff->hdr.user_size);
   }
 
   // Test hdr and data contains expected values
   for (ac_u32 i = 0; i < count; i++) {
-    AcBuff* buff = AcBuff_get_nth(buffs, i, buff_size);
+    AcBuff* buff = AcBuff_get_nth(buffs, i, data_size);
 
     ac_u8 str[32];
     ac_sprintf(str, sizeof(str), "buffs[%d]=", i);
-    AcBuff_print_count((char*)str, buff, buff->hdr.buff_size);
+    AcBuff_print_count((char*)str, buff, buff->hdr.data_size);
 
     error |= AC_TEST(buff->hdr.next == AC_NULL);
     error |= AC_TEST(buff->hdr.fifo == AC_NULL);
-    error |= AC_TEST(buff->hdr.buff_size == buff_size);
+    error |= AC_TEST(buff->hdr.data_size == data_size);
     error |= AC_TEST(buff->hdr.user_size == user_size);
 
     ac_u32 j;
     for (j = 0; j < buff->hdr.user_size; j++) {
       error |= AC_TEST(buff->data[j] == i);
     }
-    for (; j < buff->hdr.buff_size; j++) {
+    for (; j < buff->hdr.data_size; j++) {
       error |= AC_TEST(buff->data[j] == 0xa5);
     }
   }

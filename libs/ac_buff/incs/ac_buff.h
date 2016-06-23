@@ -22,13 +22,13 @@
 #include <ac_status.h>
 
 typedef struct AcMpscFifo AcMpscFifo;
-typedef struct AcBuffHdr AcBuffHdr;
+typedef struct AcBuff AcBuff;
 
 typedef struct __attribute__((packed)) AcBuffHdr {
-  AcBuffHdr *next;      // Next AcBuff
-  AcMpscFifo* fifo;     // Fifo this belongs to
-  ac_u32 buff_size;     // Size of the buffer
-  ac_u32 user_size;     // Size user requested
+  AcBuff* next;         // Next AcBuff
+  AcMpscFifo* fifo;     // Fifo this AcBuff is allocated from
+  ac_u32 data_size;     // Size of the data array following this header
+  ac_u32 user_size;     // Size of the user area in data array
 } AcBuffHdr;
 
 typedef struct __attribute__((packed)) AcBuff {
@@ -36,9 +36,9 @@ typedef struct __attribute__((packed)) AcBuff {
   ac_u8 data[];         // The buffers data
 } AcBuff;
 
-#define AcBuff_get_nth(array, index, buff_size) ({ \
+#define AcBuff_get_nth(array, index, data_size) ({ \
     AcBuff* nth = array; \
-    nth += (index  * (sizeof(AcBuff) + buff_size)); \
+    nth += (index  * (sizeof(AcBuff) + data_size)); \
 })
 
 /**
@@ -51,12 +51,12 @@ void AcBuff_free(AcBuff* buffs);
  *
  * @params fifo is the fifo this AcBuff belongs to
  * @params count is number of buffers to allocate, 0 set buffs to AC_NULL
- * @params buff_size is size of each buffer
+ * @params data_size is size of each buffer
  * @params user_size is size available to user
  *
  * @return 0 (AC_STATUS_OK) if successful and if count > 0 then buff != AC_NULL
  */
-AcStatus AcBuff_alloc(AcMpscFifo* fifo, ac_u32 count, ac_u32 buff_size, ac_u32 user_size,
+AcStatus AcBuff_alloc(AcMpscFifo* fifo, ac_u32 count, ac_u32 data_size, ac_u32 user_size,
     AcBuff** buffs);
 
 #endif
