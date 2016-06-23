@@ -61,12 +61,12 @@ int main(void) {
   for (ac_u32 i = 0; i < count; i++) {
     AcBuff* buff = AcBuff_get_nth(buffs, i, data_size);
 
-    ac_u8 str[32];
-    ac_sprintf(str, sizeof(str), "buffs[%d]=", i);
-    AcBuff_print_count((char*)str, buff, buff->hdr.data_size);
+    char str[32];
+    ac_sprintf((ac_u8*)str, sizeof(str), "buffs[%d]=", i);
+    AcBuff_print_count(str, buff, buff->hdr.data_size);
 
     error |= AC_TEST(buff->hdr.next == AC_NULL);
-    error |= AC_TEST(buff->hdr.fifo == AC_NULL);
+    error |= AC_TEST(buff->hdr.pool_fifo == AC_NULL);
     error |= AC_TEST(buff->hdr.data_size == data_size);
     error |= AC_TEST(buff->hdr.user_size == user_size);
 

@@ -28,7 +28,7 @@ pkgg.generate(
 firstSrcFiles = []
 
 # Initialize some globals
-compilerArgs = ['-std=c11', '-O2', '-g']
+compilerArgs = ['-std=c11', '-O2', '-g', '-Wall']
 linkArgs = []
 linkDeps = []
 runtimeSrcs = []
@@ -76,6 +76,7 @@ subdir('libs/ac_bits/tests')
 subdir('libs/ac_buff/tests')
 subdir('libs/ac_comp_mgr/tests')
 subdir('libs/ac_check_sum/tests')
+subdir('libs/ac_mpsc_fifo/tests')
 subdir('libs/ac_mpscfifo/tests')
 subdir('libs/ac_msg_pool/tests')
 subdir('libs/ac_printf/tests')

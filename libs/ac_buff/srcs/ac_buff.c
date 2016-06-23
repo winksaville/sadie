@@ -33,6 +33,22 @@ void AcBuff_free(AcBuff* buffs) {
 }
 
 /**
+ * Return a buff to its pool
+ *
+ * @params buff is an AcBuff
+ */
+void AcBuff_ret(AcBuff* buff) {
+  ac_printf("AcBuff_ret: buff=%p pool_fifo=%p\n", buff, buff->hdr.pool_fifo);
+  if (buff != AC_NULL) {
+    if (buff->hdr.pool_fifo != AC_NULL) {
+      AcMpscFifo_add_ac_buff(buff->hdr.pool_fifo, buff);
+    } else {
+      AcBuff_free(buff);
+    }
+  }
+}
+
+/**
  * Allocate one for more AcBuff contigiously
  *
  * @params fifo is the fifo this AcBuff belongs to
@@ -42,8 +58,8 @@ void AcBuff_free(AcBuff* buffs) {
  *
  * @return 0 (AC_STATUS_OK) if successful and if count > 0 then buff != AC_NULL
  */
-AcStatus AcBuff_alloc(AcMpscFifo* fifo, ac_u32 count, ac_u32 data_size, ac_u32 user_size,
-    AcBuff** buffs) {
+AcStatus AcBuff_alloc(AcMpscFifo* fifo, ac_u32 count,
+    ac_u32 data_size, ac_u32 user_size, AcBuff** buffs) {
   AcStatus status;
   AcBuff* buff_array = AC_NULL;
 
@@ -59,7 +75,7 @@ AcStatus AcBuff_alloc(AcMpscFifo* fifo, ac_u32 count, ac_u32 data_size, ac_u32 u
   for (ac_u32 i = 0; i < count; i++) {
     AcBuff* buff = AcBuff_get_nth(buff_array, i, data_size);
     buff->hdr.next = AC_NULL;
-    buff->hdr.fifo = fifo;
+    buff->hdr.pool_fifo = fifo;
     buff->hdr.data_size = data_size;
     buff->hdr.user_size = user_size;
   }

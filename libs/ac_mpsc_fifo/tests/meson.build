@@ -18,8 +18,8 @@ if Platform == 'VersatilePB'
   linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
-  # Create test-ac_mpscfifo executable
-  test_ac_mpscfifo = executable( 'test_ac_mpscfifo', srcFiles,
+  # Create test-ac_mpsc_fifo executable
+  test_ac_mpsc_fifo = executable( 'test_ac_mpsc_fifo', srcFiles,
     include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
@@ -28,16 +28,16 @@ if Platform == 'VersatilePB'
   )
 
   # Create test.bin suitable for executing with qemu
-  test_ac_mpscfifo_bin = custom_target( 'test_ac_mpscfifo_bin',
-    output : ['test_ac_mpscfifo.bin'],
+  test_ac_mpsc_fifo_bin = custom_target( 'test_ac_mpsc_fifo_bin',
+    output : ['test_ac_mpsc_fifo.bin'],
     command : ['arm-eabi-objcopy', '-O', 'binary',
-      '@0@/test_ac_mpscfifo'.format(meson.current_build_dir()),
-      '@0@/test_ac_mpscfifo.bin'.format(meson.current_build_dir())],
-    depends : [test_ac_mpscfifo])
+      '@0@/test_ac_mpsc_fifo'.format(meson.current_build_dir()),
+      '@0@/test_ac_mpsc_fifo.bin'.format(meson.current_build_dir())],
+    depends : [test_ac_mpsc_fifo])
 
-  run_target('run-test-ac_mpscfifo',
+  run_target('run-test-ac_mpsc_fifo',
      '@0@/tools/qemu-system-arm.runner.sh'.format(meson.source_root()),
-     'versatilepb', test_ac_mpscfifo_bin)
+     'versatilepb', test_ac_mpsc_fifo_bin)
 endif
 
 
@@ -45,13 +45,13 @@ if Platform == 'Posix'
   srcFiles = firstSrcFiles + ['srcs/test.c']
 
   # Create testit executable
-  test_ac_mpscfifo = executable( 'test_ac_mpscfifo', srcFiles,
+  test_ac_mpsc_fifo = executable( 'test_ac_mpsc_fifo', srcFiles,
     include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     dependencies : [libruntime_dep],
   )
 
-  run_target('run-test-ac_mpscfifo', test_ac_mpscfifo)
+  run_target('run-test-ac_mpsc_fifo', test_ac_mpsc_fifo)
 endif
 
 if Platform == 'pc_x86_32'
@@ -60,8 +60,8 @@ if Platform == 'pc_x86_32'
   linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
-  # Create test_ac_mpscfifo executable
-  test_ac_mpscfifo = executable( 'test_ac_mpscfifo', srcFiles,
+  # Create test_ac_mpsc_fifo executable
+  test_ac_mpsc_fifo = executable( 'test_ac_mpsc_fifo', srcFiles,
     include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
@@ -69,8 +69,8 @@ if Platform == 'pc_x86_32'
     dependencies : [libruntime_dep],
   )
 
-  run_target('run-test-ac_mpscfifo', '@0@/tools/qemu-system-i386.runner.sh'.format(meson.source_root()),
-             test_ac_mpscfifo)
+  run_target('run-test-ac_mpsc_fifo', '@0@/tools/qemu-system-i386.runner.sh'.format(meson.source_root()),
+             test_ac_mpsc_fifo)
 endif
 
 
@@ -80,8 +80,8 @@ if Platform == 'pc_x86_64'
   linkArgs += ['-Wl,-n,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
-  # Create test_ac_mpscfifo executable
-  test_ac_mpscfifo = executable( 'test_ac_mpscfifo', srcFiles,
+  # Create test_ac_mpsc_fifo executable
+  test_ac_mpsc_fifo = executable( 'test_ac_mpsc_fifo', srcFiles,
     include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
@@ -90,17 +90,17 @@ if Platform == 'pc_x86_64'
   )
 
   grub_cfg = '@0@/grub.cfg'.format(meson.current_source_dir())
-  test_ac_mpscfifo_exe = '@0@/test_ac_mpscfifo'.format(meson.current_build_dir())
+  test_ac_mpsc_fifo_exe = '@0@/test_ac_mpsc_fifo'.format(meson.current_build_dir())
 
-  # Create test_ac_mpscfifo.bin suitable for executing with qemu or on hardware
-  test_ac_mpscfifo_bin = custom_target( 'test_ac_mpscfifo.img',
+  # Create test_ac_mpsc_fifo.bin suitable for executing with qemu or on hardware
+  test_ac_mpsc_fifo_bin = custom_target( 'test_ac_mpsc_fifo.img',
     input : grub_cfg,
-    output : 'test_ac_mpscfifo.img',
+    output : 'test_ac_mpsc_fifo.img',
     command : ['@0@/tools/grub-mkrescue.runner.sh'.format(meson.source_root()),
-      test_ac_mpscfifo_exe, grub_cfg, '@OUTPUT@'],
-    depends : [test_ac_mpscfifo])
+      test_ac_mpsc_fifo_exe, grub_cfg, '@OUTPUT@'],
+    depends : [test_ac_mpsc_fifo])
 
-  run_target('run-test-ac_mpscfifo', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              test_ac_mpscfifo_bin, '-enable-kvm', '-cpu', 'host,+tsc-deadline')
+  run_target('run-test-ac_mpsc_fifo', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
+              test_ac_mpsc_fifo_bin, '-enable-kvm', '-cpu', 'host,+tsc-deadline')
 endif
 

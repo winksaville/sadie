@@ -20,53 +20,44 @@
 
 #define NDEBUG
 
+#include <ac_mpsc_fifo.h>
+#include <ac_mpsc_fifo_dbg.h>
+
+#include <ac_buff.h>
+#include <ac_buff_dbg.h>
 #include <ac_printf.h>
 
-#include "ac_mpscfifo_dbg.h"
-
 /**
- * @see ac_mpscfifo_dbg.h
+ * @see AcMpscFifo_dbg.h
  */
-void ac_msg_print(const char* leader, AcMsg* pmsg) {
-  if (leader != AC_NULL) {
-    ac_printf(leader);
-  }
-  if (pmsg != AC_NULL) {
-    ac_printf("pmsg=%p pnext=%p pool=%p arg1=0x%lx arg2=0x%lx\n",
-        (void *)pmsg, (void *)(pmsg->pnext), pmsg->pool, pmsg->arg1, pmsg->arg2);
-  } else {
-    ac_printf("pmsg == AC_NULL\n");
-  }
-}
-
-/**
- * @see ac_mpscfifo_dbg.h
- */
-void ac_mpscfifo_print(ac_mpscfifo* pq) {
-  if (pq != AC_NULL) {
+void AcMpscFifo_print(const char* leader, AcMpscFifo* fifo) {
+  if (fifo != AC_NULL) {
 #ifndef NDEBUG
-    ac_msg_print("pq->phead: ", pq->phead);
-    ac_msg_print("pq->ptail: ", AC_NULL, pq->ptail);
+    AcBuff_print("fifo->head: ", fifo->head);
+    AcBuff_print("fifo->tail: ", AC_NULL, fifo->tail);
 #endif
-    AcMsg* ptail = pq->ptail->pnext;
-    if (ptail == AC_NULL) {
-      ac_msg_print("empty h/t: ", pq->phead);
-    } else if (ptail == pq->phead) {
-      ac_msg_print("one h/t:   ", pq->phead);
+    if (leader != AC_NULL) {
+      ac_printf(leader);
+    }
+    AcBuff* tail = fifo->tail->hdr.next;
+    if (tail == AC_NULL) {
+      AcBuff_print("empty h/t: ", fifo->head);
+    } else if (tail == fifo->head) {
+      AcBuff_print("one h/t:   ", fifo->head);
     } else {
       ac_bool first_time = AC_TRUE;
-      while (ptail != AC_NULL) {
+      while (tail != AC_NULL) {
         if (first_time) {
           first_time = AC_FALSE;
-          ac_printf("n ptail:   ");
+          ac_printf("n tail:   ");
         } else {
-          ac_printf("           ");
+          ac_printf("          ");
         }
-        ac_msg_print(AC_NULL, ptail);
-        ptail = ptail->pnext;
+        AcBuff_print(AC_NULL, tail);
+        tail = tail->hdr.next;
       }
     }
   } else {
-    ac_printf("pq == AC_NULL");
+    ac_printf("fifo == AC_NULL");
   }
 }

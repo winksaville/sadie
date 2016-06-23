@@ -18,15 +18,21 @@
 #define SADIE_LIBS_AC_BUFF_INCS_AC_BUFF_H
 
 #include <ac_buff.h>
+
 #include <ac_inttypes.h>
+//#include <ac_mpsc_fifo.h>
 #include <ac_status.h>
 
-typedef struct AcMpscFifo AcMpscFifo;
+#include <ac_printf.h>
+
 typedef struct AcBuff AcBuff;
+
+typedef struct AcMpscFifo AcMpscFifo;
+extern void AcMpscFifo_add_ac_buff(AcMpscFifo* fifo, AcBuff* buff);
 
 typedef struct __attribute__((packed)) AcBuffHdr {
   AcBuff* next;         // Next AcBuff
-  AcMpscFifo* fifo;     // Fifo this AcBuff is allocated from
+  AcMpscFifo* pool_fifo;// Poll fifo this AcBuff is allocated from
   ac_u32 data_size;     // Size of the data array following this header
   ac_u32 user_size;     // Size of the user area in data array
 } AcBuffHdr;
@@ -36,10 +42,26 @@ typedef struct __attribute__((packed)) AcBuff {
   ac_u8 data[];         // The buffers data
 } AcBuff;
 
-#define AcBuff_get_nth(array, index, data_size) ({ \
-    AcBuff* nth = array; \
-    nth += (index  * (sizeof(AcBuff) + data_size)); \
-})
+/**
+ * Return the nth AcBuff in the array
+ *
+ * @params array is the pointer to the first element
+ * @params index is the index into the array
+ * @params data_size is the size of the AcBuff.data
+ *
+ * @returns pointer to the element
+ */
+static inline AcBuff* AcBuff_get_nth(AcBuff* array, ac_u32 index, ac_u32 data_size) { 
+    ac_u8* addr = ((ac_u8*)array) + (index  * (sizeof(AcBuff) + data_size));
+    return (AcBuff*)addr;
+}
+
+/**
+ * Return a buff to its pool
+ *
+ * @params buff is an AcBuff
+ */
+void AcBuff_ret(AcBuff* buff);
 
 /**
  * Free prviously allocated AcBuff's

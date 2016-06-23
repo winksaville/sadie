@@ -122,7 +122,7 @@
 #include <ac_memcpy.h>
 #include <ac_msg_pool.h>
 
-AcMpscFifo* stubs = AC_NULL;
+#include <ac_printf.h>
 
 /**
  * @see ac_mpsc_fifo.h
@@ -139,9 +139,10 @@ void AcMpscFifo_add_ac_buff(AcMpscFifo* fifo, AcBuff* buff) {
     // points at the new buff. Serializes with other producers
     // calling this routine.
     AcBuff *prev_head = __atomic_exchange_n(&fifo->head, buff, __ATOMIC_ACQ_REL);
+    ac_printf("AcMpscFifo_add_ac_buff: prev_head=%p\n", prev_head);
 
     // Assert buff is compatible
-    ac_assert(prev_head->hdr.buff_size == buff->hdr.buff_size);
+    ac_assert(prev_head->hdr.data_size == buff->hdr.data_size);
 
     // Step 3) Store buff into the next of the previous head
     // which actually adds the new buff to the fifo. Serialize
@@ -187,7 +188,9 @@ AcBuff* AcMpscFifo_rmv_ac_buff(AcMpscFifo* fifo) {
  * @see ac_mpsc_fifo.h
  */
 AcBuff* AcMpscFifo_rmv_ac_buff_raw(AcMpscFifo* fifo) {
-  ac_assert(fifo != AC_NULL);
+  if (fifo == AC_NULL) {
+    return AC_NULL;
+  }
 
   // Step 1) Use the current stub value to return the result
   AcBuff *result = fifo->tail;
@@ -214,24 +217,26 @@ AcBuff* AcMpscFifo_rmv_ac_buff_raw(AcMpscFifo* fifo) {
  */
 void AcMpscFifo_deinit(AcMpscFifo* fifo) {
   // Assert that the fifo is empty
-  ac_assert(fifo->tail->hdr.next == AC_NULL);
+  ac_assert(fifo != AC_NULL);
   ac_assert(fifo->head != AC_NULL);
   ac_assert(fifo->tail != AC_NULL);
+  ac_assert(fifo->tail->hdr.next == AC_NULL);
   ac_assert(fifo->tail == fifo->head);
 
-  // Return the stub and null head and tail
-  AcMpscFifo* head_fifo;
-  AcBuff* head = fifo->head;
+  // Return the stub to its fifo and null head and tail
+  AcBuff* stub = fifo->head;
   fifo->head = AC_NULL;
   fifo->tail = AC_NULL;
-  AcMpscFifo_add_ac_buff(head_fifo, head);
+  ac_printf("a\n");
+  AcBuff_ret(stub);
+  ac_printf("b\n");
 }
 
 /**
  * @see ac_mpsc_fifo.h
  */
 AcStatus AcMpscFifo_init_with_stub(AcMpscFifo* fifo, AcBuff* stub) {
-  AcStatus status;
+  int status;
 
   if ((fifo == AC_NULL) || (stub == AC_NULL)) {
     status = AC_STATUS_BAD_PARAM;
@@ -242,26 +247,26 @@ AcStatus AcMpscFifo_init_with_stub(AcMpscFifo* fifo, AcBuff* stub) {
   fifo->head = stub;
   fifo->tail = stub;
 
+  status = AC_STATUS_OK;
+
 done:
-  return status;
+  return (AcStatus)status;
 }
 
 /**
  * @see ac_mpsc_fifo.h
  */
-AcStatus AcMpscFifo_init(AcMpscFifo* fifo, ac_u32 buff_size) {
+AcStatus AcMpscFifo_init(AcMpscFifo* fifo, ac_u32 data_size) {
   AcStatus status;
 
-  AcBuff* stub = AcMpscFifo_rmv_ac_buff_raw(stubs);
-  if (stub == AC_NULL) {
-    if (AcBuff_alloc(fifo, 1, buff_size, 0, &stub) != AC_STATUS_OK) {
-      status = AC_STATUS_OUT_OF_MEMORY;
-      goto done;
-    }
-
-    stub->hdr.fifo = fifo;
+  AcBuff* stub;
+  if (AcBuff_alloc(AC_NULL, 1, data_size, 0, &stub) != AC_STATUS_OK) {
+    status = AC_STATUS_OUT_OF_MEMORY;
+    goto done;
   }
+
   AcMpscFifo_init_with_stub(fifo, stub);
+  //status = AcMpscFifo_init_with_stub(fifo, stub);
 
 done:
   return status;
@@ -272,5 +277,4 @@ done:
  */
 __attribute__((constructor))
 void AcMpscFifo_early_init(void) {
-  stubs = AC_NULL;
 }

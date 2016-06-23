@@ -14,24 +14,12 @@
  * limitations under the License.
  */
 
-/**
- * Debug code for mpscfifo
- */
+#ifndef LIBS_AC_MSG_POOL_TESTS_INCS_TEST_H
+#define LIBS_AC_MSG_POOL_TESTS_INCS_TEST_H
 
-#ifndef SADIE_LIBS_AC_MPSC_FIFO_AC_MPSC_FIFO_DBG_H
-#define SADIE_LIBS_AC_MPSC_FIFO_AC_MPSC_FIFO_DBG_H
+#include <ac_inttypes.h>
 
-#include <ac_mpsc_fifo.h>
-
-/**
- * Print a AcMpscFifo
- */
-void AcMpscFifo_print(const char* leader, AcMpscFifo* fifo);
-
-#ifdef NDEBUG
-  #define AcMpscFifo_debug_print(leader, fifo) ((void)(0))
-#else
-  #define AcMpscFifo_debug_print(leader, fifo) AcBuff_print(leader, fifo)
-#endif
+ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count, ac_u32 comps_per_thread,
+    ac_u32 extra_size);
 
 #endif

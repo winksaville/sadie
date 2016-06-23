@@ -31,8 +31,8 @@ void AcBuff_print_count(const char* leader, AcBuff* buff, ac_u32 data_count_to_p
     ac_printf(leader);
   }
   if (buff != AC_NULL) {
-    ac_printf("%p next=%p pool=%p data_size=%d user_size=%d data=",
-        (void *)buff, (void *)(buff->hdr.next), buff->hdr.fifo,
+    ac_printf("%p next=%p pool_fifo=%p data_size=%d user_size=%d data=",
+        (void *)buff, (void *)(buff->hdr.next), buff->hdr.pool_fifo,
         buff->hdr.data_size, buff->hdr.user_size);
     for (ac_u32 i = 0; i < data_count_to_print; i++) {
       if (i == 0) {
