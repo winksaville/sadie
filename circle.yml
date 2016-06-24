@@ -26,6 +26,7 @@ dependencies:
 
     # Install latest compilers
     - GCC_VERSION=6 vendor-install-tools/ubuntu_gcc_g++_install.sh
+    - CLANG_VERSION="3.8" vendor-install-tools/ubuntu_clang_clang++_install.sh
 
     # Test python is installed correctly
     - v=$(python --version 2>& 1); if [ "$v" == "Python 2.7.11" ]; then echo "$v OK"; else ! echo "$v ERR"; fi
