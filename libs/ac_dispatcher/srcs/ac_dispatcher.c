@@ -43,7 +43,7 @@ typedef struct AcDispatcher {
 #define DC_EMPTY       ((AcDispatchableComp*)(0))
 
 /** d->AcDispatchableComp[i] messages are being processed by AcDispatcher */
-#define DC_PROCESSING  ((AcDispatchableComp*)(!DC_EMPTY))
+#define DC_PROCESSING  ((AcDispatchableComp*)(1))
 
 /**
  * Get a AcDispatchableComp aka dc
@@ -192,7 +192,7 @@ ac_bool AcDispatcher_dispatch(AcDispatcher* d) {
       ac_debug_printf("ac_dispatch: process msgs d=%p i=%d\n",
           d, i);
       processed_msgs = process_msgs(q);
-      const AcDispatchableComp* dc_processing = DC_PROCESSING;
+      /*const*/ AcDispatchableComp* dc_processing = DC_PROCESSING;
 
       // Now restore the previous q if it is still DC_PROCESSING.
       ac_bool restored = __atomic_compare_exchange_n(

@@ -16,6 +16,7 @@
 
 #include <ac_stop.h>
 #include <ac_printf.h>
+#include <ac_thread.h>
 
 /**
  * Set memory to the given byte value
@@ -35,9 +36,11 @@ void* ac_memset(void *s, ac_u8 val, ac_uptr count) {
   return s;
 }
 
+#if AC_PLATFORM != Posix
 /**
  * Set memory, compiler needs this for initializing structs and such.
  */
-void* memset(void *s, int val, ac_size_t count) {
+void* memset(void *s, int val, unsigned long count) {
   return ac_memset(s, val, count);
 }
+#endif

@@ -46,8 +46,8 @@ typedef struct {
   ac_tcb tcbs[];
 } ac_threads;
 
-#define AC_THREAD_ID_EMPTY (ac_uptr)-1
-#define AC_THREAD_ID_NOT_EMPTY (ac_uptr)-2
+#define AC_THREAD_ID_EMPTY (pthread_t)-1
+#define AC_THREAD_ID_NOT_EMPTY (pthread_t)-2
 
 static ac_threads* pthreads;
 
@@ -181,7 +181,7 @@ ac_thread_rslt_t ac_thread_create(ac_size_t stack_size,
 
   // Find an empty slot
   for (ac_u32 i = 0; i < pthreads->max_count; i++) {
-    ac_uptr empty = AC_THREAD_ID_EMPTY;
+    pthread_t empty = AC_THREAD_ID_EMPTY;
 
     ac_tcb* pcur_tcb = &pthreads->tcbs[i];
     pthread_t* pthread_id = &pcur_tcb->thread_id;

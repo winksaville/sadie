@@ -63,13 +63,30 @@ struct ac_acpi_desc_hdr {
   ac_u32 oem_revision;
   ac_u8 creator_id[4];
   ac_u32 creator_revision;
-  ac_u8 table[];
 } __attribute__((__packed__));
 
 typedef struct ac_acpi_desc_hdr ac_acpi_desc_hdr;
 
 ac_static_assert(sizeof(ac_acpi_desc_hdr) == 36,
     L"ac_acpi_desc_hdr is not 36 bytes");
+
+/**
+ * System Description table
+ *
+ * See: [Advanced Configuration and Power Interface Specification v6.1]
+ * (https://goo.gl/G1ov65)
+ * section 5.2.7 "Root System Description Table" and
+ * section 5.2.8 "Extended System Description Table".
+ */
+struct ac_acpi_desc_table {
+  ac_acpi_desc_hdr hdr;
+  ac_u8 table[];
+} __attribute__((__packed__));
+
+typedef struct ac_acpi_desc_table ac_acpi_desc_table;
+
+ac_static_assert(sizeof(ac_acpi_desc_table) == 36,
+    L"ac_acpi_desc_table is not 36 bytes");
 
 /**
  * MADT type_len

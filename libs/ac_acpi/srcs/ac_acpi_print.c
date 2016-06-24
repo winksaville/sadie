@@ -156,13 +156,13 @@ void ac_acpi_rsdp_print(char* str, ac_acpi_rsdp* rsdp) {
   }
   ac_printf("\n");
 
-  ac_acpi_desc_hdr* sdt;
+  ac_acpi_desc_table* sdt;
   ac_uint sdt_entry_size;
   if (rsdp->revision == 0) {
-    sdt = (ac_acpi_desc_hdr*)(ac_uptr)rsdp->rsdt_address;
+    sdt = (ac_acpi_desc_table*)(ac_uptr)rsdp->rsdt_address;
     sdt_entry_size = sizeof(ac_u32);
   } else if (rsdp->revision == 2) {
-    sdt = (ac_acpi_desc_hdr*)(ac_uptr)rsdp->xsdt_address;
+    sdt = (ac_acpi_desc_table*)(ac_uptr)rsdp->xsdt_address;
     sdt_entry_size = sizeof(ac_u64);
   } else {
     ac_printf("ac_acpi_rsdp_get:-rdsp=%lx expected revision 0 or 2"
@@ -172,9 +172,9 @@ void ac_acpi_rsdp_print(char* str, ac_acpi_rsdp* rsdp) {
 
   if (sdt != AC_NULL) {
     ac_printf("sdt=%p ", sdt);
-    ac_acpi_desc_hdr_sig_len_print("", sdt);
+    ac_acpi_desc_hdr_sig_len_print("", &sdt->hdr);
     ac_printf("\n");
-    for (ac_uint i = 0; i < sdt->length - sizeof(ac_acpi_desc_hdr); i += sdt_entry_size) {
+    for (ac_uint i = 0; i < sdt->hdr.length - sizeof(ac_acpi_desc_hdr); i += sdt_entry_size) {
       ac_acpi_desc_hdr* pentry = AC_NULL;
       ac_memcpy(&pentry, &sdt->table[i], sdt_entry_size);
       ac_u8 check_sum = ac_check_sum_u8(pentry, pentry->length);

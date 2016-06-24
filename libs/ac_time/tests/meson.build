@@ -46,6 +46,7 @@ if Platform == 'Posix'
   # Create testit executable
   test_ac_time = executable( 'test_ac_time', srcFiles,
     include_directories : runtimeIncDirs,
+    link_args : linkArgs,
     c_args : compilerArgs,
     dependencies : [libruntime_dep],
   )

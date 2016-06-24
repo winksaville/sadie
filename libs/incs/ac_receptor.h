@@ -15,7 +15,7 @@
  */
 
 #ifndef SADIE_LIBS_INCS_AC_RECEPTOR_H
-#define SADIE_LIBS_INCS_AC_RECEPTOR_h
+#define SADIE_LIBS_INCS_AC_RECEPTOR_H
 
 #include <ac_inttypes.h>
 
