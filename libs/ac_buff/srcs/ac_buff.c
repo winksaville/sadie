@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-/**
- * Debug code for AcBuff
- */
+//#define NDEBUG
 
 #include <ac_buff.h>
 
 #include <ac_inttypes.h>
 #include <ac_memmgr.h>
 #include <ac_status.h>
-#include <ac_printf.h>
 
 /**
  * Free prviously allocated AcBuff's
@@ -38,7 +35,6 @@ void AcBuff_free(AcBuff* buffs) {
  * @params buff is an AcBuff
  */
 void AcBuff_ret(AcBuff* buff) {
-  ac_printf("AcBuff_ret: buff=%p pool_fifo=%p\n", buff, buff->hdr.pool_fifo);
   if (buff != AC_NULL) {
     if (buff->hdr.pool_fifo != AC_NULL) {
       AcMpscFifo_add_ac_buff(buff->hdr.pool_fifo, buff);
@@ -61,31 +57,39 @@ void AcBuff_ret(AcBuff* buff) {
 AcStatus AcBuff_alloc(AcMpscFifo* fifo, ac_u32 count,
     ac_u32 data_size, ac_u32 user_size, AcBuff** buffs) {
   AcStatus status;
-  AcBuff* buff_array = AC_NULL;
+  AcBuff* buff_array;
 
+  // Check params
   if ((count == 0) || (data_size == 0) || (data_size < user_size)) {
     status = AC_STATUS_BAD_PARAM;
-    *buffs = AC_NULL;
+    buff_array = AC_NULL;
     goto done;
   }
 
-  ac_u32 alloc_size = sizeof(AcBuff) + data_size;
-  ac_printf("alloc_size=%d\n", alloc_size);
-  buff_array = ac_calloc(count, alloc_size);
+  // Allocate the array and clear it
+  buff_array = ac_calloc(count, sizeof(AcBuff) + data_size);
+  if (buff_array == AC_NULL) {
+    status = AC_STATUS_OUT_OF_MEMORY;
+    goto done;
+  }
+
+  // Initialize headers
   for (ac_u32 i = 0; i < count; i++) {
-    AcBuff* buff = AcBuff_get_nth(buff_array, i, data_size);
+    AcBuff* buff = AcBuff_get_nth(buff_array, i);
     buff->hdr.next = AC_NULL;
     buff->hdr.pool_fifo = fifo;
     buff->hdr.data_size = data_size;
     buff->hdr.user_size = user_size;
   }
-  *buffs = buff_array;
 
   status = AC_STATUS_OK;
+
 done:
   if (status != AC_STATUS_OK) {
     ac_free(buff_array);
   }
+
+  *buffs = buff_array;
 
   return status;
 }

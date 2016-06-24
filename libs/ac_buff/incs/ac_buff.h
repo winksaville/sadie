@@ -23,8 +23,6 @@
 //#include <ac_mpsc_fifo.h>
 #include <ac_status.h>
 
-#include <ac_printf.h>
-
 typedef struct AcBuff AcBuff;
 
 typedef struct AcMpscFifo AcMpscFifo;
@@ -47,12 +45,12 @@ typedef struct __attribute__((packed)) AcBuff {
  *
  * @params array is the pointer to the first element
  * @params index is the index into the array
- * @params data_size is the size of the AcBuff.data
  *
  * @returns pointer to the element
  */
-static inline AcBuff* AcBuff_get_nth(AcBuff* array, ac_u32 index, ac_u32 data_size) { 
-    ac_u8* addr = ((ac_u8*)array) + (index  * (sizeof(AcBuff) + data_size));
+// TODO: Consider having AcBuff_alloc return an array of pointers.
+static inline AcBuff* AcBuff_get_nth(AcBuff* array, ac_u32 index) {
+    ac_u8* addr = ((ac_u8*)array) + (index  * (sizeof(AcBuff) + array->hdr.data_size));
     return (AcBuff*)addr;
 }
 
@@ -78,6 +76,7 @@ void AcBuff_free(AcBuff* buffs);
  *
  * @return 0 (AC_STATUS_OK) if successful and if count > 0 then buff != AC_NULL
  */
+// TODO: Consider having AcBuff_alloc return an array of pointers instead of the buffers
 AcStatus AcBuff_alloc(AcMpscFifo* fifo, ac_u32 count, ac_u32 data_size, ac_u32 user_size,
     AcBuff** buffs);
 

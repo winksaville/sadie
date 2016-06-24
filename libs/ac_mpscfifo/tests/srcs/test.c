@@ -143,6 +143,15 @@ static ac_bool test_add_rmv_msg_raw() {
   error |= AC_TEST(q.phead->pnext == AC_NULL);
   error |= AC_TEST(q.ptail->pnext == &msg1);
 
+  // Add msg3
+  AcMsg msg3 = { .arg1 = 3, .arg2 = 0x333 };
+  ac_mpscfifo_add_msg(&q, &msg3);
+  ac_printf("test_add_rmv_msg_raw: add msg3\n");
+  ac_mpscfifo_print(&q);
+  error |= AC_TEST(q.phead == &msg3);
+  error |= AC_TEST(q.phead->pnext == AC_NULL);
+  error |= AC_TEST(q.ptail->pnext == &msg1);
+
   // Remove stub
   presult = ac_mpscfifo_rmv_msg_raw(&q);
   ac_printf("test_add_rmv_msg_raw: stub\n");
@@ -160,6 +169,16 @@ static ac_bool test_add_rmv_msg_raw() {
   error |= AC_TEST(presult != AC_NULL);
   error |= AC_TEST(presult->arg1 == 1);
   error |= AC_TEST(presult->arg2 == 0x111);
+
+  // Remove msg2
+  presult = ac_mpscfifo_rmv_msg_raw(&q);
+  ac_printf("test_add_rmv_msg_raw: 2\n");
+  ac_msg_print("presult:   ", presult);
+  ac_mpscfifo_print(&q);
+
+  error |= AC_TEST(presult != AC_NULL);
+  error |= AC_TEST(presult->arg1 == 2);
+  error |= AC_TEST(presult->arg2 == 0x222);
 
   // Remove from empty
   presult = ac_mpscfifo_rmv_msg(&q);

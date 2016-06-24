@@ -31,7 +31,7 @@ void AcMpscFifo_print(const char* leader, AcMpscFifo* fifo);
 #ifdef NDEBUG
   #define AcMpscFifo_debug_print(leader, fifo) ((void)(0))
 #else
-  #define AcMpscFifo_debug_print(leader, fifo) AcBuff_print(leader, fifo)
+  #define AcMpscFifo_debug_print(leader, fifo) AcMpscFifo_print(leader, fifo)
 #endif
 
 #endif

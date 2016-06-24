@@ -32,13 +32,21 @@
  */
 void AcMpscFifo_print(const char* leader, AcMpscFifo* fifo) {
   if (fifo != AC_NULL) {
-#ifndef NDEBUG
-    AcBuff_print("fifo->head: ", fifo->head);
-    AcBuff_print("fifo->tail: ", AC_NULL, fifo->tail);
-#endif
-    if (leader != AC_NULL) {
-      ac_printf(leader);
+#ifdef NDEBUG
+    if (leader == AC_NULL) {
+      ac_printf("fifo=%p\n", fifo);
+    } else {
+      ac_printf("%s %p\n", leader, fifo);
     }
+#else
+    if (leader == AC_NULL) {
+      ac_printf("fifo=%p\n", fifo);
+    } else {
+      ac_printf("%s %p\n", leader, fifo);
+    }
+    AcBuff_print("fifo->head: ", fifo->head);
+    AcBuff_print("fifo->tail: ", fifo->tail);
+#endif
     AcBuff* tail = fifo->tail->hdr.next;
     if (tail == AC_NULL) {
       AcBuff_print("empty h/t: ", fifo->head);
@@ -49,9 +57,9 @@ void AcMpscFifo_print(const char* leader, AcMpscFifo* fifo) {
       while (tail != AC_NULL) {
         if (first_time) {
           first_time = AC_FALSE;
-          ac_printf("n tail:   ");
+          ac_printf("n tail:    ");
         } else {
-          ac_printf("          ");
+          ac_printf("           ");
         }
         AcBuff_print(AC_NULL, tail);
         tail = tail->hdr.next;

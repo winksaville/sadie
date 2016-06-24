@@ -52,14 +52,14 @@ int main(void) {
 
   // Initialize data area
   for (ac_u32 i = 0; i < count; i++) {
-    AcBuff* buff = AcBuff_get_nth(buffs, i, data_size);
+    AcBuff* buff = AcBuff_get_nth(buffs, i);
     ac_memset(buff->data, 0xa5, buff->hdr.data_size);
     ac_memset(buff->data, i, buff->hdr.user_size);
   }
 
   // Test hdr and data contains expected values
   for (ac_u32 i = 0; i < count; i++) {
-    AcBuff* buff = AcBuff_get_nth(buffs, i, data_size);
+    AcBuff* buff = AcBuff_get_nth(buffs, i);
 
     char str[32];
     ac_sprintf((ac_u8*)str, sizeof(str), "buffs[%d]=", i);
