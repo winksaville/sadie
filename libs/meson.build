@@ -20,7 +20,7 @@ runtimeIncDirs += [include_directories('incs')]
 subdir('ac_acpi')
 subdir('ac_assert')
 subdir('ac_bits')
-subdir('ac_buff')
+subdir('ac_mem')
 subdir('ac_check_sum')
 subdir('ac_comp_mgr')
 subdir('ac_dispatcher')

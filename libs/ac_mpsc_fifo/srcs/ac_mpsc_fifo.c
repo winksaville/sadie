@@ -26,81 +26,81 @@
  * so that a single atomic instruction can be used to add and
  * remove an element.
  *
- * The FIFO is composed of a singularly linked list of AcBuff's
+ * The FIFO is composed of a singularly linked list of AcMem's
  * with a next pointer stored in each element. The list oldest
  * element, which is removed first as this is a FIFO, starts
  * at the fifo->tail->hdr.next and ends with a fifo->head->hdr.next
  * being AC_NULL.
  *
- * A consequence of the algorithm is that when an AcBuff is
- * added to the FIFO a different AcBuff is returned but the
- * contents of AcBuff.data and its size are copied to this
- * new buffer. THEREFORE in general AcBuff's should be small
- * UNLESS AcMpscFifo_rmv_ac_buff_raw is used.
+ * A consequence of the algorithm is that when an AcMem is
+ * added to the FIFO a different AcMem is returned but the
+ * contents of AcMem.data and its size are copied to this
+ * new memer. THEREFORE in general AcMem's should be small
+ * UNLESS AcMpscFifo_rmv_ac_mem_raw is used.
  *
- * If AcMpscFifo_rmv_ac_buff_arw is called no data is copied
+ * If AcMpscFifo_rmv_ac_mem_arw is called no data is copied
  *
  *
  * Some details:
  *
  * A AcMpscFifo has two fields phead and ptail:
  *   typedef struct AcMpscFifo {
- *     AcBuff *head;
- *     AcBuff *tail;
+ *     AcMem *head;
+ *     AcMem *tail;
  *   } AcMpscFifo;
  *
- * A AcBuff is declared as:
- *   typedef struct __attribute__((packed)) AcBuffHdr {
- *     AcBuff* next;         // Next AcBuff
- *     AcMpscFifo* pool_fifo;// Poll fifo this AcBuff is allocated from
+ * A AcMem is declared as:
+ *   typedef struct __attribute__((packed)) AcMemHdr {
+ *     AcMem* next;         // Next AcMem
+ *     AcMpscFifo* pool_fifo;// Poll fifo this AcMem is allocated from
  *     ac_u32 data_size;     // Size of the data array following this header
  *     ac_u32 user_size;     // Size of the user area in data array
- *   } AcBuffHdr;
+ *   } AcMemHdr;
  *
- *   typedef struct __attribute__((packed)) AcBuff {
- *     AcBuffHdr hdr;        // The header
- *     ac_u8 data[];         // The buffers data
- *   } AcBuff;
+ *   typedef struct __attribute__((packed)) AcMem {
+ *     AcMemHdr hdr;        // The header
+ *     ac_u8 data[];         // The memers data
+ *   } AcMem;
  *
  *
  * When AcMpscFifo_init is called an empty fifo is created
- * with one stub AcBuff whose hdr.next field is AC_NULL and
+ * with one stub AcMem whose hdr.next field is AC_NULL and
  * AcMpscFifo.head and .tail both point at this stub.
  *
- * The fifo->head is where AcBuff's are added to the queue and
+ * The fifo->head is where AcMem's are added to the queue and
  * points to the most recent element and is at the end of
  * the list thus this element always has its next == AC_NULL.
  *
- * fifo->tail->hdr.next is the oldest AcBuff and is the next
+ * fifo->tail->hdr.next is the oldest AcMem and is the next
  * element that will be removed and is only AC_NULL when the
  * FIFO is empty.
  *
  *
- * Add an AcBuff to the FIFO, invoked by multiple threads
+ * Add an AcMem to the FIFO, invoked by multiple threads
  * (Multiple Producers):
  *
- *    // Step 1) Set buff->next to AC_NULL as this is the end
+ *    // Step 1) Set mem->next to AC_NULL as this is the end
  *    // of the list.
- *    buff->hdr.next = AC_NULL;
+ *    mem->hdr.next = AC_NULL;
  *
- *    // Step 2) Exchange fifo->head and buff so fifo->head now
- *    // points at the new buff. Serializes with other producers
+ *    // Step 2) Exchange fifo->head and mem so fifo->head now
+ *    // points at the new mem. Serializes with other producers
  *    // calling this routine.
- *    AcBuff *prev_head = __atomic_exchange_n(&fifo->head, buff, __ATOMIC_ACQ_REL);
+ *    AcMem *prev_head = __atomic_exchange_n(&fifo->head, mem, __ATOMIC_ACQ_REL);
  *
- *    // Step 3) Store buff into the next of the previous head
- *    // which actually adds the new buff to the fifo. Serialize
- *    // with rmv_ac_buff Step 4 if the list is empty.
- *    __atomic_store_n(&prev_head->hdr.next, buff, __ATOMIC_RELEASE);
+ *    // Step 3) Store mem into the next of the previous head
+ *    // which actually adds the new mem to the fifo. Serialize
+ *    // with rmv_ac_mem Step 4 if the list is empty.
+ *    __atomic_store_n(&prev_head->hdr.next, mem, __ATOMIC_RELEASE);
  *
- * Remove an AcBuff from the FIFO, invoked by one thread
+ * Remove an AcMem from the FIFO, invoked by one thread
  * (Single Consumer):
  *
  *    // Step 1) Use the current stub value to return the result
- *    AcBuff* result = fifo->tail;
+ *    AcMem* result = fifo->tail;
  *
- *    // Step 2) Get the oldest element, serialize with Step 3 in add ac_buff
- *    AcBuff* oldest = __atomic_load_n(&result->hdr.next, __ATOMIC_ACQUIRE);
+ *    // Step 2) Get the oldest element, serialize with Step 3 in add ac_mem
+ *    AcMem* oldest = __atomic_load_n(&result->hdr.next, __ATOMIC_ACQUIRE);
  *
  *    // Step 3) If list is empty return AC_NULL
  *    if (oldest == AC_NULL) {
@@ -108,11 +108,11 @@
  *    }
  *
  *    // Step 4) The oldest becomes new tail stub. If we are removing
- *    // the last element then poldest->pnext is AC_NULL because add ac_buff
+ *    // the last element then poldest->pnext is AC_NULL because add ac_mem
  *    // made it so.
  *    fifo->tail = oldest;
  *
- *    // Step 5) Copy the contents of oldest AcBuff to result
+ *    // Step 5) Copy the contents of oldest AcMem to result
  *    result->hdr.user_size = oldest->hdr.user_size;
  *    ac_memcpy(result->data, oldest->data, oldest->hdr.user_size);
  *
@@ -120,14 +120,14 @@
  *    result->hdr.next = AC_NULL;
  *    return result;
  *
- * Raw remove an AcBuff from the FIFO, invoked by one thread
+ * Raw remove an AcMem from the FIFO, invoked by one thread
  * (Single Consumer):
  *
  *    // Step 1) Use the current stub value to return the result
- *    AcBuff *result = fifo->tail;
+ *    AcMem *result = fifo->tail;
  *
- *    // Step 2) Get the oldest element, serialize with Step 3 in add_buff
- *    AcBuff* oldest = __atomic_load_n(&result->hdr.next, __ATOMIC_ACQUIRE);
+ *    // Step 2) Get the oldest element, serialize with Step 3 in add_mem
+ *    AcMem* oldest = __atomic_load_n(&result->hdr.next, __ATOMIC_ACQUIRE);
  *
  *    // Step 3) If list is empty return AC_NULL
  *    if (oldest == AC_NULL) {
@@ -135,7 +135,7 @@
  *    }
  *
  *    // Step 4) The oldest becomes new tail stub. If we are removing
- *    // the last element then oldest->hdr.next is AC_NULL because add_ac_buff
+ *    // the last element then oldest->hdr.next is AC_NULL because add_ac_mem
  *    // made it so.
  *    fifo->tail = oldest;
  *
@@ -148,7 +148,7 @@
 #include <ac_mpsc_fifo_dbg.h>
 
 #include <ac_assert.h>
-#include <ac_buff_dbg.h>
+#include <ac_mem_dbg.h>
 #include <ac_inttypes.h>
 #include <ac_memmgr.h>
 #include <ac_memcpy.h>
@@ -156,41 +156,41 @@
 /**
  * @see ac_mpsc_fifo.h
  */
-void AcMpscFifo_add_ac_buff(AcMpscFifo* fifo, AcBuff* buff) {
+void AcMpscFifo_add_ac_mem(AcMpscFifo* fifo, AcMem* mem) {
   ac_assert(fifo != AC_NULL);
 
-  if (buff != AC_NULL) {
-    // Assert buff is compatible
+  if (mem != AC_NULL) {
+    // Assert mem is compatible
     // TODO, maybe have routine return AcStatus and return AC_STATUS_BAD_PARAM??
-    ac_assert(fifo->tail->hdr.data_size == buff->hdr.data_size);
+    ac_assert(fifo->tail->hdr.data_size == mem->hdr.data_size);
 
-    // Step 1) Set buff->next to AC_NULL as this is the end
+    // Step 1) Set mem->next to AC_NULL as this is the end
     // of the list.
-    buff->hdr.next = AC_NULL;
+    mem->hdr.next = AC_NULL;
 
-    // Step 2) Exchange fifo->head and buff so fifo->head now
-    // points at the new buff. Serializes with other producers
+    // Step 2) Exchange fifo->head and mem so fifo->head now
+    // points at the new mem. Serializes with other producers
     // calling this routine.
-    AcBuff *prev_head = __atomic_exchange_n(&fifo->head, buff, __ATOMIC_ACQ_REL);
+    AcMem *prev_head = __atomic_exchange_n(&fifo->head, mem, __ATOMIC_ACQ_REL);
 
-    // Step 3) Store buff into the next of the previous head
-    // which actually adds the new buff to the fifo. Serialize
-    // with rmv_ac_buff Step 4 if the list is empty.
-    __atomic_store_n(&prev_head->hdr.next, buff, __ATOMIC_RELEASE);
+    // Step 3) Store mem into the next of the previous head
+    // which actually adds the new mem to the fifo. Serialize
+    // with rmv_ac_mem Step 4 if the list is empty.
+    __atomic_store_n(&prev_head->hdr.next, mem, __ATOMIC_RELEASE);
   }
 }
 
 /**
  * @see ac_mpsc_fifo.h
  */
-AcBuff* AcMpscFifo_rmv_ac_buff(AcMpscFifo* fifo) {
+AcMem* AcMpscFifo_rmv_ac_mem(AcMpscFifo* fifo) {
   ac_assert(fifo != AC_NULL);
 
   // Step 1) Use the current stub value to return the result
-  AcBuff* result = fifo->tail;
+  AcMem* result = fifo->tail;
 
-  // Step 2) Get the oldest element, serialize with Step 3 in add ac_buff
-  AcBuff* oldest = __atomic_load_n(&result->hdr.next, __ATOMIC_ACQUIRE);
+  // Step 2) Get the oldest element, serialize with Step 3 in add ac_mem
+  AcMem* oldest = __atomic_load_n(&result->hdr.next, __ATOMIC_ACQUIRE);
 
   // Step 3) If list is empty return AC_NULL
   if (oldest == AC_NULL) {
@@ -198,11 +198,11 @@ AcBuff* AcMpscFifo_rmv_ac_buff(AcMpscFifo* fifo) {
   }
 
   // Step 4) The oldest becomes new tail stub. If we are removing
-  // the last element then poldest->pnext is AC_NULL because add ac_buff
+  // the last element then poldest->pnext is AC_NULL because add ac_mem
   // made it so.
   fifo->tail = oldest;
 
-  // Step 5) Copy the contents of oldest AcBuff to result
+  // Step 5) Copy the contents of oldest AcMem to result
   result->hdr.user_size = oldest->hdr.user_size;
   ac_memcpy(result->data, oldest->data, oldest->hdr.user_size);
 
@@ -214,16 +214,16 @@ AcBuff* AcMpscFifo_rmv_ac_buff(AcMpscFifo* fifo) {
 /**
  * @see ac_mpsc_fifo.h
  */
-AcBuff* AcMpscFifo_rmv_ac_buff_raw(AcMpscFifo* fifo) {
+AcMem* AcMpscFifo_rmv_ac_mem_raw(AcMpscFifo* fifo) {
   if (fifo == AC_NULL) {
     return AC_NULL;
   }
 
   // Step 1) Use the current stub value to return the result
-  AcBuff *result = fifo->tail;
+  AcMem *result = fifo->tail;
 
-  // Step 2) Get the oldest element, serialize with Step 3 in add_buff
-  AcBuff* oldest = __atomic_load_n(&result->hdr.next, __ATOMIC_ACQUIRE);
+  // Step 2) Get the oldest element, serialize with Step 3 in add_mem
+  AcMem* oldest = __atomic_load_n(&result->hdr.next, __ATOMIC_ACQUIRE);
 
   // Step 3) If list is empty return AC_NULL
   if (oldest == AC_NULL) {
@@ -231,7 +231,7 @@ AcBuff* AcMpscFifo_rmv_ac_buff_raw(AcMpscFifo* fifo) {
   }
 
   // Step 4) The oldest becomes new tail stub. If we are removing
-  // the last element then oldest->hdr.next is AC_NULL because add_ac_buff
+  // the last element then oldest->hdr.next is AC_NULL because add_ac_mem
   // made it so.
   fifo->tail = oldest;
 
@@ -252,19 +252,19 @@ void AcMpscFifo_deinit(AcMpscFifo* fifo) {
   ac_assert(fifo->tail == fifo->head);
 
   // Return the stub to its fifo and null head and tail
-  AcBuff* stub = fifo->head;
+  AcMem* stub = fifo->head;
   fifo->head = AC_NULL;
   fifo->tail = AC_NULL;
 
   if (stub->hdr.pool_fifo != fifo) {
-    AcBuff_ret(stub);
+    AcMem_ret(stub);
   }
 }
 
 /**
  * @see ac_mpsc_fifo.h
  */
-AcStatus AcMpscFifo_init_with_stub(AcMpscFifo* fifo, AcBuff* stub) {
+AcStatus AcMpscFifo_init_with_stub(AcMpscFifo* fifo, AcMem* stub) {
   int status;
 
   if ((fifo == AC_NULL) || (stub == AC_NULL)) {
@@ -288,8 +288,8 @@ done:
 AcStatus AcMpscFifo_init(AcMpscFifo* fifo, ac_u32 data_size) {
   AcStatus status;
 
-  AcBuff* stub;
-  if (AcBuff_alloc(AC_NULL, 1, data_size, 0, &stub) != AC_STATUS_OK) {
+  AcMem* stub;
+  if (AcMem_alloc(AC_NULL, 1, data_size, 0, &stub) != AC_STATUS_OK) {
     status = AC_STATUS_OUT_OF_MEMORY;
     goto done;
   }

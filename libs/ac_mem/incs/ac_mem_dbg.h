@@ -18,25 +18,25 @@
  * Debug code for mpscfifo
  */
 
-#ifndef SADIE_LIBS_AC_BUFF_AC_BUFF_DBG_H
-#define SADIE_LIBS_AC_BUFF_AC_BUFF_DBG_H
+#ifndef SADIE_LIBS_AC_MEM_AC_MEM_DBG_H
+#define SADIE_LIBS_AC_MEM_AC_MEM_DBG_H
 
-#include <ac_buff.h>
-
-/**
- * Print a AcBuff and the specified number of bytes in data
- */
-void AcBuff_print_count(const char* leader, AcBuff* buff, ac_u32 data_count_to_print);
+#include <ac_mem.h>
 
 /**
- * Print a AcBuff and all of the user data
+ * Print a AcMem and the specified number of bytes in data
  */
-void AcBuff_print(const char* leader, AcBuff* buff);
+void AcMem_print_count(const char* leader, AcMem* buff, ac_u32 data_count_to_print);
+
+/**
+ * Print a AcMem and all of the user data
+ */
+void AcMem_print(const char* leader, AcMem* buff);
 
 #ifdef NDEBUG
-  #define AcBuff_debug_print(leader, buff) ((void)(0))
+  #define AcMem_debug_print(leader, buff) ((void)(0))
 #else
-  #define AcBuff_debug_print(leader, buff) AcBuff_print(leader, buff)
+  #define AcMem_debug_print(leader, buff) AcMem_print(leader, buff)
 #endif
 
 #endif

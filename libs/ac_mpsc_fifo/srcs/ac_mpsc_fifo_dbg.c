@@ -23,8 +23,8 @@
 #include <ac_mpsc_fifo.h>
 #include <ac_mpsc_fifo_dbg.h>
 
-#include <ac_buff.h>
-#include <ac_buff_dbg.h>
+#include <ac_mem.h>
+#include <ac_mem_dbg.h>
 #include <ac_printf.h>
 
 /**
@@ -44,14 +44,14 @@ void AcMpscFifo_print(const char* leader, AcMpscFifo* fifo) {
     } else {
       ac_printf("%s %p\n", leader, fifo);
     }
-    AcBuff_print("fifo->head: ", fifo->head);
-    AcBuff_print("fifo->tail: ", fifo->tail);
+    AcMem_print("fifo->head: ", fifo->head);
+    AcMem_print("fifo->tail: ", fifo->tail);
 #endif
-    AcBuff* tail = fifo->tail->hdr.next;
+    AcMem* tail = fifo->tail->hdr.next;
     if (tail == AC_NULL) {
-      AcBuff_print("empty h/t: ", fifo->head);
+      AcMem_print("empty h/t: ", fifo->head);
     } else if (tail == fifo->head) {
-      AcBuff_print("one h/t:   ", fifo->head);
+      AcMem_print("one h/t:   ", fifo->head);
     } else {
       ac_bool first_time = AC_TRUE;
       while (tail != AC_NULL) {
@@ -61,7 +61,7 @@ void AcMpscFifo_print(const char* leader, AcMpscFifo* fifo) {
         } else {
           ac_printf("           ");
         }
-        AcBuff_print(AC_NULL, tail);
+        AcMem_print(AC_NULL, tail);
         tail = tail->hdr.next;
       }
     }

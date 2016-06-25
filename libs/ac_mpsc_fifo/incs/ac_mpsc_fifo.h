@@ -20,15 +20,15 @@
  * is from Dimitry Vyukov's non intrusive MPSC code here:
  *   http://www.1024cores.net/home/lock-free-algorithms/queues/non-intrusive-mpsc-node-based-queue
  *
- * The fifo has a head and tail, the AcBuff elements are added
+ * The fifo has a head and tail, the AcMem elements are added
  * to the head of the queue and removed from the tail.
- * To allow for a wait free algorithm a there is an extra AcBuff,
+ * To allow for a wait free algorithm a there is an extra AcMem,
  * called the stubm, so that a single atomic instruction can be
- * used to add and remove an AcBuff. The AcMpscFifo_deinit must
+ * used to add and remove an AcMem. The AcMpscFifo_deinit must
  * be called so that the stub maybe returned to is proper pool.
  *
  * A consequence of this algorithm is that when you add an
- * AcBuff to the queue a different AcBuff is returned when
+ * AcMem to the queue a different AcMem is returned when
  * you remove it from the queue. Of course the contents are
  * the same but the returned pointer will be different.
  */
@@ -36,42 +36,42 @@
 #ifndef SADIE_LIBS_AC_MPSCFIFO_AC_MPSCFIFO_H
 #define SADIE_LIBS_AC_MPSCFIFO_AC_MPSCFIFO_H
 
-#include <ac_buff.h>
+#include <ac_mem.h>
 
 typedef struct AcMpscFifo {
-  AcBuff* head;
-  AcBuff* tail;
+  AcMem* head;
+  AcMem* tail;
 } AcMpscFifo;
 
 /**
- * Add a AcBuff to the fifo. This maybe used by multiple
+ * Add a AcMem to the fifo. This maybe used by multiple
  * threads and never blocks.
  *
  * @params fifo is an iniitalized AcMpscFifo
  */
-void AcMpscFifo_add_ac_buff(AcMpscFifo* fifo, AcBuff* buff);
+void AcMpscFifo_add_ac_mem(AcMpscFifo* fifo, AcMem* mem);
 
 /**
- * Remove a AcBuff from the FIFO. This maybe used only by
+ * Remove a AcMem from the FIFO. This maybe used only by
  * a single thread and returns AC_NULL if the FIFO is empty.
  *
  * @params fifo is an iniitalized AcMpscFifo
  *
- * @return AcBuff or AC_NULL if empty
+ * @return AcMem or AC_NULL if empty
  */
-AcBuff* AcMpscFifo_rmv_ac_buff(AcMpscFifo* fifo);
+AcMem* AcMpscFifo_rmv_ac_mem(AcMpscFifo* fifo);
 
 /**
- * Remove a raw AcBuff from the FIFO. A raw buffer contents
+ * Remove a raw AcMem from the FIFO. A raw memer contents
  * are NOT preserved and the caller will be initializing the
  * contents after removal. This is useful in managing a pool
- * of empty buffers.
+ * of empty memers.
  *
  * @params fifo is an iniitalized AcMpscFifo
  *
- * @return AcBuff or AC_NULL if empty
+ * @return AcMem or AC_NULL if empty
  */
-AcBuff* AcMpscFifo_rmv_ac_buff_raw(AcMpscFifo* fifo);
+AcMem* AcMpscFifo_rmv_ac_mem_raw(AcMpscFifo* fifo);
 
 /**
  * Deinitialize the AcMpscFifo and return the stub which
@@ -85,21 +85,21 @@ void AcMpscFifo_deinit(AcMpscFifo* fifo);
  * Initialize an AcMpscFifo using the stub
  *
  * @params fifo is an uniniitalized AcMpscFifo
- * @params stub is the AcBuff which will be the stub
+ * @params stub is the AcMem which will be the stub
  *
  * @return 0 (AC_STATUS_OK) if successfull
  */
-AcStatus AcMpscFifo_init_with_stub(AcMpscFifo* fifo, AcBuff* stub);
+AcStatus AcMpscFifo_init_with_stub(AcMpscFifo* fifo, AcMem* stub);
 
 /**
  * Initialize an AcMpscFifo.
  *
  * @params fifo is an uniniitalized AcMpscFifo
- * @params buff_size number of bytes in AcBuff.data[]
+ * @params mem_size number of bytes in AcMem.data[]
  *
  * @return 0 (AC_STATUS_OK) if successfull
  */
-AcStatus AcMpscFifo_init(AcMpscFifo* fifo, ac_u32 buff_size);
+AcStatus AcMpscFifo_init(AcMpscFifo* fifo, ac_u32 mem_size);
 
 /**
  * Early initialize module

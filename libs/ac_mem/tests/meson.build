@@ -18,8 +18,8 @@ if Platform == 'VersatilePB'
   linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
-  # Create test-ac_buff executable
-  test_ac_buff = executable( 'test_ac_buff', srcFiles,
+  # Create test-ac_mem executable
+  test_ac_mem = executable( 'test_ac_mem', srcFiles,
     include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
@@ -28,16 +28,16 @@ if Platform == 'VersatilePB'
   )
 
   # Create test.bin suitable for executing with qemu
-  test_ac_buff_bin = custom_target( 'test_ac_buff_bin',
-    output : ['test_ac_buff.bin'],
+  test_ac_mem_bin = custom_target( 'test_ac_mem_bin',
+    output : ['test_ac_mem.bin'],
     command : ['arm-eabi-objcopy', '-O', 'binary',
-      '@0@/test_ac_buff'.format(meson.current_build_dir()),
-      '@0@/test_ac_buff.bin'.format(meson.current_build_dir())],
-    depends : [test_ac_buff])
+      '@0@/test_ac_mem'.format(meson.current_build_dir()),
+      '@0@/test_ac_mem.bin'.format(meson.current_build_dir())],
+    depends : [test_ac_mem])
 
-  run_target('run-test-ac_buff',
+  run_target('run-test-ac_mem',
      '@0@/tools/qemu-system-arm.runner.sh'.format(meson.source_root()),
-     'versatilepb', test_ac_buff_bin)
+     'versatilepb', test_ac_mem_bin)
 endif
 
 
@@ -45,13 +45,13 @@ if Platform == 'Posix'
   srcFiles = firstSrcFiles + ['srcs/test.c']
 
   # Create testit executable
-  test_ac_buff = executable( 'test_ac_buff', srcFiles,
+  test_ac_mem = executable( 'test_ac_mem', srcFiles,
     include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     dependencies : [libruntime_dep],
   )
 
-  run_target('run-test-ac_buff', test_ac_buff)
+  run_target('run-test-ac_mem', test_ac_mem)
 endif
 
 if Platform == 'pc_x86_32'
@@ -60,8 +60,8 @@ if Platform == 'pc_x86_32'
   linkArgs += ['-Wl,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
-  # Create test_ac_buff executable
-  test_ac_buff = executable( 'test_ac_buff', srcFiles,
+  # Create test_ac_mem executable
+  test_ac_mem = executable( 'test_ac_mem', srcFiles,
     include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
@@ -69,8 +69,8 @@ if Platform == 'pc_x86_32'
     dependencies : [libruntime_dep],
   )
 
-  run_target('run-test-ac_buff', '@0@/tools/qemu-system-i386.runner.sh'.format(meson.source_root()),
-             test_ac_buff)
+  run_target('run-test-ac_mem', '@0@/tools/qemu-system-i386.runner.sh'.format(meson.source_root()),
+             test_ac_mem)
 endif
 
 
@@ -80,8 +80,8 @@ if Platform == 'pc_x86_64'
   linkArgs += ['-Wl,-n,-lgcc,-T,@0@'.format(linkfile)]
   linkDeps += [linkfile]
 
-  # Create test_ac_buff executable
-  test_ac_buff = executable( 'test_ac_buff', srcFiles,
+  # Create test_ac_mem executable
+  test_ac_mem = executable( 'test_ac_mem', srcFiles,
     include_directories : runtimeIncDirs,
     c_args : compilerArgs,
     link_args : linkArgs,
@@ -90,17 +90,17 @@ if Platform == 'pc_x86_64'
   )
 
   grub_cfg = '@0@/grub.cfg'.format(meson.current_source_dir())
-  test_ac_buff_exe = '@0@/test_ac_buff'.format(meson.current_build_dir())
+  test_ac_mem_exe = '@0@/test_ac_mem'.format(meson.current_build_dir())
 
-  # Create test_ac_buff.bin suitable for executing with qemu or on hardware
-  test_ac_buff_bin = custom_target( 'test_ac_buff.img',
+  # Create test_ac_mem.bin suitable for executing with qemu or on hardware
+  test_ac_mem_bin = custom_target( 'test_ac_mem.img',
     input : grub_cfg,
-    output : 'test_ac_buff.img',
+    output : 'test_ac_mem.img',
     command : ['@0@/tools/grub-mkrescue.runner.sh'.format(meson.source_root()),
-      test_ac_buff_exe, grub_cfg, '@OUTPUT@'],
-    depends : [test_ac_buff])
+      test_ac_mem_exe, grub_cfg, '@OUTPUT@'],
+    depends : [test_ac_mem])
 
-  run_target('run-test-ac_buff', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
-              test_ac_buff_bin, '-enable-kvm', '-cpu', 'host,+tsc-deadline')
+  run_target('run-test-ac_mem', '@0@/tools/qemu-system-x86_64.runner.sh'.format(meson.source_root()),
+              test_ac_mem_bin, '-enable-kvm', '-cpu', 'host,+tsc-deadline')
 endif
 

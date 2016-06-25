@@ -15,45 +15,45 @@
  */
 
 /**
- * Debug code for AcBuff
+ * Debug code for AcMem
  */
 
-#include <ac_buff_dbg.h>
+#include <ac_mem_dbg.h>
 
 #include <ac_inttypes.h>
 #include <ac_printf.h>
 
 /**
- * Print a AcBuff and the specified number of bytes in data
+ * Print an AcMem and the specified number of bytes in data
  */
-void AcBuff_print_count(const char* leader, AcBuff* buff, ac_u32 data_count_to_print) {
+void AcMem_print_count(const char* leader, AcMem* mem, ac_u32 data_count_to_print) {
   if (leader != AC_NULL) {
     ac_printf(leader);
   }
-  if (buff != AC_NULL) {
+  if (mem != AC_NULL) {
     ac_printf("%p next=%p pool_fifo=%p data_size=%d user_size=%d data=",
-        (void *)buff, (void *)(buff->hdr.next), buff->hdr.pool_fifo,
-        buff->hdr.data_size, buff->hdr.user_size);
+        (void *)mem, (void *)(mem->hdr.next), mem->hdr.pool_fifo,
+        mem->hdr.data_size, mem->hdr.user_size);
     for (ac_u32 i = 0; i < data_count_to_print; i++) {
       if (i == 0) {
-        ac_printf("%2x", buff->data[i]);
+        ac_printf("%2x", mem->data[i]);
       } else {
-        ac_printf(" %2x", buff->data[i]);
+        ac_printf(" %2x", mem->data[i]);
       }
     }
     ac_printf("\n");
   } else {
-    ac_printf("buff == AC_NULL\n");
+    ac_printf("mem == AC_NULL\n");
   }
 }
 
 /**
- * Print a AcBuff and all of the user data
+ * Print an AcMem and all of the user data
  */
-void AcBuff_print(const char* leader, AcBuff* buff) {
-  if (buff != AC_NULL) {
-    AcBuff_print_count(leader, buff, buff->hdr.user_size);
+void AcMem_print(const char* leader, AcMem* mem) {
+  if (mem != AC_NULL) {
+    AcMem_print_count(leader, mem, mem->hdr.user_size);
   } else {
-    ac_printf("buff == AC_NULL\n");
+    ac_printf("mem == AC_NULL\n");
   }
 }
