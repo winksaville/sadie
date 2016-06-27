@@ -256,12 +256,16 @@ AcMem* AcMpscFifo_rmv_ac_mem_raw(AcMpscFifo* fifo) {
  * @see ac_mpsc_fifo.h
  */
 void AcMpscFifo_deinit(AcMpscFifo* fifo) {
-  // Assert that the fifo is empty
   ac_debug_printf("AcMpscFifo_deinit:+fifo=%p\n", fifo);
 
+  // Assert fifo is "valid" and it owns only one AcMem
   ac_assert(fifo != AC_NULL);
+  ac_assert(fifo->count == 1);
+  ac_assert(fifo->mem_array != AC_NULL);
   ac_assert(fifo->head != AC_NULL);
   ac_assert(fifo->tail != AC_NULL);
+
+  // Assert that the fifo is empty
   ac_assert(fifo->tail->hdr.next == AC_NULL);
   ac_assert(fifo->tail == fifo->head);
 
@@ -271,10 +275,50 @@ void AcMpscFifo_deinit(AcMpscFifo* fifo) {
   fifo->tail = AC_NULL;
 
   if (stub->hdr.pool_fifo != fifo) {
-    ac_debug_printf("AcMpscFifo_deinit: fifo=%p return stub=%p stub->pool_fifo=%p\n",
+    ac_debug_printf("AcMpscFifo_deinit: fifo=%p return non-owned stub=%p stub->pool_fifo=%p\n",
         fifo, stub, stub->hdr.pool_fifo);
     AcMem_ret(stub);
+  } else {
+    ac_debug_printf("AcMpscFifo_deinit: fifo=%p return owned stub=%p stub->pool_fifo=%p\n",
+        fifo, stub, stub->hdr.pool_fifo);
+    AcMem_free(stub);
   }
+
+  ac_debug_printf("AcMpscFifo_deinit:-fifo=%p\n", fifo);
+}
+
+/**
+ * @see ac_mpsc_fifo.h
+ */
+void AcMpscFifo_deinit_full(AcMpscFifo* fifo) {
+  ac_debug_printf("AcMpscFifo_deinit:+fifo=%p count=%d\n", fifo, fifo->count);
+
+  // Assert fifo is "valid" and it owns more than one AcMem
+  ac_assert(fifo != AC_NULL);
+  ac_assert(fifo->count > 1);
+  ac_assert(fifo->mem_array != AC_NULL);
+  ac_assert(fifo->head != AC_NULL);
+  ac_assert(fifo->tail != AC_NULL);
+
+  // Loop through the fifo removing AcMem's verifying all they
+  // all belong to this fifo.
+  for (ac_u32 i = 0; i < fifo->count - 1; i++) {
+    AcMem* mem = AcMpscFifo_rmv_ac_mem(fifo);
+    AcMem_debug_print("AcMpscFifo_deinit: mem=", mem);
+
+    // Be sure mem is valid and it belongs to this fifo
+    ac_assert(mem != AC_NULL);
+    ac_assert(mem->hdr.pool_fifo == fifo);
+  }
+
+  // Remove the stub
+  AcMem* stub = fifo->head;
+  fifo->head = AC_NULL;
+  fifo->tail = AC_NULL;
+
+  // Verify it belongs to this fifo
+  ac_assert(stub != AC_NULL);
+  ac_assert(stub->hdr.pool_fifo == fifo);
 
   ac_debug_printf("AcMpscFifo_deinit: fifo=%p ret mem_array=%p\n", fifo, fifo->mem_array);
   AcMem_free(fifo->mem_array);
@@ -297,7 +341,7 @@ AcStatus AcMpscFifo_init_and_alloc(AcMpscFifo* fifo, ac_u32 count,
   }
 
   // Allocate one extra for the stub
-  count += 1;
+  fifo->count = count + 1;
 
   // Allocate the mem_array for the fifo including an extra one for
   // the stub, AC_NULL is passed for fifo because the fifo isn't
@@ -308,7 +352,7 @@ AcStatus AcMpscFifo_init_and_alloc(AcMpscFifo* fifo, ac_u32 count,
   // and when we deinit we free them in a loop one at a time, that way
   // additional memory blocks could be added to the fifo for management
   // at any time.
-  status = AcMem_alloc(AC_NULL, count, data_size, 0, &fifo->mem_array);
+  status = AcMem_alloc(AC_NULL, fifo->count, data_size, 0, &fifo->mem_array);
   ac_debug_printf("AcMpscFifo_init_and_alloc: fifo=%p status=%d mem_array=%p\n",
       fifo, status, fifo->mem_array);
   if (status != AC_STATUS_OK) {
@@ -316,7 +360,7 @@ AcStatus AcMpscFifo_init_and_alloc(AcMpscFifo* fifo, ac_u32 count,
   }
 
   // Add the rest of the AcMem's to the fifo
-  for (ac_u32 i = 0; i < count; i++) {
+  for (ac_u32 i = 0; i < fifo->count; i++) {
     AcMem* mem = AcMem_get_nth(fifo->mem_array, i);
     mem->hdr.pool_fifo = fifo;
     if (i == 0) {

@@ -30,7 +30,9 @@ void AcMem_ret(AcMem* mem) {
     if (mem->hdr.pool_fifo != AC_NULL) {
       AcMpscFifo_add_ac_mem(mem->hdr.pool_fifo, mem);
     } else {
-      AcMem_free(mem);
+      // TODO: If we always individually allocate
+      // AcMems we could do AcMem_free
+      //AcMem_free(mem);
     }
   }
 }

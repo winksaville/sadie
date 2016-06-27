@@ -41,6 +41,7 @@
 #include <ac_mem.h>
 
 typedef struct AcMpscFifo {
+  ac_u32 count;      // Number of AcMems owned by this fifo
   AcMem* mem_array;  // AcMem's owned by this fifo, there is
                      // always at least one, the stub.
   AcMem* head;       // head of the list where items are added
@@ -85,6 +86,14 @@ AcMem* AcMpscFifo_rmv_ac_mem_raw(AcMpscFifo* fifo);
  * @params fifo is an iniitalized AcMpscFifo
  */
 void AcMpscFifo_deinit(AcMpscFifo* fifo);
+
+/**
+ * Deinitialize the AcMpscFifo and return the stub which
+ * needs to be disposed of properly. Assumes the fifo is full.
+ *
+ * @params fifo is an iniitalized AcMpscFifo
+ */
+void AcMpscFifo_deinit_full(AcMpscFifo* fifo);
 
 /**
  * Initialize an AcMpscFifo allocating AcMem's that
