@@ -144,6 +144,8 @@
  *    return result;
  */
 
+#define NDEBUG
+
 #include <ac_mpsc_fifo.h>
 #include <ac_mpsc_fifo_dbg.h>
 
@@ -152,6 +154,7 @@
 #include <ac_inttypes.h>
 #include <ac_memmgr.h>
 #include <ac_memcpy.h>
+#include <ac_debug_printf.h>
 
 /**
  * @see ac_mpsc_fifo.h
@@ -159,7 +162,13 @@
 void AcMpscFifo_add_ac_mem(AcMpscFifo* fifo, AcMem* mem) {
   ac_assert(fifo != AC_NULL);
 
+  ac_debug_printf("AcMpscFifo_add_ac_mem:+fifo=%p mem=%p\n",
+      fifo, mem);
+
   if (mem != AC_NULL) {
+    ac_debug_printf("AcMpscFifo_add_ac_mem: fifo=%p mem=%p tail=%p tail.data_size=%d mem.data_size=%d\n",
+        fifo, mem, fifo->tail, fifo->tail->hdr.data_size, mem->hdr.data_size);
+
     // Assert mem is compatible
     // TODO, maybe have routine return AcStatus and return AC_STATUS_BAD_PARAM??
     ac_assert(fifo->tail->hdr.data_size == mem->hdr.data_size);
@@ -178,6 +187,9 @@ void AcMpscFifo_add_ac_mem(AcMpscFifo* fifo, AcMem* mem) {
     // with rmv_ac_mem Step 4 if the list is empty.
     __atomic_store_n(&prev_head->hdr.next, mem, __ATOMIC_RELEASE);
   }
+
+  ac_debug_printf("AcMpscFifo_add_ac_mem:-fifo=%p mem=%p\n",
+      fifo, mem);
 }
 
 /**
@@ -245,6 +257,8 @@ AcMem* AcMpscFifo_rmv_ac_mem_raw(AcMpscFifo* fifo) {
  */
 void AcMpscFifo_deinit(AcMpscFifo* fifo) {
   // Assert that the fifo is empty
+  ac_debug_printf("AcMpscFifo_deinit:+fifo=%p\n", fifo);
+
   ac_assert(fifo != AC_NULL);
   ac_assert(fifo->head != AC_NULL);
   ac_assert(fifo->tail != AC_NULL);
@@ -257,47 +271,84 @@ void AcMpscFifo_deinit(AcMpscFifo* fifo) {
   fifo->tail = AC_NULL;
 
   if (stub->hdr.pool_fifo != fifo) {
+    ac_debug_printf("AcMpscFifo_deinit: fifo=%p return stub=%p stub->pool_fifo=%p\n",
+        fifo, stub, stub->hdr.pool_fifo);
     AcMem_ret(stub);
   }
+
+  ac_debug_printf("AcMpscFifo_deinit: fifo=%p ret mem_array=%p\n", fifo, fifo->mem_array);
+  AcMem_free(fifo->mem_array);
+  ac_debug_printf("AcMpscFifo_deinit:-fifo=%p\n", fifo);
 }
 
 /**
  * @see ac_mpsc_fifo.h
  */
-AcStatus AcMpscFifo_init_with_stub(AcMpscFifo* fifo, AcMem* stub) {
-  int status;
+AcStatus AcMpscFifo_init_and_alloc(AcMpscFifo* fifo, ac_u32 count,
+    ac_u32 data_size) {
+  AcStatus status;
 
-  if ((fifo == AC_NULL) || (stub == AC_NULL)) {
+  ac_debug_printf("AcMpscFifo_init_and_alloc:+fifo=%p count=%d data_size=%d\n",
+      fifo, count, data_size);
+
+  if (fifo == AC_NULL) {
     status = AC_STATUS_BAD_PARAM;
     goto done;
   }
 
-  stub->hdr.next = AC_NULL;
-  fifo->head = stub;
-  fifo->tail = stub;
+  // Allocate one extra for the stub
+  count += 1;
 
-  status = AC_STATUS_OK;
+  // Allocate the mem_array for the fifo including an extra one for
+  // the stub, AC_NULL is passed for fifo because the fifo isn't
+  // initialized yet and thus AcMem_alloc can't automatically add it.
+  //
+  //
+  // TODO: Maybe AcMem_alloc should not have a count (or we only use 1)
+  // and when we deinit we free them in a loop one at a time, that way
+  // additional memory blocks could be added to the fifo for management
+  // at any time.
+  status = AcMem_alloc(AC_NULL, count, data_size, 0, &fifo->mem_array);
+  ac_debug_printf("AcMpscFifo_init_and_alloc: fifo=%p status=%d mem_array=%p\n",
+      fifo, status, fifo->mem_array);
+  if (status != AC_STATUS_OK) {
+    goto done;
+  }
+
+  // Add the rest of the AcMem's to the fifo
+  for (ac_u32 i = 0; i < count; i++) {
+    AcMem* mem = AcMem_get_nth(fifo->mem_array, i);
+    mem->hdr.pool_fifo = fifo;
+    if (i == 0) {
+      // Add the stub
+      ac_debug_printf("AcMpscFifo_init_and_alloc: fifo=%p add stub=%p\n",
+          fifo, mem);
+      mem->hdr.next = AC_NULL;
+      fifo->head = mem;
+      fifo->tail = mem;
+    } else {
+      // Add non-stub
+      AcMpscFifo_add_ac_mem(fifo, mem);
+    }
+  }
 
 done:
-  return (AcStatus)status;
+  if (status != AC_STATUS_OK) {
+    if (fifo != AC_NULL) {
+      AcMem_free(fifo->mem_array);
+    }
+  }
+
+  ac_debug_printf("AcMpscFifo_init_and_alloc:-fifo=%p status=%d\n",
+      fifo, status);
+  return status;
 }
 
 /**
  * @see ac_mpsc_fifo.h
  */
 AcStatus AcMpscFifo_init(AcMpscFifo* fifo, ac_u32 data_size) {
-  AcStatus status;
-
-  AcMem* stub;
-  if (AcMem_alloc(AC_NULL, 1, data_size, 0, &stub) != AC_STATUS_OK) {
-    status = AC_STATUS_OUT_OF_MEMORY;
-    goto done;
-  }
-
-  status = AcMpscFifo_init_with_stub(fifo, stub);
-
-done:
-  return status;
+  return AcMpscFifo_init_and_alloc(fifo, 0, data_size);
 }
 
 /**

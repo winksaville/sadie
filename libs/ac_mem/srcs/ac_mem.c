@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-//#define NDEBUG
-
 #include <ac_mem.h>
 
 #include <ac_inttypes.h>
@@ -48,16 +46,19 @@ void AcMem_free(AcMem* mem_array) {
 }
 
 /**
- * Allocate one for more AcMem contigiously
+ * Allocate one or more AcMem contigiously and if fifo is not AC_NULL
+ * the AcMem is added to the fifo
  *
- * @params fifo is the fifo this AcMem belongs to
+ * @params fifo owning this AcMem's allocated or AC_NULL if none.
  * @params count is number of AcMem's to allocate
  * @params data_size is size of each memory block
  * @params user_size is size available to user
  * @params ptr_mem_array an out parameter that on success
  * will point to the allocate array of AcMem's.
  *
- * @return 0 (AC_STATUS_OK) if successful and if count > 0 then mem != AC_NULL
+ * @return 0 (AC_STATUS_OK) if successful the allocated AcMem's will
+ * be initialized and if fifo parameter is not AC_NULL they will be
+ * added to the fifo.
  */
 AcStatus AcMem_alloc(AcMpscFifo* fifo, ac_u32 count,
     ac_u32 data_size, ac_u32 user_size, AcMem** ptr_mem_array) {
@@ -85,6 +86,12 @@ AcStatus AcMem_alloc(AcMpscFifo* fifo, ac_u32 count,
     mem->hdr.pool_fifo = fifo;
     mem->hdr.data_size = data_size;
     mem->hdr.user_size = user_size;
+    if (mem->hdr.pool_fifo != AC_NULL) {
+      // TODO: Maybe we shouldn't ever do this because we now have AcMpsc_init_and_alloc
+      // also using AcMem_alloc multiple times will screw up freeing because right now
+      // we're assume all mems are allocated at once.
+      AcMem_ret(mem);
+    }
   }
 
   status = AC_STATUS_OK;

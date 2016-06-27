@@ -21,16 +21,18 @@
  *   http://www.1024cores.net/home/lock-free-algorithms/queues/non-intrusive-mpsc-node-based-queue
  *
  * The fifo has a head and tail, the AcMem elements are added
- * to the head of the queue and removed from the tail.
+ * to the head of the and removed from the tail.
  * To allow for a wait free algorithm a there is an extra AcMem,
- * called the stubm, so that a single atomic instruction can be
+ * called the stub, so that a single atomic instruction can be
  * used to add and remove an AcMem. The AcMpscFifo_deinit must
  * be called so that the stub maybe returned to is proper pool.
  *
  * A consequence of this algorithm is that when you add an
  * AcMem to the queue a different AcMem is returned when
  * you remove it from the queue. Of course the contents are
- * the same but the returned pointer will be different.
+ * the same, but the returned pointer will be different.
+ *
+ * ...
  */
 
 #ifndef SADIE_LIBS_AC_MPSCFIFO_AC_MPSCFIFO_H
@@ -39,8 +41,11 @@
 #include <ac_mem.h>
 
 typedef struct AcMpscFifo {
-  AcMem* head;
-  AcMem* tail;
+  AcMem* mem_array;  // AcMem's owned by this fifo, there is
+                     // always at least one, the stub.
+  AcMem* head;       // head of the list where items are added
+  AcMem* tail;       // tail->next is the next AcMem to
+                     // be removed (tail->next is AC_NULL if empty)
 } AcMpscFifo;
 
 /**
@@ -82,14 +87,18 @@ AcMem* AcMpscFifo_rmv_ac_mem_raw(AcMpscFifo* fifo);
 void AcMpscFifo_deinit(AcMpscFifo* fifo);
 
 /**
- * Initialize an AcMpscFifo using the stub
+ * Initialize an AcMpscFifo allocating AcMem's that
+ * will added and owned by the fifo
  *
  * @params fifo is an uniniitalized AcMpscFifo
- * @params stub is the AcMem which will be the stub
+ * @params count is the number of AcMem's to allocate and add
+ *         (There will always be a stub allocated)
+ * @params data_size is the size of Acmem.data array for each AcMem
  *
  * @return 0 (AC_STATUS_OK) if successfull
  */
-AcStatus AcMpscFifo_init_with_stub(AcMpscFifo* fifo, AcMem* stub);
+AcStatus AcMpscFifo_init_and_alloc(AcMpscFifo* fifo, ac_u32 count,
+    ac_u32 data_size);
 
 /**
  * Initialize an AcMpscFifo.

@@ -68,7 +68,7 @@ void AcMem_ret(AcMem* mem);
 void AcMem_free(AcMem* mem);
 
 /**
- * Allocate one for more AcMem contigiously
+ * Allocate one or more AcMem contigiously
  *
  * @params fifo is the fifo this AcMem belongs to
  * @params count is number of AcMem's to allocate

@@ -35,7 +35,7 @@ static ac_bool test_init_and_deinit_mpscfifo() {
 
   // Initialize
   error |= AC_TEST(AcMpscFifo_init(&fifo, 1) == AC_STATUS_OK);
-  AcMpscFifo_print("test_init_deinit:+fifo:", &fifo);
+  AcMpscFifo_print("test_init_deinit: fifo:", &fifo);
 
   error |= AC_TEST(fifo.head != AC_NULL);
   error |= AC_TEST(fifo.tail != AC_NULL);
@@ -225,12 +225,81 @@ ac_bool test_add_rmv_ac_mem_raw() {
   return error;
 }
 
+/**
+ * Test we can add and remove multiple AcMem's owned by the fifo
+ *
+ * return !0 if an error.
+ */
+
+ac_bool test_init_and_alloc_multiple() {
+  ac_bool error = AC_FALSE;
+  AcStatus status;
+  AcMpscFifo fifo;
+  ac_u32 count = 3;
+  ac_u32 data_size = 2;
+
+  ac_printf("test_init_and_alloc_multiple:+fifo=%p\n", &fifo);
+
+  // Initialize
+  status = AcMpscFifo_init_and_alloc(&fifo, count, data_size);
+  ac_printf("test_init_and_alloc_multiple: init_alloc fifo=%p status=%d\n", &fifo, status);
+  if (status != AC_STATUS_OK) {
+    error |= AC_TRUE;
+    goto done;
+  }
+  AcMpscFifo_print("test_init_and_alloc_multiple: after init_alloc fifo:", &fifo);
+
+  // Loop through validating the initial conditions and initializing data
+  for (ac_u32 i = 0; i < count; i++) {
+    // Remove next AcMem and validate
+    AcMem* mem = AcMpscFifo_rmv_ac_mem(&fifo);
+    error |= AC_TEST(mem != AC_NULL);
+    error |= AC_TEST(mem->hdr.next == AC_NULL);
+    error |= AC_TEST(mem->hdr.data_size == data_size);
+    error |= AC_TEST(mem->hdr.user_size == 0);
+    error |= AC_TEST(mem->data[0] == 0);
+    error |= AC_TEST(mem->data[1] == 0);
+    error |= AC_TEST(data_size >= 2);
+
+    // Initialize data fields
+    mem->hdr.user_size = data_size;
+    mem->data[0] = i;
+    mem->data[1] = i + 1;
+
+    // Add it back
+    AcMpscFifo_add_ac_mem(&fifo, mem);
+  }
+  AcMpscFifo_print("test_init_and_alloc_multiple: after initialization fifo:", &fifo);
+
+  // Loop through validating the initialized data
+  for (ac_u32 i = 0; i < count; i++) {
+    // Remove the first one
+    AcMem* mem = AcMpscFifo_rmv_ac_mem(&fifo);
+
+    // Validate field
+    error |= AC_TEST(mem != AC_NULL);
+    error |= AC_TEST(mem->hdr.next == AC_NULL);
+    error |= AC_TEST(mem->hdr.data_size == data_size);
+    error |= AC_TEST(mem->hdr.user_size == data_size);
+    error |= AC_TEST(mem->data[0] == i);
+    error |= AC_TEST(mem->data[1] == i + 1);
+  }
+
+  // Deinitialize
+  AcMpscFifo_deinit(&fifo);
+
+done:
+  ac_printf("test_init_and_alloc_multiple:-error=%d\n", error);
+  return error;
+}
+
 int main(void) {
   ac_bool error = AC_FALSE;
 
   error |= test_init_and_deinit_mpscfifo();
   error |= test_add_rmv_ac_mem();
   error |= test_add_rmv_ac_mem_raw();
+  error |= test_init_and_alloc_multiple();
 
   if (!error) {
     // Succeeded
