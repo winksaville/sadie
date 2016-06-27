@@ -66,6 +66,8 @@
 -I
 /home/wink/prgs/sadie/libs/ac_mem/incs
 -I
+/home/wink/prgs/sadie/libs/ac_mem_pool/incs
+-I
 /home/wink/prgs/sadie/libs/ac_check_sum/incs
 -I
 /home/wink/prgs/sadie/libs/ac_comp_mgr/incs
