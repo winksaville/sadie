@@ -18,4 +18,5 @@ runtimeIncDirs += include_directories(
 
 runtimeSrcs += [
   '@0@/srcs/ac_mem_pool.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_mem_pool_dbg.c'.format(meson.current_source_dir()),
 ]

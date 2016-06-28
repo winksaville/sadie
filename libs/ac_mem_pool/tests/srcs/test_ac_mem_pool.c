@@ -17,6 +17,7 @@
 //#define NDEBUG
 
 #include <ac_mem_pool.h>
+#include <ac_mem_pool_dbg.h>
 #include <ac_mem_pool/tests/incs/test.h>
 
 #include <ac_printf.h>
@@ -30,7 +31,7 @@
 
 extern AcMpscFifo* AcMemPool_get_fifo(AcMemPool* pool);
 
-ac_bool simple_mem_pool_test(ac_u32 data_size) {
+ac_bool simple_mem_pool_test() {
   ac_bool error = AC_FALSE;
   ac_debug_printf("simple_mem_pool_test:+\n");
 
@@ -79,22 +80,18 @@ ac_bool simple_mem_pool_test(ac_u32 data_size) {
   AcMemPool_ret_ac_mem(AC_NULL);
   AcMemPool_ret_mem(AC_NULL);
 
-#if 0
-  // Test returning a AC_NULL mem to a AC_NULL pool doesn't blow up
-  ac_debug_printf("simple_mem_pool_test: returning an AC_NULL message doesn't blow up\n");
-  AcMem_ret(mem);
 
-  // Testing creating a pool with one mem
-  ac_debug_printf("simple_mem_pool_test: create a pool with 1 mem and data_size=%d\n",
-      data_size);
-  mp = AcMemPool_create_extra(1, data_size);
+  // Testing creating a pool with single size
+  ac_debug_printf("simple_mem_pool_test: pool with one size data_size=%d\n",
+      mcs[0].data_size);
+  error |= AC_TEST(AcMemPool_alloc(1, mcs, &mp) == AC_STATUS_OK);
   error |= AC_TEST(mp != AC_NULL);
 
 #ifndef NDEBUG
-  ac_debug_printf("simple_mem_pool_test: pool after creation:\n");
-  AcMpscFifo_print(AcMemPool_get_fifo(mp));
+  AcMemPool_debug_print("simple_mem_pool_test: pool after creation:", mp);
 #endif
 
+#if 0
   // Test requesting the message
   ac_debug_printf("simple_mem_pool_test: get mem expecting != AC_NULL\n");
   mem = AcMem_get(mp);
@@ -149,7 +146,7 @@ int main(void) {
 
   ac_debug_printf("sizeof(AcMem)=%d\n", sizeof(AcMem));
 
-  error |= simple_mem_pool_test(0);
+  error |= simple_mem_pool_test();
   //error |= simple_mem_pool_test(1);
   //error |= simple_mem_pool_test(127);
   //error |= test_mem_pool_multiple_threads(1, 1, 0);

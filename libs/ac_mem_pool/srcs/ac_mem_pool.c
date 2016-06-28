@@ -17,6 +17,7 @@
 //#define NDEBUG
 
 #include <ac_mem_pool.h>
+#include <ac_mem_pool_internal.h>
 
 #include <ac_assert.h>
 #include <ac_debug_printf.h>
@@ -24,19 +25,6 @@
 #include <ac_mpsc_fifo.h>
 #include <ac_mem.h>
 #include <ac_status.h>
-
-// Pool mem pool where each mem->arg1 points to a AcMem
-typedef struct AcMemFifo {
-  AcMemCountSize mcs;   // Count of mem_array
-  AcMem* mem_array;     // The mem_array allocated owned by this AcMemFifo
-  AcMpscFifo fifo;      // A fifo of AcMem's available for use
-} AcMemFifo;
-
-// Array of AcMemPool one for each different AcMem size
-typedef struct AcMemPool {
-  ac_u32 count;                 // Number of elements in mem_fifo_array
-  AcMemFifo mem_fifo_array[];   // Array of AcMemFifo's
-} AcMemPool;
 
 /**
  * Get an AcMem with the specified sized AcMem.data
