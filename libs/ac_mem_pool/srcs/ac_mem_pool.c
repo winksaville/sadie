@@ -53,9 +53,10 @@ AcStatus AcMemPool_get_ac_mem(AcMemPool* pool, ac_u32 size, AcMem** ptr_AcMem) {
 
   ac_debug_printf("AcMemPool_get:+pool=%p\n", pool);
 
-  if ((pool == AC_NULL) || (ptr_AcMem == AC_NULL)) {
-    ac_debug_printf("AcMemPool_get: err AC)NULL pool=%p or ptr_AcMem=%p\n",
-        pool, ptr_AcMem);
+  if ((pool == AC_NULL) || (size == 0) || (ptr_AcMem == AC_NULL)) {
+    ac_debug_printf("AcMemPool_get: err bad param "
+        "pool=%p == AC_NULL or size=%d == 0 or ptr_AcMem=%p AC_NULL\n",
+        pool, size, ptr_AcMem);
     status = AC_STATUS_BAD_PARAM;
     mem = AC_NULL;
     goto done;

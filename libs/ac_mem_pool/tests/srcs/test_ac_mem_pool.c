@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define NDEBUG
+//#define NDEBUG
 
 #include <ac_mem_pool.h>
 #include <ac_mem_pool/tests/incs/test.h>
@@ -34,17 +34,18 @@ ac_bool simple_mem_pool_test(ac_u32 data_size) {
   ac_bool error = AC_FALSE;
   ac_debug_printf("simple_mem_pool_test:+\n");
 
+  ac_u8* data;
   AcMemPool* mp;
   AcMem* mem;
   //AcMem* mem2;
-  AC_UNUSED(mem);
+
   AcMemCountSize mcs[3] = {
     { .count = 1, .data_size = 1 },
     { .count = 2, .data_size = 2 },
     { .count = 3, .data_size = 3 },
   };
 
-  // Testing creating an empty pool returns BAD_PARAM and mp is AC_NULL
+  // Test BAD_PARAMS
   ac_debug_printf("simple_mem_pool_test: create a pool with NO AcMem's\n");
   error |= AC_TEST(AcMemPool_alloc(0, mcs, &mp) == AC_STATUS_BAD_PARAM);
   error |= AC_TEST(mp == AC_NULL);
@@ -54,12 +55,31 @@ ac_bool simple_mem_pool_test(ac_u32 data_size) {
 
   error |= AC_TEST(AcMemPool_alloc(AC_ARRAY_COUNT(mcs), mcs, AC_NULL) == AC_STATUS_BAD_PARAM);
 
-#if 0
-  // Test requesting a message from a AC_NULL pool returns AC_NULL
-  ac_debug_printf("simple_mem_pool_test: test an empty pool that AcMem_get returns AC_NULL\n");
-  error |= AC_TEST(AcMemPool_get_ac_mem(mp, 1, &mem));
+  // Test requesting an AcMem from a AC_NULL pool returns AC_NULL
+  ac_debug_printf("simple_mem_pool_test: bad params for AcMem_get_ac_mem\n");
+  mem = (AcMem*)1;
+  error |= AC_TEST(AcMemPool_get_ac_mem(AC_NULL, 1, &mem) == AC_STATUS_BAD_PARAM);
   error |= AC_TEST(mem == AC_NULL);
+  mem = (AcMem*)1;
+  error |= AC_TEST(AcMemPool_get_ac_mem(AC_NULL, 0, &mem) == AC_STATUS_BAD_PARAM);
+  error |= AC_TEST(mem == AC_NULL);
+  error |= AC_TEST(AcMemPool_get_ac_mem((AcMemPool*)1, 1, AC_NULL) == AC_STATUS_BAD_PARAM);
 
+  ac_debug_printf("simple_mem_pool_test: bad params for AcMem_get_mem\n");
+  data = (void*)1;
+  error |= AC_TEST(AcMemPool_get_mem(AC_NULL, 1, (void**)&data) == AC_STATUS_BAD_PARAM);
+  error |= AC_TEST(data == AC_NULL);
+  data = (void*)1;
+  error |= AC_TEST(AcMemPool_get_mem(AC_NULL, 0, (void**)&data) == AC_STATUS_BAD_PARAM);
+  error |= AC_TEST(data == AC_NULL);
+  error |= AC_TEST(AcMemPool_get_mem((AcMemPool*)1, 1, AC_NULL) == AC_STATUS_BAD_PARAM);
+
+  ac_debug_printf("simple_mem_pool_test: AC_NULL passed to AcMem_free, AcMem_ret_ac_mem and AcMem_ret_mem\n");
+  AcMemPool_free(AC_NULL);
+  AcMemPool_ret_ac_mem(AC_NULL);
+  AcMemPool_ret_mem(AC_NULL);
+
+#if 0
   // Test returning a AC_NULL mem to a AC_NULL pool doesn't blow up
   ac_debug_printf("simple_mem_pool_test: returning an AC_NULL message doesn't blow up\n");
   AcMem_ret(mem);
