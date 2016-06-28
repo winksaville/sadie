@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define NDEBUG
+//#define NDEBUG
 
 #include <ac_mem_pool.h>
 
@@ -173,8 +173,10 @@ AcStatus AcMemPool_alloc(ac_u32 count, AcMemCountSize mcs[],
   
   ac_debug_printf("AcMemPool_alloc:+count=%d =%p\n", count, mcs);
 
-  if (count == 0) {
-    ac_debug_printf("AcMemPool_alloc: err count is 0 return pool=AC_NULL\n");
+  if ((count == 0) || (mcs == AC_NULL) || (ptr_pool == AC_NULL)) {
+    ac_debug_printf("AcMemPool_alloc: err bad param"
+        " count=%d is 0 or mcs=%p = AC_NULL or ptr_pool=%p == AC_NULL\n",
+        count, mcs, ptr_pool);
     pool = AC_NULL;
     status = AC_STATUS_BAD_PARAM;
     goto done;
@@ -213,6 +215,10 @@ done:
 
   if (status != AC_STATUS_OK) {
     AcMemPool_free(pool);
+  }
+
+  if (ptr_pool != AC_NULL) {
+    *ptr_pool = pool;
   }
 
   return status;
