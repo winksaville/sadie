@@ -17,6 +17,7 @@
 //#define NDEBUG
 
 #include <ac_mem_pool.h>
+#include <ac_mem_pool_dbg.h>
 #include <ac_mem_pool_internal.h>
 
 #include <ac_assert.h>
@@ -54,10 +55,11 @@ AcStatus AcMemPool_get_ac_mem(AcMemPool* pool, ac_u32 size, AcMem** ptr_AcMem) {
     AcMemFifo* mem_fifo = &pool->mem_fifo_array[i];
 
     // Find first fit
-    if (mem_fifo->mcs.data_size >= size) {
+    if (mem_fifo->mpcs.data_size >= size) {
       mem = AcMpscFifo_rmv_ac_mem_raw(&mem_fifo->fifo);
       if (mem != AC_NULL) {
         // Got one
+        mem->hdr.user_size = size;
         status = AC_STATUS_OK;
         goto done;
       }
@@ -85,7 +87,10 @@ done:
 void AcMemPool_ret_ac_mem(AcMem* mem) {
   ac_debug_printf("AcMemPool_ret_ac_mem:+mem=%p\n", mem);
 
-  AcMem_ret(mem);
+  if (mem != AC_NULL) {
+    mem->hdr.user_size = 0;
+    AcMem_ret(mem);
+  }
 
   ac_debug_printf("AcMemPool_ret_ac_mem:-mem=%p\n", mem);
 }
@@ -136,7 +141,7 @@ void AcMemPool_ret_mem(void* mem) {
   ac_debug_printf("AcMemPool_ret:+mem=%p\n", mem);
 
   if (mem != AC_NULL) {
-    AcMem_ret((AcMem*)(mem - sizeof(AcMem)));
+    AcMemPool_ret_ac_mem((AcMem*)(mem - sizeof(AcMem)));
   }
 
   ac_debug_printf("AcMemPool_ret:-mem=%p\n", mem);
@@ -148,24 +153,24 @@ void AcMemPool_ret_mem(void* mem) {
  * element determines the number of AcMem's to create and the size of
  * each of there AcMem.data arrays.
  *
- * @params count is the size of the mcs array
- * @params mcs is an array of AcMemCountSize's defining the of each AcMem
+ * @params count is the size of the mpcs array
+ * @params mpcs is an array of AcMemCountSize's defining the of each AcMem
  *         and there count.
  * @params ptr_pool is an out parameter pointing to the pool new created pool
  *
  * @return 0 (AC_STATUS_OK) if successful
  */
-AcStatus AcMemPool_alloc(ac_u32 count, AcMemCountSize mcs[],
+AcStatus AcMemPool_alloc(ac_u32 count, AcMemPoolCountSize mpcs[],
     AcMemPool** ptr_pool) {
   AcStatus status;
   AcMemPool* pool;
   
-  ac_debug_printf("AcMemPool_alloc:+count=%d =%p\n", count, mcs);
+  ac_debug_printf("AcMemPool_alloc:+count=%d mpcs=%p\n", count, mpcs);
 
-  if ((count == 0) || (mcs == AC_NULL) || (ptr_pool == AC_NULL)) {
+  if ((count == 0) || (mpcs == AC_NULL) || (ptr_pool == AC_NULL)) {
     ac_debug_printf("AcMemPool_alloc: err bad param"
-        " count=%d is 0 or mcs=%p = AC_NULL or ptr_pool=%p == AC_NULL\n",
-        count, mcs, ptr_pool);
+        " count=%d is 0 or mpcs=%p = AC_NULL or ptr_pool=%p == AC_NULL\n",
+        count, mpcs, ptr_pool);
     pool = AC_NULL;
     status = AC_STATUS_BAD_PARAM;
     goto done;
@@ -186,10 +191,13 @@ AcStatus AcMemPool_alloc(ac_u32 count, AcMemCountSize mcs[],
     AcMemFifo* mem_fifo = &pool->mem_fifo_array[i];
 
     // Init mem count and size
-    mem_fifo->mcs = mcs[i];
+    mem_fifo->mpcs = mpcs[i];
+    ac_printf("AcMemPool_alloc: mem_fifo=%p\n", mem_fifo);
+    //ac_printf("AcMemPool_alloc: count=%d data_size=%d\n", mem_fifo->mpcs.count, mem_fifo->mpcs.data_size);
+    ac_printf("AcMemPool_alloc: mem_fifo=%p count=%d data_size=%d\n", mem_fifo, mem_fifo->mpcs.count, mem_fifo->mpcs.data_size);
 
     // Init the fifo
-    status = AcMpscFifo_init_and_alloc(&mem_fifo->fifo, mem_fifo->mcs.count, mem_fifo->mcs.data_size);
+    status = AcMpscFifo_init_and_alloc(&mem_fifo->fifo, mem_fifo->mpcs.count, mem_fifo->mpcs.data_size);
     if (status != AC_STATUS_OK) {
       ac_debug_printf("AcMemPool_alloc: err init_and_alloc failed status=%d\n", status);
       goto done;
@@ -200,7 +208,7 @@ AcStatus AcMemPool_alloc(ac_u32 count, AcMemCountSize mcs[],
   status = AC_STATUS_OK;
 
 done:
-  ac_debug_printf("AcMemPool_alloc:-count=%d mcs=%p pool=%p\n", count, mcs, pool);
+  ac_debug_printf("AcMemPool_alloc:-count=%d mpcs=%p pool=%p\n", count, mpcs, pool);
 
   if (status != AC_STATUS_OK) {
     AcMemPool_free(pool);
@@ -210,6 +218,7 @@ done:
     *ptr_pool = pool;
   }
 
+  AcMemPool_debug_print("AcMemPool_alloc:-", *ptr_pool);
   return status;
 }
 

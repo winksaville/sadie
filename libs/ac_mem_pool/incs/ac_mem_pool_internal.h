@@ -27,9 +27,9 @@
 
 // Pool mem pool where each mem->arg1 points to a AcMem
 typedef struct AcMemFifo {
-  AcMemCountSize mcs;   // Count of mem_array
-  AcMem* mem_array;     // The mem_array allocated owned by this AcMemFifo
-  AcMpscFifo fifo;      // A fifo of AcMem's available for use
+  AcMemPoolCountSize mpcs; // Count of mem_array
+  AcMem* mem_array;        // The mem_array allocated owned by this AcMemFifo
+  AcMpscFifo fifo;         // A fifo of AcMem's available for use
 } AcMemFifo;
 
 // Array of AcMemPool one for each different AcMem size

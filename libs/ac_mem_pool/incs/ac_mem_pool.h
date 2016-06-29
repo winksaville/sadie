@@ -30,10 +30,10 @@
 
 typedef struct AcMemPool AcMemPool;
 
-typedef struct AcMemCountSize {
+typedef struct AcMemPoolCountSize {
   ac_u32 count;         // Number of mem AcMem's to create of size
   ac_u32 data_size;     // Size of each AcMem.data array 
-} AcMemCountSize;
+} AcMemPoolCountSize;
 
 /**
  * Get an AcMem with the specified sized AcMem.data
@@ -72,18 +72,18 @@ AcStatus AcMemPool_get_mem(AcMemPool* pool, ac_u32 size, void** ptr_mem);
 void AcMemPool_ret_mem(void* mem);
 
 /**
- * Allocate a memory pool of various sized AcMem's. Each AcMemCountSize
+ * Allocate a memory pool of various sized AcMem's. Each AcMemPoolCountSize
  * element determines the number of AcMem's to create and the size of
  * each of there AcMem.data arrays.
  *
  * @params count is the size of the mcs array
- * @params mcs is an array of AcMemCountSize's defining the of each AcMem
+ * @params mpcs is an array of AcMemPoolCountSize's defining the of each AcMem
  *         and there count.
  * @params ptr_pool is an out parameter pointing to the pool new created pool
  *
  * @return 0 (AC_STATUS_OK) if successful
  */
-AcStatus AcMemPool_alloc(ac_u32 count, AcMemCountSize mcs[],
+AcStatus AcMemPool_alloc(ac_u32 count, AcMemPoolCountSize mpcs[],
     AcMemPool** ptr_pool);
 
 /**
