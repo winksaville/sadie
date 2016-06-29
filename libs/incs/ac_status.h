@@ -19,7 +19,7 @@
 
 #include <ac_inttypes.h>
 
-typedef ac_uint AcStatus;
+typedef ac_u32 AcStatus;
 
 /**
  * AcStatus values
