@@ -32,9 +32,7 @@
  */
 void AcMpscFifo_print(const char* leader, AcMpscFifo* fifo) {
   if (fifo != AC_NULL) {
-    if (leader == AC_NULL) {
-      ac_printf("fifo=%p\n", fifo);
-    } else {
+    if (leader != AC_NULL) {
       ac_printf("%s %p\n", leader, fifo);
     }
 #ifndef NDEBUG
