@@ -56,6 +56,7 @@ ac_bool simple_mem_pool_test() {
   error |= AC_TEST(mp == AC_NULL);
 
   error |= AC_TEST(AcMemPool_alloc(AC_ARRAY_COUNT(mpcs), mpcs, AC_NULL) == AC_STATUS_BAD_PARAM);
+  ac_debug_printf("\n");
 
   // Test requesting an AcMem from a AC_NULL pool returns AC_NULL
   ac_debug_printf("simple_mem_pool_test: bad params for AcMem_get_ac_mem\n");
@@ -66,6 +67,7 @@ ac_bool simple_mem_pool_test() {
   error |= AC_TEST(AcMemPool_get_ac_mem(AC_NULL, 0, &mem) == AC_STATUS_BAD_PARAM);
   error |= AC_TEST(mem == AC_NULL);
   error |= AC_TEST(AcMemPool_get_ac_mem((AcMemPool*)1, 1, AC_NULL) == AC_STATUS_BAD_PARAM);
+  ac_debug_printf("\n");
 
   ac_debug_printf("simple_mem_pool_test: bad params for AcMem_get_mem\n");
   data = (void*)1;
@@ -75,11 +77,13 @@ ac_bool simple_mem_pool_test() {
   error |= AC_TEST(AcMemPool_get_mem(AC_NULL, 0, (void**)&data) == AC_STATUS_BAD_PARAM);
   error |= AC_TEST(data == AC_NULL);
   error |= AC_TEST(AcMemPool_get_mem((AcMemPool*)1, 1, AC_NULL) == AC_STATUS_BAD_PARAM);
+  ac_debug_printf("\n");
 
   ac_debug_printf("simple_mem_pool_test: AC_NULL passed to AcMem_free, AcMem_ret_ac_mem and AcMem_ret_mem\n");
   AcMemPool_free(AC_NULL);
   AcMemPool_ret_ac_mem(AC_NULL);
   AcMemPool_ret_mem(AC_NULL);
+  ac_debug_printf("\n");
 
 
   // Testing creating a pool with single size
@@ -88,6 +92,7 @@ ac_bool simple_mem_pool_test() {
   error |= AC_TEST(AcMemPool_alloc(1, mpcs, &mp) == AC_STATUS_OK);
   error |= AC_TEST(mp != AC_NULL);
   AcMemPool_debug_print("simple_mem_pool_test: pool after creation, should have one entry:", mp);
+  ac_debug_printf("\n");
 
   // Test getting an AcMem
   ac_debug_printf("simple_mem_pool_test: first get ac_mem, expecting != AC_NULL\n");
@@ -96,12 +101,14 @@ ac_bool simple_mem_pool_test() {
   error |= AC_TEST(mem->hdr.user_size == 1);
   error |= AC_TEST(mem->data[0] == 0);
   AcMemPool_debug_print("simple_mem_pool_test: pool after first get, should be empty:", mp);
+  ac_debug_printf("\n");
 
   // Test a second get fails
   ac_debug_printf("simple_mem_pool_test: second get ac_mem, expecting == AC_NULL\n");
   error |= AC_TEST(AcMemPool_get_ac_mem(mp, 1, &mem2) == AC_STATUS_NOT_AVAILABLE);
   error |= AC_TEST(mem2 == AC_NULL);
   AcMemPool_debug_print("simple_mem_pool_test: pool after second get:", mp);
+  ac_debug_printf("\n");
 
   // Modify data and return the AcMem
   ac_debug_printf("simple_mem_pool_test: ret ac_mem, expecting == AC_NULL\n");
@@ -109,6 +116,7 @@ ac_bool simple_mem_pool_test() {
   error |= AC_TEST(mem->data[0] == 1);
   AcMemPool_ret_ac_mem(mem);
   AcMemPool_debug_print("simple_mem_pool_test: pool after return, should have one entry:", mp);
+  ac_debug_printf("\n");
 
   // Request it back and verify that data[0] is 0 and its not the same as mem
   ac_debug_printf("simple_mem_pool_test: re-getting ac_mem, expecting != AC_NULL\n");
@@ -118,7 +126,7 @@ ac_bool simple_mem_pool_test() {
   error |= AC_TEST(mem2->hdr.user_size == 1);
   error |= AC_TEST(mem2->data[0] == 0);
   AcMemPool_debug_print("simple_mem_pool_test: pool after re-getting, should be empty:", mp);
-
+  ac_debug_printf("\n");
 
 #if 0
 

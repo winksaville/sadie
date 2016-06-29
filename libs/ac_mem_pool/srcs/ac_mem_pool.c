@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-//#define NDEBUG
+#define NDEBUG
 
 #include <ac_mem_pool.h>
 #include <ac_mem_pool_dbg.h>
@@ -22,9 +22,9 @@
 
 #include <ac_assert.h>
 #include <ac_debug_printf.h>
+#include <ac_mem.h>
 #include <ac_memmgr.h>
 #include <ac_mpsc_fifo.h>
-#include <ac_mem.h>
 #include <ac_status.h>
 
 /**
@@ -71,7 +71,7 @@ AcStatus AcMemPool_get_ac_mem(AcMemPool* pool, ac_u32 size, AcMem** ptr_AcMem) {
   mem = AC_NULL;
 
 done:
-  ac_debug_printf("AcMemPool_get:-pool=%p mem=%p\n", pool, mem);
+  ac_debug_printf("AcMemPool_get:-pool=%p mem=%p status=%d\n", pool, mem, status);
   if (ptr_AcMem != AC_NULL) {
     *ptr_AcMem = mem;
   }
@@ -192,9 +192,6 @@ AcStatus AcMemPool_alloc(ac_u32 count, AcMemPoolCountSize mpcs[],
 
     // Init mem count and size
     mem_fifo->mpcs = mpcs[i];
-    ac_printf("AcMemPool_alloc: mem_fifo=%p\n", mem_fifo);
-    //ac_printf("AcMemPool_alloc: count=%d data_size=%d\n", mem_fifo->mpcs.count, mem_fifo->mpcs.data_size);
-    ac_printf("AcMemPool_alloc: mem_fifo=%p count=%d data_size=%d\n", mem_fifo, mem_fifo->mpcs.count, mem_fifo->mpcs.data_size);
 
     // Init the fifo
     status = AcMpscFifo_init_and_alloc(&mem_fifo->fifo, mem_fifo->mpcs.count, mem_fifo->mpcs.data_size);
@@ -208,8 +205,6 @@ AcStatus AcMemPool_alloc(ac_u32 count, AcMemPoolCountSize mpcs[],
   status = AC_STATUS_OK;
 
 done:
-  ac_debug_printf("AcMemPool_alloc:-count=%d mpcs=%p pool=%p\n", count, mpcs, pool);
-
   if (status != AC_STATUS_OK) {
     AcMemPool_free(pool);
   }
@@ -218,7 +213,9 @@ done:
     *ptr_pool = pool;
   }
 
-  AcMemPool_debug_print("AcMemPool_alloc:-", *ptr_pool);
+  AcMemPool_debug_print("AcMemPool_alloc:", pool);
+
+  ac_debug_printf("AcMemPool_alloc:-count=%d mpcs=%p pool=%p status=%d\n", count, mpcs, pool, status);
   return status;
 }
 
