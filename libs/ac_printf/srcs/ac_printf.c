@@ -128,7 +128,7 @@ static void write_sval(
         writer->write_param(writer, cast_to_write_param('-'));
         val = -val;
     }
-    write_uval(writer, val, sizeof(ac_uint), 10);
+    write_uval(writer, val, sizeof(ac_uint), radix);
 }
 
 /**
@@ -161,12 +161,15 @@ static ac_uint get_number(char ch, char** format) {
  *   - %% ::= prints a percent
  *   - %s ::= prints a string
  *   - %p ::= prints a pointer base 16 with leading zero's
- *   - %b ::= prints a ac_uint base 2
- *   - %d ::= prints a ac_sint base 10
- *   - %u ::= prints a ac_uint base 10
- *   - %x ::= prints a ac_uint base 16
+ *   - %b ::= prints a ac_u32 base 2
+ *   - %d ::= prints a ac_s32 base 10
+ *   - %u ::= prints a ac_u32 base 10
+ *   - %x ::= prints a ac_u32 base 16
  *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
  *   - print a 64 bit value in the requested radix.
+ *   - %i ::= prints a ac_sint base 10
+ *   - %v ::= prints a ac_uint base 10
+ *   - %y ::= prints a ac_uint base 16
  *
  * Returns number of characters consumed
  */
@@ -264,21 +267,32 @@ static void formatter(ac_writer* writer, char const* format, ac_va_list args) {
                     write_str(writer, s);
                     break;
                 }
-                case 'b': {
-                    write_uval(writer, ac_va_arg(args, ac_uint),
-                       sizeof(ac_uint), 2);
+                case 'i': {
+                    write_sval(writer, ac_va_arg(args, ac_sint), sizeof(ac_sint), 10);
                     break;
                 }
-                case 'd': {
-                    write_sval(writer, ac_va_arg(args, ac_sint), sizeof(ac_uint), 2);
-                    break;
-                }
-                case 'u': {
+                case 'v': {
                     write_uval(writer, ac_va_arg(args, ac_uint), sizeof(ac_uint), 10);
                     break;
                 }
-                case 'x': {
+                case 'y': {
                     write_uval(writer, ac_va_arg(args, ac_uint), sizeof(ac_uint), 16);
+                    break;
+                }
+                case 'b': {
+                    write_uval(writer, ac_va_arg(args, ac_u32), sizeof(ac_u32), 2);
+                    break;
+                }
+                case 'd': {
+                    write_sval(writer, ac_va_arg(args, ac_s32), sizeof(ac_s32), 10);
+                    break;
+                }
+                case 'u': {
+                    write_uval(writer, ac_va_arg(args, ac_u32), sizeof(ac_u32), 10);
+                    break;
+                }
+                case 'x': {
+                    write_uval(writer, ac_va_arg(args, ac_u32), sizeof(ac_u32), 16);
                     break;
                 }
                 case 'l': {
@@ -293,7 +307,7 @@ static void formatter(ac_writer* writer, char const* format, ac_va_list args) {
                         write_uval(writer, ac_va_arg(args, ac_u64), sizeof(ac_u64), 2);
                     } else if (ac_strncmp("d", format, 1) == 0) {
                         format += 1;
-                        write_sval(writer, ac_va_arg(args, ac_u64), sizeof(ac_u64), 10);
+                        write_sval(writer, ac_va_arg(args, ac_s64), sizeof(ac_s64), 10);
                     } else if (ac_strncmp("u", format, 1) == 0) {
                         format += 1;
                         write_uval(writer, ac_va_arg(args, ac_u64), sizeof(ac_u64), 10);

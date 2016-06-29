@@ -144,15 +144,18 @@ ac_uint ac_printf_register_format_proc(ac_printf_format_proc format_proc, ac_u8 
  *   - 'l' or 'll'
  *
  * format char:
- *   - % ::= prints a percent
- *   - s ::= prints a string
- *   - p ::= prints a pointer base 16 with leading zero's
- *   - b ::= prints a ac_uint base 2
- *   - d ::= prints a ac_sint base 10
- *   - u ::= prints a ac_uint base 10
- *   - x ::= prints a ac_uint base 16
- *   - For %b, %d, %u, %x can be preceeded by length modifier "l" or "ll" to
+ *   - %% ::= prints a percent
+ *   - %s ::= prints a string
+ *   - %p ::= prints a pointer base 16 with leading zero's
+ *   - %b ::= prints a ac_u32 base 2
+ *   - %d ::= prints a ac_s32 base 10
+ *   - %u ::= prints a ac_u32 base 10
+ *   - %x ::= prints a ac_u32 base 16
+ *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
  *   - print a 64 bit value in the requested radix.
+ *   - %i ::= prints a ac_sint base 10
+ *   - %v ::= prints a ac_uint base 10
+ *   - %y ::= prints a ac_uint base 16
  *
  * Returns returns what writer->get_buff() returns if it exists and doesn't
  * return AC_NULL. If get_buff doesn't exists or does return AC_NULL at least
@@ -183,15 +186,18 @@ const char* ac_formatter(ac_writer* writer, const char *format, ...);
  *   - 'l' or 'll'
  *
  * format char:
- *   - % ::= prints a percent
- *   - s ::= prints a string
- *   - p ::= prints a pointer base 16 with leading zero's
- *   - b ::= prints a ac_uint base 2
- *   - d ::= prints a ac_sint base 10
- *   - u ::= prints a ac_uint base 10
- *   - x ::= prints a ac_uint base 16
- *   - For %b, %d, %u, %x can be preceeded by length modifier "l" or "ll" to
+ *   - %% ::= prints a percent
+ *   - %s ::= prints a string
+ *   - %p ::= prints a pointer base 16 with leading zero's
+ *   - %b ::= prints a ac_u32 base 2
+ *   - %d ::= prints a ac_s32 base 10
+ *   - %u ::= prints a ac_u32 base 10
+ *   - %x ::= prints a ac_u32 base 16
+ *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
  *   - print a 64 bit value in the requested radix.
+ *   - %i ::= prints a ac_sint base 10
+ *   - %v ::= prints a ac_uint base 10
+ *   - %y ::= prints a ac_uint base 16
  *
  * Returns writer->count which should be the number of characters printed
  */
@@ -220,15 +226,18 @@ ac_uint ac_printfw(ac_writer* writer, const char *format, ...);
  *   - 'l' or 'll'
  *
  * format char:
- *   - % ::= prints a percent
- *   - s ::= prints a string
- *   - p ::= prints a pointer base 16 with leading zero's
- *   - b ::= prints a ac_uint base 2
- *   - d ::= prints a ac_sint base 10
- *   - u ::= prints a ac_uint base 10
- *   - x ::= prints a ac_uint base 16
- *   - For %b, %d, %u, %x can be preceeded by length modifier "l" or "ll" to
+ *   - %% ::= prints a percent
+ *   - %s ::= prints a string
+ *   - %p ::= prints a pointer base 16 with leading zero's
+ *   - %b ::= prints a ac_u32 base 2
+ *   - %d ::= prints a ac_s32 base 10
+ *   - %u ::= prints a ac_u32 base 10
+ *   - %x ::= prints a ac_u32 base 16
+ *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
  *   - print a 64 bit value in the requested radix.
+ *   - %i ::= prints a ac_sint base 10
+ *   - %v ::= prints a ac_uint base 10
+ *   - %y ::= prints a ac_uint base 16
  *
  * Returns writer->count which should be the number of characters printed
  */
@@ -257,15 +266,18 @@ ac_uint ac_printf(const char *format, ...);
  *   - 'l' or 'll'
  *
  * format char:
- *   - % ::= prints a percent
- *   - s ::= prints a string
- *   - p ::= prints a pointer base 16 with leading zero's
- *   - b ::= prints a ac_uint base 2
- *   - d ::= prints a ac_sint base 10
- *   - u ::= prints a ac_uint base 10
- *   - x ::= prints a ac_uint base 16
- *   - For %b, %d, %u, %x can be preceeded by length modifier "l" or "ll" to
+ *   - %% ::= prints a percent
+ *   - %s ::= prints a string
+ *   - %p ::= prints a pointer base 16 with leading zero's
+ *   - %b ::= prints a ac_u32 base 2
+ *   - %d ::= prints a ac_s32 base 10
+ *   - %u ::= prints a ac_u32 base 10
+ *   - %x ::= prints a ac_u32 base 16
+ *   - For %b, %d, %u, %x can be preceeded by "l" or "ll" to
  *   - print a 64 bit value in the requested radix.
+ *   - %i ::= prints a ac_sint base 10
+ *   - %v ::= prints a ac_uint base 10
+ *   - %y ::= prints a ac_uint base 16
  *
  * Returns writer->count which should be the number of characters printed
  */

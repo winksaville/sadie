@@ -243,9 +243,9 @@ int main(void) {
 
   // In printf statements constant negative numbers must be cast
   // so they work both 32 and 64 bit environments.
-  failure |= TEST_PRINTING("%d", AC_SINT(-2147483647), "-2147483647");
-  failure |= TEST_PRINTING("%d", (ac_sint)-2147483648, "-2147483648");
-  failure |= TEST_PRINTING("%d", (ac_int)-1, "-1");
+  failure |= TEST_PRINTING("%i", AC_SINT(-2147483647), "-2147483647");
+  failure |= TEST_PRINTING("%i", (ac_sint)-2147483648, "-2147483648");
+  failure |= TEST_PRINTING("%i", (ac_int)-1, "-1");
 
   failure |= TEST_PRINTING("%u", 2, "2");
   failure |= TEST_PRINTING("%u", 0x7FFFFFFF, "2147483647");
@@ -319,48 +319,48 @@ int main(void) {
   if (sizeof(ac_uint) == sizeof(ac_u64)) {
     // Test big positive and negative numbers on 64 bit systems
     // But casting isn't necessary, but works.
-    failure |= TEST_PRINTING("%b", 0x8765432187654321,
+    failure |= TEST_PRINTING("%lb", 0x8765432187654321,
         "1000011101100101010000110010000110000111011001010100001100100001");
-    failure |= TEST_PRINTING("%b", 0xFFFFFFFFFFFFFFFF,
+    failure |= TEST_PRINTING("%llb", 0xFFFFFFFFFFFFFFFF,
         "1111111111111111111111111111111111111111111111111111111111111111");
 
-    failure |= TEST_PRINTING("%d",
+    failure |= TEST_PRINTING("%i",
         (ac_sint)0x7FFFFFFFFFFFFFFF, "9223372036854775807");
-    failure |= TEST_PRINTING("%d",
+    failure |= TEST_PRINTING("%i",
         (ac_int)0x8000000000000000, "-9223372036854775808");
-    failure |= TEST_PRINTING("%d",
+    failure |= TEST_PRINTING("%i",
         0x7FFFFFFFFFFFFFFF, "9223372036854775807");
-    failure |= TEST_PRINTING("%d",
+    failure |= TEST_PRINTING("%i",
         0x8000000000000000, "-9223372036854775808");
 
 
-    failure |= TEST_PRINTING("%u",
+    failure |= TEST_PRINTING("%v",
         (ac_uint)0x7FFFFFFFFFFFFFFF, "9223372036854775807");
-    failure |= TEST_PRINTING("%u",
+    failure |= TEST_PRINTING("%v",
         AC_UINT(0x8000000000000000), "9223372036854775808");
-    failure |= TEST_PRINTING("%u",
+    failure |= TEST_PRINTING("%v",
         (ac_uint)0xFFFFFFFFFFFFFFFF, "18446744073709551615");
-    failure |= TEST_PRINTING("%u",
+    failure |= TEST_PRINTING("%v",
         0x7FFFFFFFFFFFFFFF, "9223372036854775807");
-    failure |= TEST_PRINTING("%u",
+    failure |= TEST_PRINTING("%v",
         0x8000000000000000, "9223372036854775808");
-    failure |= TEST_PRINTING("%u",
+    failure |= TEST_PRINTING("%v",
         0xFFFFFFFFFFFFFFFF, "18446744073709551615");
 
-    failure |= TEST_PRINTING("%u", (ac_uint)-1, "18446744073709551615");
-    failure |= TEST_PRINTING("%u", AC_UINT(-1), "18446744073709551615");
+    failure |= TEST_PRINTING("%v", (ac_uint)-1, "18446744073709551615");
+    failure |= TEST_PRINTING("%v", AC_UINT(-1), "18446744073709551615");
 
-    failure |= TEST_PRINTING("%x",
+    failure |= TEST_PRINTING("%y",
         (ac_uint)0x7FFFFFFFFFFFFFFF, "7fffffffffffffff");
-    failure |= TEST_PRINTING("%x",
+    failure |= TEST_PRINTING("%y",
         AC_UINT(0x8000000000000000), "8000000000000000");
-    failure |= TEST_PRINTING("%x",
+    failure |= TEST_PRINTING("%y",
         (ac_uint)0xFFFFFFFFFFFFFFFF, "ffffffffffffffff");
-    failure |= TEST_PRINTING("%x",
+    failure |= TEST_PRINTING("%y",
         0x7FFFFFFFFFFFFFFF, "7fffffffffffffff");
-    failure |= TEST_PRINTING("%x",
+    failure |= TEST_PRINTING("%y",
         0x8000000000000000, "8000000000000000");
-    failure |= TEST_PRINTING("%x",
+    failure |= TEST_PRINTING("%y",
         0xFFFFFFFFFFFFFFFF, "ffffffffffffffff");
   }
 
@@ -372,8 +372,8 @@ int main(void) {
 
   failure |= TEST_PRINTING("%llx", 0ll, "0");
   failure |= TEST_PRINTING("%llx", 9ll, "9");
-  failure |= TEST_PRINTING("%x", 10ll, "a");
-  failure |= TEST_PRINTING("%x", 15ll, "f");
+  failure |= TEST_PRINTING("%y", 10ll, "a");
+  failure |= TEST_PRINTING("%y", 15ll, "f");
   failure |= TEST_PRINTING("%llx", 16ll, "10");
 
   // Test we are "filling" zeros correctly as we print using write_u32 twice
@@ -408,7 +408,7 @@ int main(void) {
       failure |= TEST_PRINTING("%x", i, "f7654321");
   } else if (sizeof(ac_uint) == sizeof(ac_u64)) {
       ac_uint i = (ac_uint)0xf7654321f7654321;
-      failure |= TEST_PRINTING("%x", i, "f7654321f7654321");
+      failure |= TEST_PRINTING("%y", i, "f7654321f7654321");
   } else {
       failure |= FAIL(ac_formatter(
             &writer, "Unexptected sizeof(ac_uint)=%d", sizeof(ac_uint)));
