@@ -41,20 +41,16 @@ ac_bool simple_mem_pool_test() {
   AcMem* mem;
   AcMem* mem2;
 
-  AcMemPoolCountSize mpcs[3] = {
+  AcMemPoolCountSize mpcs[1] = {
     { .count = 1, .data_size = 1 },
-    { .count = 2, .data_size = 2 },
-    { .count = 3, .data_size = 3 },
   };
 
   // Test BAD_PARAMS
   ac_debug_printf("simple_mem_pool_test: create a pool with NO AcMem's\n");
   error |= AC_TEST(AcMemPool_alloc(0, mpcs, &mp) == AC_STATUS_BAD_PARAM);
   error |= AC_TEST(mp == AC_NULL);
-
   error |= AC_TEST(AcMemPool_alloc(AC_ARRAY_COUNT(mpcs), AC_NULL, &mp) == AC_STATUS_BAD_PARAM);
   error |= AC_TEST(mp == AC_NULL);
-
   error |= AC_TEST(AcMemPool_alloc(AC_ARRAY_COUNT(mpcs), mpcs, AC_NULL) == AC_STATUS_BAD_PARAM);
   ac_debug_printf("\n");
 
@@ -84,7 +80,6 @@ ac_bool simple_mem_pool_test() {
   AcMemPool_ret_ac_mem(AC_NULL);
   AcMemPool_ret_mem(AC_NULL);
   ac_debug_printf("\n");
-
 
   // Testing creating a pool with single size
   ac_debug_printf("simple_mem_pool_test: pool with one size data_size=%d\n",
@@ -127,36 +122,6 @@ ac_bool simple_mem_pool_test() {
   error |= AC_TEST(mem2->data[0] == 0);
   AcMemPool_debug_print("simple_mem_pool_test: pool after re-getting, should be empty:", mp);
   ac_debug_printf("\n");
-
-#if 0
-
-  ac_memset(mem->data, 0xa5, data_size);
-  for (ac_u32 i = 0; i < data_size; i++) {
-    error |= AC_TEST(mem->data[i] == 0xa5);
-  }
-
-#ifndef NDEBUG
-  ac_debug_printf("simple_mem_pool_test: pool after setting extra data:\n");
-  AcMpscFifo_print(AcMemPool_get_fifo(mp));
-#endif
-
-  // Test requesting the message which should be empty
-  ac_debug_printf("simple_mem_pool_test: get mem expecting AC_NULL\n");
-  mem2 = AcMem_get(mp);
-  error |= AC_TEST(mem2 == AC_NULL);
-
-  ac_debug_printf("simple_mem_pool_test: return mem=%p\n", mem);
-  // Test returning the message we successfully got
-  AcMem_ret(mem);
-
-  // Test we can get a message back after its returned
-  ac_debug_printf("simple_mem_pool_test: test we can get a mem after returning\n");
-  mem = AcMem_get(mp);
-  error |= AC_TEST(mem != AC_NULL);
-
-  // Return mem
-  AcMem_ret(mem);
-#endif
 
   ac_debug_printf("simple_mem_pool_test:-\n");
   return error;
