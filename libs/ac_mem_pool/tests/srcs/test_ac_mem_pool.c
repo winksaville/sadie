@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-//#define NDEBUG
+#define NDEBUG
 
 #include <ac_mem_pool.h>
 #include <ac_mem_pool_dbg.h>
 #include <ac_mem_pool_internal.h>
 #include <ac_mem_pool/tests/incs/test.h>
 
-#include <ac_printf.h>
+#include <ac_assert.h>
 #include <ac_debug_printf.h>
 #include <ac_memset.h>
 #include <ac_mpsc_fifo_dbg.h>
@@ -127,6 +127,87 @@ ac_bool simple_mem_pool_test() {
   return error;
 }
 
+ac_bool multiple_mem_pool_test() {
+  ac_bool error = AC_FALSE;
+  ac_debug_printf("multiple_mem_pool_test:+\n");
+
+  AcMemPool* mp;
+  AcMem* ac_mem[3];
+  ac_u8* mem[6];
+
+  AcMemPoolCountSize mpcs[3] = {
+    { .count = 1, .data_size = 1 },
+    { .count = 2, .data_size = 2 },
+    { .count = 3, .data_size = 3 },
+  };
+
+  // Create a pool with multiple sizes and counts
+  ac_debug_printf("multiple_mem_pool_test: pool with multiple sizes data_sizes: %d %d %d\n",
+      mpcs[0].data_size, mpcs[1].data_size, mpcs[2].data_size);
+  error |= AC_TEST(AcMemPool_alloc(AC_ARRAY_COUNT(mpcs), mpcs, &mp) == AC_STATUS_OK);
+  error |= AC_TEST(mp != AC_NULL);
+  AcMemPool_debug_print("multiple_mem_pool_test: pool after creation, should have 3 fifo's:", mp);
+  ac_debug_printf("\n");
+
+  // Test getting an AcMem
+  ac_debug_printf("multiple_mem_pool_test: first get ac_mem, expecting != AC_NULL\n");
+  error |= AC_TEST(AcMemPool_get_ac_mem(mp, mpcs[2].data_size, &ac_mem[0]) == AC_STATUS_OK);
+  error |= AC_TEST(ac_mem[0] != AC_NULL);
+  error |= AC_TEST(ac_mem[0]->hdr.user_size == mpcs[2].data_size);
+  error |= AC_TEST(ac_mem[0]->data[0] == 0);
+  error |= AC_TEST(ac_mem[0]->data[1] == 0);
+  error |= AC_TEST(ac_mem[0]->data[2] == 0);
+  AcMemPool_debug_print("multiple_mem_pool_test: pool after first get ac_mem, fifo 2 should now have 2 entries:", mp);
+  AcMemPool_ret_ac_mem(ac_mem[0]);
+  AcMemPool_debug_print("multiple_mem_pool_test: pool after returning ac_mem, fifo 2 should now have 3 entries:", mp);
+  ac_debug_printf("\n");
+
+  // Test getting all of the memory asking for 1 byte
+  ac_debug_printf("multiple_mem_pool_test: 1 all of the memory, expecting != AC_NULL\n");
+  ac_assert(AC_ARRAY_COUNT(mpcs) == 3);
+  ac_assert(AC_ARRAY_COUNT(mem) == (mpcs[0].count + mpcs[1].count + mpcs[2].count));
+  for (ac_u32 i = 0; i < AC_ARRAY_COUNT(mem); i++) {
+    error |= AC_TEST(AcMemPool_get_mem(mp, 1, (void**)&mem[i]) == AC_STATUS_OK);
+    error |= AC_TEST(mem[i] != AC_NULL);
+    mem[i][0] = i;
+  }
+  // test initialized
+  for (ac_u32 i = 0; i < AC_ARRAY_COUNT(mem); i++) {
+    error |= AC_TEST(mem[i][0] == i);
+  }
+  AcMemPool_debug_print("multiple_mem_pool_test: 1 pool after getting all mem, pool is empty:", mp);
+  for (ac_u32 i = 0; i < AC_ARRAY_COUNT(mem); i++) {
+    AcMemPool_ret_mem(mem[i]);
+  }
+  AcMemPool_debug_print("multiple_mem_pool_test: 1 pool after returning all mem, poll is full:", mp);
+  ac_debug_printf("\n");
+
+  // Test getting all of the memory a second time
+  ac_debug_printf("multiple_mem_pool_test: 2 all of the memory, expecting != AC_NULL ****\n");
+  ac_u32 idx = 0;
+  for (ac_u32 i = 0; i < AC_ARRAY_COUNT(mpcs); i++) {
+    for (ac_u32 m = 0; m < mpcs[i].count; m++) {
+      error |= AC_TEST(AcMemPool_get_mem(mp, 1, (void**)&mem[idx]) == AC_STATUS_OK);
+      error |= AC_TEST(mem[idx] != AC_NULL);
+      mem[idx][0] = idx;
+      idx += 1;
+    }
+  }
+  // test initialized
+  for (ac_u32 i = 0; i < AC_ARRAY_COUNT(mem); i++) {
+    error |= AC_TEST(mem[i][0] == i);
+  }
+  AcMemPool_debug_print("multiple_mem_pool_test: 2 pool after getting all mem, pool is empty:", mp);
+  for (ac_u32 i = 0; i < AC_ARRAY_COUNT(mem); i++) {
+    AcMemPool_ret_mem(mem[i]);
+  }
+  AcMemPool_debug_print("multiple_mem_pool_test: 2 pool after returning all mem, poll is full:", mp);
+  ac_debug_printf("\n");
+
+  ac_debug_printf("multiple_mem_pool_test:-\n");
+  return error;
+}
+
 /**
  * main
  */
@@ -140,8 +221,7 @@ int main(void) {
   ac_debug_printf("sizeof(AcMem)=%d\n", sizeof(AcMem));
 
   error |= simple_mem_pool_test();
-  //error |= simple_mem_pool_test(1);
-  //error |= simple_mem_pool_test(127);
+  error |= multiple_mem_pool_test();
   //error |= test_mem_pool_multiple_threads(1, 1, 0);
   //error |= test_mem_pool_multiple_threads(1, 10, 1);
   //error |= test_mem_pool_multiple_threads(10, 1, 48);
