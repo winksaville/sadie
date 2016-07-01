@@ -18,6 +18,7 @@
 
 #include <ac_mem_pool/tests/incs/test.h>
 
+#include <ac_assert.h>
 #include <ac_comp_mgr.h>
 #include <ac_debug_printf.h>
 #include <ac_inttypes.h>
@@ -28,11 +29,12 @@
 #include <ac_mem_pool.h>
 #include <ac_receptor.h>
 #include <ac_test.h>
+#include <ac_time.h>
 #include <ac_thread.h>
 #include <ac_tsc.h>
 
-#define MSGS_PER_THREAD 20
-#define MSGS_TSC_COUNT  MSGS_PER_THREAD
+#define MEMS_PER_THREAD 20
+#define MEMS_TSC_COUNT  MEMS_PER_THREAD
 
 #if AC_PLATFORM == pc_x86_64
 extern ac_uint remove_zombies(void);
@@ -50,243 +52,199 @@ ac_u32 ready_length(void) {
 #endif
 }
 
-#if 0
-struct MsgTsc {
-  ac_u32 waiting_count;
-  ac_u32 ready_length;
-  ac_u64 sent_tsc;
-  ac_u64 recv_tsc;
-  ac_u64 done_tsc;
-  ac_bool extra_error;
-  ac_u32 extra_error_index;
-  ac_u8 extra_error_value;
-  ac_u8 extra_error_expected_value;
-};
-
-typedef struct {
-  AcComp comp;
-  AcCompMgr* cm;
-  AcCompInfo* ci;
-  ac_bool stop_processing_mems;
-  ac_u32 extra_size;
-  ac_u8  extra_value;
+typedef struct ClientParams {
+  ac_bool running;
+  ac_bool done;
+  ac_u8* mem;
+  ac_u64 error_count;
   ac_u64 count;
-  struct MsgTsc mem_tsc[MSGS_TSC_COUNT];
-} mptt_params;
+  AcReceptor* receptor_ready;
+  AcReceptor* receptor_waiting;
+  AcReceptor* receptor_work_complete;
+  AcReceptor* receptor_done;
+} ClientParams;
 
-static ac_bool mptt_process_mem(AcComp* this, AcMsg* msg) {
-  ac_u64 recv_tsc = ac_tscrd();
-  mptt_params* params = (mptt_params*)this;
+void* client(void* param) {
+  ac_debug_printf("client:+param=%p\n", param);
+  ClientParams* cp = (ClientParams*)param;
 
-  ac_uint idx = params->count++ % AC_ARRAY_COUNT(params->mem_tsc);
-  struct MsgTsc* mt = &params->mem_tsc[idx];
-  mt->waiting_count = mem->arg1;
-  mt->ready_length = ready_length();
-  mt->sent_tsc = mem->arg2;
-  mt->recv_tsc = recv_tsc;
-  mt->extra_error = AC_FALSE;
+  ac_assert((cp->receptor_waiting = AcReceptor_get()) != AC_NULL);
 
-  if (params->extra_size != 0) {
-    for (ac_u32 i = 0; i < params->extra_size; i++) {
-      mt->extra_error |= mem->data[i] != params->extra_value;
-      if (mt->extra_error) {
-        mt->extra_error_index = i;
-        mt->extra_error_value = mem->extra_data[i];
-        mt->extra_error_expected_value = params->extra_value;
-        ac_debug_printf("mptt_process_mem: err mem->arg1=%ld mem->arg2=%ld count=%ld "
-            " extra_error=%b extra_error_value=0x%x extra_error_expected_value=0x%x\n",
-            mem->arg1, mem->arg2, params->count,
-            mt->extra_error, mt->extra_error_value, mt->extra_error_expected_value);
-        break;
+  // Signal we're ready
+  AcReceptor_signal(cp->receptor_ready);
+
+  // While we're not done wait for a signal to do work
+  // do the work and signal work is complete.
+  ac_bool* ptr_done = &cp->done;
+  while (__atomic_load_n(ptr_done, __ATOMIC_ACQUIRE) == AC_FALSE) {
+    AcReceptor_wait(cp->receptor_waiting);
+
+    if (!cp->done) {
+      cp->count += 1;
+      ac_u8** ptr_mem = &cp->mem;
+      ac_u8* m = __atomic_exchange_n(ptr_mem, AC_NULL, __ATOMIC_ACQUIRE);
+      if (m == AC_NULL) {
+        cp->error_count += 1;
+      } else {
+        AcMemPool_ret_mem(m);
+        AcReceptor_signal(cp->receptor_work_complete);
       }
     }
   }
-  ac_debug_printf("mptt_process_mem:- mem->arg1=%ld mem->arg2=%ld count=%ld\n",
-      mem->arg1, mem->arg2, params->count);
 
-  // Return message
-  AcMsg_ret(mem);
+  AcReceptor_ret(cp->receptor_waiting);
 
-  mt->done_tsc = ac_tscrd();
+  // Signal we're done
+  AcReceptor_signal(cp->receptor_done);
 
-  __atomic_thread_fence(__ATOMIC_RELEASE);
-  return AC_TRUE;
+  ac_debug_printf("client:-param=%p\n", param);
+  return AC_NULL;
 }
 
 /**
- * Count the message in the pool
- */
-ac_u32 count_mems(AcMsgPool* mp, ac_u32 mem_count) {
-  ac_u32 count = 0;
-
-  ac_debug_printf("count_mems:+ mem_count=%d\n", mem_count);
-
-  if (mem_count > 0) {
-    AcMsg** array = ac_malloc(sizeof(AcMsg*) * mem_count);
-
-    AcMsg* mem;
-    ac_u32 idx = 0;
-    while ((mem = AcMsg_get(mp)) != AC_NULL) {
-      array[idx] = mem;
-      count += 1;
-      idx = count % mem_count;
-    }
-    for (ac_u32 idx = 0; idx < count && idx < mem_count; idx++) {
-      AcMsg_ret(array[idx]);
-    }
-
-    ac_free(array);
-  }
-
-  ac_debug_printf("count_mems:- count=%d\n", count);
-  return count;
-}
-#endif
-
-/**
- * Test mem pools being used by multiple threads
+ * Test mem pools being having the calling thread create
+ * subbe the axle
+ * and passed the number of spokes
  *
  * return AC_TRUE if an error.
  */
-ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count, ac_u32 comps_per_thread,
-    ac_u32 extra_size) {
+ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count) {
   ac_bool error = AC_FALSE;
-  ac_printf("test_mem_pool_multiple_threads:+ thread_count=%d comps_per_thread=%d extra_size=%d rl=%d\n",
-      thread_count, comps_per_thread, extra_size, ready_length());
-#if 10 //AC_PLATFORM == VersatilePB
+  ClientParams* client_params = AC_NULL;
+  ac_u64 count = 0;
+  ac_u64 loops = 0;
+  ac_debug_printf("test_mem_pool_multiple_threads:+ thread_count=%d\n", thread_count);
+
+#if 0 //AC_PLATFORM == VersatilePB
   //ac_printf("test_mem_pool_multiple_threads: VersatilePB threading not working, skipping\n");
   ac_printf("test_mem_pool_multiple_threads: skipping\n");
 #else
 
-  ac_u32 total_comp_count = thread_count * comps_per_thread;
+  AcReceptor* work_complete = AcReceptor_get();
+  ac_assert(work_complete != AC_NULL);
 
-  // Create a mem pool. The mem_count must be at
-  // at least twice the number of total components
-  // because each component has a fifo and the first
-  // message returned by the queue will be a stub
-  // created when the fifo was created. Hence we loose
-  // the use of one message until the fifo is deinited.
-  //
-  // Since there is one queue per thread in this
-  // test we create a message pool with twice the
-  // number threads as the mem_count
-  ac_u32 mem_count = total_comp_count * 2;
-  AcMsgPool* mp = AcMsgPool_create_extra(mem_count, extra_size);
-  error |= AC_TEST(mp != AC_NULL);
-  error |= AC_TEST(count_mems(mp, mem_count) == mem_count);
-  ac_debug_printf("test_mem_pool_multiple_threads:+total_comp_count=%d mem_count=%d\n",
-      total_comp_count, mem_count);
+  AcMemPoolCountSize mpcs[1];
+  mpcs[0].count = thread_count; // + 10; //* 10;
+  mpcs[0].data_size = 1;
 
-  mptt_params** params = ac_malloc(sizeof(mptt_params) * thread_count);
+  AcMemPool* pool;
+  error |= AC_TEST(AcMemPool_alloc(AC_ARRAY_COUNT(mpcs), mpcs, &pool) == AC_STATUS_OK);
+  if (error) {
+    goto done;
+  }
 
-  // Create the component manager with appropriate
-  // number of theads and comps_per_thread
-  AcCompMgr* cm = AcCompMgr_init(thread_count, comps_per_thread, 0);
-  error |= AC_TEST(cm != AC_NULL);
+  // Start clients
+  client_params = ac_calloc(thread_count, sizeof(ClientParams));
+  for (ac_u32 t = 0; t < thread_count; t++) {
+    ClientParams* cp = &client_params[t];
 
-  // Add the components to the component manager
-  for (ac_u32 i = 0; i < total_comp_count; i++) {
-    ac_debug_printf("test_mem_pool_multiple_threads: init %d\n", i);
-    params[i] = ac_malloc(sizeof(mptt_params));
-    error |= AC_TEST(params[i] != AC_NULL);
+    cp->done = AC_FALSE;
+    cp->mem = AC_NULL;
+    cp->count = 0;
+    cp->error_count = 0;
+    ac_assert((cp->receptor_ready = AcReceptor_get()) != AC_NULL);
+    ac_assert((cp->receptor_done = AcReceptor_get()) != AC_NULL);
+    cp->receptor_work_complete = work_complete;
+
+    ac_thread_rslt_t rslt = ac_thread_create(0, client, (void*)cp);
+    error |= AC_TEST(rslt.status == AC_STATUS_OK);
     if (error) {
-      return error;
-    }
-
-    params[i]->cm = cm;
-    params[i]->comp.process_mem = mptt_process_mem;
-    params[i]->ci = AcCompMgr_add_comp(cm, &params[i]->comp, extra_size);
-    params[i]->extra_size = extra_size;
-    params[i]->extra_value = 0x5a;
-    error |= AC_TEST(params[i]->ci != AC_NULL);
-  }
-
-  // Send the threads messages which they will return to our pool
-  //
-  // Note: See [this](https://github.com/winksaville/sadie/wiki/test-ac_mem_pool-on-Posix)
-  // and other pages in the wiki for additional information.
-  ac_u64 start = ac_tscrd();
-  ac_debug_printf("test_mem_pool_multiple_threads: sending mems\n");
-  const ac_u32 max_waiting_count = 100000;
-  ac_u32 waiting_count = 0;
-  for (ac_u32 message = 0; !error && (message < MSGS_PER_THREAD); message++) {
-    ac_debug_printf("test_mem_pool_multiple_threads: waiting_count=%ld message=%d\n",
-        waiting_count, message);
-    for (ac_s32 i = 0; !error && (i < thread_count); i++) {
-        ac_debug_printf("test_mem_pool_multiple_threads: %d waiting_count=%ld TOP Loop\n",
-            i, waiting_count);
-      AcMsg* mem = AcMsg_get(mp);
-      while (!error && (mem == AC_NULL)) {
-        if (waiting_count++ >= max_waiting_count) {
-          ac_printf("test_mem_pool_multiple_threads: %d waiting_count=%ld ERROR, no mems avail\n",
-              i, waiting_count);
-          // Report the failure.
-          error |= AC_TEST(waiting_count < max_waiting_count);
-          break;
-        }
-        ac_thread_yield();
-        mem = AcMsg_get(mp);
-      }
-      if (mem != AC_NULL) {
-        mem->arg1 = waiting_count;
-        mem->arg2 = ac_tscrd();
-        if (extra_size != 0) {
-          ac_memset(mem->extra_data, params[i]->extra_value, params[i]->extra_size);
-        }
-        AcCompMgr_send_mem(params[i]->cm, params[i]->ci, mem);
-      }
-    }
-  }
-
-  // Deinit the component manager which will stop and wait until
-  // they are done.
-  AcCompMgr_deinit(cm);
-
-  ac_u64 stop = ac_tscrd();
-  ac_printf("test_mem_pool_multiple_threads: done in %.9t\n", stop - start);
-
-  // If we cleaned up the threads then all of the messages should be back
-  error |= AC_TEST(count_mems(mp, mem_count) == mem_count);
-
-  ac_debug_printf("test_mem_pool_multiple_threads: waiting_count=%ld\n",
-      waiting_count);
-
-  // Display MsgTsc's.
-  for (ac_u32 thrd = 0; thrd < thread_count; thrd++) {
-    mptt_params* cur = params[thrd];
-    ac_uint max = AC_ARRAY_COUNT(cur->mem_tsc);
-    ac_uint idx;
-    ac_uint count;
-    if (cur->count < max) {
-      idx = 0;
-      count = cur->count;
+      cp->running = AC_FALSE;
     } else {
-      count = max;
-      idx = cur->count % max;
-    }
-    ac_printf("params[%d]=%p\n", thrd, cur);
-    for (; count-- > 0; idx = (idx + 1) % max) {
-      struct MsgTsc* mem_tsc = &cur->mem_tsc[idx];
-
-      error |= AC_TEST(mem_tsc->extra_error == AC_FALSE);
-
-      ac_printf("%d: sent=%ld wc=%d rl=%d travel=%.9t ret=%.9t extra_error=%d\n",
-          idx, mem_tsc->sent_tsc, mem_tsc->waiting_count, mem_tsc->ready_length,
-          mem_tsc->recv_tsc - mem_tsc->sent_tsc,
-          mem_tsc->done_tsc - mem_tsc->recv_tsc,
-          mem_tsc->extra_error);
+      cp->running = AC_TRUE;
+      AcReceptor_wait(cp->receptor_ready);
+      ac_debug_printf("test_mem_pool_multiple_threads: started cp=%p\n", cp);
     }
   }
+  if (error) {
+    ac_printf("test_mem_pool_multiple_threads: error starting, skip tests");
+    goto done;
+  }
 
+  // For a few seconds have to clients do work on the memory
+  //#define RUNTIME 1
+  //ac_u64 end_tsc = ac_tscrd() + AcTime_nanos_to_ticks(AC_SEC_IN_NS * RUNTIME);
+  //while (ac_tscrd() < end_tsc) {
+  for (ac_u32 i = 0; i < 2000000; i++) {
+    for (ac_u32 t = 0; t < thread_count; t++) {
+      loops += 1;
+
+      ClientParams* cp = &client_params[t];
+      ac_u8** ptr_cp_mem = &cp->mem;
+      if (__atomic_load_n(ptr_cp_mem, __ATOMIC_ACQUIRE) == AC_NULL) {
+        // Ask for some memory
+        ac_u8* mem;
+        AcMemPool_get_mem(pool, 1, (void**)&mem);
+        if (mem != AC_NULL) {
+          // Got it, pass it to client
+          __atomic_store_n(ptr_cp_mem, mem, __ATOMIC_RELEASE);
+
+          // Signal client receptor
+          AcReceptor_signal(cp->receptor_waiting);
+          count += 1;
+        } else {
+          //ac_printf("no mem t=%d\n", t);
+          //AcReceptor_wait(work_complete);
+          ac_thread_yield();
+        }
+      }
+    }
+
+#if 0
+    // Waiting for work to complete causes the pc_x86_64
+    // scheduler to be unfair when there are >= thread_count
+    // memory buffers created when thread_count is > 1. For
+    // Posix it doesn't matter.
+    //
+    // What happens is that we end up in the ready list in
+    // reverse order and the first thread, t = 0, never
+    // processes any memory buffers. Threads 1 to thread_count - 2
+    // processes a single memory buffer and the last thread,
+    // thread_count -1 processes all of the rest!!
+
+    AcReceptor_wait(work_complete);
+#else
+    // If we yield then its fair as every thread will get to
+    // processes its memory buffers.
+
+    ac_thread_yield();
+#endif
+  }
+
+done:
   // Cleanup
-  for (ac_u32 thrd = 0; thrd < thread_count; thrd++) {
-    ac_free(params[thrd]);
+  ac_debug_printf("test_mem_pool_multiple_threads: Done cleanup, loops=%ld\n", loops);
+  ac_u64 count_sum = 0;
+  for (ac_u32 t = 0; t < thread_count; t++) {
+    ClientParams* cp = &client_params[t];
+
+    if (cp->running) {
+      // Tell client its done working and wait until its done
+      __atomic_store_n(&cp->done, AC_TRUE, __ATOMIC_RELEASE);
+      AcReceptor_signal(cp->receptor_waiting);
+      AcReceptor_wait(cp->receptor_done);
+
+      ac_debug_printf("test_mem_pool_multiple_threads: cleanup cp=%p cp->error_count=%ld cp->count=%ld\n",
+          cp, cp->error_count, cp->count);
+      count_sum += cp->count;
+
+      // Collect error signal
+      error |= (cp->error_count != 0);
+    }
+
+    // Cleanup
+    AcReceptor_ret(cp->receptor_ready);
+    AcReceptor_ret(cp->receptor_done);
   }
+  AcReceptor_ret(work_complete);
+  ac_free(client_params);
 
-  ac_free(params);
-
+  // Let idle run to clean up zombies with Platform == pc_x86_64
+  // TODO: Shouldn't have to do this
+  ac_thread_wait_ns(100000);
 #endif
 
-  ac_printf("test_mem_pool_multiple_threads:- error=%d rl=%d\n", error, ready_length());
+  ac_debug_printf("test_mem_pool_multiple_threads:- error=%d rl=%d count=%ld count_sum=%ld loops=%ld\n\n",
+      error, ready_length(), count, count_sum, loops);
   return error;
 }

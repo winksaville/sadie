@@ -155,6 +155,7 @@
 #include <ac_memmgr.h>
 #include <ac_memcpy.h>
 #include <ac_debug_printf.h>
+#include <ac_printf.h>
 
 /**
  * @see ac_mpsc_fifo.h
@@ -171,7 +172,20 @@ void AcMpscFifo_add_ac_mem(AcMpscFifo* fifo, AcMem* mem) {
 
     // Assert mem is compatible
     // TODO, maybe have routine return AcStatus and return AC_STATUS_BAD_PARAM??
+#if 1
+    ac_u8 b3 = ((ac_u8*)&fifo->tail)[3];
+    if (((fifo->tail != AC_NULL) && (((ac_uptr)(fifo->tail) & (ac_uptr)0xFFFFFF) == 0)) || (b3 == 0)) {
+      ac_printf("Crash add_ac_mem: fifo=%p\n", fifo);
+      ac_printf("Crash add_ac_mem: fifo->head=%p\n", fifo->head);
+      ac_printf("Crash add_ac_mem: fifo->tail=%p\n", fifo->tail);
+      ac_printf("b3=0x%x\n", b3);
+      AcMem* n = fifo->tail->hdr.next;
+      ac_printf("n=%p\n", n);
+      ac_assert((fifo->tail == AC_NULL) || (((ac_uptr)(fifo->tail) & (ac_uptr)0xFFFFFF) != 0) || (b3 != 0));
+    }
+#else
     ac_assert(fifo->tail->hdr.data_size == mem->hdr.data_size);
+#endif
 
     // Step 1) Set mem->next to AC_NULL as this is the end
     // of the list.
@@ -234,6 +248,18 @@ AcMem* AcMpscFifo_rmv_ac_mem_raw(AcMpscFifo* fifo) {
   // Step 1) Use the current stub value to return the result
   AcMem *result = fifo->tail;
 
+  ac_u8 b3 = ((ac_u8*)&result)[3];
+  if (((result != AC_NULL) && (((ac_uptr)(result) & (ac_uptr)0xFFFFFF) == 0)) || (b3 == 0)) {
+    ac_printf("Crash rmv_ac_mem: result=%p\n", result);
+    ac_printf("Crash rmv_ac_mem: fifo=%p\n", fifo);
+    ac_printf("Crash rmv_ac_mem: fifo->head=%p\n", fifo->head);
+    ac_printf("Crash rmv_ac_mem: fifo->tail=%p\n", fifo->tail);
+    ac_printf("b3=0x%x\n", b3);
+    AcMem* n = result->hdr.next;
+    ac_printf("n=%p\n", n);
+    ac_assert(((result == AC_NULL) || ((ac_uptr)(result) & (ac_uptr)0xFFFFFF) != 0) || (b3 != 0));
+  }
+
   // Step 2) Get the oldest element, serialize with Step 3 in add_mem
   AcMem* oldest = __atomic_load_n(&result->hdr.next, __ATOMIC_ACQUIRE);
 
@@ -242,10 +268,31 @@ AcMem* AcMpscFifo_rmv_ac_mem_raw(AcMpscFifo* fifo) {
     return AC_NULL;
   }
 
+  if (((oldest != AC_NULL) && (((ac_uptr)(oldest) & (ac_uptr)0xFFFFFF) == 0)) || (b3 == 0)) {
+    ac_printf("Crash rmv_ac_mem: oldest=%p\n", oldest);
+    ac_printf("Crash rmv_ac_mem: fifo=%p\n", fifo);
+    ac_printf("Crash rmv_ac_mem: fifo->head=%p\n", fifo->head);
+    ac_printf("Crash rmv_ac_mem: fifo->tail=%p\n", fifo->tail);
+    ac_printf("b3=0x%x\n", b3);
+    AcMem* n = oldest->hdr.next;
+    ac_printf("n=%p\n", n);
+    ac_assert((oldest == AC_NULL) || (((ac_uptr)(oldest) & (ac_uptr)0xFFFFFF) != 0) || (b3 != 0));
+  }
+
   // Step 4) The oldest becomes new tail stub. If we are removing
   // the last element then oldest->hdr.next is AC_NULL because add_ac_mem
   // made it so.
   fifo->tail = oldest;
+
+  if (((fifo->tail != AC_NULL) && (((ac_uptr)(fifo->tail) & (ac_uptr)0xFFFFFF) == 0)) || (b3 == 0)) {
+    ac_printf("Crash rmv_ac_mem: fifo=%p\n", fifo);
+    ac_printf("Crash rmv_ac_mem: fifo->head=%p\n", fifo->head);
+    ac_printf("Crash rmv_ac_mem: fifo->tail=%p\n", fifo->tail);
+    ac_printf("b3=0x%x\n", b3);
+    AcMem* n = fifo->tail->hdr.next;
+    ac_printf("n=%p\n", n);
+    ac_assert((fifo->tail == AC_NULL) || (((ac_uptr)(fifo->tail) & (ac_uptr)0xFFFFFF) != 0) || (b3 != 0));
+  }
 
   // Step 5) Return result and we'll set next to AC_NULL
   result->hdr.next = AC_NULL;

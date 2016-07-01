@@ -19,7 +19,6 @@
 
 #include <ac_inttypes.h>
 
-ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count, ac_u32 comps_per_thread,
-    ac_u32 extra_size);
+ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count);
 
 #endif
