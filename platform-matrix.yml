@@ -10,7 +10,7 @@ command:
 
   # Posix: Create the build directory and the build.ninja file
   - if [[ "${Platform}" == 'Posix' ]]; then rm -rf build-${Platform}; mkdir -p build-${Platform}; fi
-  - if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; meson -D Platform=${Platform} --cross-file ../cross-file-Posix --buildtype plain ..; fi
+  - if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; meson -D Platform=${Platform} --cross-file ../cross-file-Posix-gcc --buildtype plain ..; fi
 
   # Run the tests from the current build directory
   - cd build-${Platform}; ninja

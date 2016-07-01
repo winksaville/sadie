@@ -111,11 +111,12 @@ void* client(void* param) {
 ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count) {
   ac_bool error = AC_FALSE;
   ClientParams* client_params = AC_NULL;
+  ac_u64 count_sum = 0;
   ac_u64 count = 0;
   ac_u64 loops = 0;
   ac_debug_printf("test_mem_pool_multiple_threads:+ thread_count=%d\n", thread_count);
 
-#if 0 //AC_PLATFORM == VersatilePB
+#if AC_PLATFORM == VersatilePB
   //ac_printf("test_mem_pool_multiple_threads: VersatilePB threading not working, skipping\n");
   ac_printf("test_mem_pool_multiple_threads: skipping\n");
 #else
@@ -162,10 +163,10 @@ ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count) {
   }
 
   // For a few seconds have to clients do work on the memory
-  //#define RUNTIME 1
+  //#define RUNTIME 10
   //ac_u64 end_tsc = ac_tscrd() + AcTime_nanos_to_ticks(AC_SEC_IN_NS * RUNTIME);
   //while (ac_tscrd() < end_tsc) {
-  for (ac_u32 i = 0; i < 2000000; i++) {
+  for (ac_u32 i = 0; i < 200000; i++) {
     for (ac_u32 t = 0; t < thread_count; t++) {
       loops += 1;
 
@@ -214,7 +215,6 @@ ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count) {
 done:
   // Cleanup
   ac_debug_printf("test_mem_pool_multiple_threads: Done cleanup, loops=%ld\n", loops);
-  ac_u64 count_sum = 0;
   for (ac_u32 t = 0; t < thread_count; t++) {
     ClientParams* cp = &client_params[t];
 

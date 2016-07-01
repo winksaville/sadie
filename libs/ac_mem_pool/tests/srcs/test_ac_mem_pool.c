@@ -214,18 +214,18 @@ ac_bool multiple_mem_pool_test() {
 int main(void) {
   ac_bool error = AC_FALSE;
 
-  ac_thread_init(20);
-  AcReceptor_init(100);
+  ac_thread_init(10);
+  AcReceptor_init(50);
   AcTime_init();
 
   ac_debug_printf("sizeof(AcMem)=%d\n", sizeof(AcMem));
 
-  //error |= simple_mem_pool_test();
-  //error |= multiple_mem_pool_test();
+  error |= simple_mem_pool_test();
+  error |= multiple_mem_pool_test();
   error |= test_mem_pool_multiple_threads(1);
   error |= test_mem_pool_multiple_threads(2);
   error |= test_mem_pool_multiple_threads(5);
-  //error |= test_mem_pool_multiple_threads(10);
+  error |= test_mem_pool_multiple_threads(10);
 
   if (!error) {
     ac_printf("OK\n");
