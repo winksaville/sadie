@@ -25,6 +25,7 @@
 #include <ac_mem.h>
 #include <ac_memmgr.h>
 #include <ac_mpsc_fifo.h>
+#include <ac_printf.h>
 #include <ac_status.h>
 
 /**
@@ -195,6 +196,8 @@ AcStatus AcMemPool_alloc(ac_u32 count, AcMemPoolCountSize mpcs[],
 
     // Init the fifo
     status = AcMpscFifo_init_and_alloc(&mem_fifo->fifo, mem_fifo->mpcs.count, mem_fifo->mpcs.data_size);
+    ac_debug_printf("AcMemPool_alloc: status=%d mem_fifo->fifo=%p &mem_fifo->fifo.mem__array=%p mem_fifo->fifo.mem__array=%p\n",
+        status, &mem_fifo->fifo, &mem_fifo->fifo.mem_array, mem_fifo->fifo.mem_array);
     if (status != AC_STATUS_OK) {
       ac_debug_printf("AcMemPool_alloc: err init_and_alloc failed status=%d\n", status);
       goto done;
@@ -225,15 +228,20 @@ done:
  * @params pool is a pool created by AcMemPool_alloc
  */
 void AcMemPool_free(AcMemPool* pool) {
+  ac_debug_printf("AcMemPool_free:+pool=%p\n", pool);
   if (pool != AC_NULL) {
     for (ac_u32 i = 0; i < pool->count; i++) {
       AcMemFifo* mem_fifo = &pool->mem_fifo_array[i];
 
-      if (mem_fifo->mem_array != AC_NULL) {
+      ac_debug_printf("AcMemPool_free: pool=%p, mem_fifo->fifo=%p mem_fifo->fifo.mem_array=%p\n",
+          pool, mem_fifo->fifo, mem_fifo->fifo.mem_array);
+
+      if (mem_fifo->fifo.mem_array != AC_NULL) {
         // Deinit the fifo, it better be full
         AcMpscFifo_deinit_full(&mem_fifo->fifo);
       }
     }
     ac_free(pool);
   }
+  ac_debug_printf("AcMemPool_free:-pool=%p\n", pool);
 }

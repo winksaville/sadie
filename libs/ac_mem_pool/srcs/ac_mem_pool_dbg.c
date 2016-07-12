@@ -37,8 +37,8 @@ void AcMemFifo_print(const char* leader, AcMemFifo* mem_fifo) {
     } else {
       ac_printf("%s %p ", leader, mem_fifo);
     }
-    ac_printf("count=%d data_size=%d mem_array=%p\n",
-        mem_fifo->mpcs.count, mem_fifo->mpcs.data_size, mem_fifo->mem_array);
+    ac_printf("count=%d data_size=%d fifo.mem_array=%p\n",
+        mem_fifo->mpcs.count, mem_fifo->mpcs.data_size, mem_fifo->fifo.mem_array);
     AcMpscFifo_print(AC_NULL, &mem_fifo->fifo);
   }
 }

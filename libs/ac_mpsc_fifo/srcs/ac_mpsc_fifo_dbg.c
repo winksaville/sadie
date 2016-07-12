@@ -18,7 +18,7 @@
  * Debug code for mpscfifo
  */
 
-#define NDEBUG
+//#define NDEBUG
 
 #include <ac_mpsc_fifo.h>
 #include <ac_mpsc_fifo_dbg.h>

@@ -47,6 +47,7 @@ if Platform == 'Posix'
   # Create testit executable
   test_ac_mpsc_fifo = executable( 'test_ac_mpsc_fifo', srcFiles,
     include_directories : runtimeIncDirs,
+    link_args : linkArgs,
     c_args : compilerArgs,
     dependencies : [libruntime_dep],
   )

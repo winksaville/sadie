@@ -18,22 +18,36 @@
 #define SADIE_LIBS_AC_MEM_INCS_AC_MEM_H
 
 #include <ac_inttypes.h>
-//#include <ac_mpsc_fifo.h>
 #include <ac_status.h>
 
+#define MEM_USE_REGULAR_TYPES 0
+#define MEM_USE_ATOMIC_TYPES (!MEM_USE_REGULAR_TYPES)
+#define MEM_ALIGN_TO_64 0
+
 typedef struct AcMem AcMem;
+
 
 typedef struct AcMpscFifo AcMpscFifo;
 extern void AcMpscFifo_add_ac_mem(AcMpscFifo* fifo, AcMem* mem);
 
-typedef struct __attribute__((packed)) AcMemHdr {
+typedef struct AcMemHdr { //__attribute__((packed)) AcMemHdr {
+#if MEM_USE_REGULAR_TYPES & MEM_ALIGN_TO_64
+  AcMem* next __attribute(( aligned(64) ));         // Next AcMem
+#elif MEM_USE_REGULAR_TYPES
   AcMem* next;         // Next AcMem
+#elif MEM_USE_ATOMIC_TYPES & MEM_ALIGN_TO_64
+  _Atomic(AcMem*) next __attribute(( aligned(64) ));         // Next AcMem
+#elif MEM_USE_ATOMIC_TYPES
+  _Atomic(AcMem*) next;          // Next AcMem
+#else
+  error "BAD ac_mem configuration"
+#endif
   AcMpscFifo* pool_fifo;// Poll fifo this AcMem is allocated from
   ac_u32 data_size;     // Size of the data array following this header
   ac_u32 user_size;     // Size of the user area in data array
 } AcMemHdr;
 
-typedef struct __attribute__((packed)) AcMem {
+typedef struct AcMem { //__attribute__((packed)) AcMem {
   AcMemHdr hdr;        // The header
   ac_u8 data[];         // The buffers data
 } AcMem;

@@ -31,8 +31,8 @@
 typedef struct AcMemPool AcMemPool;
 
 typedef struct AcMemPoolCountSize {
-  ac_u32 count;         // Number of mem AcMem's to create of size
-  ac_u32 data_size;     // Size of each AcMem.data array 
+  ac_u32 count;         // Number of mem AcMem's to create
+  ac_u32 data_size;     // Size of each of the AcMem.data[]
 } AcMemPoolCountSize;
 
 /**

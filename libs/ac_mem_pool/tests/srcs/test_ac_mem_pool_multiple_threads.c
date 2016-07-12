@@ -55,7 +55,8 @@ ac_u32 ready_length(void) {
 typedef struct ClientParams {
   ac_bool running;
   ac_bool done;
-  ac_u8* mem;
+  //ac_u8* mem;
+  AcMem* pAcMem;
   ac_u64 error_count;
   ac_u64 count;
   AcReceptor* receptor_ready;
@@ -81,6 +82,7 @@ void* client(void* param) {
 
     if (!cp->done) {
       cp->count += 1;
+#if 0
       ac_u8** ptr_mem = &cp->mem;
       ac_u8* m = __atomic_exchange_n(ptr_mem, AC_NULL, __ATOMIC_ACQUIRE);
       if (m == AC_NULL) {
@@ -89,6 +91,16 @@ void* client(void* param) {
         AcMemPool_ret_mem(m);
         AcReceptor_signal(cp->receptor_work_complete);
       }
+#else
+      AcMem** ptr_AcMem = &cp->pAcMem;
+      AcMem* acmem = __atomic_exchange_n(ptr_AcMem, AC_NULL, __ATOMIC_ACQUIRE);
+      if (acmem == AC_NULL) {
+        cp->error_count += 1;
+      } else {
+        AcMemPool_ret_ac_mem(acmem);
+        AcReceptor_signal(cp->receptor_work_complete);
+      }
+#endif
     }
   }
 
@@ -117,6 +129,7 @@ ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count) {
   ac_debug_printf("test_mem_pool_multiple_threads:+ thread_count=%d\n", thread_count);
 
 #if AC_PLATFORM == VersatilePB
+//#if 0
   //ac_printf("test_mem_pool_multiple_threads: VersatilePB threading not working, skipping\n");
   ac_printf("test_mem_pool_multiple_threads: skipping\n");
 #else
@@ -140,7 +153,7 @@ ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count) {
     ClientParams* cp = &client_params[t];
 
     cp->done = AC_FALSE;
-    cp->mem = AC_NULL;
+    cp->pAcMem = AC_NULL;
     cp->count = 0;
     cp->error_count = 0;
     ac_assert((cp->receptor_ready = AcReceptor_get()) != AC_NULL);
@@ -166,12 +179,13 @@ ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count) {
   //#define RUNTIME 10
   //ac_u64 end_tsc = ac_tscrd() + AcTime_nanos_to_ticks(AC_SEC_IN_NS * RUNTIME);
   //while (ac_tscrd() < end_tsc) {
-  for (ac_u32 i = 0; i < 200000; i++) {
+  for (ac_u32 i = 0; i < 10000000; i++) {
     for (ac_u32 t = 0; t < thread_count; t++) {
       loops += 1;
 
       ClientParams* cp = &client_params[t];
-      ac_u8** ptr_cp_mem = &cp->mem;
+#if 0
+      ac_u8** ptr_cp_mem = &cp->pAcMem;
       if (__atomic_load_n(ptr_cp_mem, __ATOMIC_ACQUIRE) == AC_NULL) {
         // Ask for some memory
         ac_u8* mem;
@@ -189,6 +203,26 @@ ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count) {
           ac_thread_yield();
         }
       }
+#else
+      AcMem** ptr_cp_acmem = &cp->pAcMem;
+      if (__atomic_load_n(ptr_cp_acmem, __ATOMIC_ACQUIRE) == AC_NULL) {
+        // Ask for some memory
+        AcMem* pAcMem;
+        AcMemPool_get_ac_mem(pool, 1, &pAcMem);
+        if (pAcMem != AC_NULL) {
+          // Got it, pass it to client
+          __atomic_store_n(ptr_cp_acmem, pAcMem, __ATOMIC_RELEASE);
+
+          // Signal client receptor
+          AcReceptor_signal(cp->receptor_waiting);
+          count += 1;
+        } else {
+          //ac_printf("no mem t=%d\n", t);
+          //AcReceptor_wait(work_complete);
+          ac_thread_yield();
+        }
+      }
+#endif
     }
 
 #if 0
@@ -236,6 +270,8 @@ done:
     AcReceptor_ret(cp->receptor_ready);
     AcReceptor_ret(cp->receptor_done);
   }
+  AcMemPool_free(pool);
+
   AcReceptor_ret(work_complete);
   ac_free(client_params);
 

@@ -39,15 +39,96 @@
 #define SADIE_LIBS_AC_MPSCFIFO_AC_MPSCFIFO_H
 
 #include <ac_mem.h>
+#include <ac_putchar.h>
+
+#define FIFO_USE_REGULAR_TYPES 0
+#define FIFO_USE_ATOMIC_TYPES (!FIFO_USE_REGULAR_TYPES)
+#define FIFO_ALIGN_TO_64 0
 
 typedef struct AcMpscFifo {
-  ac_u32 count;      // Number of AcMems owned by this fifo
-  AcMem* mem_array;  // AcMem's owned by this fifo, there is
-                     // always at least one, the stub.
+#if FIFO_USE_REGULAR_TYPES & FIFO_ALIGN_TO_64
+  AcMem* head __attribute(( aligned(64) )); // head of the list where items are added
+  AcMem* tail __attribute(( aligned(64) )); // tail->next is the next AcMem to
+                     // be removed (tail->next is AC_NULL if empty)
+#elif FIFO_USE_REGULAR_TYPES
   AcMem* head;       // head of the list where items are added
   AcMem* tail;       // tail->next is the next AcMem to
                      // be removed (tail->next is AC_NULL if empty)
+#elif FIFO_USE_ATOMIC_TYPES & FIFO_ALIGN_TO_64
+  _Atomic(AcMem*) head __attribute(( aligned(64) )); // head of the list where items are added
+  _Atomic(AcMem*) tail __attribute(( aligned(64) )); // tail->next is the next AcMem to
+                     // be removed (tail->next is AC_NULL if empty)
+#elif FIFO_USE_ATOMIC_TYPES
+  _Atomic(AcMem*) head;       // head of the list where items are added
+  _Atomic(AcMem*) tail;       // tail->next is the next AcMem to
+                     // be removed (tail->next is AC_NULL if empty)
+#else
+  error "BAD ac_mpsc_fifo configuration"
+#endif
+  AcMem* mem_array;  // AcMem's owned by this fifo, there is
+                     // always at least one, the stub.
+  ac_u32 count;      // Number of AcMems owned by this fifo
 } AcMpscFifo;
+
+#define CRASH() do { (*(volatile ac_u8*)0) = 0; } while(AC_FALSE)
+
+extern volatile char ck_ch;
+
+inline static void CKF(AcMpscFifo* fifo, char ch) {
+  if (fifo != AC_NULL) {
+    if (fifo->tail != AC_NULL) {
+      ac_u32 low24 = (ac_u32)((ac_u64)fifo->tail & 0xffffff);
+      if (low24 == 0) {
+        ck_ch = ch;
+        CRASH();
+      } else {
+        ac_u32 tailhi = (ac_u32)(((ac_u64)fifo->tail >> 24) & 0xffffffffff);
+        ac_u32 headhi = (ac_u32)(((ac_u64)fifo->head >> 24) & 0xffffffffff);
+        if (tailhi != headhi) {
+          ck_ch = ch;
+          CRASH();
+        }
+      }
+    }
+  }
+}
+
+inline static void CKM(AcMpscFifo* fifo, volatile AcMem* m, char ch) {
+  if (fifo != AC_NULL) {
+    if (fifo->head != AC_NULL && m != AC_NULL) {
+      ac_u32 m_low24 = (ac_u32)((ac_u64)m & 0xffffff);
+      if (m_low24 == 0) {
+        ck_ch = ch;
+        CRASH();
+      } else {
+        ac_u32 m_hi = (ac_u32)(((ac_u64)m >> 24) & 0xffffffffff);
+        ac_u32 headhi = (ac_u32)(((ac_u64)fifo->head >> 24) & 0xffffffffff);
+        if (m_hi != headhi) {
+        ck_ch = ch;
+        CRASH();
+        }
+      }
+    }
+  }
+}
+
+inline static ac_bool CKM_OK(AcMpscFifo* fifo, volatile AcMem* m, char ch) {
+  if (fifo != AC_NULL) {
+    if (fifo->head != AC_NULL && m != AC_NULL) {
+      ac_u32 m_low24 = (ac_u32)((ac_u64)m & 0xffffff);
+      if (m_low24 == 0) {
+        return AC_FALSE;
+      } else {
+        ac_u32 m_hi = (ac_u32)(((ac_u64)m >> 24) & 0xffffffffff);
+        ac_u32 headhi = (ac_u32)(((ac_u64)fifo->head >> 24) & 0xffffffffff);
+        if (m_hi != headhi) {
+        return AC_FALSE;
+        }
+      }
+    }
+  }
+  return AC_TRUE;
+}
 
 /**
  * Add a AcMem to the fifo. This maybe used by multiple
