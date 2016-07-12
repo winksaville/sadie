@@ -184,4 +184,20 @@ static inline ac_u64 rdtsc(void) {
   return ((ac_u64)hi << 32) | (ac_u64)lo;
 }
 
+/** mfence instruction */
+static inline void mfence(void) {
+  __asm__ volatile ("mfence": : :"memory");
+}
+
+/** lfence instruction */
+static inline void lfence(void) {
+  __asm__ volatile ("lfence": : :"memory");
+}
+
+/** sfence instruction */
+static inline void sfence(void) {
+  __asm__ volatile ("sfence": : :"memory");
+}
+
+
 #endif
