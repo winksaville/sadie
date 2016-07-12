@@ -33,6 +33,10 @@
 #include <ac_thread.h>
 #include <ac_tsc.h>
 
+// Define which type to test
+#define TEST_MEM 1
+#define TEST_AC_MEM (!TEST_MEM)
+
 #define MEMS_PER_THREAD 20
 #define MEMS_TSC_COUNT  MEMS_PER_THREAD
 
@@ -82,16 +86,16 @@ void* client(void* param) {
 
     if (!cp->done) {
       cp->count += 1;
-#if 0
-      ac_u8** ptr_mem = &cp->mem;
-      ac_u8* m = __atomic_exchange_n(ptr_mem, AC_NULL, __ATOMIC_ACQUIRE);
+#if TEST_MEM
+      ac_u8** ptr_cp_mem = (ac_u8**)&cp->pAcMem;
+      ac_u8* m = __atomic_exchange_n(ptr_cp_mem, AC_NULL, __ATOMIC_ACQUIRE);
       if (m == AC_NULL) {
         cp->error_count += 1;
       } else {
         AcMemPool_ret_mem(m);
         AcReceptor_signal(cp->receptor_work_complete);
       }
-#else
+#elif TEST_AC_MEM
       AcMem** ptr_AcMem = &cp->pAcMem;
       AcMem* acmem = __atomic_exchange_n(ptr_AcMem, AC_NULL, __ATOMIC_ACQUIRE);
       if (acmem == AC_NULL) {
@@ -100,6 +104,8 @@ void* client(void* param) {
         AcMemPool_ret_ac_mem(acmem);
         AcReceptor_signal(cp->receptor_work_complete);
       }
+#else
+  error "BAD TEST_MEM/TEST_AC_MEM configuration"
 #endif
     }
   }
@@ -129,8 +135,6 @@ ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count) {
   ac_debug_printf("test_mem_pool_multiple_threads:+ thread_count=%d\n", thread_count);
 
 #if AC_PLATFORM == VersatilePB
-//#if 0
-  //ac_printf("test_mem_pool_multiple_threads: VersatilePB threading not working, skipping\n");
   ac_printf("test_mem_pool_multiple_threads: skipping\n");
 #else
 
@@ -176,16 +180,13 @@ ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count) {
   }
 
   // For a few seconds have to clients do work on the memory
-  //#define RUNTIME 10
-  //ac_u64 end_tsc = ac_tscrd() + AcTime_nanos_to_ticks(AC_SEC_IN_NS * RUNTIME);
-  //while (ac_tscrd() < end_tsc) {
   for (ac_u32 i = 0; i < 10000000; i++) {
     for (ac_u32 t = 0; t < thread_count; t++) {
       loops += 1;
 
       ClientParams* cp = &client_params[t];
-#if 0
-      ac_u8** ptr_cp_mem = &cp->pAcMem;
+#if TEST_MEM
+      ac_u8** ptr_cp_mem = (ac_u8**)&cp->pAcMem;
       if (__atomic_load_n(ptr_cp_mem, __ATOMIC_ACQUIRE) == AC_NULL) {
         // Ask for some memory
         ac_u8* mem;
@@ -203,7 +204,7 @@ ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count) {
           ac_thread_yield();
         }
       }
-#else
+#elif TEST_AC_MEM
       AcMem** ptr_cp_acmem = &cp->pAcMem;
       if (__atomic_load_n(ptr_cp_acmem, __ATOMIC_ACQUIRE) == AC_NULL) {
         // Ask for some memory
@@ -222,28 +223,13 @@ ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count) {
           ac_thread_yield();
         }
       }
+#else
+  error "BAD TEST_MEM/TEST_AC_MEM configuration"
 #endif
     }
 
-#if 0
-    // Waiting for work to complete causes the pc_x86_64
-    // scheduler to be unfair when there are >= thread_count
-    // memory buffers created when thread_count is > 1. For
-    // Posix it doesn't matter.
-    //
-    // What happens is that we end up in the ready list in
-    // reverse order and the first thread, t = 0, never
-    // processes any memory buffers. Threads 1 to thread_count - 2
-    // processes a single memory buffer and the last thread,
-    // thread_count -1 processes all of the rest!!
-
-    AcReceptor_wait(work_complete);
-#else
-    // If we yield then its fair as every thread will get to
-    // processes its memory buffers.
-
+    // Yield the cpu so other threads get to run
     ac_thread_yield();
-#endif
   }
 
 done:

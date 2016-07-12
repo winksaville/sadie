@@ -155,15 +155,10 @@
 #include <ac_memmgr.h>
 #include <ac_memcpy.h>
 #include <ac_debug_printf.h>
-#include <ac_printf.h>
-#include <ac_putchar.h>
 #include <ac_thread.h>
 #include <ac_tsc.h>
 
-#define SEQ_CST 1 // 1 for memory order to be __ATOMIC_SEQ_CST for all atomics
-
-// Used by CK macros
-volatile char ck_ch;
+#define SEQ_CST 0 // 1 for memory order to be __ATOMIC_SEQ_CST for all atomics
 
 /**
  * @see ac_mpsc_fifo.h
@@ -171,9 +166,6 @@ volatile char ck_ch;
 void AcMpscFifo_add_ac_mem(AcMpscFifo* fifo, AcMem* mem) {
   ac_debug_printf("AcMpscFifo_add_ac_mem:+fifo=%p mem=%p\n",
       fifo, mem);
-  //ac_putchar('+');
-#if USE_REGULAR_TYPES
-  //CKF(fifo, '1');
 
   if (mem != AC_NULL) {
     ac_debug_printf("AcMpscFifo_add_ac_mem: fifo=%p mem=%p tail=%p tail.data_size=%d mem.data_size=%d\n",
@@ -191,63 +183,30 @@ void AcMpscFifo_add_ac_mem(AcMpscFifo* fifo, AcMem* mem) {
     // points at the new mem. Serializes with other producers
     // calling this routine.
     AcMem **ptr_head = &fifo->head;
-    CKF(fifo, '2');
 #if SEQ_CST
     AcMem *prev_head = __atomic_exchange_n(ptr_head, mem, __ATOMIC_SEQ_CST);
 #else
     AcMem *prev_head = __atomic_exchange_n(ptr_head, mem, __ATOMIC_ACQ_REL);
 #endif
-    CKF(fifo, '3');
 
-    // Step 3) Store mem into the next of the previous head
-    // which actually adds the new mem to the fifo. Serialize
-    // with rmv_ac_mem Step 4 if the list is empty.
+    // Step 3) Add the AcMem to the fifo list. This serializes with
+    // with rmv_ac_mem/rmv_ac_mem_raw Step 4 if the list is empty.
+    //
+    // This is the critical step, if its not performed because
+    // the caller/producer is preempted then the consumer calling
+    // one of the AcMpscFifo.rmv methods will see a broken list.
+    // This is detected and handled in teh AcMpscFifo.rmv methods
+    // but they will either return AC_NULL or stall as appropriate.
     AcMem **ptr_next = &prev_head->hdr.next;
 #if SEQ_CST
     __atomic_store_n(ptr_next, mem, __ATOMIC_SEQ_CST);
 #else
     __atomic_store_n(ptr_next, mem, __ATOMIC_RELEASE);
 #endif
-    CKF(fifo, '4');
   }
 
-#else
-  //CKF(fifo, '1');
-
-  if (mem != AC_NULL) {
-    ac_debug_printf("AcMpscFifo_add_ac_mem: fifo=%p mem=%p tail=%p tail.data_size=%d mem.data_size=%d\n",
-        fifo, mem, fifo->tail, fifo->tail->hdr.data_size, mem->hdr.data_size);
-
-    // Assert mem is compatible
-    // TODO, maybe have routine return AcStatus and return AC_STATUS_BAD_PARAM??
-    //ac_assert(fifo->tail->hdr.data_size == mem->hdr.data_size);
-
-    // Step 1) Set mem->next to AC_NULL as this is the end
-    // of the list.
-    mem->hdr.next = AC_NULL;
-
-    // Step 2) Exchange fifo->head and mem so fifo->head now
-    // points at the new mem. Serializes with other producers
-    // calling this routine.
-    void** ptr_head = (void*)&fifo->head;
-    //CKF(fifo, '2');
-    AcMem *prev_head = __atomic_exchange_n(ptr_head, mem, __ATOMIC_SEQ_CST);
-    CKM(fifo, prev_head, '3');
-    CKF(fifo, '3');
-
-    // Step 3) Store mem into the next of the previous head
-    // which actually adds the new mem to the fifo. Serialize
-    // with rmv_ac_mem Step 4 if the list is empty.
-    //
-    // This is the cirtical spot, if preempted here when empty stays empty until this store happens
-    prev_head->hdr.next = mem;
-    CKF(fifo, '4');
-  }
-
-#endif
   ac_debug_printf("AcMpscFifo_add_ac_mem:-fifo=%p mem=%p\n",
       fifo, mem);
-  //CKF(fifo, '5');
 }
 
 /**
@@ -255,10 +214,8 @@ void AcMpscFifo_add_ac_mem(AcMpscFifo* fifo, AcMem* mem) {
  */
 AcMem* AcMpscFifo_rmv_ac_mem(AcMpscFifo* fifo) {
   ac_debug_printf("AcMpscFifo_rmv_ac_mem:+fifo=%p\n", fifo);
-  CRASH();
-#if USE_REGULAR_TYPES
-  //ac_putchar('-');
-  CKF(fifo, 'A');
+
+  AcMpscFifo_print("AcMpscFifo_rmv_ac_mem: fifo=", fifo);
 
   // Step 1) Use the current stub value to return the result
   AcMem** ptr_tail = &fifo->tail;
@@ -276,8 +233,9 @@ AcMem* AcMpscFifo_rmv_ac_mem(AcMpscFifo* fifo) {
   AcMem* oldest = __atomic_load_n(ptr_next, __ATOMIC_ACQUIRE);
 #endif
 
+
   // Step 3) If list is empty return AC_NULL
-  if ((oldest == AC_NULL) && (oldest == __atomic_load_n(&fifo->head, __ATOMIC_ACQUIRE))) {
+  if ((oldest == AC_NULL) && (result == __atomic_load_n(&fifo->head, __ATOMIC_ACQUIRE))) {
     result = AC_NULL;
   } else {
     // List is definitely not empty
@@ -289,7 +247,6 @@ AcMem* AcMpscFifo_rmv_ac_mem(AcMpscFifo* fifo) {
         ac_thread_yield();
       }
     }
-    CKF(fifo, 'B');
     // Step 4) The oldest becomes new tail stub. If we are removing
     // the last element then oldest->next is AC_NULL because add_ac_mem
     // made it so.
@@ -298,40 +255,18 @@ AcMem* AcMpscFifo_rmv_ac_mem(AcMpscFifo* fifo) {
 #else
     __atomic_store_n(ptr_tail, oldest, __ATOMIC_RELEASE);
 #endif
-    CKF(fifo, 'C');
 
     // Step 5) Copy the contents of oldest AcMem to result
     result->hdr.user_size = oldest->hdr.user_size;
-    CKF(fifo, 'D');
     ac_memcpy(result->data, oldest->data, oldest->hdr.user_size);
 
     // Step 6) Return result and we'll set next to AC_NULL
-    CKF(fifo, 'E');
     result->hdr.next = AC_NULL;
-    CK(fifo);
   }
 
   ac_debug_printf("AcMpscFifo_rmv_ac_mem:-fifo=%p result=%p\n", fifo, result);
-  CKF(fifo, 'F');
   return result;
-#else
-  return AC_NULL;
-#endif
 }
-
-volatile AcMem* sv_oldestL1;
-volatile ac_u64 sv_oldestL1_tsc;
-volatile AcMem* sv_oldestL2;
-volatile ac_u64 sv_oldestL2_tsc;
-volatile AcMem* sv_oldestL3;
-volatile ac_u64 sv_oldestL3_tsc;
-volatile AcMem* sv_oldestL4;
-volatile ac_u64 sv_oldestL4_tsc;
-volatile AcMem* sv_oldestS;
-volatile ac_u64 sv_oldestS_tsc;
-_Atomic(ac_u64) sv_not_really_empty;
-volatile ac_u64 sv_bad_read1;
-volatile ac_u64 sv_bad_read2;
 
 /*
  * @see ac_mpsc_fifo.h
@@ -339,15 +274,10 @@ volatile ac_u64 sv_bad_read2;
 AcMem* AcMpscFifo_rmv_ac_mem_raw(AcMpscFifo* fifo) {
 
   ac_debug_printf("AcMpscFifo_rmv_ac_mem_raw:+fifo=%p\n", fifo);
-  //ac_putchar('^');
-  //CKF(fifo, 'a');
-
-#if USE_REGULAR_TYPES
 
   // Step 1) Use the current stub value to return the result
   AcMem** ptr_tail = &fifo->tail;
 #if SEQ_CST
-  //CKF(fifo, 'b');
   AcMem* result = __atomic_load_n(ptr_tail, __ATOMIC_SEQ_CST);
 #else
   AcMem* result = __atomic_load_n(ptr_tail, __ATOMIC_ACQUIRE);
@@ -356,19 +286,12 @@ AcMem* AcMpscFifo_rmv_ac_mem_raw(AcMpscFifo* fifo) {
   // Step 2) Get the oldest element, serialize with Step 3 in add_mem
   AcMem** ptr_next = &result->hdr.next;
 #if SEQ_CST
-  //CKF(fifo, 'c');
   AcMem* oldest = __atomic_load_n(ptr_next, __ATOMIC_SEQ_CST);
 #else
   AcMem* oldest = __atomic_load_n(ptr_next, __ATOMIC_ACQUIRE);
 #endif
-  sv_oldestL1 = oldest;
-  sv_oldestL2 = __atomic_load_n(ptr_next, __ATOMIC_SEQ_CST);
-  CKM(fifo, sv_oldestL2, 'y');
-  CKM(fifo, oldest, 'z');
 
-  //CKF(fifo, 'd');
   if ((oldest == AC_NULL) && (result == __atomic_load_n(&fifo->head, __ATOMIC_ACQUIRE))) {
-    //CKF(fifo, 'e');
     ac_debug_printf("AcMpscFifo_rmv_ac_mem_raw: fifo=%p empty\n", fifo);
     result = AC_NULL;
   } else {
@@ -377,8 +300,6 @@ AcMem* AcMpscFifo_rmv_ac_mem_raw(AcMpscFifo* fifo) {
       // fifo is NOT empty but producer was preempted at the critical spot
       // Step 3.1 wait for producer to continue
       ac_debug_printf("AcMpscFifo_rmv_ac_mem_raw: fifo=%p stalled\n", fifo);
-      //CRASH();
-      //ac_putchar('.');
       while ((oldest = __atomic_load_n(ptr_next, __ATOMIC_ACQUIRE)) == AC_NULL) {
         ac_thread_yield();
       }
@@ -387,118 +308,16 @@ AcMem* AcMpscFifo_rmv_ac_mem_raw(AcMpscFifo* fifo) {
     // Step 4) The oldest becomes new tail stub. If we are removing
     // the last element then oldest->next is AC_NULL because add_ac_mem
     // made it so.
-    //CKF(fifo, 'f');
 #if SEQ_CST
     __atomic_store_n(ptr_tail, oldest, __ATOMIC_SEQ_CST);
 #else
     __atomic_store_n(ptr_tail, oldest, __ATOMIC_RELEASE);
 #endif
-    sv_oldestS = oldest;
-    CKF(fifo, 'g');
 
     // Step 6) Return result and we'll set next to AC_NULL
     result->hdr.next = AC_NULL;
-    //CKF(fifo, 'h');
   }
-#else
-
-#define HACK_FIX 0
-
-  // Step 1) Use the current stub value to return the result
-  CKF(fifo, 'a');
-  AcMem* result = fifo->tail;
-
-  // Step 2) Get the oldest element, serialize with Step 3 in add_mem
-  CKF(fifo, 'b');
-  AcMem* oldest = result->hdr.next;
-  sv_oldestL1 = oldest;
-  sv_oldestL1_tsc = ac_tscrd();
-#if HACK_FIX
-  ac_bool once1 = AC_FALSE;
-  while ((oldest != AC_NULL) && (CKM_OK(fifo, oldest, 'd') == AC_FALSE)) {
-    if (!once1) {
-      once1 = AC_TRUE;
-      sv_bad_read1 += 1;
-    }
-    oldest = result->hdr.next;
-  }
-#else
-  sv_oldestL2 = result->hdr.next;
-  sv_oldestL2_tsc = ac_tscrd();
-  sv_oldestL3 = result->hdr.next;
-  sv_oldestL3_tsc = ac_tscrd();
-  CKM(fifo, sv_oldestL2, 'c');
-  CKM(fifo, sv_oldestL3, 'd');
-  CKM(fifo, oldest, 'e');
-  oldest = (AcMem*)sv_oldestL3;
-#endif
-
-  //CKF(fifo, 'd');
-  if ((oldest == AC_NULL) && (result == fifo->head)) {
-    //CKF(fifo, 'e');
-    ac_debug_printf("AcMpscFifo_rmv_ac_mem_raw: fifo=%p empty\n", fifo);
-    result = AC_NULL;
-  } else {
-    // List is definitely not empty
-    if (oldest == AC_NULL) {
-
-      // fifo is NOT empty but producer was preempted at the critical spot
-      // Step 3.1 wait for producer to continue
-      sv_not_really_empty += 1;
-      ac_debug_printf("AcMpscFifo_rmv_ac_mem_raw: fifo=%p stalled\n", fifo);
-      //CRASH();
-      //ac_putchar('.');
-#if HACK_FIX
-      ac_bool once2 = AC_FALSE;
-      while (AC_TRUE) {
-        oldest = result->hdr.next;
-        sv_oldestL4 = oldest;
-        sv_oldestL4_tsc = ac_tscrd();
-        if (oldest == AC_NULL) {
-          ac_thread_yield();
-        } else if (CKM_OK(fifo, oldest, 'f') == AC_FALSE) {
-          if (!once2) {
-            once2 = AC_TRUE;
-            sv_bad_read2 += 1;
-          }
-          ac_thread_yield();
-        } else {
-          CKM(fifo, oldest, 'g');
-          break;
-        }
-      }
-#else
-      while (AC_TRUE) {
-        oldest = result->hdr.next;
-        sv_oldestL4 = oldest;
-        sv_oldestL4_tsc = ac_tscrd();
-        if (oldest == AC_NULL) {
-          ac_thread_yield();
-        } else {
-          CKM(fifo, oldest, 'g');
-          break;
-        }
-      }
-#endif
-    }
-
-    // Step 4) The oldest becomes new tail stub. If we are removing
-    // the last element then oldest->next is AC_NULL because add_ac_mem
-    // made it so.
-    //CKF(fifo, 'f');
-    fifo->tail = oldest;
-    sv_oldestS = oldest;
-    sv_oldestS_tsc = ac_tscrd();
-    CKM(fifo, oldest, 'h');
-    CKF(fifo, 'i');
-
-    // Step 6) Return result and we'll set next to AC_NULL
-    result->hdr.next = AC_NULL;
-    CKF(fifo, 'j');
-  }
-#endif
   ac_debug_printf("AcMpscFifo_rmv_ac_mem_raw:-fifo=%p result=%p\n", fifo, result);
-  //CKF(fifo, 'i');
   return result;
 }
 
@@ -507,9 +326,6 @@ AcMem* AcMpscFifo_rmv_ac_mem_raw(AcMpscFifo* fifo) {
  */
 void AcMpscFifo_deinit(AcMpscFifo* fifo) {
   ac_debug_printf("AcMpscFifo_deinit:+fifo=%p\n", fifo);
-
-  ac_printf("AcMpscFifo_deinit: sv_bad_read1=%ld sv_bad_read2=%ld\n",
-      sv_bad_read1, sv_bad_read2);
 
   // Assert fifo is "valid" and it owns only one AcMem
   ac_assert(fifo != AC_NULL);
@@ -545,9 +361,6 @@ void AcMpscFifo_deinit(AcMpscFifo* fifo) {
  */
 void AcMpscFifo_deinit_full(AcMpscFifo* fifo) {
   ac_debug_printf("AcMpscFifo_deinit:+fifo=%p count=%d\n", fifo, fifo->count);
-
-  ac_debug_printf("AcMpscFifo_deinit_full: sv_bad_read1=%ld sv_bad_read2=%ld\n",
-      sv_bad_read1, sv_bad_read2);
 
   AcMpscFifo_debug_print("AcMpscFifo_deinit_full: fifo=", fifo);
 

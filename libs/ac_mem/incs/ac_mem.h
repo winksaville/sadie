@@ -17,44 +17,43 @@
 #ifndef SADIE_LIBS_AC_MEM_INCS_AC_MEM_H
 #define SADIE_LIBS_AC_MEM_INCS_AC_MEM_H
 
+#include <ac_cache_line.h>
 #include <ac_inttypes.h>
 #include <ac_status.h>
 
-#define MEM_USE_REGULAR_TYPES 0
-#define MEM_USE_ATOMIC_TYPES (!MEM_USE_REGULAR_TYPES)
-#define MEM_ALIGN_TO_64 0
-
 typedef struct AcMem AcMem;
-
-
 typedef struct AcMpscFifo AcMpscFifo;
+
 extern void AcMpscFifo_add_ac_mem(AcMpscFifo* fifo, AcMem* mem);
 
-typedef struct AcMemHdr { //__attribute__((packed)) AcMemHdr {
-#if MEM_USE_REGULAR_TYPES & MEM_ALIGN_TO_64
-  AcMem* next __attribute(( aligned(64) ));         // Next AcMem
-#elif MEM_USE_REGULAR_TYPES
-  AcMem* next;         // Next AcMem
-#elif MEM_USE_ATOMIC_TYPES & MEM_ALIGN_TO_64
-  _Atomic(AcMem*) next __attribute(( aligned(64) ));         // Next AcMem
-#elif MEM_USE_ATOMIC_TYPES
-  _Atomic(AcMem*) next;          // Next AcMem
-#else
-  error "BAD ac_mem configuration"
-#endif
-  AcMpscFifo* pool_fifo;// Poll fifo this AcMem is allocated from
-  ac_u32 data_size;     // Size of the data array following this header
-  ac_u32 user_size;     // Size of the user area in data array
+/**
+ * Header preceding the data associated with a piece of memory
+ */
+typedef struct AcMemHdr {
+  /** Next AcMem */
+  AcMem* next __attribute(( aligned(AC_MAX_CACHE_LINE_LEN) ));
+
+  /** Poll fifo this AcMem is allocated from */
+  AcMpscFifo* pool_fifo;
+
+  /** Size of the data array following this header */
+  ac_u32 data_size;
+
+  /** Size of the user area in data array */
+  ac_u32 user_size;
 } AcMemHdr;
 
-typedef struct AcMem { //__attribute__((packed)) AcMem {
-  AcMemHdr hdr;        // The header
-  ac_u8 data[];         // The buffers data
+/**
+ * Memory returned in the AcMem_alloc ptr_mem_array parameter.
+ */
+typedef struct AcMem {
+  AcMemHdr hdr;        ///< The header
+  ac_u8 data[];        ///< The buffers data
 } AcMem;
 
 /**
  * Return the nth AcMem in the array
- *
+ *g
  * @params array is the pointer to the first element
  * @params index is the index into the array
  *

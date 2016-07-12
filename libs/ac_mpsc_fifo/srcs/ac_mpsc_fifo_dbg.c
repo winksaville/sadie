@@ -18,7 +18,7 @@
  * Debug code for mpscfifo
  */
 
-//#define NDEBUG
+#define NDEBUG
 
 #include <ac_mpsc_fifo.h>
 #include <ac_mpsc_fifo_dbg.h>
@@ -41,7 +41,11 @@ void AcMpscFifo_print(const char* leader, AcMpscFifo* fifo) {
 #endif
     AcMem* tail = fifo->tail->hdr.next;
     if (tail == AC_NULL) {
-      AcMem_print("empty h/t: ", fifo->head);
+      if (tail == fifo->head) {
+        AcMem_print("empty h/t: ", fifo->head);
+      } else {
+        AcMem_print("preempted tail==NULL head=: ", fifo->head);
+      }
     } else if (tail == fifo->head) {
       AcMem_print("one h/t:   ", fifo->head);
     } else {

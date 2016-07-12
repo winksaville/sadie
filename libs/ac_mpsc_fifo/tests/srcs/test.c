@@ -27,7 +27,7 @@
  * Test we can initialize and deinitialize AcMpscFifo *
  * return !0 if an error.
  */
-static ac_bool test_init_and_deinit_mpscfifo() {
+ac_bool test_init_and_deinit_mpscfifo() {
   ac_bool error = AC_FALSE;
   AcMpscFifo fifo;
 
