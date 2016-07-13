@@ -21,13 +21,12 @@
 
 typedef struct AcMsgPool AcMsgPool;
 
-typedef struct AcMsg AcMsg;
-
+/**
+ * A AC Message
+ */
 typedef struct AcMsg {
-  AcMsg *pnext;          // Next message
-  AcMsgPool* pool;       // Pool that this message belongs too
-  ac_u64 arg1;           // argument1
-  ac_u64 arg2;           // argument2
+  ac_u64 arg1;          ///< argument1
+  ac_u64 arg2;          ///< argument2
 } AcMsg;
 
 #endif

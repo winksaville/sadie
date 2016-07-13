@@ -19,12 +19,10 @@
 #include <ac_mem_pool/tests/incs/test.h>
 
 #include <ac_assert.h>
-#include <ac_comp_mgr.h>
 #include <ac_debug_printf.h>
 #include <ac_inttypes.h>
 #include <ac_memmgr.h>
 #include <ac_memset.h>
-#include <ac_mpscfifo.h>
 #include <ac_mem.h>
 #include <ac_mem_pool.h>
 #include <ac_receptor.h>

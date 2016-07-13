@@ -23,6 +23,7 @@
 #ifndef SADIE_LIBS_AC_MEM_POOL_INCS_AC_MEM_POOL_H
 #define SADIE_LIBS_AC_MEM_POOL_INCS_AC_MEM_POOL_H
 
+#include <ac_mem.h>
 #include <ac_mpsc_fifo.h>
 
 #include <ac_inttypes.h>

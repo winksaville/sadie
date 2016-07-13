@@ -23,15 +23,14 @@
 #define SADIE_LIBS_AC_MSG_POOL_INCS_AC_MSG_POOL_H
 
 #include <ac_inttypes.h>
-#include <ac_mpscfifo.h>
+#include <ac_mem_pool.h>
 #include <ac_msg.h>
+#include <ac_status.h>
 
-typedef struct AcMsgPool AcMsgPool;
+typedef struct AcMsgPool {
+  AcMemPool* mem_pool;
+} AcMsgPool;
 
-/**
- * Allocate a message
- */
-AcMsg* AcMsg_alloc(void);
 
 /**
  * Get a message from a pool
@@ -40,7 +39,7 @@ AcMsg* AcMsg_alloc(void);
  *
  * @return a message or AC_NULL if none available
  */
-AcMsg* AcMsg_get(AcMsgPool* pool);
+AcStatus AcMsgPool_get_msg(AcMsgPool* mp, AcMsg** ptr_AcMsg);
 
 /**
  * Ret a message to a pool
@@ -48,15 +47,23 @@ AcMsg* AcMsg_get(AcMsgPool* pool);
  * @param pool is a previously created pool
  * @param msg a message to return the the pool, AC_NULL is ignored
  */
-void AcMsg_ret(AcMsg* msg);
+void AcMsgPool_ret_msg(AcMsg* msg);
 
 /**
- * Create a msg pool
+ * Initialize a msg pool
  *
+ * @params pool to initialize
  * @params msg_count is number of messages for this pool
  *
- * @return AC_NULL if no pool is created.
+ * @return 0 (AC_STATUS_OK) if successful
  */
-AcMsgPool* AcMsgPool_create(ac_u32 count);
+AcStatus AcMsgPool_init(AcMsgPool* pool, ac_u32 msg_count);
+
+/**
+ * Deinitialize the message pool
+ *
+ * @params pool is a pool created by AcMsgPool_alloc
+ */
+void AcMsgPool_deinit(AcMsgPool* pool);
 
 #endif
