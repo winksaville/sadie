@@ -180,7 +180,7 @@ ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count) {
   }
 
   // For a few seconds have to clients do work on the memory
-  for (ac_u32 i = 0; i < 10000000; i++) {
+  for (ac_u32 i = 0; i < 1000000; i++) {
     for (ac_u32 t = 0; t < thread_count; t++) {
       loops += 1;
 
