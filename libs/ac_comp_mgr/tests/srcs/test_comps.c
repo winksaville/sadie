@@ -44,7 +44,7 @@ static ac_bool msg_proc(AcComp* ac, AcMsg* msg) {
   this->error |= AC_TEST(msg->arg1 == 1);
   this->error |= AC_TEST(msg->arg2 == 2);
 
-  AcMsg_ret(msg);
+  AcMsgPool_ret_msg(msg);
 
   AcReceptor_signal(this->done);
 
@@ -64,6 +64,7 @@ static ac_bool msg_proc(AcComp* ac, AcMsg* msg) {
 ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
   ac_debug_printf("test_comps:+cm=%p mp=%p comp_count=%d\n", cm, mp, comp_count);
   ac_bool error = AC_FALSE;
+  AcStatus status;
 
   T1Comp* comps= ac_malloc(comp_count * sizeof(T1Comp));
   T1Comp* c;
@@ -86,7 +87,11 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
     ac_debug_printf("test_comps: send msgs\n");
     for (ac_u32 i = 0; i < comp_count; i++) {
       c = &comps[i];
-      AcMsg* msg = AcMsg_get(mp);
+      AcMsg* msg;
+      status = AcMsgPool_get_msg(mp, &msg);
+      error |= AC_TEST(status == AC_STATUS_OK);
+      error |= AC_TEST(msg != AC_NULL);
+
       msg->arg1 = 1;
       msg->arg2 = 2;
       ac_debug_printf("test_comps: send msg %s ci=%p\n", c->comp.name, c->ci);

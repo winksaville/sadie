@@ -20,7 +20,8 @@
 
 #include <ac_inttypes.h>
 #include <ac_debug_printf.h>
-#include <ac_mpscfifo.h>
+#include <ac_mpsc_fifo.h>
+#include <ac_msg.h>
 #include <ac_memmgr.h>
 
 /**
@@ -28,7 +29,7 @@
  */
 typedef struct AcDispatchableComp {
     AcComp* comp;
-    ac_mpscfifo q;
+    AcMpscFifo q;
 } AcDispatchableComp;
 
 /**
@@ -52,7 +53,7 @@ AcDispatchableComp* get_dc() {
   // TODO: Pre allocate??
   AcDispatchableComp* ret_val = ac_malloc(sizeof(AcDispatchableComp));
   if (ret_val != AC_NULL) {
-    ac_mpscfifo_init(&ret_val->q);
+    AcMpscFifo_init(&ret_val->q, sizeof(AcMsg));
   }
   return ret_val;
 }
@@ -63,7 +64,7 @@ AcDispatchableComp* get_dc() {
 void ret_dc(AcDispatchableComp* dc) {
   // TODO: Pre allocate??
   if (dc != AC_NULL) {
-    ac_mpscfifo_deinit(&dc->q);
+    AcMpscFifo_deinit(&dc->q);
     ac_free(dc);
   }
 }
@@ -109,12 +110,12 @@ static ac_bool process_msgs(AcDispatchableComp* dc) {
   ac_debug_printf("process_msgs:+ dc=%p\n", dc);
 
   ac_bool processed_a_msg = AC_FALSE;
-  AcMsg* pmsg = ac_mpscfifo_rmv_msg(&dc->q);
+  AcMsg* pmsg = AcMpscFifo_rmv_msg(&dc->q);
   while (pmsg != AC_NULL) {
     dc->comp->process_msg(dc->comp, pmsg);
 
     // Get next message
-    pmsg = ac_mpscfifo_rmv_msg(&dc->q);
+    pmsg = AcMpscFifo_rmv_msg(&dc->q);
     processed_a_msg = AC_TRUE;
   }
 
@@ -350,5 +351,5 @@ AcComp* AcDispatcher_rmv_comp(AcDispatcher* d, AcDispatchableComp* dc) {
  * @param: msg is the message to send
  */
 void AcDispatcher_send_msg(AcDispatchableComp* dc, AcMsg* msg) {
-  ac_mpscfifo_add_msg(&dc->q, msg);
+  AcMpscFifo_add_msg(&dc->q, msg);
 }

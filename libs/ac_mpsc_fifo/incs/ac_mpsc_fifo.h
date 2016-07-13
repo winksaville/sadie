@@ -40,6 +40,7 @@
 
 #include <ac_cache_line.h>
 #include <ac_mem.h>
+#include <ac_msg.h>
 #include <ac_putchar.h>
 
 typedef struct AcMpscFifo {
@@ -64,8 +65,31 @@ typedef struct AcMpscFifo {
  * threads and never blocks.
  *
  * @params fifo is an iniitalized AcMpscFifo
+ * @params acmem is an AcMem
  */
-void AcMpscFifo_add_ac_mem(AcMpscFifo* fifo, AcMem* mem);
+void AcMpscFifo_add_ac_mem(AcMpscFifo* fifo, AcMem* ac_mem);
+
+/**
+ * Add a AcMem to the fifo. This maybe used by multiple
+ * threads and never blocks.
+ *
+ * @params fifo is an iniitalized AcMpscFifo
+ * @params mem is pointing at the AcMem.data array
+ */
+static inline void AcMpscFifo_add_mem(AcMpscFifo* fifo, void* mem) {
+  AcMpscFifo_add_ac_mem(fifo, (AcMem*)(mem - sizeof(AcMemHdr)));
+}
+
+/**
+ * Add a AcMsg to the fifo. This maybe used by multiple
+ * threads and never blocks.
+ *
+ * @params fifo is an iniitalized AcMpscFifo
+ * @params msg is pointing at the AcMem.data array
+ */
+static inline void AcMpscFifo_add_msg(AcMpscFifo* fifo, AcMsg* msg) {
+  AcMpscFifo_add_mem(fifo, msg);
+}
 
 /**
  * Remove a AcMem from the FIFO. This maybe used only by
@@ -88,6 +112,36 @@ AcMem* AcMpscFifo_rmv_ac_mem(AcMpscFifo* fifo);
  * @return AcMem or AC_NULL if empty
  */
 AcMem* AcMpscFifo_rmv_ac_mem_raw(AcMpscFifo* fifo);
+
+/**
+ * Remove a memory block from the FIFO. This maybe used only by
+ * a single thread and returns AC_NULL if the FIFO is empty.
+ *
+ * @params fifo is an iniitalized AcMpscFifo
+ *
+ * @return AcMem or AC_NULL if empty
+ */
+static inline void* AcMpscFifo_rmv_mem(AcMpscFifo* fifo) {
+  AcMem* ac_mem = AcMpscFifo_rmv_ac_mem(fifo);
+  if (ac_mem != AC_NULL) {
+    return  &ac_mem->data[0];
+  } else {
+    return AC_NULL;
+  }
+}
+
+/**
+ * Remove an AcMsg from the FIFO. This maybe used only by
+ * a single thread and returns AC_NULL if the FIFO is empty.
+ *
+ * @params fifo is an iniitalized AcMpscFifo
+ *
+ * @return AcMem or AC_NULL if empty
+ */
+static inline AcMsg* AcMpscFifo_rmv_msg(AcMpscFifo* fifo) {
+  return (AcMsg*)AcMpscFifo_rmv_mem(fifo);
+}
+
 
 /**
  * Deinitialize the AcMpscFifo and return the stub which

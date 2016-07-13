@@ -215,7 +215,7 @@ void AcMpscFifo_add_ac_mem(AcMpscFifo* fifo, AcMem* mem) {
 AcMem* AcMpscFifo_rmv_ac_mem(AcMpscFifo* fifo) {
   ac_debug_printf("AcMpscFifo_rmv_ac_mem:+fifo=%p\n", fifo);
 
-  AcMpscFifo_print("AcMpscFifo_rmv_ac_mem: fifo=", fifo);
+  AcMpscFifo_debug_print("AcMpscFifo_rmv_ac_mem: fifo=", fifo);
 
   // Step 1) Use the current stub value to return the result
   AcMem** ptr_tail = &fifo->tail;

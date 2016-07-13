@@ -23,7 +23,6 @@
 #define SADIE_LIBS_AC_COMP_MGR_INCS_AC_COMP_MGR_H
 
 #include <ac_inttypes.h>
-#include <ac_mpscfifo.h>
 #include <ac_msg.h>
 
 typedef struct AcCompMgr AcCompMgr;

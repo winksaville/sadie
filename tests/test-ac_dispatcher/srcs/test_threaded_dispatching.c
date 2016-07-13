@@ -22,9 +22,9 @@
 
 #include <ac_debug_printf.h>
 #include <ac_inttypes.h>
-#include <ac_mpscfifo.h>
 #include <ac_msg_pool.h>
 #include <ac_receptor.h>
+#include <ac_status.h>
 #include <ac_thread.h>
 #include <ac_test.h>
 
@@ -39,7 +39,7 @@ static ac_bool t1_process_msg(AcComp* this, AcMsg* pmsg) {
 
   ac_debug_printf("t1_process_msg:- error=%d\n", error);
 
-  AcMsg_ret(pmsg);
+  AcMsgPool_ret_msg(pmsg);
 
   return AC_TRUE;
 }
@@ -116,15 +116,19 @@ void t1_mark_done(void) {
  */
 ac_bool test_threaded_dispatching() {
   ac_bool error = AC_FALSE;
+  AcStatus status;
+
   ac_debug_printf("test_threaded_dispatching:+\n");
 #if AC_PLATFORM == VersatilePB
   ac_debug_printf("test_threaded_dispatching: VersatilePB threading not working, skipping\n");
 #else
   ac_thread_init(1);
   AcReceptor_init(256);
-  AcMsgPool* mp = AcMsgPool_create(1);
+  AcMsg* msg;
+  AcMsgPool mp;
 
-  error |= AC_TEST(mp != AC_NULL);
+  status = AcMsgPool_init(&mp, 1);
+  error |= AC_TEST(status == AC_STATUS_OK);
 
   t1_receptor_ready = AcReceptor_get();
   t1_receptor_done = AcReceptor_get();
@@ -136,10 +140,12 @@ ac_bool test_threaded_dispatching() {
   AcReceptor_wait(t1_receptor_ready);
 
   ac_debug_printf("test_threaded_dispatching: send msg\n");
-  AcMsg* msg1 = AcMsg_get(mp);
-  msg1->arg1 = 1;
-  msg1->arg2 = 2;
-  t1_add_msg(msg1);
+  status = AcMsgPool_get_msg(&mp, &msg);
+  error |= AC_TEST(status == AC_STATUS_OK);
+  error |= AC_TEST(msg != AC_NULL);
+  msg->arg1 = 1;
+  msg->arg2 = 2;
+  t1_add_msg(msg);
 
   ac_debug_printf("test_threaded_dispatching: wait 100ms\n");
   ac_thread_wait_ns(100 * 1000000ll);

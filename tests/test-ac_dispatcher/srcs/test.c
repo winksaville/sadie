@@ -21,8 +21,8 @@
 #include <ac_dispatcher.h>
 
 #include <ac_inttypes.h>
-#include <ac_mpscfifo.h>
 #include <ac_debug_printf.h>
+#include <ac_msg_pool.h>
 #include <ac_test.h>
 
 
@@ -116,6 +116,7 @@ static AcComp ac1 = {
  */
 static ac_bool test_dispatching() {
   ac_bool error = AC_FALSE;
+  AcStatus status;
   ac_debug_printf("test_dispatching:+\n");
 
   // Get a dispatcher
@@ -128,12 +129,18 @@ static ac_bool test_dispatching() {
   dc1 = AcDispatcher_add_comp(pd, &ac1);
   error |= AC_TEST(dc1 != AC_NULL);
 
-  // Initialize message and add it to queue
-  AcMsg msg1 = {
-    .arg1 = 1,
-    .arg2 = 2
-  };
-  AcDispatcher_send_msg(dc1, &msg1);
+  // Initialize a msg pool
+  AcMsgPool mp;
+  status = AcMsgPool_init(&mp, 2);
+  error |= AC_TEST(status == AC_STATUS_OK);
+
+  // Get a msg and dispatch it
+  AcMsg* msg1;
+  status = AcMsgPool_get_msg(&mp, &msg1);
+  error |= AC_TEST(status == AC_STATUS_OK);
+  msg1->arg1 = 1;
+  msg1->arg2 = 2;
+  AcDispatcher_send_msg(dc1, msg1);
 
 
   ac_debug_printf("test_dispatching: dispatch now\n");
@@ -141,11 +148,13 @@ static ac_bool test_dispatching() {
   ac_debug_printf("test_dispatching: dispatch complete\n");
   error |= AC_TEST(processed_msgs == AC_TRUE);
 
-  AcMsg msg2 = {
-    .arg1 = 1,
-    .arg2 = 3
-  };
-  AcDispatcher_send_msg(dc1, &msg2);
+  // Get a second message and dispatch it
+  AcMsg* msg2;
+  status = AcMsgPool_get_msg(&mp, &msg2);
+  error |= AC_TEST(status == AC_STATUS_OK);
+  msg2->arg1 = 1;
+  msg2->arg2 = 3;
+  AcDispatcher_send_msg(dc1, msg2);
 
   ac_debug_printf("test_dispatching: rmv_ac\n");
   AcComp* ac2 = AcDispatcher_rmv_comp(pd, dc1);

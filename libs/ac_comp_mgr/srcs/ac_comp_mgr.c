@@ -21,7 +21,6 @@
 #include <ac_assert.h>
 #include <ac_dispatcher.h>
 #include <ac_memmgr.h>
-#include <ac_mpscfifo.h>
 #include <ac_msg.h>
 #include <ac_printf.h>
 #include <ac_debug_printf.h>
