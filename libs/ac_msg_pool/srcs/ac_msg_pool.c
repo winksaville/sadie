@@ -25,8 +25,8 @@
 /**
  * See ac_msg_pool.h
  */
-AcStatus AcMsgPool_get_msg(AcMsgPool* mp, AcMsg** ptr_AcMsg) {
-  return AcMemPool_get_mem(mp->mem_pool, sizeof(AcMsg), (void**)ptr_AcMsg);
+AcMsg* AcMsgPool_get_msg(AcMsgPool* mp) {
+  return AcMemPool_get_mem(mp->mem_pool, sizeof(AcMsg));
 }
 
 /**

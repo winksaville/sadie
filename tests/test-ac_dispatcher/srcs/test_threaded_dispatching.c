@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-//#define NDEBUG
+#define NDEBUG
 
 #include "test-ac_dispatcher/incs/tests.h"
 
@@ -116,7 +116,6 @@ void t1_mark_done(void) {
  */
 ac_bool test_threaded_dispatching() {
   ac_bool error = AC_FALSE;
-  AcStatus status;
 
   ac_debug_printf("test_threaded_dispatching:+\n");
 #if AC_PLATFORM == VersatilePB
@@ -126,6 +125,7 @@ ac_bool test_threaded_dispatching() {
   AcReceptor_init(256);
   AcMsg* msg;
   AcMsgPool mp;
+  AcStatus status;
 
   status = AcMsgPool_init(&mp, 1);
   error |= AC_TEST(status == AC_STATUS_OK);
@@ -140,8 +140,7 @@ ac_bool test_threaded_dispatching() {
   AcReceptor_wait(t1_receptor_ready);
 
   ac_debug_printf("test_threaded_dispatching: send msg\n");
-  status = AcMsgPool_get_msg(&mp, &msg);
-  error |= AC_TEST(status == AC_STATUS_OK);
+  msg = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg != AC_NULL);
   msg->arg1 = 1;
   msg->arg2 = 2;

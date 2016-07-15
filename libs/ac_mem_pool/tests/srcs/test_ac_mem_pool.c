@@ -36,7 +36,6 @@ ac_bool simple_mem_pool_test() {
   ac_bool error = AC_FALSE;
   ac_debug_printf("simple_mem_pool_test:+\n");
 
-  ac_u8* data;
   AcMemPool* mp;
   AcMem* mem;
   AcMem* mem2;
@@ -56,23 +55,13 @@ ac_bool simple_mem_pool_test() {
 
   // Test requesting an AcMem from a AC_NULL pool returns AC_NULL
   ac_debug_printf("simple_mem_pool_test: bad params for AcMem_get_ac_mem\n");
-  mem = (AcMem*)1;
-  error |= AC_TEST(AcMemPool_get_ac_mem(AC_NULL, 1, &mem) == AC_STATUS_BAD_PARAM);
-  error |= AC_TEST(mem == AC_NULL);
-  mem = (AcMem*)1;
-  error |= AC_TEST(AcMemPool_get_ac_mem(AC_NULL, 0, &mem) == AC_STATUS_BAD_PARAM);
-  error |= AC_TEST(mem == AC_NULL);
-  error |= AC_TEST(AcMemPool_get_ac_mem((AcMemPool*)1, 1, AC_NULL) == AC_STATUS_BAD_PARAM);
+  error |= AC_TEST(AcMemPool_get_ac_mem(AC_NULL, 1) == AC_NULL);
+  error |= AC_TEST(AcMemPool_get_ac_mem(AC_NULL, 0) == AC_NULL);
   ac_debug_printf("\n");
 
   ac_debug_printf("simple_mem_pool_test: bad params for AcMem_get_mem\n");
-  data = (void*)1;
-  error |= AC_TEST(AcMemPool_get_mem(AC_NULL, 1, (void**)&data) == AC_STATUS_BAD_PARAM);
-  error |= AC_TEST(data == AC_NULL);
-  data = (void*)1;
-  error |= AC_TEST(AcMemPool_get_mem(AC_NULL, 0, (void**)&data) == AC_STATUS_BAD_PARAM);
-  error |= AC_TEST(data == AC_NULL);
-  error |= AC_TEST(AcMemPool_get_mem((AcMemPool*)1, 1, AC_NULL) == AC_STATUS_BAD_PARAM);
+  error |= AC_TEST(AcMemPool_get_mem(AC_NULL, 1) == AC_NULL);
+  error |= AC_TEST(AcMemPool_get_mem(AC_NULL, 0) == AC_NULL);
   ac_debug_printf("\n");
 
   ac_debug_printf("simple_mem_pool_test: AC_NULL passed to AcMem_free, AcMem_ret_ac_mem and AcMem_ret_mem\n");
@@ -91,7 +80,7 @@ ac_bool simple_mem_pool_test() {
 
   // Test getting an AcMem
   ac_debug_printf("simple_mem_pool_test: first get ac_mem, expecting != AC_NULL\n");
-  error |= AC_TEST(AcMemPool_get_ac_mem(mp, 1, &mem) == AC_STATUS_OK);
+  mem = AcMemPool_get_ac_mem(mp, 1);
   error |= AC_TEST(mem != AC_NULL);
   error |= AC_TEST(mem->hdr.user_size == 1);
   error |= AC_TEST(mem->data[0] == 0);
@@ -100,7 +89,7 @@ ac_bool simple_mem_pool_test() {
 
   // Test a second get fails
   ac_debug_printf("simple_mem_pool_test: second get ac_mem, expecting == AC_NULL\n");
-  error |= AC_TEST(AcMemPool_get_ac_mem(mp, 1, &mem2) == AC_STATUS_NOT_AVAILABLE);
+  mem2 = AcMemPool_get_ac_mem(mp, 1);
   error |= AC_TEST(mem2 == AC_NULL);
   AcMemPool_debug_print("simple_mem_pool_test: pool after second get:", mp);
   ac_debug_printf("\n");
@@ -115,7 +104,7 @@ ac_bool simple_mem_pool_test() {
 
   // Request it back and verify that data[0] is 0 and its not the same as mem
   ac_debug_printf("simple_mem_pool_test: re-getting ac_mem, expecting != AC_NULL\n");
-  error |= AC_TEST(AcMemPool_get_ac_mem(mp, 1, &mem2) == AC_STATUS_OK);
+  mem2 = AcMemPool_get_ac_mem(mp, 1);
   error |= AC_TEST(mem2 != AC_NULL);
   error |= AC_TEST(mem2 != mem);
   error |= AC_TEST(mem2->hdr.user_size == 1);
@@ -151,7 +140,7 @@ ac_bool multiple_mem_pool_test() {
 
   // Test getting an AcMem
   ac_debug_printf("multiple_mem_pool_test: first get ac_mem, expecting != AC_NULL\n");
-  error |= AC_TEST(AcMemPool_get_ac_mem(mp, mpcs[2].data_size, &ac_mem[0]) == AC_STATUS_OK);
+  ac_mem[0] = AcMemPool_get_ac_mem(mp, mpcs[2].data_size);
   error |= AC_TEST(ac_mem[0] != AC_NULL);
   error |= AC_TEST(ac_mem[0]->hdr.user_size == mpcs[2].data_size);
   error |= AC_TEST(ac_mem[0]->data[0] == 0);
@@ -167,7 +156,7 @@ ac_bool multiple_mem_pool_test() {
   ac_assert(AC_ARRAY_COUNT(mpcs) == 3);
   ac_assert(AC_ARRAY_COUNT(mem) == (mpcs[0].count + mpcs[1].count + mpcs[2].count));
   for (ac_u32 i = 0; i < AC_ARRAY_COUNT(mem); i++) {
-    error |= AC_TEST(AcMemPool_get_mem(mp, 1, (void**)&mem[i]) == AC_STATUS_OK);
+    mem[i] = AcMemPool_get_mem(mp, 1);
     error |= AC_TEST(mem[i] != AC_NULL);
     mem[i][0] = i;
   }
@@ -187,7 +176,7 @@ ac_bool multiple_mem_pool_test() {
   ac_u32 idx = 0;
   for (ac_u32 i = 0; i < AC_ARRAY_COUNT(mpcs); i++) {
     for (ac_u32 m = 0; m < mpcs[i].count; m++) {
-      error |= AC_TEST(AcMemPool_get_mem(mp, 1, (void**)&mem[idx]) == AC_STATUS_OK);
+      mem[idx] = AcMemPool_get_mem(mp, 1);
       error |= AC_TEST(mem[idx] != AC_NULL);
       mem[idx][0] = idx;
       idx += 1;

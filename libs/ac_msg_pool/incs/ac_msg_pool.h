@@ -39,7 +39,7 @@ typedef struct AcMsgPool {
  *
  * @return a message or AC_NULL if none available
  */
-AcStatus AcMsgPool_get_msg(AcMsgPool* mp, AcMsg** ptr_AcMsg);
+AcMsg* AcMsgPool_get_msg(AcMsgPool* mp);
 
 /**
  * Ret a message to a pool

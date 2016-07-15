@@ -46,8 +46,7 @@ ac_bool simple_msg_pool_test(void) {
 
   // Test requesting a message from a AC_NULL pool returns AC_NULL
   ac_debug_printf("test_msg_pool: test an empty pool that AcMsg_get returns AC_NULL\n");
-  status = AcMsgPool_get_msg(&mp, &msg);
-  error |= AC_TEST(status != AC_STATUS_OK);
+  msg = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg == AC_NULL);
 
   // Test returning a AC_NULL msg to a AC_NULL pool doesn't blow up
@@ -63,14 +62,12 @@ ac_bool simple_msg_pool_test(void) {
 
   // Test requesting the message
   ac_debug_printf("test_msg_pool: get msg expecting != AC_NULL\n");
-  status = AcMsgPool_get_msg(&mp, &msg);
-  error |= AC_TEST(status == AC_STATUS_OK);
+  msg = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg != AC_NULL);
 
   // Test requesting the message which should be empty
   ac_debug_printf("test_msg_pool: get msg expecting AC_NULL\n");
-  status = AcMsgPool_get_msg(&mp, &msg2);
-  error |= AC_TEST(status != AC_STATUS_OK);
+  msg2 = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg2 == AC_NULL);
 
   ac_debug_printf("test_msg_pool: return msg=%p\n", msg);
@@ -79,8 +76,7 @@ ac_bool simple_msg_pool_test(void) {
 
   // Test we can get a message back after its returned
   ac_debug_printf("test_msg_pool: test we can get a msg after returning\n");
-  status = AcMsgPool_get_msg(&mp, &msg);
-  error |= AC_TEST(status == AC_STATUS_OK);
+  msg = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg != AC_NULL);
 
   // Return msg

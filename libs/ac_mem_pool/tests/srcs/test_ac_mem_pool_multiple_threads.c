@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-//#define NDEBUG
+#define NDEBUG
 
 #include <ac_mem_pool/tests/incs/test.h>
 
@@ -126,15 +126,15 @@ void* client(void* param) {
  */
 ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count) {
   ac_bool error = AC_FALSE;
+#if AC_PLATFORM == VersatilePB
+  ac_printf("test_mem_pool_multiple_threads: skipping\n");
+#else
   ClientParams* client_params = AC_NULL;
   ac_u64 count_sum = 0;
   ac_u64 count = 0;
   ac_u64 loops = 0;
-  ac_debug_printf("test_mem_pool_multiple_threads:+ thread_count=%d\n", thread_count);
+  ac_printf("test_mem_pool_multiple_threads:+ thread_count=%d\n", thread_count);
 
-#if AC_PLATFORM == VersatilePB
-  ac_printf("test_mem_pool_multiple_threads: skipping\n");
-#else
 
   AcReceptor* work_complete = AcReceptor_get();
   ac_assert(work_complete != AC_NULL);
@@ -188,7 +188,7 @@ ac_bool test_mem_pool_multiple_threads(ac_u32 thread_count) {
       if (__atomic_load_n(ptr_cp_mem, __ATOMIC_ACQUIRE) == AC_NULL) {
         // Ask for some memory
         ac_u8* mem;
-        AcMemPool_get_mem(pool, 1, (void**)&mem);
+        mem = AcMemPool_get_mem(pool, 1);
         if (mem != AC_NULL) {
           // Got it, pass it to client
           __atomic_store_n(ptr_cp_mem, mem, __ATOMIC_RELEASE);
@@ -262,9 +262,10 @@ done:
   // Let idle run to clean up zombies with Platform == pc_x86_64
   // TODO: Shouldn't have to do this
   ac_thread_wait_ns(100000);
+
+  ac_printf("test_mem_pool_multiple_threads:- error=%d rl=%d count=%ld count_sum=%ld loops=%ld\n\n",
+      error, ready_length(), count, count_sum, loops);
 #endif
 
-  ac_debug_printf("test_mem_pool_multiple_threads:- error=%d rl=%d count=%ld count_sum=%ld loops=%ld\n\n",
-      error, ready_length(), count, count_sum, loops);
   return error;
 }

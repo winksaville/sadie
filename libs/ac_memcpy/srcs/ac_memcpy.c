@@ -19,17 +19,21 @@
 #include <ac_inttypes.h>
 
 /**
- * copy unsigned 8 bit bytes from src to dest
- *
- * @param dest points to the destination array
- * @param src points to the source array
- * @param count number of bytes to copy
+ * @see ac_memcpy.h 
  */
-void ac_memcpy(void *dest, const void* src, ac_size_t count) {
+void* ac_memcpy(void *dest, const void* src, ac_size_t count) {
   ac_u8* pd = dest;
   const ac_u8* ps = src;
   while (count-- != 0) {
     *pd++ = *ps++;
   }
+  return dest;
 }
 
+
+#if AC_PLATFORM == VersatilePB
+void* memcpy(void *dest, const void* src, ac_size_t count) {
+  ac_memcpy(dest, src, count);
+  return dest;
+}
+#endif

@@ -136,8 +136,8 @@ static ac_bool test_dispatching() {
 
   // Get a msg and dispatch it
   AcMsg* msg1;
-  status = AcMsgPool_get_msg(&mp, &msg1);
-  error |= AC_TEST(status == AC_STATUS_OK);
+  msg1 = AcMsgPool_get_msg(&mp);
+  error |= AC_TEST(msg1 != AC_NULL);
   msg1->arg1 = 1;
   msg1->arg2 = 2;
   AcDispatcher_send_msg(dc1, msg1);
@@ -150,8 +150,8 @@ static ac_bool test_dispatching() {
 
   // Get a second message and dispatch it
   AcMsg* msg2;
-  status = AcMsgPool_get_msg(&mp, &msg2);
-  error |= AC_TEST(status == AC_STATUS_OK);
+  msg2 = AcMsgPool_get_msg(&mp);
+  error |= AC_TEST(msg2 != AC_NULL);
   msg2->arg1 = 1;
   msg2->arg2 = 3;
   AcDispatcher_send_msg(dc1, msg2);

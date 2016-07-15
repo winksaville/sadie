@@ -25,7 +25,9 @@
  * @param dest points to the destination array
  * @param src points to the source array
  * @param count number of bytes to copy
+ *
+ * @return dest
  */
-void ac_memcpy(void* dest, const void* src, ac_size_t count);
+void* ac_memcpy(void* dest, const void* src, ac_size_t count);
 
 #endif

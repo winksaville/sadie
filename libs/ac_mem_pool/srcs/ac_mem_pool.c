@@ -29,25 +29,17 @@
 #include <ac_status.h>
 
 /**
- * Get an AcMem with the specified sized AcMem.data
- *
- * @param pool is a valid AcMemPool
- *
- * @return 0 (AC_STATUS_OK) on success *ptr_AcMem is AcMem* or AC_NULL
- *         AC_STATUS_BAD_PARAM if pool is AC_NULL
- *         AC_STATUS_NOT_AVAILABLE if pool has nothing that large
+ * @see ac_mem_pool.h
  */
-AcStatus AcMemPool_get_ac_mem(AcMemPool* pool, ac_u32 size, AcMem** ptr_AcMem) {
-  AcStatus status;
+AcMem* AcMemPool_get_ac_mem(AcMemPool* pool, ac_u32 size) {
   AcMem* mem;
 
-  ac_debug_printf("AcMemPool_get:+pool=%p\n", pool);
+  ac_debug_printf("AcMemPool_get_ac_mem:+pool=%p\n", pool);
 
-  if ((pool == AC_NULL) || (size == 0) || (ptr_AcMem == AC_NULL)) {
-    ac_debug_printf("AcMemPool_get: err bad param "
-        "pool=%p == AC_NULL or size=%d == 0 or ptr_AcMem=%p AC_NULL\n",
-        pool, size, ptr_AcMem);
-    status = AC_STATUS_BAD_PARAM;
+  if ((pool == AC_NULL) || (size == 0)) {
+    ac_debug_printf("AcMemPool_get_ac_mem: err bad param "
+        "pool=%p == AC_NULL or size=%d == 0\n",
+        pool, size);
     mem = AC_NULL;
     goto done;
   }
@@ -61,29 +53,22 @@ AcStatus AcMemPool_get_ac_mem(AcMemPool* pool, ac_u32 size, AcMem** ptr_AcMem) {
       if (mem != AC_NULL) {
         // Got one
         mem->hdr.user_size = size;
-        status = AC_STATUS_OK;
         goto done;
       }
     }
   }
 
   // We didn't find an AcMem
-  status = AC_STATUS_NOT_AVAILABLE;
   mem = AC_NULL;
 
 done:
-  ac_debug_printf("AcMemPool_get:-pool=%p mem=%p status=%d\n", pool, mem, status);
-  if (ptr_AcMem != AC_NULL) {
-    *ptr_AcMem = mem;
-  }
-  return status;
+  ac_debug_printf("AcMemPool_get_ac_mem:-pool=%p mem=%p\n", pool, mem);
+  return mem;
 }
 
 
 /**
- * Return an AcMem to its pool
- *
- * @param mem is an AcMem returned by AcMemPool_get_ac_mem
+ * @see ac_mem_pool.h
  */
 void AcMemPool_ret_ac_mem(AcMem* mem) {
   ac_debug_printf("AcMemPool_ret_ac_mem:+mem=%p\n", mem);
@@ -97,40 +82,28 @@ void AcMemPool_ret_ac_mem(AcMem* mem) {
 }
 
 /**
- * Get memory with the specified size
- *
- * @param pool is a valid AcMemPool
- *
- * @return 0 (AC_STATUS_OK) on success *ptr_mem is &AcMem.data[0] or AC_NULL
- *         AC_STATUS_BAD_PARAM if pool is AC_NULL
- *         AC_STATUS_NOT_AVAILABLE if pool has nothing that large
+ * @see ac_mem_pool.h
  */
-AcStatus AcMemPool_get_mem(AcMemPool* pool, ac_u32 size, void** ptr_mem) {
-  AcStatus status;
+void* AcMemPool_get_mem(AcMemPool* pool, ac_u32 size) {
   void* data;
   ac_debug_printf("AcMemPool_get_mem:+pool=%p\n", pool);
 
-  if ((pool == AC_NULL) || (ptr_mem == AC_NULL)) {
-    ac_debug_printf("AcMemPool_get_mem: err AC_NULL pool=%p or ptr_mem=%p\n", pool, ptr_mem);
-    status = AC_STATUS_BAD_PARAM;
+  if (pool == AC_NULL) {
+    ac_debug_printf("AcMemPool_get_mem: err AC_NULL pool=%p\n", pool);
     data = AC_NULL;
     goto done;
   }
 
-  AcMem* mem;
-  status = AcMemPool_get_ac_mem(pool, size, &mem);
-  if (status == AC_STATUS_OK) {
+  AcMem* mem = AcMemPool_get_ac_mem(pool, size);
+  if (mem != AC_NULL) {
     data = mem->data;
   } else {
     data = AC_NULL;
   }
 
 done:
-  ac_debug_printf("AcMemPool_get_mem:-pool=%p status=%d mem=%p\n", pool, status, data);
-  if (ptr_mem != AC_NULL) {
-    *ptr_mem = data;
-  }
-  return status;
+  ac_debug_printf("AcMemPool_get_mem:-pool=%p mem=%p\n", pool, data);
+  return data;
 }
 
 /**

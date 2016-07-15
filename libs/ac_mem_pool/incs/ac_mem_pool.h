@@ -40,12 +40,11 @@ typedef struct AcMemPoolCountSize {
  * Get an AcMem with the specified sized AcMem.data
  *
  * @param pool is a valid AcMemPool
+ * @param size is length of the AcMem.data field
  *
- * @return 0 (AC_STATUS_OK) on success *ptr_AcMem is AcMem* or AC_NULL
- *         AC_STATUS_BAD_PARAM if pool is AC_NULL
- *         AC_STATUS_NOT_AVAILABLE if pool has nothing that large
+ * @return AcMem* or AC_NULL if an error.
  */
-AcStatus AcMemPool_get_ac_mem(AcMemPool* pool, ac_u32 size, AcMem** ptr_AcMem);
+AcMem* AcMemPool_get_ac_mem(AcMemPool* pool, ac_u32 size);
 
 /**
  * Return an AcMem to its pool
@@ -58,12 +57,11 @@ void AcMemPool_ret_ac_mem(AcMem* mem);
  * Get memory with the specified size
  *
  * @param pool is a valid AcMemPool
+ * @param size is length of the memory to retrive
  *
- * @return 0 (AC_STATUS_OK) on success *ptr_mem is &AcMem.data[0] or AC_NULL
- *         AC_STATUS_BAD_PARAM if pool is AC_NULL
- *         AC_STATUS_NOT_AVAILABLE if pool has nothing that large
+ * @return Pointer to memory that is size in length
  */
-AcStatus AcMemPool_get_mem(AcMemPool* pool, ac_u32 size, void** ptr_mem);
+void* AcMemPool_get_mem(AcMemPool* pool, ac_u32 size);
 
 /**
  * Ret the memory to its pool.
