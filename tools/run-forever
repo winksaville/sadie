@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Run forever the first parameter on the command line counting the run
+for ((run=1; ;run++)); do
+  echo "***************** run $run **********************"
+  $@ || exit 1;
+  echo "exit=$?"
+  echo ""
+  echo ""
+done
