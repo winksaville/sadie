@@ -99,9 +99,9 @@ int main(void) {
   ac_debug_printf("sizeof(AcMsg)=%d\n", sizeof(AcMsg));
 
   error |= simple_msg_pool_test();
-  //error |= test_msg_pool_multiple_threads(1, 1);
-  //error |= test_msg_pool_multiple_threads(1, 10);
-  //error |= test_msg_pool_multiple_threads(10, 1);
+  error |= test_msg_pool_multiple_threads(1, 1);
+  error |= test_msg_pool_multiple_threads(1, 10);
+  error |= test_msg_pool_multiple_threads(10, 1);
 
   if (!error) {
     ac_printf("OK\n");

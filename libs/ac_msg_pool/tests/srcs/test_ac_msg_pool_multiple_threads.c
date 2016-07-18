@@ -22,7 +22,7 @@
 #include <ac_debug_printf.h>
 #include <ac_inttypes.h>
 #include <ac_memmgr.h>
-#include <ac_mpscfifo.h>
+#include <ac_mpsc_fifo.h>
 #include <ac_msg_pool.h>
 #include <ac_receptor.h>
 #include <ac_test.h>
@@ -65,7 +65,7 @@ typedef struct {
   struct MsgTsc msg_tsc[MSGS_TSC_COUNT];
 } mptt_params;
 
-static ac_bool mptt_process_msg(AcComp* this, AcMsg* msg) {
+ac_bool mptt_process_msg(AcComp* this, AcMsg* msg) {
   ac_u64 recv_tsc = ac_tscrd();
   mptt_params* params = (mptt_params*)this;
 
@@ -80,7 +80,7 @@ static ac_bool mptt_process_msg(AcComp* this, AcMsg* msg) {
       msg->arg1, msg->arg2, params->count);
 
   // Return message
-  AcMsg_ret(msg);
+  AcMsgPool_ret_msg(msg);
 
   mt->done_tsc = ac_tscrd();
 
@@ -101,13 +101,13 @@ ac_u32 count_msgs(AcMsgPool* mp, ac_u32 msg_count) {
 
     AcMsg* msg;
     ac_u32 idx = 0;
-    while ((msg = AcMsg_get(mp)) != AC_NULL) {
+    while ((msg = AcMsgPool_get_msg(mp)) != AC_NULL) {
       array[idx] = msg;
       count += 1;
       idx = count % msg_count;
     }
     for (ac_u32 idx = 0; idx < count && idx < msg_count; idx++) {
-      AcMsg_ret(array[idx]);
+      AcMsgPool_ret_msg(array[idx]);
     }
 
     ac_free(array);
@@ -124,12 +124,14 @@ ac_u32 count_msgs(AcMsgPool* mp, ac_u32 msg_count) {
  */
 ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count, ac_u32 comps_per_thread) {
   ac_bool error = AC_FALSE;
+
   ac_printf("test_msg_pool_multiple_threads:+ thread_count=%d comps_per_thread=%d rl=%d\n",
       thread_count, comps_per_thread, ready_length());
 #if AC_PLATFORM == VersatilePB
   ac_printf("test_msg_pool_multiple_threads: VersatilePB threading not working, skipping\n");
 #else
-
+  AcStatus status;
+  AcMsgPool mp;
   ac_u32 total_comp_count = thread_count * comps_per_thread;
 
   // Create a msg pool. The msg_count must be at
@@ -143,9 +145,9 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count, ac_u32 comps_per_thr
   // test we create a message pool with twice the
   // number threads as the msg_count
   ac_u32 msg_count = total_comp_count * 2;
-  AcMsgPool* mp = AcMsgPool_create(msg_count);
-  error |= AC_TEST(mp != AC_NULL);
-  error |= AC_TEST(count_msgs(mp, msg_count) == msg_count);
+  status = AcMsgPool_init(&mp, msg_count);
+  error |= AC_TEST(status == AC_STATUS_OK);
+  error |= AC_TEST(count_msgs(&mp, msg_count) == msg_count);
   ac_debug_printf("test_msg_pool_multiple_threads:+total_comp_count=%d msg_count=%d\n",
       total_comp_count, msg_count);
 
@@ -185,7 +187,7 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count, ac_u32 comps_per_thr
     for (ac_s32 i = 0; !error && (i < thread_count); i++) {
         ac_debug_printf("test_msg_pool_multiple_threads: %d waiting_count=%ld TOP Loop\n",
             i, waiting_count);
-      AcMsg* msg = AcMsg_get(mp);
+      AcMsg* msg = AcMsgPool_get_msg(&mp);
       while (!error && (msg == AC_NULL)) {
         if (waiting_count++ >= max_waiting_count) {
           ac_printf("test_msg_pool_multiple_threads: %d waiting_count=%ld ERROR, no msgs avail\n",
@@ -195,7 +197,7 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count, ac_u32 comps_per_thr
           break;
         }
         ac_thread_yield();
-        msg = AcMsg_get(mp);
+        msg = AcMsgPool_get_msg(&mp);
       }
       if (msg != AC_NULL) {
         msg->arg1 = waiting_count;
@@ -213,7 +215,7 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count, ac_u32 comps_per_thr
   ac_printf("test_msg_pool_multiple_threads: done in %.9t\n", stop - start);
 
   // If we cleaned up the threads then all of the messages should be back
-  error |= AC_TEST(count_msgs(mp, msg_count) == msg_count);
+  error |= AC_TEST(count_msgs(&mp, msg_count) == msg_count);
 
   ac_debug_printf("test_msg_pool_multiple_threads: waiting_count=%ld\n",
       waiting_count);
