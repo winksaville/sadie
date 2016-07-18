@@ -7,7 +7,7 @@ machine:
     INSTALL_PREFIX_DIR_HOME_REL: ~/opt
     INSTALL_PREFIX_DIR: ${HOME}/opt
     PATH: ${INSTALL_PREFIX_DIR}/bin:${INSTALL_PREFIX_DIR}/x-tools/x86_64-unknown-elf/bin:${INSTALL_PREFIX_DIR}/x-tools/i386-unknown-elf/bin:${INSTALL_PREFIX_DIR}/x-tools/arm-unknown-eabi/bin:${PATH}
-    PYTHONPATH: ${INSTALL_PREFIX_DIR}/opt/lib/python3.5/site-packages:${PYTHONPATH}
+    PYTHONPATH: ${INSTALL_PREFIX_DIR}/lib/python3.5/site-packages:${PYTHONPATH}
 
 checkout:
   post:
@@ -22,6 +22,11 @@ dependencies:
     - ~/opt
 
   pre:
+    - echo INSTALL_PREFIX_DIR_HOME_REL=${INSTALL_PREFIX_DIR_HOME_REL}
+    - echo INSTALL_PREFIX_DIR=${INSTALL_PREFIX_DIR}
+    - echo PATH=${PATH}
+    - echo PYTHONPATH=${PYTHONPATH}
+
     # Install base dependencies
     - vendor-install-tools/ubuntu_base_dependencies_install.sh
 
