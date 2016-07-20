@@ -53,7 +53,7 @@
 #-I
 #/home/wink/prgs/sadie/platform/Posix/libs/ac_receptor_impl/incs
 -I
-/home/wink/prgs/sadie/platform/Posix/libs/ac_net_ll_impl/incs
+/home/wink/prgs/sadie/platform/Posix/libs/ac_inet_link_impl/incs
 
 -I
 /home/wink/prgs/sadie/libs

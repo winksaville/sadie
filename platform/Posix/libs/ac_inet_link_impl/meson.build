@@ -15,7 +15,7 @@
 runtimeIncDirs += include_directories('incs')
 
 runtimeSrcs += [
-  '@0@/srcs/ac_net_ll_impl.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_inet_link_impl.c'.format(meson.current_source_dir()),
 ]
 
 compilerArgs += [

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include <ac_net_ll_impl.h>
+#include <ac_inet_link_impl.h>
 
 #include <ac_inttypes.h>
 #include <ac_printf.h>
 #include <ac_test.h>
 
-ac_uint test_net_ll(void) {
+ac_uint test_inet_link(void) {
   ac_uint error = AC_FALSE;
 
   return error;
@@ -32,7 +32,7 @@ int main(void) {
   AcNetLl_init();
 
   if (!error) {
-    error |= test_net_ll();
+    error |= test_inet_link();
   }
 
   if (!error) {

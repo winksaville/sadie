@@ -13,7 +13,7 @@ command:
   - if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; meson -D Platform=${Platform} --cross-file ../cross-file-Posix-gcc --buildtype plain ..; fi
 
   # Posix only tests
-  - if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; ninja run-test-posix-ac_net_ll_impl; fi
+  - if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; ninja run-test-posix-ac_inet_link_impl; fi
 
   # Run the these test for all platforms
   - cd build-${Platform}; ninja

@@ -21,7 +21,7 @@ subdir('@0@/libs'.format(meson.source_root()))
 # Add our platform specific libs
 subdir('ac_acpi_impl')
 subdir('ac_memmgr')
-subdir('ac_net_ll_impl')
+subdir('ac_inet_link_impl')
 subdir('ac_pci_impl')
 subdir('ac_putchar')
 subdir('ac_receptor_impl')

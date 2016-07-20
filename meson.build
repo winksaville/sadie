@@ -67,7 +67,7 @@ subdir('arch/x86/libs/thread_x86/tests')
 
 subdir('arch/armv6/arm1176jzf-s/libs/ac_receptor_impl/tests')
 
-subdir('platform/Posix/libs/ac_net_ll_impl/tests')
+subdir('platform/Posix/libs/ac_inet_link_impl/tests')
 subdir('platform/Posix/libs/ac_receptor_impl/tests')
 subdir('platform/Posix/libs/ac_tsc_impl/tests')
 
