@@ -12,7 +12,10 @@ command:
   - if [[ "${Platform}" == 'Posix' ]]; then rm -rf build-${Platform}; mkdir -p build-${Platform}; fi
   - if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; meson -D Platform=${Platform} --cross-file ../cross-file-Posix-gcc --buildtype plain ..; fi
 
-  # Run the tests from the current build directory
+  # Posix only tests
+  - if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; ninja run-test-posix-ac_net_ll_impl; fi
+
+  # Run the these test for all platforms
   - cd build-${Platform}; ninja
   - cd build-${Platform}; ninja run-test-ac_arg
   - cd build-${Platform}; ninja run-test-ac_assert

@@ -52,6 +52,8 @@
 #/home/wink/prgs/sadie/platform/Posix/libs/ac_keyboard_impl/incs
 #-I
 #/home/wink/prgs/sadie/platform/Posix/libs/ac_receptor_impl/incs
+-I
+/home/wink/prgs/sadie/platform/Posix/libs/ac_net_ll_impl/incs
 
 -I
 /home/wink/prgs/sadie/libs
