@@ -18,12 +18,17 @@
 
 #include <ac_printf.h>
 
-ac_bool test_inet_link() {
+ac_bool test_AcInetFrament_ipv6_hdr(void) {
   ac_bool error = AC_FALSE;
 
   return error;
 }
 
+ac_bool test_inet_link(void) {
+  ac_bool error = AC_FALSE;
+
+  return error;
+}
 
 int main(void) {
   ac_bool error = AC_FALSE;
