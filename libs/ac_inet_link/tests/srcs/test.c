@@ -16,24 +16,19 @@
 
 #include <ac_inet_link.h>
 
-#include <ac_inttypes.h>
 #include <ac_printf.h>
-#include <ac_test.h>
 
-ac_uint test_inet_link_impl(void) {
-  ac_uint error = AC_FALSE;
+ac_bool test_inet_link() {
+  ac_bool error = AC_FALSE;
 
   return error;
 }
 
+
 int main(void) {
-  ac_uint error = AC_FALSE;
+  ac_bool error = AC_FALSE;
 
-  AcInetLink_init();
-
-  if (!error) {
-    error |= test_inet_link_impl();
-  }
+  error |= test_inet_link();
 
   if (!error) {
     ac_printf("OK\n");

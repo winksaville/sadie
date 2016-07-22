@@ -22,6 +22,8 @@ subdir('@0@/platform/generic/libs/ac_memmgr'.format(meson.source_root()))
 subdir('@0@/platform/pc_generic/ac_putchar'.format(meson.source_root()))
 subdir('@0@/platform/pc_generic/ac_stop'.format(meson.source_root()))
 
+subdir('ac_inet_link_impl')
+
 libruntime = static_library('runtime', runtimeSrcs,
   c_args : compilerArgs,
   include_directories : runtimeIncDirs)

@@ -46,14 +46,16 @@
 # Enable one or the other, be nice if we could automate.
 -I
 /home/wink/prgs/sadie/arch/x86/libs/ac_keyboard_impl/incs
+#-I
+#/home/wink/prgs/sadie/arch/x86/libs/ac_inet_link_impl/incs
 -I
 /home/wink/prgs/sadie/arch/x86/libs/ac_receptor_impl/incs
 #-I
 #/home/wink/prgs/sadie/platform/Posix/libs/ac_keyboard_impl/incs
-#-I
-#/home/wink/prgs/sadie/platform/Posix/libs/ac_receptor_impl/incs
 -I
 /home/wink/prgs/sadie/platform/Posix/libs/ac_inet_link_impl/incs
+#-I
+#/home/wink/prgs/sadie/platform/Posix/libs/ac_receptor_impl/incs
 
 -I
 /home/wink/prgs/sadie/libs
@@ -65,6 +67,8 @@
 /home/wink/prgs/sadie/libs/ac_assert/incs
 -I
 /home/wink/prgs/sadie/libs/ac_bits/incs
+-I
+/home/wink/prgs/sadie/libs/ac_inet_link/incs
 -I
 /home/wink/prgs/sadie/libs/ac_mem/incs
 -I

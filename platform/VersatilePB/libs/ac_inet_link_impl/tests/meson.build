@@ -1,4 +1,4 @@
-# Copyright 2015 wink saville
+# Copyright 2016 wink saville
 #
 # licensed under the apache license, version 2.0 (the "license");
 # you may not use this file except in compliance with the license.
@@ -12,21 +12,16 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-# ARM Versatile Platform Board
+if Platform == 'Posix'
+  srcFiles = firstSrcFiles + ['srcs/test.c']
 
+  # Create test_versatilepb_ac_inet_link_impl executable
+  test_versatilepb_ac_inet_link_impl = executable( 'test_versatilepb_ac_inet_link_impl', srcFiles,
+    include_directories : runtimeIncDirs,
+    link_args : linkArgs,
+    c_args : compilerArgs,
+    dependencies : [libruntime_dep],
+  )
 
-# Add general runtime libs
-subdir('@0@/libs'.format(meson.source_root()))
-
-# Add our platform specific libs
-subdir('ac_inet_link_impl')
-subdir('@0@/platform/generic/libs/ac_memmgr'.format(meson.source_root()))
-subdir('ac_putchar')
-subdir('ac_stop')
-
-libruntime = static_library('runtime', runtimeSrcs,
-  c_args : compilerArgs,
-  include_directories : runtimeIncDirs)
-
-libruntime_dep += declare_dependency(
-  link_with : libruntime)
+  run_target('run-test-versatilepb-ac_inet_link_impl', test_versatilepb_ac_inet_link_impl)
+endif

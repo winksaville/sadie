@@ -1,4 +1,4 @@
-# Copyright 2015 wink saville
+# Copyright 2016 wink saville
 #
 # licensed under the apache license, version 2.0 (the "license");
 # you may not use this file except in compliance with the license.
@@ -12,21 +12,8 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-# ARM Versatile Platform Board
+runtimeIncDirs += include_directories('incs')
 
-
-# Add general runtime libs
-subdir('@0@/libs'.format(meson.source_root()))
-
-# Add our platform specific libs
-subdir('ac_inet_link_impl')
-subdir('@0@/platform/generic/libs/ac_memmgr'.format(meson.source_root()))
-subdir('ac_putchar')
-subdir('ac_stop')
-
-libruntime = static_library('runtime', runtimeSrcs,
-  c_args : compilerArgs,
-  include_directories : runtimeIncDirs)
-
-libruntime_dep += declare_dependency(
-  link_with : libruntime)
+runtimeSrcs += [
+  '@0@/srcs/ac_inet_link_impl.c'.format(meson.current_source_dir()),
+]

@@ -24,6 +24,7 @@ command:
   - cd build-${Platform}; ninja run-test-ac_check_sum
   - cd build-${Platform}; ninja run-test-ac_comp_mgr
   - cd build-${Platform}; ninja run-test-ac_dispatcher
+  - cd build-${Platform}; ninja run-test-ac_inet_link
   - cd build-${Platform}; ninja run-test-ac_mem_pool
   - cd build-${Platform}; ninja run-test-ac_memmgr
   - cd build-${Platform}; ninja run-test-ac_mpsc_fifo

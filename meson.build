@@ -67,6 +67,10 @@ subdir('arch/x86/libs/thread_x86/tests')
 
 subdir('arch/armv6/arm1176jzf-s/libs/ac_receptor_impl/tests')
 
+subdir('platform/pc_x86_64/libs/ac_inet_link_impl/tests')
+
+subdir('platform/VersatilePB/libs/ac_inet_link_impl/tests')
+
 subdir('platform/Posix/libs/ac_inet_link_impl/tests')
 subdir('platform/Posix/libs/ac_receptor_impl/tests')
 subdir('platform/Posix/libs/ac_tsc_impl/tests')
@@ -76,6 +80,7 @@ subdir('libs/ac_acpi/tests')
 subdir('libs/ac_bits/tests')
 subdir('libs/ac_comp_mgr/tests')
 subdir('libs/ac_check_sum/tests')
+subdir('libs/ac_inet_link/tests')
 subdir('libs/ac_mem/tests')
 subdir('libs/ac_mpsc_fifo/tests')
 subdir('libs/ac_mem_pool/tests')

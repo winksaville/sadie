@@ -14,17 +14,7 @@
  * limitations under the license.
  */
 
-#define NDEBUG
+#ifndef SADIE_PLATFORM_VERSATILEPB_LIBS_AC_INET_LINK_IMPL_INCS_AC_INET_LINK_IMPL_H
+#define SADIE_PLATFORM_VERSATILEPB_LIBS_AC_INET_LINK_IMPL_INCS_AC_INET_LINK_IMPL_H
 
-#include <ac_inet_link.h>
-
-
-#include <ac_debug_printf.h>
-
-
-/**
- * Initialize this module
- */
-void AcInetLink_init(void) {
-  ac_debug_printf("AcInetLink_init:#\n");
-}
+#endif

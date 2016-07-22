@@ -14,12 +14,7 @@
  * limitations under the license.
  */
 
-#ifndef SADIE_PLATFORM_POSIX_LIBS_AC_NET_LL_IMPL_H
-#define SADIE_PLATFORM_POSIX_LIBS_AC_NET_LL_IMPL_H
-
-/**
- * Initialize this module
- */
-void AcNetLl_init(void);
+#ifndef SADIE_PLATFORM_POSIX_LIBS_AC_INET_LINK_IMPL_INCS_AC_INET_LINK_IMPL_H
+#define SADIE_PLATFORM_POSIX_LIBS_AC_INET_LINK_IMPL_INCS_AC_INET_LINK_IMPL_H
 
 #endif
