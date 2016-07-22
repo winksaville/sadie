@@ -17,6 +17,7 @@
 #ifndef SADIE_X86_64_AC_INTTYPES_H
 #define SADIE_X86_64_AC_INTTYPES_H
 
+#include <generic/incs/ac_arch_byte_order_little_endian.h>
 #include <generic/incs/ac_inttypes_ll64.h>
 #include <generic/incs/ac_64bits.h>
 #include <generic/incs/ac_common.h>

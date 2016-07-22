@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Wink Saville
+ * Copyright 2016 Wink Saville
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_X86_64_AC_INTTYPES_H
-#define SADIE_X86_64_AC_INTTYPES_H
+/**
+ * Defines big endian byte order
+ */
+#ifndef SADIE_GENERIC_INCS_AC_ARCH_BYTE_ORDER_H
+#define SADIE_GENERIC_INCS_AC_ARCH_BYTE_ORDER_H
 
-#include <generic/incs/ac_arch_byte_order_little_endian.h>
-#include <generic/incs/ac_inttypes_ll64.h>
-#include <generic/incs/ac_32bits.h>
-#include <generic/incs/ac_common.h>
+#define AC_ARCH_BYTE_ORDER_LITTLE_ENDIAN 1
+#define AC_ARCH_BYTE_ORDER_BIG_ENDIAN    2
 
 #endif

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_GENERIC_AC_COMMON_H
-#define SADIE_GENERIC_AC_COMMON_H
+#ifndef SADIE_GENERIC_INCS_AC_COMMON_H
+#define SADIE_GENERIC_INCS_AC_COMMON_H
 
 #define AC_NULL ((void*)0)
 
@@ -119,5 +119,24 @@ typedef _Bool ac_bool;
 
 #define AC_INT_MAX AC_SINT_MAX
 #define AC_INT_MIN AC_SINT_MIN
+
+/*
+ * Validate that macros AC_ARCH_BYTE_ORDER* ard defined
+ */
+#ifndef AC_ARCH_BYTE_ORDER_BIG_ENDIAN
+#error "ERROR AC_ARCH_BYTE_ORDER_BIG_ENDIAN is not defined"
+#endif
+
+#ifndef AC_ARCH_BYTE_ORDER_LITTLE_ENDIAN
+#error "ERROR AC_ARCH_BYTE_ORDER_LITTLE_ENDIAN is not defined"
+#endif
+
+#ifndef AC_ARCH_BYTE_ORDER
+#error "ERROR AC_ARCH_BYTE_ORDER is not defined"
+#endif
+
+#if (AC_ARCH_BYTE_ORDER != AC_ARCH_BYTE_ORDER_BIG_ENDIAN) && (AC_ARCH_BYTE_ORDER != AC_ARCH_BYTE_ORDER_LITTLE_ENDIAN)
+#error "ERROR AC_ARCH_BYTE_ORDER is not defined as little or big endian"
+#endif
 
 #endif
