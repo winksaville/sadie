@@ -29,6 +29,11 @@ firstSrcFiles = []
 
 # Initialize some globals
 compilerArgs = ['-std=c11', '-O2', '-g', '-Wall']
+compiler = meson.get_compiler('c')
+if compiler.get_id() == 'gcc'
+  compilerArgs += ['-Wno-packed-bitfield-compat']
+endif
+
 linkArgs = []
 linkDeps = []
 runtimeSrcs = []
