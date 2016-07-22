@@ -82,6 +82,7 @@ subdir('libs/ac_mem_pool/tests')
 subdir('libs/ac_msg_pool/tests')
 subdir('libs/ac_printf/tests')
 subdir('libs/ac_pci/tests')
+subdir('libs/ac_swap_bytes/tests')
 subdir('libs/ac_time/tests')
 
 subdir('platform/tests')

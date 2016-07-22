@@ -94,6 +94,8 @@
 -I
 /home/wink/prgs/sadie/libs/ac_string/incs
 -I
+/home/wink/prgs/sadie/libs/ac_swap_bytes/incs
+-I
 /home/wink/prgs/sadie/libs/ac_time/incs
 
 -I

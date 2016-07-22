@@ -33,6 +33,7 @@ command:
   - cd build-${Platform}; ninja run-test-ac_receptor
   - cd build-${Platform}; ninja run-test-ac_string
   - cd build-${Platform}; ninja run-test-ac_sysconf
+  - cd build-${Platform}; ninja run-test-ac_swap_bytes
   - cd build-${Platform}; ninja run-test-ac_thread
   - cd build-${Platform}; ninja run-test-ac_timer
   - cd build-${Platform}; ninja run-test-ac_time
