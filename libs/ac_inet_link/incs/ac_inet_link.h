@@ -39,7 +39,7 @@ typedef struct __attribute__ ((__packed__)) AcInetIpv6Hdr {
  */
 typedef struct __attribute__ ((__packed__)) AcInetIpv4FragmentOffset {
   union {
-    ac_u8 raw_u8;
+    ac_u8 raw_u8[2];
     ac_u16 raw_u16;
     struct {
       ac_u16 offset_in_u64s:13; // Bits 0-12 this fragments byte offset == offset_in_u64s * 8
