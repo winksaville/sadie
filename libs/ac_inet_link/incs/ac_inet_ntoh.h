@@ -22,7 +22,7 @@
 
 #if AC_ARCH_BYTE_ORDER == AC_ARCH_BYTE_ORDER_LITTLE_ENDIAN
 
-/* Swap bytes for BIG_ENDIAN machines */
+/* Swap bytes for LITTLE_ENDIAN machines */
 
 #define AC_NTOH_U16(val) ({ \
   ac_u16 result = AC_SWAP_BYTES_U16(val); \
@@ -44,18 +44,15 @@
 /* Do nothing for BIG_ENDIAN machines */
 
 #define AC_NTOH_U16(val) ({ \
-  ac_u16 result = val; \
-  result; \
+  val; \
 })
 
 #define AC_NTOH_U32(val) ({ \
-  ac_u32 result = val; \
-  result; \
+  val; \
 })
 
 #define AC_NTOH_U64(val) ({ \
-  ac_u64 result = val; \
-  result; \
+  val; \
 })
 
 #else

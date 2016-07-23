@@ -22,14 +22,21 @@
 
 #pragma push_macro("AC_ARCH_BYTE_ORDER")
 #undef AC_ARCH_BYTE_ORDER
+#define AC_ARCH_BYTE_ORDER AC_ARCH_BYTE_ORDER_BIG_ENDIAN
+
+#undef SADIE_LIBS_AC_INET_LINK_INCS_AC_INET_HTON_H
 #undef AC_HTON_U16
 #undef AC_HTON_U32
 #undef AC_HTON_U64
-#define AC_ARCH_BYTE_ORDER AC_ARCH_BYTE_ORDER_BIG_ENDIAN
-#undef SADIE_LIBS_AC_INET_LINK_INCS_AC_INET_HTON_H
 #include <ac_inet_hton.h>
 
-ac_bool test_hton_be(void) {
+#undef SADIE_LIBS_AC_INET_LINK_INCS_AC_INET_NTOH_H
+#undef AC_NTOH_U16
+#undef AC_NTOH_U32
+#undef AC_NTOH_U64
+#include <ac_inet_ntoh.h>
+
+ac_bool test_hton_ntoh_be(void) {
   ac_bool error = AC_FALSE;
 
   ac_u16 a_u16 = 0x0123;
@@ -40,6 +47,9 @@ ac_bool test_hton_be(void) {
   error |= AC_TEST(AC_HTON_U16(a_u16) == a_u16);
   error |= AC_TEST(AC_HTON_U32(a_u32) == a_u32);
   error |= AC_TEST(AC_HTON_U64(a_u64) == a_u64);
+  error |= AC_TEST(AC_NTOH_U16(a_u16) == a_u16);
+  error |= AC_TEST(AC_NTOH_U32(a_u32) == a_u32);
+  error |= AC_TEST(AC_NTOH_U64(a_u64) == a_u64);
 
   return error;
 }
@@ -47,14 +57,21 @@ ac_bool test_hton_be(void) {
 
 #pragma push_macro("AC_ARCH_BYTE_ORDER")
 #undef AC_ARCH_BYTE_ORDER
+#define AC_ARCH_BYTE_ORDER AC_ARCH_BYTE_ORDER_LITTLE_ENDIAN
+
+#undef SADIE_LIBS_AC_INET_LINK_INCS_AC_INET_HTON_H
 #undef AC_HTON_U16
 #undef AC_HTON_U32
 #undef AC_HTON_U64
-#define AC_ARCH_BYTE_ORDER AC_ARCH_BYTE_ORDER_LITTLE_ENDIAN
-#undef SADIE_LIBS_AC_INET_LINK_INCS_AC_INET_HTON_H
 #include <ac_inet_hton.h>
 
-ac_bool test_hton_le(void) {
+#undef SADIE_LIBS_AC_INET_LINK_INCS_AC_INET_NTOH_H
+#undef AC_NTOH_U16
+#undef AC_NTOH_U32
+#undef AC_NTOH_U64
+#include <ac_inet_ntoh.h>
+
+ac_bool test_hton_ntoh_le(void) {
   ac_bool error = AC_FALSE;
 
   ac_u16 a_u16 = 0x0123;
@@ -65,6 +82,10 @@ ac_bool test_hton_le(void) {
   error |= AC_TEST(AC_HTON_U16(a_u16) == AC_SWAP_BYTES_U16(a_u16));
   error |= AC_TEST(AC_HTON_U32(a_u32) == AC_SWAP_BYTES_U32(a_u32));
   error |= AC_TEST(AC_HTON_U64(a_u64) == AC_SWAP_BYTES_U64(a_u64));
+
+  error |= AC_TEST(AC_NTOH_U16(a_u16) == AC_SWAP_BYTES_U16(a_u16));
+  error |= AC_TEST(AC_NTOH_U32(a_u32) == AC_SWAP_BYTES_U32(a_u32));
+  error |= AC_TEST(AC_NTOH_U64(a_u64) == AC_SWAP_BYTES_U64(a_u64));
 
   return error;
 }
@@ -96,8 +117,8 @@ ac_bool test_inet_link(void) {
 int main(void) {
   ac_bool error = AC_FALSE;
 
-  error |= test_hton_be();
-  error |= test_hton_le();
+  error |= test_hton_ntoh_be();
+  error |= test_hton_ntoh_le();
   error |= test_AcInetIpv4FragmentOffset();
   error |= test_inet_link();
 
