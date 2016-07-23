@@ -16,11 +16,7 @@ let g:syntastic_check_on_wq = 0
 let g:syntastic_c_compiler='clang'
 
 " Compiler options
-let g:syntastic_c_compiler_options='-std=c11'
-let g:syntastic_c_compiler_options+='-ffreestanding -nostdlib -nostartfiles'
-let g:syntastic_c_compiler_options+='-nodefaultlibs'
-let g:syntastic_c_compiler_options+='-pipe -Wall -Winvalid-pch'
-let g:syntastic_c_compiler_options+='-O2 -g -Dpc_x86_64 -Dx86'
-let g:syntastic_c_compiler_options+='m64 -mno-red-zone'
+let g:syntastic_c_compiler_options='-std=c11 -ffreestanding -nostdlib -nostartfiles -nodefaultlibs -pipe -Wall -Winvalid-pch -O2 -g -Dpc_x86_64 -mno-red-zone -DPosix=1 -Dx86=1 -DAC_PLATFORM=Posix -DAC_ARCH=x86 -m64'
 
+" Define the syntastic config file
 let g:syntastic_c_config_file='.syntastic_c_config'
