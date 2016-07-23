@@ -30,12 +30,12 @@
 })
 
 #define AC_NTOH_U32(val) ({ \
-  ac_u16 result = AC_SWAP_BYTES_U32(val); \
+  ac_u32 result = AC_SWAP_BYTES_U32(val); \
   result; \
 })
 
 #define AC_NTOH_U64(val) ({ \
-  ac_u16 result = AC_SWAP_BYTES_U64(val); \
+  ac_u64 result = AC_SWAP_BYTES_U64(val); \
   result; \
 })
 
@@ -49,12 +49,12 @@
 })
 
 #define AC_NTOH_U32(val) ({ \
-  ac_u16 result = val; \
+  ac_u32 result = val; \
   result; \
 })
 
 #define AC_NTOH_U64(val) ({ \
-  ac_u16 result = val; \
+  ac_u64 result = val; \
   result; \
 })
 
