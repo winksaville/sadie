@@ -20,6 +20,9 @@
 #include <ac_printf.h>
 #include <ac_test.h>
 
+/**
+ * Test AC_ARCH_BYTE_ORDER_BIG_ENDIAN
+ */
 #pragma push_macro("AC_ARCH_BYTE_ORDER")
 #undef AC_ARCH_BYTE_ORDER
 #define AC_ARCH_BYTE_ORDER AC_ARCH_BYTE_ORDER_BIG_ENDIAN
@@ -55,6 +58,9 @@ ac_bool test_hton_ntoh_be(void) {
 }
 #pragma pop_macro("AC_ARCH_BYTE_ORDER")
 
+/**
+ * Test AC_ARCH_BYTE_ORDER_LITTLE_ENDIAN
+ */
 #pragma push_macro("AC_ARCH_BYTE_ORDER")
 #undef AC_ARCH_BYTE_ORDER
 #define AC_ARCH_BYTE_ORDER AC_ARCH_BYTE_ORDER_LITTLE_ENDIAN
@@ -91,6 +97,9 @@ ac_bool test_hton_ntoh_le(void) {
 }
 #pragma pop_macro("AC_ARCH_BYTE_ORDER")
 
+/**
+ * Test AcInetIpvFragmentOffset with a walking 1 bit test
+ */
 struct test_case_AcInetIpv4FragmentOffset {
   AcInetIpv4FragmentOffset val;
   ac_u16 offset_in_u64s;
@@ -101,12 +110,17 @@ struct test_case_AcInetIpv4FragmentOffset {
 
 static struct test_case_AcInetIpv4FragmentOffset test_case_ipv4_frag[] = {
   { .val.raw_u16=0x0001, .offset_in_u64s=0x0001, },
+  { .val.raw_u16=0x0010, .offset_in_u64s=0x0010, },
+  { .val.raw_u16=0x0100, .offset_in_u64s=0x0100, },
   { .val.raw_u16=0x1000, .offset_in_u64s=0x1000, },
   { .val.raw_u16=0x2000, .more_fragments=1, },
   { .val.raw_u16=0x4000, .dont_fragment=1, },
   { .val.raw_u16=0x8000, .zero=1, },
 };
 
+/**
+ * A single test case for AcInetIpv4FragmentOffset
+ */
 static ac_bool test_ipv4_frag(struct test_case_AcInetIpv4FragmentOffset* test) {
   ac_bool error = AC_FALSE;
 
@@ -136,6 +150,9 @@ static ac_bool test_ipv4_frag(struct test_case_AcInetIpv4FragmentOffset* test) {
   return error;
 }
 
+/**
+ * Test all of the AcInetIpv4FragmentOffset test cases
+ */
 ac_bool test_AcInetIpv4FragmentOffset(void) {
   ac_bool error = AC_FALSE;
 
@@ -146,6 +163,9 @@ ac_bool test_AcInetIpv4FragmentOffset(void) {
   return error;
 }
 
+/**
+ * Main routine
+ */
 int main(void) {
   ac_bool error = AC_FALSE;
 
