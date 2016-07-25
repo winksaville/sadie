@@ -26,7 +26,3 @@ compilerArgs += [
   '-DAC_PLATFORM=@0@'.format(Platform),
   '-DAC_ARCH=@0@'.format(Arch),
 ]
-
-subdir('@0@/arch'.format(meson.source_root()))
-
-subdir('libs')

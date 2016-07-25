@@ -15,12 +15,9 @@
 # ARM Versatile Platform Board
 
 
-# Add general runtime libs
-subdir('@0@/libs'.format(meson.source_root()))
-
 # Add our platform specific libs
-subdir('ac_inet_link_impl')
 subdir('@0@/platform/generic/libs/ac_memmgr'.format(meson.source_root()))
+subdir('ac_inet_link_impl')
 subdir('ac_putchar')
 subdir('ac_stop')
 

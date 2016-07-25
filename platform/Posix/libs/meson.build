@@ -14,10 +14,6 @@
 
 # Posix
 
-
-# Add general runtime libs
-subdir('@0@/libs'.format(meson.source_root()))
-
 # Add our platform specific libs
 subdir('ac_acpi_impl')
 subdir('ac_memmgr')

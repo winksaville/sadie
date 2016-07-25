@@ -1,4 +1,4 @@
-# Copyright 2016 wink saville
+# Copyright 2015 wink saville
 #
 # licensed under the apache license, version 2.0 (the "license");
 # you may not use this file except in compliance with the license.
@@ -12,7 +12,5 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-# Use Platform variable set in <root> meson.build to decide
-# which platform subdir to use.
 
-subdir(Platform)
+runtimeIncDirs += [include_directories('.')]

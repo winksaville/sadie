@@ -43,7 +43,20 @@ libruntime_dep = []
 # Get options
 Platform = get_option('Platform')
 
+# Load the arch and compile flags from the platform
 subdir('platform')
+
+# Build system wide includes
+subdir('libs/incs')
+
+# Build regular libs
+subdir('libs')
+
+# Build the architecture for this platform
+subdir('arch')
+
+# Build the platform libraries for this platform
+subdir('platform/@0@/libs'.format(Platform))
 
 # tests
 
@@ -72,7 +85,7 @@ subdir('arch/x86/libs/thread_x86/tests')
 
 subdir('arch/armv6/arm1176jzf-s/libs/ac_receptor_impl/tests')
 
-subdir('platform/pc_x86_64/libs/ac_inet_link_impl/tests')
+subdir('platform/pc_generic/ac_inet_link_impl/tests')
 
 subdir('platform/VersatilePB/libs/ac_inet_link_impl/tests')
 

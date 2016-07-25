@@ -12,8 +12,6 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-# An "pc" as defined by qemu
-
 # The name of a subdirectory under arch so arch/x86
 Arch = 'x86'
 
@@ -32,9 +30,3 @@ compilerArgs += [
   '-nodefaultlibs',
   '-nostdlib',
 ]
-
-# Load the architecture specific information
-subdir('@0@/arch'.format(meson.source_root()))
-
-# And then the libraries for VersatilePB
-subdir('libs')

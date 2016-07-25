@@ -41,9 +41,3 @@ compilerArgs += [
   '-nodefaultlibs',
   '-nostdlib',
 ]
-
-# Load the architecture specific information
-subdir('@0@/arch'.format(meson.source_root()))
-
-# And then the libraries for VersatilePB
-subdir('libs')

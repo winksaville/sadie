@@ -13,10 +13,6 @@
 # limitations under the license.
 
 
-
-#libsIncDirs = include_directories('incs')
-runtimeIncDirs += [include_directories('incs')]
-
 subdir('ac_acpi')
 subdir('ac_assert')
 subdir('ac_bits')
