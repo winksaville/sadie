@@ -23,7 +23,7 @@ pkgg.generate(
   description : 'Runtime for asynchronous components')
 
 # This will be the first files linked and is optional. It is used
-# to to add the multi 2 boot file, m2b.S as the first file when
+# to add the multi 2 boot file, m2b.S as the first file when
 # creating grub bootable files.
 firstSrcFiles = []
 
@@ -39,6 +39,9 @@ linkDeps = []
 runtimeSrcs = []
 runtimeIncDirs = []
 libruntime_dep = []
+componentSrcs = []
+componentIncDirs = []
+component_dep = []
 
 # Get options
 Platform = get_option('Platform')
@@ -55,8 +58,14 @@ subdir('libs')
 # Build the architecture for this platform
 subdir('arch')
 
+# Build the system wide components
+subdir('components')
+
 # Build the platform libraries for this platform
 subdir('platform/@0@/libs'.format(Platform))
+
+# Build the platform libraries for this platform
+subdir('platform/@0@/components'.format(Platform))
 
 # tests
 
@@ -85,11 +94,11 @@ subdir('arch/x86/libs/thread_x86/tests')
 
 subdir('arch/armv6/arm1176jzf-s/libs/ac_receptor_impl/tests')
 
-subdir('platform/pc_generic/ac_inet_link_impl/tests')
+subdir('platform/pc_generic/components/ac_inet_link/tests')
 
-subdir('platform/VersatilePB/libs/ac_inet_link_impl/tests')
+subdir('platform/VersatilePB/components/ac_inet_link/tests')
 
-subdir('platform/Posix/libs/ac_inet_link_impl/tests')
+subdir('platform/Posix/components/ac_inet_link/tests')
 subdir('platform/Posix/libs/ac_receptor_impl/tests')
 subdir('platform/Posix/libs/ac_tsc_impl/tests')
 
@@ -98,7 +107,6 @@ subdir('libs/ac_acpi/tests')
 subdir('libs/ac_bits/tests')
 subdir('libs/ac_comp_mgr/tests')
 subdir('libs/ac_check_sum/tests')
-subdir('libs/ac_inet_link/tests')
 subdir('libs/ac_mem/tests')
 subdir('libs/ac_mpsc_fifo/tests')
 subdir('libs/ac_mem_pool/tests')
@@ -107,6 +115,8 @@ subdir('libs/ac_printf/tests')
 subdir('libs/ac_pci/tests')
 subdir('libs/ac_swap_bytes/tests')
 subdir('libs/ac_time/tests')
+
+subdir('components/ac_inet_link/tests')
 
 subdir('platform/tests')
 subdir('tests')

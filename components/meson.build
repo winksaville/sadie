@@ -1,4 +1,4 @@
-# Copyright 2015 wink saville
+# Copyright 2016 wink saville
 #
 # licensed under the apache license, version 2.0 (the "license");
 # you may not use this file except in compliance with the license.
@@ -13,22 +13,4 @@
 # limitations under the license.
 
 
-subdir('ac_acpi')
-subdir('ac_assert')
-subdir('ac_bits')
-subdir('ac_check_sum')
-subdir('ac_comp_mgr')
-subdir('ac_dispatcher')
-subdir('ac_mem')
-subdir('ac_memcmp')
-subdir('ac_memcpy')
-subdir('ac_memset')
-subdir('ac_mem_pool')
-subdir('ac_mpsc_fifo')
-subdir('ac_msg_pool')
-subdir('ac_pci')
-subdir('ac_printf')
-subdir('ac_sort')
-subdir('ac_string')
-subdir('ac_swap_bytes')
-subdir('ac_time')
+subdir('ac_inet_link')
