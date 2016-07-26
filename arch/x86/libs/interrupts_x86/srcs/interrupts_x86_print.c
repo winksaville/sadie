@@ -18,6 +18,7 @@
 #include <interrupts_x86_print.h>
 
 #include <ac_assert.h>
+#include <ac_attributes.h>
 #include <ac_inttypes.h>
 #include <ac_printf.h>
 
@@ -40,26 +41,26 @@ struct saved_regs {
   ac_u64 rbp;
 };
 
-struct full_expt_stack_frame {
+struct AC_ATTR_PACKED full_expt_stack_frame {
   union {
     struct saved_regs regs;
     ac_u64 regs_array[NUM_SAVED_REGS];
   };
   ac_u64 error_code;
-  struct intr_frame iret_frame;
-} __attribute__ ((__packed__));
+  IntrFrame iret_frame;
+};
 
 #define FULL_EXPT_STACK_FRAME_SIZE (NUM_SAVED_REGS + 5 + 1) * sizeof(ac_u64)
 ac_static_assert(sizeof(struct full_expt_stack_frame) == FULL_EXPT_STACK_FRAME_SIZE,
     "full_expt_stack_frame is not " AC_XSTR(EXPT_FULL_STACK_FRAME_SIZE) " bytes in size");
 
-struct full_intr_stack_frame {
+struct AC_ATTR_PACKED full_intr_stack_frame {
   union {
     struct saved_regs regs;
     ac_u64 regs_array[NUM_SAVED_REGS];
   };
-  struct intr_frame iret_frame;
-} __attribute__ ((__packed__));
+  IntrFrame iret_frame;
+};
 
 #define FULL_INTR_STACK_FRAME_SIZE (NUM_SAVED_REGS + 5) * sizeof(ac_u64)
 ac_static_assert(sizeof(struct full_intr_stack_frame) == FULL_INTR_STACK_FRAME_SIZE,
@@ -89,7 +90,7 @@ void print_saved_regs(struct saved_regs* sr) {
 /**
  * Print full stack frame
  */
-void print_full_expt_stack_frame(char* str, struct intr_frame* f) {
+void print_full_expt_stack_frame(char* str, IntrFrame* f) {
   if (str != AC_NULL) {
     ac_printf("%s:", str);
   }
@@ -104,7 +105,7 @@ void print_full_expt_stack_frame(char* str, struct intr_frame* f) {
 /**
  * Print full iintr stack frame
  */
-void print_full_intr_stack_frame(char* str, struct intr_frame* f) {
+void print_full_intr_stack_frame(char* str, IntrFrame* f) {
   if (str != AC_NULL) {
     ac_printf("%s:", str);
   }
@@ -115,7 +116,7 @@ void print_full_intr_stack_frame(char* str, struct intr_frame* f) {
   print_intr_frame(AC_NULL, &fsf->iret_frame);
 }
 
-void print_intr_frame(char* str, intr_frame* frame) {
+void print_intr_frame(char* str, IntrFrame* frame) {
   if (str != AC_NULL) {
     ac_printf("%s:\n", str);
   }
@@ -126,7 +127,7 @@ void print_intr_frame(char* str, intr_frame* frame) {
   ac_printf(" frame->ss:    0x%x 0x%p\n", frame->ss, &frame->ss);
 }
 
-void print_intr_gate(char *str, intr_gate* gate) {
+void print_intr_gate(char *str, IntrGate* gate) {
   if (str != AC_NULL) {
     ac_printf("%s:\n", str);
   }

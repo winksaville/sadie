@@ -74,12 +74,12 @@ ac_uint thread_make_ready(ac_thread_hdl_t hdl);
 /**
  * Handle the reschedule interrupt. Defined in thread_x86_asm.S
  */
-void reschedule_isr(struct intr_frame* frame);
+void reschedule_isr(IntrFrame* frame);
 
 /**
  * Handle the timer reschedule interrupt. Defined in thread_x86_asm.S
  */
-void timer_reschedule_isr(struct intr_frame* frame);
+void timer_reschedule_isr(IntrFrame* frame);
 
 /**
  * Get number of timer_reschedule_isr that have occurred.

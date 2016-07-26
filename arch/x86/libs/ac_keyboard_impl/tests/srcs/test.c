@@ -40,8 +40,8 @@ extern ac_sint channel2_device_type;
 volatile ac_u64 keyboard_isr_counter;
 volatile ac_u8 ch;
 
-__attribute__ ((__interrupt__))
-void keyboard_isr(struct intr_frame *frame) {
+AC_ATTR_INTR_HDLR
+void keyboard_isr(IntrFrame* frame) {
   //print_intr_frame("keyboard_isr:+", frame);
   __atomic_add_fetch(&keyboard_isr_counter, 1, __ATOMIC_RELEASE);
 

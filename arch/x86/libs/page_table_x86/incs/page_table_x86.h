@@ -26,6 +26,7 @@
 
 #include <cr_x86.h>
 
+#include <ac_attributes.h>
 #include <ac_inttypes.h>
 
 #include <multiboot2.h>
@@ -101,7 +102,7 @@ enum page_caching {
  * Volume 3 chapter 4.5 "IA-32e Paging"
  * Table 4-12. "Use of CR3 with IA-32e Paging and CR4.PCIDE = 0"
  */
-struct cr3_nrml_paging_fields {
+struct AC_ATTR_PACKED cr3_nrml_paging_fields {
   ac_uint reserved_0:3;
   ac_bool pwt:1;
   ac_bool pcd:1;
@@ -111,7 +112,7 @@ struct cr3_nrml_paging_fields {
 #else /* CPU_X86_32 */
   ac_uint page_directory_base:20;
 #endif
-} __attribute__((__packed__));
+};
 
 _Static_assert(sizeof(struct cr3_nrml_paging_fields) == CR3_FIELDS_SIZE,
     L"cr3_nrml_paging_fields is not " AC_XSTR(CR3_FIELDS_SIZE) " bytes");
@@ -123,14 +124,14 @@ _Static_assert(sizeof(struct cr3_nrml_paging_fields) == CR3_FIELDS_SIZE,
  * Volume 3 chapter 4.4 "PAE Paging"
  * Table 4-7. "Use of CR3 with PAE Paging"
  */
-struct cr3_pae_paging_fields {
+struct AC_ATTR_PACKED cr3_pae_paging_fields {
   ac_uint reserved_0:5;
 #ifdef CPU_X86_64
   ac_uint page_directory_base:59;
 #else /* CPU_X86_32 */
   ac_uint page_directory_base:27;
 #endif
-} __attribute__((__packed__));
+};
 
 _Static_assert(sizeof(struct cr3_pae_paging_fields) == CR3_FIELDS_SIZE,
     L"cr3_pae_paging_fields is not " AC_XSTR(CR3_FIELDS_SIZE) " bytes");
@@ -142,14 +143,14 @@ _Static_assert(sizeof(struct cr3_pae_paging_fields) == CR3_FIELDS_SIZE,
  * Volume 3 chapter 4.5 "IA-32e Paging"
  * Table 4-13. "Use of CR3 with IA-32e Paging and CR4.PCIDE = 1"
  */
-struct cr3_pcide_paging_fields {
+struct AC_ATTR_PACKED cr3_pcide_paging_fields {
   ac_uint pcid:12;
 #ifdef CPU_X86_64
   ac_uint page_directory_base:52;
 #else /* CPU_X86_32 */
   ac_uint page_directory_base:20;
 #endif
-} __attribute__((__packed__));
+};
 
 _Static_assert(sizeof(struct cr3_pcide_paging_fields) == CR3_FIELDS_SIZE,
     L"cr3_pcide_paging_fields is not " AC_XSTR(CR3_FIELDS_SIZE) " bytes");
@@ -172,7 +173,7 @@ _Static_assert(sizeof(union cr3_paging_fields_u) == CR3_FIELDS_SIZE,
  * Table 4-18. "Format of an IA-32 Page-Directory Entry (PDE)
  * that References a Page Table"
  */
-struct pde_fields {
+struct AC_ATTR_PACKED pde_fields {
   ac_bool p:1;                  // Present
   ac_bool rw:1;                 // Read write
   ac_bool us:1;                 // User/Supervisor
@@ -184,7 +185,7 @@ struct pde_fields {
   ac_u64 reserved_1:4;
   ac_u64 phy_addr:51;           // Physical address of Page Directory
   ac_bool xd:1;                 // Execute disable if IA32_EFER.NXE = 1
-} __attribute__((__packed__));
+};
 
 _Static_assert(sizeof(struct pde_fields) == PDE_FIELDS_SIZE,
     L"pde_fields is not " AC_XSTR(PDE_FIELDS_SIZE) " bytes");
@@ -208,7 +209,7 @@ _Static_assert(sizeof(union pde_fields_u) == PDE_FIELDS_SIZE,
  * Table 4-17. "Format of an IA-32 Page-Direcotry-Pointer-Table
  * (PDPTE) that Maps a 2-MByte page"
  */
-struct pte_huge_fields {
+struct AC_ATTR_PACKED pte_huge_fields {
   ac_bool p:1;                  // Present
   ac_bool rw:1;                 // Read write
   ac_bool us:1;                 // User/Supervisor
@@ -223,7 +224,7 @@ struct pte_huge_fields {
   ac_u64 phy_addr:46;           // Physical address of huge page
   ac_u64 pke:4;                 // Protection key if CR4.PKE == 1
   ac_bool xd:1;                 // Execute disable if IA32_EFER.NXE = 1
-} __attribute__((__packed__));
+};
 
 _Static_assert(sizeof(struct pte_huge_fields) == PTE_FIELDS_SIZE,
     L"pdpte_huge_fields is not " AC_XSTR(PTE_FIELDS_SIZE) " bytes");
@@ -236,7 +237,7 @@ _Static_assert(sizeof(struct pte_huge_fields) == PTE_FIELDS_SIZE,
  * Table 4-19. "Format of an IA-32 Page-Table Entry (PTE)
  * that References a 4-KByte Page"
  */
-struct pte_small_fields {
+struct AC_ATTR_PACKED pte_small_fields {
   ac_bool p:1;                  // Present
   ac_bool rw:1;                 // Read write
   ac_bool us:1;                 // User/Supervisor
@@ -250,7 +251,7 @@ struct pte_small_fields {
   ac_u64 phy_addr:47;           // Physical address of 4-KByte page
   ac_u64 pke:4;                 // Protection key if CR4.PKE == 1
   ac_bool xd:1;                 // Execute disable if IA32_EFER.NXE = 1
-} __attribute__((__packed__));
+};
 
 _Static_assert(sizeof(struct pte_small_fields) == PTE_FIELDS_SIZE,
     L"pte_small_fields is not " AC_XSTR(PTE_FIELDS_SIZE) " bytes");
@@ -268,12 +269,13 @@ _Static_assert(sizeof(union pte_fields_u) == PTE_FIELDS_SIZE,
 /**
  * Decode linear address
  */
-struct linear_address_pml_indexes {
+struct AC_ATTR_PACKED linear_address_pml_indexes {
   ac_u64 offset:12;
   ac_u64 pml1:9;
   ac_u64 pml2:9;
   ac_u64 pml3:9;
   ac_u64 pml4:9;
+  ac_u64 reserved_0:16;
 };
 
 _Static_assert(sizeof(struct linear_address_pml_indexes) == LINEAR_ADDRESS_SIZE,

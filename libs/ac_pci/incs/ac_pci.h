@@ -18,6 +18,7 @@
 #define SADIE_LIBS_AC_PCI_INCS_AC_PCI_H
 
 #include <ac_assert.h>
+#include <ac_attributes.h>
 #include <ac_bits.h>
 #include <ac_inttypes.h>
 
@@ -25,7 +26,7 @@
 #define MAX_DEV  0x1F
 #define MAX_BUS  0xFF
 
-struct ac_pci_cfg_addr {
+struct AC_ATTR_PACKED ac_pci_cfg_addr {
   union {
     ac_u32 raw;                 // u32 version of the cfg_addr
     struct {
@@ -37,14 +38,14 @@ struct ac_pci_cfg_addr {
       ac_bool enable:1;         // Enable bit
     };
   };
-} __attribute__((__packed__));
+};
 
 typedef struct ac_pci_cfg_addr  ac_pci_cfg_addr;
 
 ac_static_assert(sizeof(ac_pci_cfg_addr) == 4,
     L"ac_pci_cfg_addr is not 4 bytes");
 
-struct ac_pci_cfg_hdr_cmn {
+struct AC_ATTR_PACKED ac_pci_cfg_hdr_cmn {
   union {
     ac_u32 raw[4];
     struct {
@@ -63,7 +64,7 @@ struct ac_pci_cfg_hdr_cmn {
       ac_u8 bist;
     };
   };
-} __attribute__((__packed__));
+};
 
 typedef struct ac_pci_cfg_hdr_cmn ac_pci_cfg_hdr_cmn;
 
@@ -74,7 +75,7 @@ ac_static_assert(sizeof(ac_pci_cfg_hdr_cmn) == 16,
 /**
  * pci type 0 configuration header
  */
-struct ac_pci_cfg_hdr0 {
+struct AC_ATTR_PACKED ac_pci_cfg_hdr0 {
   union {
     ac_u32 raw[12];
     struct {
@@ -92,7 +93,7 @@ struct ac_pci_cfg_hdr0 {
       ac_u8 max_grant;
     };
   };
-} __attribute__((__packed__));
+};
 
 typedef struct ac_pci_cfg_hdr0 ac_pci_cfg_hdr0;
 
@@ -102,7 +103,7 @@ ac_static_assert(sizeof(ac_pci_cfg_hdr0) == 48,
 /**
  * pci configuration header type1
  */
-struct ac_pci_cfg_hdr1 {
+struct AC_ATTR_PACKED ac_pci_cfg_hdr1 {
   union {
     ac_u32 raw[12];
     struct {
@@ -130,20 +131,20 @@ struct ac_pci_cfg_hdr1 {
       ac_u16 bridge_control;
     };
   };
-} __attribute__((__packed__));
+};
 
 typedef struct ac_pci_cfg_hdr1 ac_pci_cfg_hdr1;
 
 ac_static_assert(sizeof(ac_pci_cfg_hdr1) == 48,
     L"ac_pci_cfg_hdr1 is not 48 bytes");
 
-struct ac_pci_cfg_hdr {
+struct AC_ATTR_PACKED ac_pci_cfg_hdr {
   ac_pci_cfg_hdr_cmn hdr_cmn;
   union {
     struct ac_pci_cfg_hdr0 hdr0;
     struct ac_pci_cfg_hdr1 hdr1;
   };
-} __attribute__((__packed__));
+};
 
 typedef struct ac_pci_cfg_hdr ac_pci_cfg_hdr;
 

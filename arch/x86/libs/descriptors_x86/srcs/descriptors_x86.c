@@ -19,9 +19,9 @@
 #include <ac_inttypes.h>
 #include <ac_memcmp.h>
 
-void set_seg_desc(seg_desc* sd, ac_u32 seg_limit, ac_uptr base_addr, ac_u8 type,
+void set_seg_desc(SegDesc* sd, ac_u32 seg_limit, ac_uptr base_addr, ac_u8 type,
     ac_u8 s, ac_u8 dpl, ac_u8 p, ac_u8 avl, ac_u8 l, ac_u8 d_b, ac_u8 g) {
-  seg_desc default_desc = SEG_DESC_INITIALIZER;
+  SegDesc default_desc = SEG_DESC_INITIALIZER;
 
   *sd = default_desc;
   sd->seg_limit_lo = SEG_DESC_SEG_LIMIT_LO(seg_limit);
@@ -38,7 +38,7 @@ void set_seg_desc(seg_desc* sd, ac_u32 seg_limit, ac_uptr base_addr, ac_u8 type,
   sd->g = g;
 }
 
-void set_code_seg_desc(seg_desc* sd, ac_u8 accessed, ac_u8 readable, ac_u8 conforming,
+void set_code_seg_desc(SegDesc* sd, ac_u8 accessed, ac_u8 readable, ac_u8 conforming,
     ac_u8 dpl, ac_u8 p, ac_u8 avl, ac_u8 l, ac_u8 d, ac_u8 g) {
     union seg_type_u type = {
       .code = {
@@ -49,7 +49,7 @@ void set_code_seg_desc(seg_desc* sd, ac_u8 accessed, ac_u8 readable, ac_u8 confo
   set_seg_desc(sd, 0, 0, type.byte, 1, dpl, p, avl, l, d, g);
 }
 
-void set_data_seg_desc(seg_desc* sd, ac_u8 accessed, ac_u8 write_enable, ac_u8 expand_dir,
+void set_data_seg_desc(SegDesc* sd, ac_u8 accessed, ac_u8 write_enable, ac_u8 expand_dir,
     ac_u8 dpl, ac_u8 p, ac_u8 avl, ac_u8 l, ac_u8 d, ac_u8 g) {
   union seg_type_u type = {
       .data = {
@@ -60,14 +60,14 @@ void set_data_seg_desc(seg_desc* sd, ac_u8 accessed, ac_u8 write_enable, ac_u8 e
   set_seg_desc(sd, 0, 0, type.byte, 1, dpl, p, avl, l, d, g);
 }
 
-ac_s32 cmp_seg_desc(seg_desc* sd1, seg_desc* sd2)  {
-  return ac_memcmp(sd1, sd2, sizeof(seg_desc));
+ac_s32 cmp_seg_desc(SegDesc* sd1, SegDesc* sd2)  {
+  return ac_memcmp(sd1, sd2, sizeof(SegDesc));
 }
 
-void set_tss_desc(tss_desc* td, ac_u32 seg_limit, ac_uptr base_addr, ac_u8 type,
+void set_tss_desc(TssDesc* td, ac_u32 seg_limit, ac_uptr base_addr, ac_u8 type,
     ac_u8 dpl, ac_u8 p, ac_u8 avl, ac_u8 g) {
 
-  tss_desc default_desc = TSS_DESC_INITIALIZER;
+  TssDesc default_desc = TSS_DESC_INITIALIZER;
 
   *td = default_desc;
   td->seg_limit_lo = TSS_DESC_SEG_LIMIT_LO(seg_limit);
@@ -81,6 +81,6 @@ void set_tss_desc(tss_desc* td, ac_u32 seg_limit, ac_uptr base_addr, ac_u8 type,
   td->g = g;
 }
 
-ac_s32 cmp_tss_desc(tss_desc* sd1, tss_desc* sd2)  {
-  return ac_memcmp(sd1, sd2, sizeof(tss_desc));
+ac_s32 cmp_tss_desc(TssDesc* sd1, TssDesc* sd2)  {
+  return ac_memcmp(sd1, sd2, sizeof(TssDesc));
 }

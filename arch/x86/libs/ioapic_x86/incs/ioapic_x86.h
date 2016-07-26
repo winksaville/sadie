@@ -24,8 +24,9 @@
 #ifndef ARCH_X86_LIBS_IOAPIC_X86_INCS_IOAPIC_X86_H
 #define ARCH_X86_LIBS_IOAPIC_X86_INCS_IOAPIC_X86_H
 
-#include <ac_bits.h>
 #include <ac_assert.h>
+#include <ac_attributes.h>
+#include <ac_bits.h>
 #include <ac_inttypes.h>
 #include <ac_printf.h>
 
@@ -34,15 +35,15 @@
 #define IOAPIC_ARB      2       // Arbitration register
 #define IOAPIC_REDTBL   0x10    // Redirection table
 
-struct ioapic_regs {
+struct AC_ATTR_PACKED ioapic_regs {
   volatile ac_u32 index;        // Index to a 32 bit register 0 == first reg, 1 = second ...
   volatile ac_u32 resv[3];
   volatile ac_u32 data;         // Data to read/write to the addressed register
-} __attribute__((__packed__));
+};
 
 typedef struct ioapic_regs ioapic_regs;
 
-struct ioapic_redir {
+struct AC_ATTR_PACKED ioapic_redir {
   union {
     ac_u64  raw;
     struct {
@@ -68,7 +69,7 @@ struct ioapic_redir {
                                     // which can be one or more CPU's.
     };
   };
-} __attribute__((__packed__));
+};
 
 typedef struct ioapic_redir ioapic_redir;
 

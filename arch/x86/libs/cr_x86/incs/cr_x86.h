@@ -26,6 +26,7 @@
 #define ARCH_X86_CR_X86_INCS_CR_X86_H
 
 #include <ac_architecture.h>
+#include <ac_attributes.h>
 #include <ac_inttypes.h>
 #include <ac_xstr.h>
 
@@ -46,7 +47,7 @@
  * Volume 3 chapter 2.5 "Control Registers"
  * Figure 2-7 "Control Registers"
  */
-struct cr0_fields {
+struct AC_ATTR_PACKED cr0_fields {
   ac_uint pe:1;
   ac_uint mp:1;
   ac_uint em:1;
@@ -64,7 +65,7 @@ struct cr0_fields {
 #ifdef CPU_X86_64
   ac_uint reserved_3:32;
 #endif
-} __attribute__((__packed__));
+};
 
 _Static_assert(sizeof(struct cr0_fields) == CR0_FIELDS_SIZE,
     L"cr0_fields is not " AC_XSTR(CR0_FIELDS_SIZE) " bytes");
@@ -105,7 +106,7 @@ _Static_assert(sizeof(struct cr3_fields) == CR3_FIELDS_SIZE,
  * Volume 3 chapter 2.5 "Control Registers"
  * Figure 2-7 "Control Registers"
  */
-struct cr4_fields {
+struct AC_ATTR_PACKED cr4_fields {
   ac_uint vme:1;
   ac_uint pvi:1;
   ac_uint tsd:1;
@@ -130,15 +131,15 @@ struct cr4_fields {
 #else /* CPU_X86_32 */
   ac_uint reserved_2:9;
 #endif
-} __attribute__((__packed__));
+};
 
 _Static_assert(sizeof(struct cr4_fields) == CR4_FIELDS_SIZE,
     L"cr4_fields is not " AC_XSTR(CR4_FIELDS_SIZE) " bytes");
 
-union cr4_u {
+union AC_ATTR_PACKED cr4_u {
   ac_uint raw;
   struct cr4_fields fields;
-} __attribute__((__packed__));
+};
 
 _Static_assert(sizeof(union cr4_u) == CR4_FIELDS_SIZE,
     L"cr4_u is not " AC_XSTR(CR4_FIELDS_SIZE) " bytes");

@@ -17,6 +17,7 @@
 #ifndef ARCH_X86_MSR_X86_INCS_MSR_MTRRCAP_X86_H
 #define ARCH_X86_MSR_X86_INCS_MSR_MTRRCAP_X86_H
 
+#include <ac_attributes.h>
 #include <ac_inttypes.h>
 
 
@@ -32,14 +33,14 @@
  * Volume 3 chapter 10.12.1 "Detecting and Enabling x2APIC Mode"
  * Figure 10-26 "IA32_APIC_BASE MSR Supporting x2APIC"
  */
-struct msr_mtrrcap_fields {
+struct AC_ATTR_PACKED msr_mtrrcap_fields {
   ac_u64 vcnt:8;
   ac_u64 fix:1;
   ac_u64 reserved_0:1;
   ac_u64 wc:1;
   ac_u64 smrr:1;
   ac_u64 reserved_1:52;
-} __attribute__((__packed__));
+};
 
 _Static_assert(sizeof(struct msr_mtrrcap_fields) == sizeof(ac_u64),
     L"struct msr_mtrrcap_fields is not 8 bytes");

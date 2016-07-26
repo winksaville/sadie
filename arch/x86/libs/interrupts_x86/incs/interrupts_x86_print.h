@@ -35,22 +35,22 @@ __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", \
  * Print full exception stack frame, add INTR_SAVE_REGS and
  * INTR_RESTORE_REGS to the interrupt handler.
  */
-void print_full_expt_stack_frame(char* str, struct intr_frame* f);
+void print_full_expt_stack_frame(char* str, IntrFrame* f);
 
 /**
  * Print full interrupt stack frame, add INTR_SAVE_REGS and
  * INTR_RESTORE_REGS to the interrupt handler.
  */
-void print_full_intr_stack_frame(char* str, struct intr_frame* f);
+void print_full_intr_stack_frame(char* str, IntrFrame* f);
 
 /**
  * Print the interrupt frame only
  */
-void print_intr_frame(char* str, intr_frame* frame);
+void print_intr_frame(char* str, IntrFrame* frame);
 
 /**
  * Print an interrupt/exception gate
  */
-void print_intr_gate(char *str, intr_gate* gate);
+void print_intr_gate(char *str, IntrGate* gate);
 
 #endif

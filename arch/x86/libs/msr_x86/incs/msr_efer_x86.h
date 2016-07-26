@@ -21,6 +21,7 @@
 #ifndef ARCH_X86_MSR_X86_INCS_MSR_EFER_X86_H
 #define ARCH_X86_MSR_X86_INCS_MSR_EFER_X86_H
 
+#include <ac_attributes.h>
 #include <ac_inttypes.h>
 
 
@@ -34,7 +35,7 @@
 /**
  * EFER ::= Extended Feature Enables Register
  */
-struct msr_efer_fields {
+struct AC_ATTR_PACKED msr_efer_fields {
   ac_u64 sce:1;            // syscall enable
   ac_u64 reserved_0:7;
   ac_u64 lme:1;            // long mode enable (R/W)
@@ -42,7 +43,7 @@ struct msr_efer_fields {
   ac_u64 lma:1;            // long mode active (R)
   ac_u64 nxe:1;            // Execute Disable Bit (R/W)
   ac_u64 reserved_2:52;
-} __attribute__((__packed__));
+};
 
 _Static_assert(sizeof(struct msr_efer_fields) == sizeof(ac_u64),
     L"struct msr_efer_fields is not 8 bytes");

@@ -25,6 +25,7 @@
 #include <reset_x86.h>
 #include <print_msr.h>
 
+#include <ac_attributes.h>
 #include <ac_bits.h>
 #include <ac_inttypes.h>
 #include <ac_memset.h>
@@ -92,8 +93,8 @@ volatile ac_u32 apic_timer_initial_count;
  * The Programmable Interrupt Timer (PIT) interrupt.
  * FIXME: The PIT needs to be disabled.
  */
-__attribute__ ((__interrupt__))
-static void pit_isr(struct intr_frame *frame) {
+AC_ATTR_INTR_HDLR
+static void pit_isr(IntrFrame* frame) {
   AC_UNUSED(frame);
 
   // Increment counter
@@ -103,8 +104,8 @@ static void pit_isr(struct intr_frame *frame) {
   outb_port_value(0x20, 0x20);
 }
 
-__attribute__ ((__interrupt__))
-static void apic_timer_isr(struct intr_frame *frame) {
+AC_ATTR_INTR_HDLR
+static void apic_timer_isr(IntrFrame* frame) {
   AC_UNUSED(frame);
 
   // Increment counter and reset initial count to make it periodic.
@@ -129,7 +130,7 @@ ac_bool test_apic_timer() {
   ac_printf("flags=0x%lx\n", flags);
 
   union apic_timer_lvt_fields_u ilvtu = { .fields = get_apic_timer_lvt() };
-  intr_gate saved_iapic_gate = *get_intr_gate(80);
+  IntrGate saved_iapic_gate = *get_intr_gate(80);
 
   ac_printf("test_apic_timer: ilvtu.raw=0x%x\n", ilvtu.raw);
   ac_printf("test_apic_timer: ilvtu.fields.vector=%d\n", ilvtu.fields.vector);

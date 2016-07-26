@@ -97,8 +97,8 @@ ac_bool test_seg_desc_fields() {
 }
 
 ac_bool test_gdt_ldt(void) {
-  desc_ptr dp1;
-  desc_ptr dp2;
+  DescPtr dp1;
+  DescPtr dp2;
   ac_bool error = AC_FALSE;
 
   // Get current GDT and verifiy we can write it
@@ -110,10 +110,10 @@ ac_bool test_gdt_ldt(void) {
   get_gdt(&dp2);
 
   error |= AC_TEST_EM(dp1.limit == dp2.limit,
-      "Unable to get/set/get GDT register desc_ptr.limit");
+      "Unable to get/set/get GDT register DescPtr.limit");
 
   error |= AC_TEST_EM(dp1.sd == dp2.sd,
-      "Unable to get/set/get GDT register desc_ptr.sd");
+      "Unable to get/set/get GDT register DescPtr.sd");
 
   // Get current LDT and verifiy we can write it
   // and read back the same value. Not a great test
@@ -124,10 +124,10 @@ ac_bool test_gdt_ldt(void) {
   get_ldt(&dp2);
 
   error |= AC_TEST_EM(dp1.limit == dp2.limit,
-      "Unable to get/set/get LDT register desc_ptr.limit");
+      "Unable to get/set/get LDT register DescPtr.limit");
 
   error |= AC_TEST_EM(dp1.sd == dp2.sd,
-      "Unable to get/set/get LDT register desc_ptr.sd");
+      "Unable to get/set/get LDT register DescPtr.sd");
 
   return error;
 }
@@ -135,7 +135,7 @@ ac_bool test_gdt_ldt(void) {
 int main(void) {
   ac_bool error = AC_FALSE;
 
-  desc_ptr dp;
+  DescPtr dp;
   get_gdt(&dp);
   print_desc_table("gdt", dp);
 

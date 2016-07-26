@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef DESCRIPTORS_X86_64_PRINT_H
-#define DESCRIPTORS_X86_64_PRINT_H
+#ifndef SADIE_GENERIC_INCS_AC_ATTRIBUTES_H
+#define SADIE_GENERIC_INCS_AC_ATTRIBUTES_H
 
-#include "ac_inttypes.h"
-#include "interrupts_x86.h"
-#include "descriptors_x86.h"
+#define AC_ATTR_PACKED    __attribute__ ((__packed__))
+#define AC_ATTR_INTR_HDLR __attribute__ ((__interrupt__))
+#define AC_ATTR_INTR(which_one) __attribute__ ((__interrupt__(which_one)))
 
-void print_tss_desc(char *str, TssDesc* desc);
-
-void print_seg_desc(char *str, SegDesc* desc);
-
-void print_desc_table(char *str, DescPtr dp);
 
 #endif

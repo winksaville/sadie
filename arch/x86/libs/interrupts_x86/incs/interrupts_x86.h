@@ -17,15 +17,14 @@
 #ifndef INTERRUPTS_H
 #define INTERRUPTS_H
 
-#include <ac_inttypes.h>
 #include <ac_architecture.h>
+#include <ac_attributes.h>
+#include <ac_inttypes.h>
 #include <ac_xstr.h>
 
 #if !defined(ARCH_X86) && (!defined(CPU_X86_32) || !defined(CPU_X86_64))
 #error  "Expecting ARCH_X86 && (CPU_X86_32 || CPU_X86_64)"
 #endif
-
-#define INTERRUPT_HANDLER __attribute__ ((__interrupt__))
 
 #ifdef CPU_X86_64 
 #define INTR_GATE_OFFSET_HI_MASK  ((ac_uptr)0xFFFFFFFFFFFFLL)
@@ -51,7 +50,7 @@
  * Volume 3 chapter 6.14.1 "64-Bit Mode IDT"
  * Figure 6-7. 64-Bit IDT Gate Descriptors
  */
-struct intr_gate {
+typedef struct AC_ATTR_PACKED {
   ac_uptr offset_lo:16;
   ac_uptr segment:16;
 #ifdef CPU_X86_64
@@ -70,17 +69,15 @@ struct intr_gate {
 #else /* CPU_X86_32 */
   ac_uptr offset_hi:16;
 #endif
-} __attribute__((__packed__));
+} IntrGate;
 
-_Static_assert(sizeof(struct intr_gate) == INTR_GATE_SIZE,
-    L"struct intr_gate is not " AC_XSTR(INTR_GATE_SIZE_STR) " bytes");
-
-typedef struct intr_gate intr_gate;
+_Static_assert(sizeof(IntrGate) == INTR_GATE_SIZE,
+    L"IntrGate is not " AC_XSTR(INTR_GATE_SIZE_STR) " bytes");
 
 /**
  * Task gate
  */
-struct task_gate {
+typedef struct AC_ATTR_PACKED {
   ac_uptr unused_1:16;
   ac_uptr tss_seg_selector:16;
   ac_uptr unused_2:8;
@@ -89,13 +86,10 @@ struct task_gate {
   ac_uptr dpl:2;
   ac_uptr p:1;
   ac_uptr unused_4:16;
-} __attribute__((__packed__));
+} TaskGate;
 
-_Static_assert(sizeof(struct task_gate) == TASK_GATE_SIZE,
-    L"struct intr_trap_gate is not 16 bytes");
-
-typedef struct task_gate task_gate;
-
+_Static_assert(sizeof(TaskGate) == TASK_GATE_SIZE,
+    L"TaskGate is not 16 bytes");
 
 #define INTR_GATE_COMMON_INITIALIZER \
    .offset_lo = 0, \
@@ -122,19 +116,19 @@ typedef struct task_gate task_gate;
 }
 #endif
 
-/** Return the bits for intr_gate.offset_lo as a ac_uptr */
+/** Return the bits for IntrGate.offset_lo as a ac_uptr */
 #define INTR_GATE_OFFSET_LO(addr) ({ \
   ac_uptr r = ((ac_uptr)(addr) >> 0) & 0xFFFF; \
   r; \
 })
 
-/** Return the bits for intr_gate.offset_hi as a ac_uptr */
+/** Return the bits for IntrGate.offset_hi as a ac_uptr */
 #define INTR_GATE_OFFSET_HI(addr) ({ \
   ac_uptr r = ((ac_uptr)(addr) >> 16) & INTR_GATE_OFFSET_HI_MASK; \
   r; \
 })
 
-/** Return the intr_gate.offset as an ac_uptr */
+/** Return the IntrGate.offset as an ac_uptr */
 #define GET_INTR_GATE_OFFSET(gate) ({ \
   ac_uptr r = (ac_uptr)((((ac_uptr)(gate).offset_hi) << 16) \
       | (ac_uptr)((gate).offset_lo)); \
@@ -147,20 +141,20 @@ typedef struct task_gate task_gate;
  *
  * This is the signature required for the compiler so
  * intr_handler and expt_handler are can be marked with
- * the __attribute__((__interrupt__))
+ * the AC_ATTR_INTR_HDLR
  */
-typedef struct intr_frame {
+typedef struct {
   ac_uptr ip;
   ac_uptr cs;
   ac_uptr flags;
   ac_uptr sp;
   ac_uptr ss;
-} intr_frame;
+} IntrFrame;
 
 /**
  * Pointer to an interrupt descriptor table
  */
-struct idt_ptr {
+typedef struct AC_ATTR_PACKED {
     ac_u16 unused[3];   // Align descriptor_ptr.limit to an odd ac_u16 boundary
                         // so descriptor_ptr.address is on a ac_uptr boundary.
                         // This is for better performance and for user mode
@@ -169,22 +163,20 @@ struct idt_ptr {
                         // Software Developer's Manual" Volume 3 chapter 3.5.1
                         // "Segment Descriptor Tables".
     volatile ac_u16 limit;    // Volatile so limit is stored when in set_gdt/ldt
-    intr_gate * volatile iig; // Volatile so sd is stored when calling set_gdt/ldt
-} __attribute__((__packed__));
+    IntrGate* volatile iig; // Volatile so sd is stored when calling set_gdt/ldt
+} IdtPtr;
 
-_Static_assert(sizeof(struct idt_ptr) == IDT_PTR_SIZE,
-    L"struct descriptor_ptr != " AC_XSTR(IDT_PTR_SIZE) " bytes");
+_Static_assert(sizeof(IdtPtr) == IDT_PTR_SIZE,
+    L"IdtPtr != " AC_XSTR(IDT_PTR_SIZE) " bytes");
 
-typedef struct idt_ptr idt_ptr;
-
-/** Set the IDT register from idt_ptr */
-static __inline__ void set_idt(volatile idt_ptr* ptr) {
+/** Set the IDT register from IdtPtr */
+static __inline__ void set_idt(volatile IdtPtr* ptr) {
   ac_u16* p = (ac_u16*)&ptr->limit;
   __asm__ volatile("lidt %0" :: "m" (*p));
 }
 
-/** Get the IDT register to idt_ptr */
-static __inline__ void get_idt(idt_ptr* ptr) {
+/** Get the IDT register to IdtPtr */
+static __inline__ void get_idt(IdtPtr* ptr) {
   ac_u16* p = (ac_u16*)&ptr->limit;
   __asm__ volatile("sidt %0" : "=m" (*p));
 }
@@ -270,15 +262,15 @@ static __inline void restore_intr(ac_uint flags) {
 }
 
 
-typedef void (intr_handler)(struct intr_frame* frame);
+typedef void (intr_handler)(IntrFrame* frame);
 
-typedef void (expt_handler) (struct intr_frame* frame, ac_uint error_code);
+typedef void (expt_handler) (IntrFrame* frame, ac_uint error_code);
 
 void set_intr_handler(ac_u32 intr_num, intr_handler ih);
 
 void set_expt_handler(ac_u32 intr_num, expt_handler eh);
 
-intr_gate* get_intr_gate(ac_u32 intr_num);
+IntrGate* get_intr_gate(ac_u32 intr_num);
 
 void initialize_intr_descriptor_table(void);
 

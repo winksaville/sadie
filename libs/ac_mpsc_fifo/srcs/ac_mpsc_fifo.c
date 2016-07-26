@@ -50,14 +50,14 @@
  *   } AcMpscFifo;
  *
  * A AcMem is declared as:
- *   typedef struct __attribute__((packed)) AcMemHdr {
+ *   typedef struct AcMemHdr {
  *     AcMem* next;         // Next AcMem
  *     AcMpscFifo* pool_fifo;// Poll fifo this AcMem is allocated from
  *     ac_u32 data_size;     // Size of the data array following this header
  *     ac_u32 user_size;     // Size of the user area in data array
  *   } AcMemHdr;
  *
- *   typedef struct __attribute__((packed)) AcMem {
+ *   typedef struct AcMem {
  *     AcMemHdr hdr;        // The header
  *     ac_u8 data[];         // The memers data
  *   } AcMem;

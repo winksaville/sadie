@@ -20,6 +20,7 @@
 #include <msr_x86.h>
 
 #include <ac_inttypes.h>
+#include <ac_attributes.h>
 
 /**
  * TSC-Deadline msr
@@ -43,7 +44,7 @@ extern void* apic_lin_addr;
  * Volume 3 chapter 10.5.3 "APIC Timer"
  * Figure 10-10. "Divide Configuration Register"
  */
-struct apic_timer_lvt_fields {
+struct AC_ATTR_PACKED apic_timer_lvt_fields {
   ac_u8 vector:8;               // Interrupt vector
   ac_u8 reserved_0:4;
   ac_bool status:1;             // Delivery status, 0 == idle, 1 == Send Pending
@@ -51,7 +52,7 @@ struct apic_timer_lvt_fields {
   ac_bool disable:1;            // Interrupt mask, 0 == enabled, 1 == disabled
   ac_u8 mode:2;                 // Mode, 0 == one-shot, 1 == Periodic, 2 = TSC-Deadline
   ac_u32 reserved_2:13;
-} __attribute__((__packed__));
+};
 
 _Static_assert(sizeof(struct apic_timer_lvt_fields) == 4,
     L"apic_timer_lvt_fields is not 4 bytes");
@@ -72,14 +73,14 @@ _Static_assert(sizeof(union apic_timer_lvt_fields_u) == 4,
  * Volume 3 chapter 10.9 "SPURIOUS INTERRUPT"
  * Figure 10-23. "Suprious-Interrupt Vector Register (SVR)"
  */
-struct apic_spurious_vector_fields {
+struct AC_ATTR_PACKED apic_spurious_vector_fields {
   ac_u8 vector:8;               // Spurious interrupt vector
   ac_bool apic_enable:1;        // APIC enable, 0 == disabled, 1 = enabled
   ac_bool fpc_disable:1;        // Focus processor cheching, 0 == enabled, 1 = disabled
   ac_u8 reserved_0:2;
   ac_bool eoi_broadcast_disable:1; // EOI-Broadcast suppression, 0=disabled, 1 = enabled
   ac_u32 reserved_2:19;
-} __attribute__((__packed__));
+};
 
 _Static_assert(sizeof(struct apic_spurious_vector_fields) == 4,
     L"apic_spurious_vector_fields is not 4 bytes");

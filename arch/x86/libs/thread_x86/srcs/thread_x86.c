@@ -29,6 +29,7 @@
 #include <reset_x86.h>
 
 #include <ac_assert.h>
+#include <ac_attributes.h>
 #include <ac_bits.h>
 #include <ac_debug_assert.h>
 #include <ac_intmath.h>
@@ -124,13 +125,13 @@ struct saved_regs {
   ac_u64 rbp;
 };
 
-struct full_stack_frame {
+struct AC_ATTR_PACKED full_stack_frame {
   union {
     struct saved_regs regs;
     ac_u64 regs_array[NUM_SAVED_REGS];
   };
-  struct intr_frame iret_frame;
-} __attribute__ ((__packed__));
+  IntrFrame iret_frame;
+};
 
 #define FULL_STACK_FRAME_SIZE 20 * sizeof(ac_u64)
 ac_static_assert(sizeof(struct full_stack_frame) == FULL_STACK_FRAME_SIZE,

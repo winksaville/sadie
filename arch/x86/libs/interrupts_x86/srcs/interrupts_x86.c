@@ -20,6 +20,7 @@
 #include <apic_x86.h>
 
 #include <ac_assert.h>
+#include <ac_attributes.h>
 #include <ac_inttypes.h>
 #include <ac_printf.h>
 #include <ac_xstr.h>
@@ -28,10 +29,10 @@
 #include <native_x86.h>
 #include <reset_x86.h>
 
-static void set_intr_gate(intr_gate* gate, intr_handler* ih);
+static void set_intr_gate(IntrGate* gate, intr_handler* ih);
 
 /* Interrupt Descriptor Table */
-static intr_gate idt[256];
+static IntrGate idt[256];
 
 static ac_u32 intr_divide_err_counter;
 static ac_u32 intr_debug_counter;
@@ -56,8 +57,8 @@ static ac_u32 intr_virtualization_counter;
 
 #define INTR_UNDEFINED(idx) \
 ac_uint AC_CAT(intr_undefined_counter, idx) = 0; \
-INTERRUPT_HANDLER \
-static void AC_CAT(intr_undefined, idx) (struct intr_frame *frame) { \
+AC_ATTR_INTR_HDLR \
+static void AC_CAT(intr_undefined, idx) (IntrFrame *frame) { \
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", \
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15"); \
   print_full_intr_stack_frame("#UD" AC_STR(idx), frame); \
@@ -619,8 +620,8 @@ void init_idt_to_undefined(void) {
   set_intr_gate(&idt[0xFF], intr_undefined0xFF);
 }
 
-INTERRUPT_HANDLER
-static void intr_divide_err(struct intr_frame *frame) {
+AC_ATTR_INTR_HDLR
+static void intr_divide_err(IntrFrame *frame) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_intr_stack_frame("#DE 0", frame);
@@ -631,8 +632,8 @@ static void intr_divide_err(struct intr_frame *frame) {
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void intr_debug(struct intr_frame *frame) {
+AC_ATTR_INTR_HDLR
+static void intr_debug(IntrFrame *frame) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_intr_stack_frame("#DB 1", frame);
@@ -644,8 +645,8 @@ static void intr_debug(struct intr_frame *frame) {
 }
 
 
-INTERRUPT_HANDLER
-static void intr_nmi(struct intr_frame *frame) {
+AC_ATTR_INTR_HDLR
+static void intr_nmi(IntrFrame *frame) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_intr_stack_frame("#NMI 2", frame);
@@ -656,8 +657,8 @@ static void intr_nmi(struct intr_frame *frame) {
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void intr_breakpoint(struct intr_frame *frame) {
+AC_ATTR_INTR_HDLR
+static void intr_breakpoint(IntrFrame *frame) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_intr_stack_frame("#BP 3", frame);
@@ -668,8 +669,8 @@ static void intr_breakpoint(struct intr_frame *frame) {
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void intr_overflow(struct intr_frame *frame) {
+AC_ATTR_INTR_HDLR
+static void intr_overflow(IntrFrame *frame) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_intr_stack_frame("#OF 4", frame);
@@ -680,8 +681,8 @@ static void intr_overflow(struct intr_frame *frame) {
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void intr_bound_range(struct intr_frame *frame) {
+AC_ATTR_INTR_HDLR
+static void intr_bound_range(IntrFrame *frame) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_intr_stack_frame("#BR 5", frame);
@@ -692,8 +693,8 @@ static void intr_bound_range(struct intr_frame *frame) {
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void intr_invalid_opcode(struct intr_frame *frame) {
+AC_ATTR_INTR_HDLR
+static void intr_invalid_opcode(IntrFrame *frame) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_intr_stack_frame("#UD 6", frame);
@@ -704,8 +705,8 @@ static void intr_invalid_opcode(struct intr_frame *frame) {
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void intr_device_not_available(struct intr_frame *frame) {
+AC_ATTR_INTR_HDLR
+static void intr_device_not_available(IntrFrame *frame) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_intr_stack_frame("#UD 7", frame);
@@ -717,8 +718,8 @@ static void intr_device_not_available(struct intr_frame *frame) {
 }
 
 
-INTERRUPT_HANDLER
-static void expt_double_fault(struct intr_frame *frame, ac_uint error_code) {
+AC_ATTR_INTR_HDLR
+static void expt_double_fault(IntrFrame *frame, ac_uint error_code) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_expt_stack_frame("#DF 8", frame);
@@ -730,8 +731,8 @@ static void expt_double_fault(struct intr_frame *frame, ac_uint error_code) {
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void intr_coprocessor_segment_overrun(struct intr_frame *frame) {
+AC_ATTR_INTR_HDLR
+static void intr_coprocessor_segment_overrun(IntrFrame *frame) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_intr_stack_frame("#CPSO 9", frame);
@@ -742,8 +743,8 @@ static void intr_coprocessor_segment_overrun(struct intr_frame *frame) {
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void expt_invalid_tss(struct intr_frame *frame, ac_uint error_code) {
+AC_ATTR_INTR_HDLR
+static void expt_invalid_tss(IntrFrame *frame, ac_uint error_code) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_expt_stack_frame("#TS 10", frame);
@@ -755,8 +756,8 @@ static void expt_invalid_tss(struct intr_frame *frame, ac_uint error_code) {
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void expt_segment_not_present(struct intr_frame *frame, ac_uint error_code) {
+AC_ATTR_INTR_HDLR
+static void expt_segment_not_present(IntrFrame *frame, ac_uint error_code) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_expt_stack_frame("#NP 11", frame);
@@ -768,8 +769,8 @@ static void expt_segment_not_present(struct intr_frame *frame, ac_uint error_cod
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void expt_stack_fault(struct intr_frame *frame, ac_uint error_code) {
+AC_ATTR_INTR_HDLR
+static void expt_stack_fault(IntrFrame *frame, ac_uint error_code) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_intr_stack_frame("#SS 12", frame);
@@ -781,8 +782,8 @@ static void expt_stack_fault(struct intr_frame *frame, ac_uint error_code) {
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void expt_general_protection(struct intr_frame *frame, ac_uint error_code) {
+AC_ATTR_INTR_HDLR
+static void expt_general_protection(IntrFrame *frame, ac_uint error_code) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_expt_stack_frame("#GP13", frame);
@@ -790,15 +791,15 @@ static void expt_general_protection(struct intr_frame *frame, ac_uint error_code
   expt_general_protection_counter += 1;
   ac_printf(" expt_general_protection_counter: %d\n", expt_general_protection_counter);
 
-  idt_ptr idtp;
+  IdtPtr idtp;
   get_idt(&idtp);
   ac_printf(" idt.limit=%d\n", idtp.limit);
   ac_printf(" idt.iig=%p\n", idtp.iig);
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void expt_page_fault(struct intr_frame *frame, ac_uint error_code) {
+AC_ATTR_INTR_HDLR
+static void expt_page_fault(IntrFrame *frame, ac_uint error_code) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_expt_stack_frame("#PF 14", frame);
@@ -810,8 +811,8 @@ static void expt_page_fault(struct intr_frame *frame, ac_uint error_code) {
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void intr_x87_floating_point(struct intr_frame *frame) {
+AC_ATTR_INTR_HDLR
+static void intr_x87_floating_point(IntrFrame *frame) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_intr_stack_frame("#MF 16", frame);
@@ -822,8 +823,8 @@ static void intr_x87_floating_point(struct intr_frame *frame) {
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void expt_alignment_check(struct intr_frame *frame, ac_uint error_code) {
+AC_ATTR_INTR_HDLR
+static void expt_alignment_check(IntrFrame *frame, ac_uint error_code) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_expt_stack_frame("#AC 17", frame);
@@ -835,8 +836,8 @@ static void expt_alignment_check(struct intr_frame *frame, ac_uint error_code) {
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void intr_machine_check(struct intr_frame *frame) {
+AC_ATTR_INTR_HDLR
+static void intr_machine_check(IntrFrame *frame) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_intr_stack_frame("#MC 18", frame);
@@ -847,8 +848,8 @@ static void intr_machine_check(struct intr_frame *frame) {
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void intr_simd_floating_point(struct intr_frame *frame) {
+AC_ATTR_INTR_HDLR
+static void intr_simd_floating_point(IntrFrame *frame) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_intr_stack_frame("#XM 19", frame);
@@ -859,8 +860,8 @@ static void intr_simd_floating_point(struct intr_frame *frame) {
   reset_x86();
 }
 
-INTERRUPT_HANDLER
-static void intr_virtualization(struct intr_frame *frame) {
+AC_ATTR_INTR_HDLR
+static void intr_virtualization(IntrFrame *frame) {
   __asm__ volatile(""::: "rax", "rbx", "rcx", "rdx", "rsi", "rdi", // "rbp", rbp is already saved
                          "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15");
   print_full_expt_stack_frame("#VE 20", frame);
@@ -871,8 +872,8 @@ static void intr_virtualization(struct intr_frame *frame) {
   reset_x86();
 }
 
-static void set_intr_gate(intr_gate* gate, intr_handler* ih) {
-  static intr_gate g = INTR_GATE_INITIALIZER;
+static void set_intr_gate(IntrGate* gate, intr_handler* ih) {
+  static IntrGate g = INTR_GATE_INITIALIZER;
   *gate = g;
 
   gate->offset_lo = INTR_GATE_OFFSET_LO(ih);
@@ -887,8 +888,8 @@ static void set_intr_gate(intr_gate* gate, intr_handler* ih) {
   gate->p = 1;
 }
 
-static void set_expt_gate(intr_gate* gate, expt_handler* eh) {
-  static intr_gate g = INTR_GATE_INITIALIZER;
+static void set_expt_gate(IntrGate* gate, expt_handler* eh) {
+  static IntrGate g = INTR_GATE_INITIALIZER;
   *gate = g;
 
   gate->offset_lo = INTR_GATE_OFFSET_LO(eh);
@@ -903,8 +904,8 @@ static void set_expt_gate(intr_gate* gate, expt_handler* eh) {
   gate->p = 1;
 }
 
-static void set_idtr(intr_gate idt[], ac_u32 count) {
-  idt_ptr dp;
+static void set_idtr(IntrGate idt[], ac_u32 count) {
+  IdtPtr dp;
   dp.limit = (ac_u16)(((ac_uptr)&idt[count] - (ac_uptr)&idt[0] - 1)
       & 0xFFFF);
   dp.iig = &idt[0];
@@ -919,7 +920,7 @@ void set_expt_handler(ac_u32 intr_num, expt_handler eh) {
   set_expt_gate(&idt[intr_num], eh);
 }
 
-intr_gate* get_intr_gate(ac_u32 intr_num) {
+IntrGate* get_intr_gate(ac_u32 intr_num) {
   return &idt[intr_num];
 }
 

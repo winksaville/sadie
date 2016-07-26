@@ -19,30 +19,30 @@
 
 #include <ac_inttypes.h>
 
-struct multiboot2_header_tag {
+struct AC_ATTR_PACKED multiboot2_header_tag {
   ac_u32 type;
   ac_u32 size;
-} __attribute__((__packed__));
+};
 
-struct multiboot2_basic_memory_tag {
+struct AC_ATTR_PACKED multiboot2_basic_memory_tag {
   struct multiboot2_header_tag header;
   ac_u32 mem_lower;
   ac_u32 mem_upper;
-} __attribute__((__packed__));
+};
 
-struct multiboot2_mmap {
+struct AC_ATTR_PACKED multiboot2_mmap {
   ac_u64 base_addr;
   ac_u64 length;
   ac_u32 type;
   ac_u32 reserved;
-} __attribute__((__packed__));
+};
 
-struct multiboot2_memory_map_tag {
+struct AC_ATTR_PACKED multiboot2_memory_map_tag {
   struct multiboot2_header_tag header;
   ac_u32 entry_size;
   ac_u32 entry_version;
   struct multiboot2_mmap entries[];
-} __attribute__((__packed__));
+};
 
 static __inline__ struct multiboot2_header_tag* multiboot2_next_tag(
     struct multiboot2_header_tag* tag) {

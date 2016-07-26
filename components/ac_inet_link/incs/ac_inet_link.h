@@ -18,16 +18,18 @@
 #define SADIE_LIBS_AC_INET_LINK_INCS_AC_INET_LINK_H
 
 #include <ac_inttypes.h>
+#include <ac_attributes.h>
 
 /**
  * See (RFC-2460 Internet Protocol, V6)[https://tools.ietf.org/html/rfc2460]
  */
-typedef struct __attribute__ ((__packed__)) AcInetIpv6Hdr {
+typedef struct AC_ATTR_PACKED AcInetIpv6Hdr {
   ac_u8 version:4;        // Version = 6
   ac_u8 traffic_class:8;  // Traffic class see (section 7)[https://tools.ietf.org/html/rfc2460#section-7]
   ac_u32 flow_label:20;   // Flow label set (section 6)[https://tools.ietf.org/html/rfc2460#section-6]
   ac_u16 payload_length;  // Includes extension headers, if any, and payload that follow this header
-  ac_u8 next_header;      // 59 == no next_header, IP Protocol see (www.iana.org Protocol Numbers)[http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml]
+  ac_u8 next_header;      // 59 == no next_header, IP Protocol see (www.iana.org Protocol Numbers)
+                          //   [http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml]
   ac_u8 hop_limit;        // If arrives as 0 discard. Before forwarding decrement
                           // and if it becomes 0 discard and do not forward.
   ac_u8 source[16];       // 16 byte source address
@@ -37,7 +39,7 @@ typedef struct __attribute__ ((__packed__)) AcInetIpv6Hdr {
 /**
  * See (RFC-791 Internet Protocol)[https://tools.ietf.org/html/rfc791]
  */
-typedef struct __attribute__ ((__packed__)) AcInetIpv4FragmentOffset {
+typedef struct AC_ATTR_PACKED AcInetIpv4FragmentOffset {
   union {
     ac_u8 raw_u8[2];
     ac_u16 raw_u16;
@@ -53,7 +55,7 @@ typedef struct __attribute__ ((__packed__)) AcInetIpv4FragmentOffset {
 /**
  * See (RFC-791 Internet Protocol)[https://tools.ietf.org/html/rfc791]
  */
-typedef struct __attribute__((__packed__)) AcInetIpv4Hdr {
+typedef struct AC_ATTR_PACKED AcInetIpv4Hdr {
   ac_u8 version:4;         // Version = 4
   ac_u8 ihl:4;             // Interent Header Lenth
   ac_u8 tos;               // Type of service
@@ -64,7 +66,8 @@ typedef struct __attribute__((__packed__)) AcInetIpv4Hdr {
                                             // bit 15 == 0 always
                                             // bit 14 == 0 = May Fragment,  1 = Don't Fragment
   ac_u8 time_to_live;      // 0 == time has expired and this packet is not forwarded
-  ac_u8 protocol;          // IP Protocol see (www.iana.org Protocol Numbers)[http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml]
+  ac_u8 protocol;          // IP Protocol see (www.iana.org Protocol Numbers)
+                           //   [http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml]
   ac_u16 header_checksum;  // Checksum for the header
   ac_u8 source[4];         // 4 byte source address
   ac_u8 destination[4];    // 4 byte destination address

@@ -16,30 +16,24 @@
 
 #include <ac_exceptions.h>
 
+#include <ac_attributes.h>
 #include <ac_inttypes.h>
 #include <ac_putchar.h>
 #include <ac_timer.h>
 
-void ac_exception_reset_handler(void)
-  __attribute__ ((interrupt ("UNDEF")));
+void ac_exception_reset_handler(void) AC_ATTR_INTR("UNDEF");
 
-void ac_exception_undef_handler(void)
-  __attribute__ ((interrupt ("UNDEF")));
+void ac_exception_undef_handler(void) AC_ATTR_INTR("UNDEF");
 
-void ac_exception_svc_handler(void)
-  __attribute__ ((interrupt ("SWI")));
+void ac_exception_svc_handler(void) AC_ATTR_INTR("SWI");
 
-void ac_exception_prefetch_abort_handler(void)
-  __attribute__ ((interrupt ("ABORT")));
+void ac_exception_prefetch_abort_handler(void) AC_ATTR_INTR("ABORT");
 
-void ac_exception_data_abort_handler(void)
-  __attribute__ ((interrupt ("ABORT")));
+void ac_exception_data_abort_handler(void) AC_ATTR_INTR("ABORT");
 
-//void ac_exception_irq_handler(void)
-//  __attribute__ ((interrupt ("IRQ")));
+//void ac_exception_irq_handler(void) AC_ATTR_INTR("IRQ");
 
-void ac_exception_fiq_handler(void)
-  __attribute__ ((interrupt ("FIQ")));
+void ac_exception_fiq_handler(void) AC_ATTR_INTR("FIQ");
 
 typedef struct {
   ac_bool available;

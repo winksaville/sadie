@@ -19,7 +19,7 @@
 #include "descriptors_x86.h"
 #include "descriptors_x86_print.h"
 
-void print_tss_desc(char *str, tss_desc* desc) {
+void print_tss_desc(char *str, TssDesc* desc) {
   if (str != AC_NULL) {
     ac_printf("%s: ", str);
   }
@@ -44,7 +44,7 @@ void print_tss_desc(char *str, tss_desc* desc) {
   ac_printf(" desc->base_addr: 0x%lx\n", GET_TSS_DESC_BASE_ADDR(*desc));
 }
 
-void print_seg_desc(char *str, seg_desc* desc) {
+void print_seg_desc(char *str, SegDesc* desc) {
   if (str != AC_NULL) {
     ac_printf("%s: ", str);
   }
@@ -67,11 +67,11 @@ void print_seg_desc(char *str, seg_desc* desc) {
   ac_printf(" desc->base_addr: 0x%lx\n", GET_SEG_DESC_BASE_ADDR(*desc));
 }
 
-void print_desc_table(char *str, desc_ptr dp) {
-  ac_uint count = (dp.limit + 1) / sizeof(seg_desc);
+void print_desc_table(char *str, DescPtr dp) {
+  ac_uint count = (dp.limit + 1) / sizeof(SegDesc);
   ac_printf("%s: count=%d dp.limit=%d sd=%p\n", str, count, dp.limit, dp.sd);
   for (ac_uint i = 0; i < count; i++) {
-    ac_printf("seg_desc[%d]:\n", i);
+    ac_printf("SegDesc[%d]:\n", i);
     print_seg_desc(AC_NULL, &dp.sd[i]);
   }
 }

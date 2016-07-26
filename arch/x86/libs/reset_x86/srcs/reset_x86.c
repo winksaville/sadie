@@ -80,7 +80,7 @@ void reset_x86(void) {
   // caused an GP fault (exception 13), but this code
   // works.
 
-  idt_ptr null_idtr;
+  IdtPtr null_idtr;
 
   null_idtr.limit = 0;
   null_idtr.iig = 0;

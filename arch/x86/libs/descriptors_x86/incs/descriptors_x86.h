@@ -20,6 +20,7 @@
 //#include <interrupts_x86.h>
 
 #include <ac_architecture.h>
+#include <ac_attributes.h>
 #include <ac_inttypes.h>
 #include <ac_xstr.h>
 
@@ -49,7 +50,7 @@
  * Volume 3 chapter 7.2.2 "TSS Descriptor"
  * Figure 7-3. Format of TSS Descriptor
  */
-struct tss_desc {
+typedef struct AC_ATTR_PACKED {
   ac_uptr seg_limit_lo:16;
   ac_uptr base_addr_lo:24;
   ac_uptr type:4;
@@ -66,16 +67,14 @@ struct tss_desc {
 #else /* CPU_X86_32 */
   ac_uptr base_addr_hi:8;
 #endif
-} __attribute__((__packed__));
+} TssDesc;
 
-_Static_assert(sizeof(struct tss_desc) == TSS_DESC_SIZE,
+_Static_assert(sizeof(TssDesc) == TSS_DESC_SIZE,
     L"TSS/LDT segment_descriptor is not " AC_XSTR(TSS_DESC_SIZE) " bytes");
-
-typedef struct tss_desc tss_desc;
 
 union tss_desc_u {
   ac_u64 raw;
-  struct tss_desc fields;
+  TssDesc fields;
 };
 
 _Static_assert(sizeof(union tss_desc_u) == TSS_DESC_SIZE,
@@ -150,7 +149,7 @@ _Static_assert(sizeof(union tss_desc_u) == TSS_DESC_SIZE,
  * Volume 3 chapter 3.4.5 "Segment Descriptors"
  * Figure 3-8. Segment Descriptor
  */
-struct seg_desc {
+typedef struct AC_ATTR_PACKED {
   ac_u64 seg_limit_lo:16;
   ac_u64 base_addr_lo:24;
   ac_u64 type:4;
@@ -163,16 +162,14 @@ struct seg_desc {
   ac_u64 d_b:1;
   ac_u64 g:1;
   ac_u64 base_addr_hi:8;
-} __attribute__((__packed__));
+} SegDesc;
 
-_Static_assert(sizeof(struct seg_desc) == 8,
-    L"segment_descriptor is not 8 bytes");
-
-typedef struct seg_desc seg_desc;
+_Static_assert(sizeof(SegDesc) == 8,
+    L"SegDesc is not 8 bytes");
 
 union seg_desc_u {
   ac_u64 raw;
-  struct seg_desc fields;
+  SegDesc fields;
 };
 
 _Static_assert(sizeof(union seg_desc_u) == sizeof(ac_u64),
@@ -195,38 +192,38 @@ _Static_assert(sizeof(union seg_desc_u) == sizeof(ac_u64),
   .base_addr_hi = 0, \
 }
 
-/** Return the bits for seg_desc.seg_limit_lo */
+/** Return the bits for SegDesc.seg_limit_lo */
 #define SEG_DESC_SEG_LIMIT_LO(i) ({ \
   ac_uptr r = (((ac_uptr)(i) >> 0) & 0xFFFF); \
   r; \
 })
 
-/** Return the bits for seg_desc.seg_limit_hi */
+/** Return the bits for SegDesc.seg_limit_hi */
 #define SEG_DESC_SEG_LIMIT_HI(addr) ({ \
   ac_uptr r = ((ac_uptr)(addr) >> 16) & 0xFFFFFFFFFFFFLL; \
   r; \
 })
 
-/** Return seg_desc.seg_limit as a ac_uptr */
+/** Return SegDesc.seg_limit as a ac_uptr */
 #define GET_SEG_DESC_SEG_LIMIT(sd) ({ \
   ac_uptr r = (ac_uptr)((((ac_uptr)(sd).seg_limit_hi) << 16) \
       | (ac_uptr)((sd).seg_limit_lo)); \
   r; \
 })
 
-/** Return the bits for seg_desc.base_addr_lo */
+/** Return the bits for SegDesc.base_addr_lo */
 #define SEG_DESC_BASE_ADDR_LO(addr) ({ \
   ac_uptr r = (((ac_uptr)(addr) >> 16) & 0xFFFFFF); \
   r; \
 })
 
-/** Return the bits for seg_desc.base_addr_hi */
+/** Return the bits for SegDesc.base_addr_hi */
 #define SEG_DESC_BASE_ADDR_HI(addr) ({ \
   ac_uptr r = ((ac_uptr)(addr) >> 24) & 0xFF; \
   r; \
 })
 
-/** Return seg_desc.base_addr as a ac_uptr */
+/** Return SegDesc.base_addr as a ac_uptr */
 #define GET_SEG_DESC_BASE_ADDR(desc) ({ \
   ac_uptr r = (ac_uptr)((((ac_uptr)(desc).base_addr_hi) << 24) \
       | (ac_uptr)((desc).base_addr_lo)); \
@@ -266,89 +263,89 @@ enum seg_type_sys_gate {
  * Volume 3 chapter 3.4.5.1 "Segment Descriptors"
  * Table 3-1. Code- and Data-Segment Types
  */
-struct seg_type_code {
+typedef struct AC_ATTR_PACKED {
   ac_u8 a:1;       // accessed, set by hardware cleared by software
   ac_u8 r:1;       // readable
   ac_u8 c:1;       // conforming
   ac_u8 one:1;     // for code this bit is always one
-} __attribute__((__packed__));
-_Static_assert(sizeof(struct seg_type_code) == 1,
+} SegTypeCode;
+
+_Static_assert(sizeof(SegTypeCode) == 1,
     L"sizeof seg_type_code must be one byte");
 
-struct seg_type_data {
+typedef struct AC_ATTR_PACKED {
   ac_u8 a:1;       // accessed, set by hardware cleared by software
   ac_u8 w:1;       // write enable, 1 == read/write, 0 == read only
   ac_u8 e:1;       // expansion direction down == 1, up == 0
   ac_u8 zero:1;    // for data this bit is always zero
-} __attribute__((__packed__));
-_Static_assert(sizeof(struct seg_type_data) == 1,
-    L"sizeof seg_type_data must be one byte");
+} SegTypeData;
+
+_Static_assert(sizeof(SegTypeData) == 1,
+    L"sizeof SegTypeData must be one byte");
 
 union seg_type_u {
     ac_u8 byte;
-    struct seg_type_data data;
-    struct seg_type_code code;
-} __attribute__((__packed__));
+    SegTypeData data;
+    SegTypeCode code;
+};
+
 _Static_assert(sizeof(union seg_type_u) == 1,
     L"sizeof seg_type_u must be one byte");
 
 /**
  * Pointer to segment descriptor
  */
-struct desc_ptr {
-    ac_u16 unused[3];   // Align desc_ptr.limit to an odd ac_u16 boundary
-                        // so desc_ptr.address is on a ac_uptr boundary.
+typedef struct AC_ATTR_PACKED {
+    ac_u16 unused[3];   // Align DescPtr.limit to an odd ac_u16 boundary
+                        // so DescPtr.address is on a ac_uptr boundary.
                         // This is for better performance and for user mode
                         // it avoids an alignment check fault. See the last
                         // paragraph of "Intel 64 and IA-32 Architectures
                         // Software Developer's Manual" Volume 3 chapter 3.5.1
                         // "Segment Descriptor Tables".
-    volatile ac_u16 limit;  // Volatile so limit is stored when in set_gdt/ldt
-    seg_desc * volatile sd; // Volatile so sd is stored when calling set_gdt/ldt
-} __attribute__((__packed__));
+    volatile ac_u16 limit;// Volatile so limit is stored when in set_gdt/ldt
+    SegDesc* volatile sd; // Volatile so sd is stored when calling set_gdt/ldt
+} DescPtr;
 
-_Static_assert(sizeof(struct desc_ptr) == SEG_DESC_SIZE,
-    L"struct desc_ptr != " AC_XSTR(SEG_DESC_SIZE) " bytes");
+_Static_assert(sizeof(DescPtr) == SEG_DESC_SIZE,
+    L"DescPtr != " AC_XSTR(SEG_DESC_SIZE) " bytes");
 
-/** Descriptor Pointer typedef */
-typedef struct desc_ptr desc_ptr;
-
-void set_seg_desc(seg_desc* sd, ac_u32 seg_limit, ac_uptr base_addr, ac_u8 type,
+void set_seg_desc(SegDesc* sd, ac_u32 seg_limit, ac_uptr base_addr, ac_u8 type,
     ac_u8 s, ac_u8 dpl, ac_u8 p, ac_u8 avl, ac_u8 l, ac_u8 d_b, ac_u8 g);
 
-void set_code_seg_desc(seg_desc* sd, ac_u8 accessed, ac_u8 readable,
+void set_code_seg_desc(SegDesc* sd, ac_u8 accessed, ac_u8 readable,
     ac_u8 conforming, ac_u8 dpl, ac_u8 p, ac_u8 avl, ac_u8 l, ac_u8 d, ac_u8 g);
 
-void set_data_seg_desc(seg_desc* sd, ac_u8 accessed, ac_u8 write_enable,
+void set_data_seg_desc(SegDesc* sd, ac_u8 accessed, ac_u8 write_enable,
     ac_u8 expand_dir, ac_u8 dpl, ac_u8 p, ac_u8 avl, ac_u8 l, ac_u8 d, ac_u8 g);
 
-ac_s32 cmp_seg_desc(seg_desc* sd1, seg_desc* sd2);
+ac_s32 cmp_seg_desc(SegDesc* sd1, SegDesc* sd2);
 
-void set_tss_ldt_desc(tss_desc* tld, ac_u32 seg_limit, ac_uptr base_addr,
+void set_tss_ldt_desc(TssDesc* tld, ac_u32 seg_limit, ac_uptr base_addr,
     ac_u8 type, ac_u8 dpl, ac_u8 p, ac_u8 avl, ac_u8 g);
 
-ac_s32 cmp_tss_ldt_desc(tss_desc* sd1, tss_desc* sd2);
+ac_s32 cmp_tss_ldt_desc(TssDesc* sd1, TssDesc* sd2);
 
-/** Set the GDT register from desc_ptr */
-static __inline__ void set_gdt(desc_ptr* desc_ptr) {
+/** Set the GDT register from DescPtr */
+static __inline__ void set_gdt(DescPtr* desc_ptr) {
   ac_u16* p = (ac_u16*)&desc_ptr->limit;
   __asm__ volatile("lgdt %0" :: "m" (*p));
 }
 
 /** Get the GDT register to desc_ptr */
-static __inline__ void get_gdt(desc_ptr* desc_ptr) {
+static __inline__ void get_gdt(DescPtr* desc_ptr) {
   ac_u16* p = (ac_u16*)&desc_ptr->limit;
   __asm__ volatile("sgdt %0" : "=m" (*p));
 }
 
 /** Set the LDT register from desc_ptr */
-static __inline__ void set_ldt(desc_ptr* desc_ptr) {
+static __inline__ void set_ldt(DescPtr* desc_ptr) {
   ac_u16* p = (ac_u16*)&desc_ptr->limit;
   __asm__ volatile("lldt %0" :: "m" (*p));
 }
 
 /** Get the LDT register to desc_ptr */
-static __inline__ void get_ldt(desc_ptr* desc_ptr) {
+static __inline__ void get_ldt(DescPtr* desc_ptr) {
   ac_u16* p = (ac_u16*)&desc_ptr->limit;
   __asm__ volatile("sldt %0" : "=m" (*p));
 }

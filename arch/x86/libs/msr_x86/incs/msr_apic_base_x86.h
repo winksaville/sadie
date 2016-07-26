@@ -20,6 +20,7 @@
 #include <cpuid_x86.h>
 #include <msr_x86.h>
 
+#include <ac_attributes.h>
 #include <ac_inttypes.h>
 #include <ac_bits.h>
 
@@ -36,14 +37,14 @@
  * Volume 3 chapter 10.12.1 "Detecting and Enabling x2APIC Mode"
  * Figure 10-26 "IA32_APIC_BASE MSR Supporting x2APIC"
  */
-struct msr_apic_base_fields {
+struct AC_ATTR_PACKED msr_apic_base_fields {
   ac_u64 reserved_0:8;
   ac_u64 bsp:1;
   ac_u64 reserved_1:1;
   ac_u64 extd:1;
   ac_u64 e:1;
   ac_u64 base_addr:52;
-} __attribute__((__packed__));
+};
 
 _Static_assert(sizeof(struct msr_apic_base_fields) == sizeof(ac_u64),
     L"struct msr_apic_base_fields is not 8 bytes");
