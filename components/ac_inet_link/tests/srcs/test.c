@@ -164,6 +164,29 @@ ac_bool test_AcInetIpv4FragmentOffset(void) {
 }
 
 /**
+ * Test all of the AcInetIpv4FragmentOffset test cases
+ */
+ac_bool test_AcInetSendPacket(void) {
+  ac_bool error = AC_FALSE;
+
+  AcInetSendPacketCmd spc = {
+    .po = AC_INET_SEND_PACKET_CMD,
+  };
+
+  error |= AC_TEST(spc.po.protocol == 1);
+  error |= AC_TEST(spc.po.flags == AC_CMD);
+  error |= AC_TEST(spc.po.opcode == 1);
+  error |= AC_TEST(spc.po.operation == 0x50001);
+
+  ac_printf("test_AcInetSendPacket: spc.po.protocol=0x%lx\n", spc.po.protocol);
+  ac_printf("test_AcInetSendPacket: spc.po.flags=0x%lx\n", spc.po.flags);
+  ac_printf("test_AcInetSendPacket: spc.po.opcode=0x%lx\n", spc.po.opcode);
+  ac_printf("test_AcInetSendPacket: spc.po.operation=0x%lx\n", spc.po.operation);
+
+  return error;
+}
+
+/**
  * Main routine
  */
 int main(void) {
@@ -172,6 +195,7 @@ int main(void) {
   error |= test_hton_ntoh_be();
   error |= test_hton_ntoh_le();
   error |= test_AcInetIpv4FragmentOffset();
+  error |= test_AcInetSendPacket();
 
   if (!error) {
     ac_printf("OK\n");
