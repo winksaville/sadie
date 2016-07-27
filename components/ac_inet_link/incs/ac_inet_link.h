@@ -100,19 +100,18 @@ typedef struct AC_ATTR_PACKED {
       ac_u64 protocol:46;   // Bits 18-63 protocol
     };
   };
-} AcProtocolOpcode;
-ac_static_assert(sizeof(AcProtocolOpcode) == sizeof(ac_u64),
-   L"AcProtocolReqOpcode != 4");
+} AcOperation;
+ac_static_assert(sizeof(AcOperation) == sizeof(ac_u64),
+   L"AcOperation != 4");
 
-//#define AC_PO(name, protocol, flags, opcode)
 #define AC_PO(name, p, f, o) \
-static const AcProtocolOpcode name = { \
+static const AcOperation name = { \
   .protocol = p, \
   .flags = f, \
   .opcode = o, \
 }
 
-#define AC_PO_CMD_REQ_RSP(name, protocol, opcode) \
+#define AC_OPERATIONS(name, protocol, opcode) \
   AC_PO(name ## _CMD, protocol, AC_CMD, opcode); \
   AC_PO(name ## _REQ, protocol, AC_REQ, opcode); \
   AC_PO(name ## _RSP, protocol, AC_RSP, opcode)
@@ -120,36 +119,38 @@ static const AcProtocolOpcode name = { \
 /**
  * The protocol for AcInetXxxx operations
  */
-#define AC_INET_SEND_PACKET_PROTOCOL    0x1
+#define AC_INET_SEND_PACKET_PROTOCOL   0x1
 
 /**
  * Generate: AC_INET_SEND_PACKET_CMD
  * Generate: AC_INET_SEND_PACKET_REQ
  * Generate: AC_INET_SEND_PACKET_RSP
  */
-//AC_PO_CMD_REQ_RSP(AC_INET_SEND_PACKET, AC_INET_SEND_PACKET_PROTOCOL, 1);
-AC_PO(AC_INET_SEND_PACKET_CMD, AC_INET_SEND_PACKET_PROTOCOL, AC_CMD, 1);
-//AC_PO(AC_INET_SEND_PACKET_REQ, AC_INET_SEND_PACKET_PROTOCOL, AC_RSP 1);
-//AC_PO(AC_INET_SEND_PACKET_RSP, AC_INET_SEND_PACKET_PROTOCOL, AC_REQ 1);
+AC_OPERATIONS(AC_INET_SEND_PACKET, AC_INET_SEND_PACKET_PROTOCOL, 1);
 
+/**
+ * AcInetSendPacetOp is either AC_INET_SEND_PACKET_CMD or _REQ.
+ * If _REQ is sent then AcInetSendPacketRsp must be sent, for _CMD
+ * the _RSP may be sent when an error occurs, usually detected by
+ * before trasmitting. 
+ */
 typedef struct {
-  AcProtocolOpcode po;  // protocol opcode = AC_INET_SEND_PACKET_CMD
+  AcOperation op;       // Op is the operation AC_INET_SEND_PACKET_CMD | _REQ
   ac_u64    tag;        // tag an app defined tag
   ac_u64    app_vec_cnt;// Number of AcIoBuff's for application data
   AcIoBuff* link_buff;  // Pointer to the Link header buffer
   AcIoBuff* ip_buff;    // Pointer to the IP header buffer
   AcIoBuff* trans_buff; // Pointer to the Transport header buffer
   AcIoBuff* app_buffs[];// Pointer to the app data buffer
-} AcInetSendPacketCmd;
+} AcInetSendPacketOp;
 
 /**
  * AcInetSendPacketRsp is optional and returns 0 if succesfully
  * queued for sending does not mean it was sent or recevied.
  * Generally will only be returned if an error unless po.flags = AC_REQ
  */
-#define AC_INET_SEND_PACKET_RSP ((AC_CMD_INET_PROTOCOL << 16) + AC_RSP(0x1))
 typedef struct {
-  AcProtocolOpcode po;  // protocol opcode = AC_INET_SEND_PACKET_CMD
+  AcOperation operation;// Opeeration is AC_INET_SEND_PACKET_RSP
   ac_u64    tag;        // tag an app defined tag
   AcStatus  status;     // 0 == successful, !0 == error
 } AcInetSendPacketRsp;
