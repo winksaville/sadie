@@ -97,36 +97,41 @@ typedef struct AC_ATTR_PACKED {
                             // Bits 16-17 AC_CMD 0x1 == cmd (no response expected)
                             // Bits 16-17 AC_REQ 0x2 == req (response expected)
                             // Bits 16-17 AC_RSP 0x3 == rsp A response to a previous command
-      ac_u64 protocol:46;   // Bits 18-63 protocol
+      ac_u64 reserved:2;    // Bits 18-19 reserved
+      ac_u64 protocol:44;   // Bits 20-63 protocol
     };
   };
 } AcOperation;
 ac_static_assert(sizeof(AcOperation) == sizeof(ac_u64),
    L"AcOperation != 4");
 
-#define AC_PO(name, p, f, o) \
+/**
+ * Define an AcOperation
+ */
+#define DEFINE_AC_OPERATION(name, p, f, o) \
 static const AcOperation name = { \
   .protocol = p, \
   .flags = f, \
   .opcode = o, \
 }
 
-#define AC_OPERATIONS(name, protocol, opcode) \
-  AC_PO(name ## _CMD, protocol, AC_CMD, opcode); \
-  AC_PO(name ## _REQ, protocol, AC_REQ, opcode); \
-  AC_PO(name ## _RSP, protocol, AC_RSP, opcode)
+/**
+ * Define the name_CMD, name_REQ and name_RSP operations for
+ * the name_PROTOCOL, which must be defined.
+ */
+#define DEFINE_AC_OPERATIONS(name, opcode) \
+  DEFINE_AC_OPERATION(name ## _CMD, name ## _PROTOCOL, AC_CMD, opcode); \
+  DEFINE_AC_OPERATION(name ## _REQ, name ## _PROTOCOL, AC_REQ, opcode); \
+  DEFINE_AC_OPERATION(name ## _RSP, name ## _PROTOCOL, AC_RSP, opcode)
 
 /**
- * The protocol for AcInetXxxx operations
+ * For AC_INET_SEND_PACKET_PROTOCOL define:
+ *   AC_INET_SEND_PACKET_CMD
+ *   AC_INET_SEND_PACKET_REQ
+ *   AC_INET_SEND_PACKET_RSP
  */
-#define AC_INET_SEND_PACKET_PROTOCOL   0x1
-
-/**
- * Generate: AC_INET_SEND_PACKET_CMD
- * Generate: AC_INET_SEND_PACKET_REQ
- * Generate: AC_INET_SEND_PACKET_RSP
- */
-AC_OPERATIONS(AC_INET_SEND_PACKET, AC_INET_SEND_PACKET_PROTOCOL, 1);
+#define AC_INET_SEND_PACKET_PROTOCOL   0x1234
+DEFINE_AC_OPERATIONS(AC_INET_SEND_PACKET, 0x1);
 
 /**
  * AcInetSendPacetOp is either AC_INET_SEND_PACKET_CMD or _REQ.

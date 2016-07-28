@@ -171,36 +171,42 @@ ac_bool test_AcInetSendPacket(void) {
 
   AcInetSendPacketOp sp_cmd = { .op = AC_INET_SEND_PACKET_CMD };
 
-  error |= AC_TEST(sp_cmd.op.protocol == 1);
+  error |= AC_TEST(sp_cmd.op.protocol == AC_INET_SEND_PACKET_PROTOCOL);
+  error |= AC_TEST(sp_cmd.op.reserved == 0);
   error |= AC_TEST(sp_cmd.op.flags == AC_CMD);
   error |= AC_TEST(sp_cmd.op.opcode == 1);
-  error |= AC_TEST(sp_cmd.op.operation == 0x50001);
+  error |= AC_TEST(sp_cmd.op.operation == 0x123410001);
 
   ac_printf("test_AcInetSendPacket: sp_cmd.op.protocol=0x%lx\n", sp_cmd.op.protocol);
+  ac_printf("test_AcInetSendPacket: sp_cmd.op.reserved=0x%lx\n", sp_cmd.op.reserved);
   ac_printf("test_AcInetSendPacket: sp_cmd.op.flags=0x%lx\n", sp_cmd.op.flags);
   ac_printf("test_AcInetSendPacket: sp_cmd.op.opcode=0x%lx\n", sp_cmd.op.opcode);
   ac_printf("test_AcInetSendPacket: sp_cmd.op.operation=0x%lx\n", sp_cmd.op.operation);
 
   AcInetSendPacketOp sp_req = { .op = AC_INET_SEND_PACKET_REQ };
 
-  error |= AC_TEST(sp_req.op.protocol == 1);
+  error |= AC_TEST(sp_req.op.protocol == AC_INET_SEND_PACKET_PROTOCOL);
+  error |= AC_TEST(sp_req.op.reserved == 0);
   error |= AC_TEST(sp_req.op.flags == AC_REQ);
   error |= AC_TEST(sp_req.op.opcode == 1);
-  error |= AC_TEST(sp_req.op.operation == 0x60001);
+  error |= AC_TEST(sp_req.op.operation == 0x123420001);
 
   ac_printf("test_AcInetSendPacket: sp_req.op.protocol=0x%lx\n", sp_req.op.protocol);
+  ac_printf("test_AcInetSendPacket: sp_req.op.reserved=0x%lx\n", sp_req.op.reserved);
   ac_printf("test_AcInetSendPacket: sp_req.op.flags=0x%lx\n", sp_req.op.flags);
   ac_printf("test_AcInetSendPacket: sp_req.op.opcode=0x%lx\n", sp_req.op.opcode);
   ac_printf("test_AcInetSendPacket: sp_req.op.operation=0x%lx\n", sp_req.op.operation);
 
   AcInetSendPacketOp sp_rsp = { .op = AC_INET_SEND_PACKET_RSP };
 
-  error |= AC_TEST(sp_rsp.op.protocol == 1);
+  error |= AC_TEST(sp_rsp.op.protocol == AC_INET_SEND_PACKET_PROTOCOL);
+  error |= AC_TEST(sp_rsp.op.reserved == 0);
   error |= AC_TEST(sp_rsp.op.flags == AC_RSP);
   error |= AC_TEST(sp_rsp.op.opcode == 1);
-  error |= AC_TEST(sp_rsp.op.operation == 0x70001);
+  error |= AC_TEST(sp_rsp.op.operation == 0x123430001);
 
   ac_printf("test_AcInetSendPacket: sp_rsp.op.protocol=0x%lx\n", sp_rsp.op.protocol);
+  ac_printf("test_AcInetSendPacket: sp_rsp.op.reserved=0x%lx\n", sp_rsp.op.reserved);
   ac_printf("test_AcInetSendPacket: sp_rsp.op.flags=0x%lx\n", sp_rsp.op.flags);
   ac_printf("test_AcInetSendPacket: sp_rsp.op.opcode=0x%lx\n", sp_rsp.op.opcode);
   ac_printf("test_AcInetSendPacket: sp_rsp.op.operation=0x%lx\n", sp_rsp.op.operation);
