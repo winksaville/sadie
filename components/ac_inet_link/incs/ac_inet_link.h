@@ -134,10 +134,10 @@ static const AcOperation name = { \
 DEFINE_AC_OPERATIONS(AC_INET_SEND_PACKET, 0x1);
 
 /**
- * AcInetSendPacetOp is either AC_INET_SEND_PACKET_CMD or _REQ.
- * If _REQ is sent then AcInetSendPacketRsp must be sent, for _CMD
- * the _RSP may be sent when an error occurs, usually detected by
- * before trasmitting. 
+ * AcInetSendPacetOpCr is either AC_INET_SEND_PACKET_CMD or _REQ.
+ * If _REQ is sent then AcInetSendPacketOpRsp must be sent, for _CMD
+ * the _RSP may be sent, typically when an error occurs, usually
+ * detected by before transmitting.
  */
 typedef struct {
   AcOperation op;       // Op is the operation AC_INET_SEND_PACKET_CMD | _REQ
@@ -147,7 +147,7 @@ typedef struct {
   AcIoBuff* ip_buff;    // Pointer to the IP header buffer
   AcIoBuff* trans_buff; // Pointer to the Transport header buffer
   AcIoBuff* app_buffs[];// Pointer to the app data buffer
-} AcInetSendPacketOp;
+} AcInetSendPacketOpCr;
 
 /**
  * AcInetSendPacketRsp is optional and returns 0 if succesfully
@@ -155,10 +155,10 @@ typedef struct {
  * Generally will only be returned if an error unless po.flags = AC_REQ
  */
 typedef struct {
-  AcOperation operation;// Opeeration is AC_INET_SEND_PACKET_RSP
+  AcOperation op;       // Opeeration is AC_INET_SEND_PACKET_RSP
   ac_u64    tag;        // tag an app defined tag
   AcStatus  status;     // 0 == successful, !0 == error
-} AcInetSendPacketRsp;
+} AcInetSendPacketOpRsp;
 
 /**
  * Initialize this module

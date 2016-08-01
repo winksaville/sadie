@@ -169,7 +169,7 @@ ac_bool test_AcInetIpv4FragmentOffset(void) {
 ac_bool test_AcInetSendPacket(void) {
   ac_bool error = AC_FALSE;
 
-  AcInetSendPacketOp sp_cmd = { .op = AC_INET_SEND_PACKET_CMD };
+  AcInetSendPacketOpCr sp_cmd = { .op = AC_INET_SEND_PACKET_CMD };
 
   error |= AC_TEST(sp_cmd.op.protocol == AC_INET_SEND_PACKET_PROTOCOL);
   error |= AC_TEST(sp_cmd.op.reserved == 0);
@@ -183,7 +183,7 @@ ac_bool test_AcInetSendPacket(void) {
   ac_printf("test_AcInetSendPacket: sp_cmd.op.opcode=0x%lx\n", sp_cmd.op.opcode);
   ac_printf("test_AcInetSendPacket: sp_cmd.op.operation=0x%lx\n", sp_cmd.op.operation);
 
-  AcInetSendPacketOp sp_req = { .op = AC_INET_SEND_PACKET_REQ };
+  AcInetSendPacketOpCr sp_req = { .op = AC_INET_SEND_PACKET_REQ };
 
   error |= AC_TEST(sp_req.op.protocol == AC_INET_SEND_PACKET_PROTOCOL);
   error |= AC_TEST(sp_req.op.reserved == 0);
@@ -197,7 +197,7 @@ ac_bool test_AcInetSendPacket(void) {
   ac_printf("test_AcInetSendPacket: sp_req.op.opcode=0x%lx\n", sp_req.op.opcode);
   ac_printf("test_AcInetSendPacket: sp_req.op.operation=0x%lx\n", sp_req.op.operation);
 
-  AcInetSendPacketOp sp_rsp = { .op = AC_INET_SEND_PACKET_RSP };
+  AcInetSendPacketOpRsp sp_rsp = { .op = AC_INET_SEND_PACKET_RSP };
 
   error |= AC_TEST(sp_rsp.op.protocol == AC_INET_SEND_PACKET_PROTOCOL);
   error |= AC_TEST(sp_rsp.op.reserved == 0);
