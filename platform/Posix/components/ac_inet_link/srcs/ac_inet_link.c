@@ -14,17 +14,17 @@
  * limitations under the license.
  */
 
-#define NDEBUG
+//#define NDEBUG
 
 #include <ac_inet_link.h>
 
-
+#include <ac_comp_mgr.h>
 #include <ac_debug_printf.h>
 
 
 /**
  * Initialize this module
  */
-void AcInetLink_init(void) {
-  ac_debug_printf("AcInetLink_init:#\n");
+void AcInetLink_init(AcCompMgr* cm) {
+  ac_debug_printf("AcInetLink_init:# cm=%p\n", cm);
 }

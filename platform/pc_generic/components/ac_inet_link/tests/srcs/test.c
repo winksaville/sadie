@@ -18,6 +18,8 @@
 
 #include <ac_inttypes.h>
 #include <ac_printf.h>
+#include <ac_receptor.h>
+#include <ac_thread.h>
 #include <ac_test.h>
 
 ac_uint test_inet_link_impl(void) {
@@ -29,7 +31,12 @@ ac_uint test_inet_link_impl(void) {
 int main(void) {
   ac_uint error = AC_FALSE;
 
-  AcInetLink_init();
+  ac_thread_init(3);
+  AcReceptor_init(256);
+  AcCompMgr* cm = AcCompMgr_init(3, 10, 0);
+  error |= AC_TEST(cm != AC_NULL);
+
+  AcInetLink_init(cm);
 
   if (!error) {
     error |= test_inet_link_impl();

@@ -19,6 +19,7 @@
 
 #include <ac_assert.h>
 #include <ac_attributes.h>
+#include <ac_comp_mgr.h>
 #include <ac_inttypes.h>
 #include <ac_status.h>
 
@@ -163,6 +164,6 @@ typedef struct {
 /**
  * Initialize this module
  */
-void AcInetLink_init(void);
+void AcInetLink_init(AcCompMgr* cm);
 
 #endif

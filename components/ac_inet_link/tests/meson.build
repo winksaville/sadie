@@ -49,6 +49,7 @@ if Platform == 'Posix'
   # Create testit executable
   test_ac_inet_link = executable( 'test_ac_inet_link', srcFiles,
     include_directories : incDirs,
+    link_args : linkArgs,
     c_args : compilerArgs,
     dependencies : deps,
   )

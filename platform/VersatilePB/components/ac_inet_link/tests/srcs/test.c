@@ -29,7 +29,7 @@ ac_uint test_inet_link_impl(void) {
 int main(void) {
   ac_uint error = AC_FALSE;
 
-  AcInetLink_init();
+  AcInetLink_init(AC_NULL);
 
   if (!error) {
     error |= test_inet_link_impl();

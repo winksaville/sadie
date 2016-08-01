@@ -16,8 +16,11 @@
 
 #include <ac_inet_link.h>
 
+#include <ac_comp_mgr.h>
 #include <ac_memset.h>
 #include <ac_printf.h>
+#include <ac_receptor.h>
+#include <ac_thread.h>
 #include <ac_test.h>
 
 /**
@@ -219,10 +222,26 @@ ac_bool test_AcInetSendPacket(void) {
 int main(void) {
   ac_bool error = AC_FALSE;
 
+#if AC_PLATFORM == VersatilePB
+  ac_printf("ac_inet_link is not fully supported on the VersatilePB platform\n");
+
   error |= test_hton_ntoh_be();
   error |= test_hton_ntoh_le();
   error |= test_AcInetIpv4FragmentOffset();
   error |= test_AcInetSendPacket();
+#else
+  ac_thread_init(3);
+  AcReceptor_init(256);
+  AcCompMgr* cm = AcCompMgr_init(3, 10, 0);
+  error |= AC_TEST(cm != AC_NULL);
+
+  AcInetLink_init(cm);
+
+  error |= test_hton_ntoh_be();
+  error |= test_hton_ntoh_le();
+  error |= test_AcInetIpv4FragmentOffset();
+  error |= test_AcInetSendPacket();
+#endif
 
   if (!error) {
     ac_printf("OK\n");
