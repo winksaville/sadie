@@ -62,7 +62,8 @@ static ac_bool msg_proc(AcComp* ac, AcMsg* msg) {
  * @return: AC_TRUE if an error
  */
 ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
-  ac_debug_printf("test_comps:+cm=%p mp=%p comp_count=%d\n", cm, mp, comp_count);
+  ac_debug_printf("test_comps:+cm=%p mp=%p comp_count=%d\n",
+      cm, mp, comp_count);
   ac_bool error = AC_FALSE;
 
   T1Comp* comps= ac_malloc(comp_count * sizeof(T1Comp));
@@ -83,6 +84,15 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
   }
 
   if (!error) {
+    ac_debug_printf("test_comps: find\n");
+    for (ac_u32 i = 0; i < comp_count; i++) {
+      ac_u8 name[10];
+      ac_sprintf(name, sizeof(name), "t%d", i);
+      AcComp* comp = AcCompMgr_find_comp(cm, name);
+      error |=  AC_TEST(comp != AC_NULL);
+      ac_printf("test_comps:find name=%s\n", comp->name);
+    }
+
     ac_debug_printf("test_comps: send msgs\n");
     for (ac_u32 i = 0; i < comp_count; i++) {
       c = &comps[i];
@@ -117,6 +127,7 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
 
   ac_free(comps);
 
-  ac_debug_printf("test_comps:-cm=%p mp=%p comp_count=%d error=%d\n", cm, mp, comp_count, error);
+  ac_debug_printf("test_comps:-cm=%p mp=%p comp_count=%d error=%d\n",
+      cm, mp, comp_count, error);
   return error;
 }

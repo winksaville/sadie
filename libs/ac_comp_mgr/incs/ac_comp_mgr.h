@@ -25,6 +25,9 @@
 #include <ac_inttypes.h>
 #include <ac_msg.h>
 
+/**
+ * A component manager as returned by AcCompMgr_init
+ */
 typedef struct AcCompMgr AcCompMgr;
 
 /**
@@ -55,8 +58,21 @@ typedef struct AcComp {
 } AcComp;
 
 /**
+ * Find a component
+ * BUG: Component could change or be removed probably
+ * return a copy of the AcComp ????
+ *
+ * @param: mgr is a component manager
+ * @param: name is the name of the component
+ *
+ * @return: AcComp or AC_NULL if an error
+ */
+AcComp* AcCompMgr_find_comp(AcCompMgr* mgr, ac_u8* name);
+
+/**
  * Add a component to be managed
  *
+ * @param: mgr is a component manager
  * @param: comp is an initialized component type
  *
  * @return: AcCompInfo or AC_NULL if an error
@@ -66,6 +82,7 @@ AcCompInfo* AcCompMgr_add_comp(AcCompMgr* mgr, AcComp* comp);
 /**
  * Remove a component being managed
  *
+ * @param: mgr is a component manager
  * @param: info an AcCompInfo returned by AcCompMgr_add_comp.
  *
  * @return: AcComp passed to AcCompMgr_add_comp.

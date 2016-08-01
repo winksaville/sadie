@@ -25,6 +25,7 @@
 #include <ac_printf.h>
 #include <ac_debug_printf.h>
 #include <ac_receptor.h>
+#include <ac_string.h>
 #include <ac_thread.h>
 
 #if AC_PLATFORM == pc_x86_64
@@ -62,6 +63,7 @@ typedef struct DispatchThreadParams {
 typedef struct AcCompMgr {
   AcCompInfo* comp_infos;     // Array of AcCompInfo objects being managed
                               // across all of the threads
+  ac_u32 comp_infos_max_count;// Number of elements in comp_infos array
   DispatchThreadParams* dtps; // Array of DispathThreadParams, one for each thread
   ac_u32 max_dtps;            // Number of threads in the dtps array
   ac_u32 next_dtps;           // Next thread
@@ -126,20 +128,43 @@ done:
   return AC_NULL;
 }
 
+/**
+ * see ac_comp_mgr.h
+ */
+AcComp* AcCompMgr_find_comp(AcCompMgr* mgr, ac_u8* name) {
+  AcCompInfo* ci = AC_NULL;
+  AcComp* comp = AC_NULL;
+  ac_bool found = AC_FALSE;
+
+  // Search the list CompInfos for the name
+  for (ac_u32 i = 0; i < mgr->comp_infos_max_count; i++) {
+    ci = &mgr->comp_infos[i];
+    comp = ci->comp;
+    if (comp != AC_NULL) {
+      if (ac_strncmp((const char*)name, (const char*)comp->name, ac_strlen((const char*)comp->name)) == 0) {
+        ac_debug_printf("AcCompMgr_find_comp: dtp->d=%p, could not add comp=%p\n", dtp->d, comp);
+        found = AC_TRUE;
+        break;
+      }
+    }
+  }
+
+  if (!found) {
+    comp = AC_NULL;
+  }
+  ac_debug_printf("AcCompMgr_find_comp:-comp=%p\n", comp);
+  return comp;
+}
 
 /**
- * Add a component to be managed
- *
- * @param: comp is an initialized component type
- *
- * @return: AcCompInfo or AC_NULL if an error
+ * see ac_comp_mgr.h
  */
 AcCompInfo* AcCompMgr_add_comp(AcCompMgr* mgr, AcComp* comp) {
   AcCompInfo* ci = AC_NULL;
   ac_bool found = AC_FALSE;
 
   for (ac_u32 thrd = 0; !found && (thrd < mgr->max_dtps); thrd++) {
-    // Use a simple round robin algorithm to choose the thread.
+    // Search the dtps
     ac_u32 idx = __atomic_fetch_add(&mgr->next_dtps, 1, __ATOMIC_RELEASE);
     idx %= mgr->max_dtps;
 
@@ -179,11 +204,7 @@ AcCompInfo* AcCompMgr_add_comp(AcCompMgr* mgr, AcComp* comp) {
 }
 
 /**
- * Remove a component being managed
- *
- * @param: info an AcCompInfo returned by AcCompMgr_add_comp.
- *
- * @return: AcComp passed to AcCompMgr_add_comp.
+ * see ac_comp_mgr.h
  */
 AcComp* AcCompMgr_rmv_comp(AcCompMgr* mgr, AcCompInfo* ci) {
   AC_UNUSED(mgr);
@@ -200,8 +221,9 @@ AcComp* AcCompMgr_rmv_comp(AcCompMgr* mgr, AcCompInfo* ci) {
   return comp;
 }
 
+
 /**
- * Send a message to the comp
+ * see ac_comp_mgr.h
  */
 void AcCompMgr_send_msg(AcCompMgr* mgr, AcCompInfo* info, AcMsg* msg) {
   AC_UNUSED(mgr);
@@ -211,7 +233,7 @@ void AcCompMgr_send_msg(AcCompMgr* mgr, AcCompInfo* info, AcMsg* msg) {
 }
 
 /**
- * Deinitialzie the component manager.
+ * see ac_comp_mgr.h
  */
 void AcCompMgr_deinit(AcCompMgr* mgr) {
   ac_debug_printf("AcCompMgr_deinit:+mgr=%p\n", mgr);
@@ -265,11 +287,7 @@ void AcCompMgr_deinit(AcCompMgr* mgr) {
 }
 
 /**
- * Initialize the component manager, may only be called once.
- *
- * @param: max_component_threads is the maximum number of threads to manage
- * @param: max_components_per_thread is the maximum number of components per thread
- * @param: stack_size is number of bytes for a threads stack, 0 will provide the default
+ * see ac_comp_mgr.h
  */
 AcCompMgr* AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_per_thread,
     ac_u32 stack_size) {
@@ -300,7 +318,8 @@ AcCompMgr* AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_pe
     error = AC_TRUE;
     goto done;
   }
-  mgr->comp_infos = ac_calloc(mgr->max_dtps * max_components_per_thread, sizeof(AcCompInfo));
+  mgr->comp_infos_max_count = mgr->max_dtps * max_components_per_thread;
+  mgr->comp_infos = ac_calloc(mgr->comp_infos_max_count, sizeof(AcCompInfo));
   if (mgr->comp_infos == AC_NULL) {
     error = AC_TRUE;
     goto done;
