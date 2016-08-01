@@ -90,7 +90,6 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
       ac_sprintf(name, sizeof(name), "t%d", i);
       AcComp* comp = AcCompMgr_find_comp(cm, name);
       error |=  AC_TEST(comp != AC_NULL);
-      ac_printf("test_comps:find name=%s\n", comp->name);
     }
 
     ac_debug_printf("test_comps: send msgs\n");
