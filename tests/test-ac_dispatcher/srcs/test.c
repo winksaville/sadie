@@ -103,6 +103,8 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
   this->error |= AC_TEST(msg->arg1 == 1);
   this->error |= AC_TEST(msg->arg2 == this->msg_count);
 
+  AcMsgPool_ret_msg(msg);
+
   ac_debug_printf("ac1_process_msg:- msg->arg1=%ld, msg->arg2=%ld error=%d\n",
       msg->arg1, msg->arg2, this->error);
 
