@@ -18,6 +18,7 @@
 #define LIBS_AC_MSG_POOL_TESTS_INCS_TEST_H
 
 #include <ac_inttypes.h>
+#include <ac_msg_pool.h>
 
 /**
  * Test we can create, send a message and remove components.

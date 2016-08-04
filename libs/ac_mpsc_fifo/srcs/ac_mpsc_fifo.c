@@ -327,10 +327,10 @@ AcMem* AcMpscFifo_rmv_ac_mem_raw(AcMpscFifo* fifo) {
 void AcMpscFifo_deinit(AcMpscFifo* fifo) {
   ac_debug_printf("AcMpscFifo_deinit:+fifo=%p\n", fifo);
 
-  // Assert fifo is "valid" and it owns only one AcMem
+  // Assert fifo is "valid" and there is only a stub and no mem_array
   ac_assert(fifo != AC_NULL);
-  ac_assert(fifo->count == 1);
-  ac_assert(fifo->mem_array != AC_NULL);
+  ac_assert(fifo->count == 0);
+  ac_assert(fifo->mem_array == AC_NULL);
   ac_assert(fifo->head != AC_NULL);
   ac_assert(fifo->tail != AC_NULL);
 
@@ -476,8 +476,37 @@ done:
 /**
  * @see ac_mpsc_fifo.h
  */
-AcStatus AcMpscFifo_init(AcMpscFifo* fifo, ac_u32 data_size) {
-  return AcMpscFifo_init_and_alloc(fifo, 0, data_size);
+AcStatus AcMpscFifo_init_ac_mem_stub(AcMpscFifo* fifo, AcMem* stub) {
+  AcStatus status;
+
+  ac_debug_printf("AcMpscFifo_init_ac_mem_stub:+fifo=%p stub=%p\n", fifo, stub);
+
+  if (fifo == AC_NULL) {
+    status = AC_STATUS_BAD_PARAM;
+    goto done;
+  }
+
+  stub->hdr.next = AC_NULL;
+  fifo->count = 0;
+  fifo->mem_array = AC_NULL;
+  fifo->head = stub;
+  fifo->tail = stub;
+
+  status = AC_STATUS_OK;
+
+done:
+  if (status != AC_STATUS_OK) {
+    if (fifo != AC_NULL) {
+      AcMem_free(fifo->mem_array);
+    }
+  }
+
+  AcMpscFifo_debug_print("AcMpscFifo_init_ac_mem_stub: fifo=", fifo);
+
+  ac_debug_printf("AcMpscFifo_init_ac_mem_stub:-fifo=%p status=%d mem_array=%p\n",
+      fifo, status, fifo->mem_array);
+
+  return status;
 }
 
 /**

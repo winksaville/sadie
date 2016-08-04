@@ -18,10 +18,12 @@
 
 #include <ac_dispatcher.h>
 
-#include <ac_inttypes.h>
+#include <ac_assert.h>
 #include <ac_debug_printf.h>
+#include <ac_inttypes.h>
 #include <ac_mpsc_fifo.h>
 #include <ac_msg.h>
+#include <ac_msg_pool.h>
 #include <ac_memmgr.h>
 
 /**
@@ -29,6 +31,7 @@
  */
 typedef struct AcDispatchableComp {
     AcComp* comp;
+    AcMsgPool mp;
     AcMpscFifo q;
 } AcDispatchableComp;
 
@@ -50,12 +53,25 @@ typedef struct AcDispatcher {
  * Get a AcDispatchableComp aka dc
  */
 AcDispatchableComp* get_dc() {
-  // TODO: Pre allocate??
-  AcDispatchableComp* ret_val = ac_malloc(sizeof(AcDispatchableComp));
-  if (ret_val != AC_NULL) {
-    AcMpscFifo_init(&ret_val->q, sizeof(AcMsg));
+  AcDispatchableComp* dc = ac_malloc(sizeof(AcDispatchableComp));
+  if (dc != AC_NULL) {
+    // Allocate the stub
+    if (AcMsgPool_init(&dc->mp, 1) != AC_STATUS_OK) {
+      ac_free(dc);
+      dc = AC_NULL;
+    } else {
+      AcMsg* msg = AcMsgPool_get_msg(&dc->mp);
+      if ((msg == AC_NULL) ||
+          (AcMpscFifo_init_msg_stub(&dc->q, msg) != AC_STATUS_OK)) {
+        AcMsgPool_deinit(&dc->mp);
+        ac_free(&dc);
+        dc = AC_NULL;
+      } else {
+        // All is well
+      }
+    }
   }
-  return ret_val;
+  return dc;
 }
 
 /**
@@ -65,6 +81,7 @@ void ret_dc(AcDispatchableComp* dc) {
   // TODO: Pre allocate??
   if (dc != AC_NULL) {
     AcMpscFifo_deinit(&dc->q);
+    AcMsgPool_deinit(&dc->mp);
     ac_free(dc);
   }
 }

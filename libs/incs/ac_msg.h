@@ -19,8 +19,6 @@
 
 #include <ac_inttypes.h>
 
-typedef struct AcMsgPool AcMsgPool;
-
 /**
  * A AC Message
  */

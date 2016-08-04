@@ -19,6 +19,7 @@
 
 #include <ac_mem.h>
 #include <ac_mem_dbg.h>
+#include <ac_msg.h>
 #include <ac_inttypes.h>
 #include <ac_test.h>
 
@@ -33,9 +34,17 @@ ac_bool test_init_and_deinit_mpscfifo() {
 
   ac_printf("test_init_and_deinit:+fifo=%p\n", &fifo);
 
+  // Construct a Stub which is an AcMem
+  AcMem stub = {
+    .hdr.next = AC_NULL,
+    .hdr.pool_fifo = AC_NULL,
+    .hdr.data_size = 0,
+    .hdr.user_size = 0
+  };
+
   // Initialize
   ac_printf("test_init_deinit: invoke init fifo=%p\n", &fifo);
-  error |= AC_TEST(AcMpscFifo_init(&fifo, 1) == AC_STATUS_OK);
+  error |= AC_TEST(AcMpscFifo_init_ac_mem_stub(&fifo, &stub) == AC_STATUS_OK);
   AcMpscFifo_print("test_init_deinit: initialized fifo:", &fifo);
 
   error |= AC_TEST(fifo.head != AC_NULL);
@@ -65,12 +74,28 @@ ac_bool test_add_rmv_ac_mem() {
   AcStatus status;
   AcMpscFifo fifo;
   AcMem* mem;
-  ac_u32 data_size = 2;
+  const ac_u32 data_size = 2;
 
   ac_printf("test_add_rmv_ac_mem:+fifo=%p\n", &fifo);
 
+  // Construct a Stub which is an AcMem and a byte array of data
+  typedef struct AC_ATTRIBUTE_PACKED {
+    struct {
+      AcMem mem;
+    };
+    ac_u8 data[data_size];
+  } Stub;
+
+  Stub stub;
+  stub.mem.hdr.next = AC_NULL;
+  stub.mem.hdr.pool_fifo = AC_NULL;
+  stub.mem.hdr.data_size = data_size;
+  stub.mem.hdr.user_size = 0;
+  stub.data[0] = 0;
+  stub.data[1] = 0;
+
   // Initialize
-  AcMpscFifo_init(&fifo, data_size);
+  AcMpscFifo_init_ac_mem_stub(&fifo, &stub.mem);
   AcMpscFifo_print("test_add_rmv_ac_mem fifo:", &fifo);
 
   // Add mem1
@@ -141,12 +166,28 @@ ac_bool test_add_rmv_ac_mem_raw() {
   AcStatus status;
   AcMpscFifo fifo;
   AcMem* mem;
-  ac_u32 data_size = 2;
+  const ac_u32 data_size = 2;
 
   ac_printf("test_add_rmv_ac_mem_raw:+fifo=%p\n", &fifo);
 
+  // Construct a Stub which is an AcMem and a byte array of data
+  typedef struct AC_ATTRIBUTE_PACKED {
+    struct {
+      AcMem mem;
+    };
+    ac_u8 data[data_size];
+  } Stub;
+
+  Stub stub;
+  stub.mem.hdr.next = AC_NULL;
+  stub.mem.hdr.pool_fifo = AC_NULL;
+  stub.mem.hdr.data_size = data_size;
+  stub.mem.hdr.user_size = 0;
+  stub.data[0] = 0;
+  stub.data[1] = 0;
+
   // Initialize
-  AcMpscFifo_init(&fifo, data_size);
+  AcMpscFifo_init_ac_mem_stub(&fifo, &stub.mem);
   AcMpscFifo_print("test_add_rmv_ac_mem_raw: fifo:", &fifo);
 
   // Allocate 3 memers

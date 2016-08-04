@@ -144,18 +144,16 @@ static inline AcMsg* AcMpscFifo_rmv_msg(AcMpscFifo* fifo) {
 
 
 /**
- * Deinitialize the AcMpscFifo and return the stub which
- * needs to be disposed of properly. Assumes the fifo is empty.
+ * Deinitialize the AcMpscFifo. Assumes the fifo is EMPTY.
  *
- * @params fifo is an iniitalized AcMpscFifo
+ * @params fifo is an iniitalized AcMpscFifo_init_msg_stub or AcMpscFifo_init_ac_mem_stub
  */
 void AcMpscFifo_deinit(AcMpscFifo* fifo);
 
 /**
- * Deinitialize the AcMpscFifo and return the stub which
- * needs to be disposed of properly. Assumes the fifo is full.
+ * Deinitialize the AcMpscFifo, assumes the fifo is FULL.
  *
- * @params fifo is an iniitalized AcMpscFifo
+ * @params fifo is an iniitalized AcMpscFifo_init_and_alloc
  */
 void AcMpscFifo_deinit_full(AcMpscFifo* fifo);
 
@@ -174,14 +172,26 @@ AcStatus AcMpscFifo_init_and_alloc(AcMpscFifo* fifo, ac_u32 count,
     ac_u32 data_size);
 
 /**
- * Initialize an AcMpscFifo.
+ * Initialize an AcMpscFifo with a stub allocated with AcMemPool_get_ac_mem
  *
  * @params fifo is an uniniitalized AcMpscFifo
- * @params mem_size number of bytes in AcMem.data[]
+ * @params stub is an AcMem to be used as a stub
  *
  * @return 0 (AC_STATUS_OK) if successfull
  */
-AcStatus AcMpscFifo_init(AcMpscFifo* fifo, ac_u32 mem_size);
+AcStatus AcMpscFifo_init_ac_mem_stub(AcMpscFifo* fifo, AcMem* stub);
+
+/**
+ * Initialize an AcMpscFifo with an AcMsg stub
+ *
+ * @params fifo is an uniniitalized AcMpscFifo
+ * @params stub is an AcMsg as returned by AcMsgPool_get_msg()
+ *
+ * @return 0 (AC_STATUS_OK) if successfull
+ */
+static inline AcStatus AcMpscFifo_init_msg_stub(AcMpscFifo* fifo, AcMsg* stub) {
+  return AcMpscFifo_init_ac_mem_stub(fifo, (AcMem*)((void*)stub - sizeof(AcMemHdr)));
+}
 
 /**
  * Early initialize module
