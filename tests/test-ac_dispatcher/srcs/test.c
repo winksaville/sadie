@@ -86,28 +86,28 @@ static int test_dispatcher_add_rmv_acq() {
   return error;
 }
 
+typedef struct {
+  AcComp comp;
+  ac_u32 msg_count;
+  ac_bool error;
+} Ac1Comp;
 
-static ac_bool ac1_process_msg(AcComp* this, AcMsg* pmsg) {
-  ac_bool error = AC_FALSE;
+static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
+  Ac1Comp* this = (Ac1Comp*)ac;
 
-  ac_debug_printf("ac1_process_msg:+ pmsg->arg1=%ld, pmsg->arg2=%ld\n",
-      pmsg->arg1, pmsg->arg2);
+  ac_debug_printf("ac1_process_msg:+ msg->arg1=%ld, msg->arg2=%ld\n",
+      msg->arg1, msg->arg2);
 
-  error |= AC_TEST(pmsg->arg1 == 1);
-  error |= AC_TEST(pmsg->arg2 > 1);
+  this->msg_count += 1;
 
-  pmsg->arg2 = error;
+  this->error |= AC_TEST(msg->arg1 == 1);
+  this->error |= AC_TEST(msg->arg2 == this->msg_count);
 
-  ac_debug_printf("ac1_process_msg:- pmsg->arg1=%ld, pmsg->arg2=%ld\n",
-      pmsg->arg1, pmsg->arg2);
+  ac_debug_printf("ac1_process_msg:- msg->arg1=%ld, msg->arg2=%ld error=%d\n",
+      msg->arg1, msg->arg2, this->error);
 
   return AC_TRUE;
 }
-
-static AcComp ac1 = {
-  .process_msg = &ac1_process_msg,
-};
-
 
 /**
  * Test dispatching a message
@@ -123,10 +123,16 @@ static ac_bool test_dispatching() {
   AcDispatcher* pd = AcDispatcher_get(1);
   error |= AC_TEST(pd != AC_NULL);
 
+  Ac1Comp ac1 = {
+    .comp = { .process_msg = &ac1_process_msg },
+    .msg_count = 0,
+    .error = 0
+  };
+
   // Add an acq
   AcDispatchableComp* dc1;
 
-  dc1 = AcDispatcher_add_comp(pd, &ac1);
+  dc1 = AcDispatcher_add_comp(pd, &ac1.comp);
   error |= AC_TEST(dc1 != AC_NULL);
 
   // Initialize a msg pool
@@ -139,7 +145,7 @@ static ac_bool test_dispatching() {
   msg1 = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg1 != AC_NULL);
   msg1->arg1 = 1;
-  msg1->arg2 = 2;
+  msg1->arg2 = 1;
   AcDispatcher_send_msg(dc1, msg1);
 
 
@@ -153,12 +159,13 @@ static ac_bool test_dispatching() {
   msg2 = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg2 != AC_NULL);
   msg2->arg1 = 1;
-  msg2->arg2 = 3;
+  msg2->arg2 = 2;
   AcDispatcher_send_msg(dc1, msg2);
 
   ac_debug_printf("test_dispatching: rmv_ac\n");
   AcComp* ac2 = AcDispatcher_rmv_comp(pd, dc1);
-  error |= AC_TEST(ac2 == &ac1);
+  error |= AC_TEST(ac2 == &ac1.comp);
+  error |= AC_TEST(ac1.error == 0);
 
   ac_debug_printf("test_dispatching:- error=%d\n", error);
   return error;
