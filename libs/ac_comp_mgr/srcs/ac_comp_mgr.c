@@ -84,7 +84,7 @@ static void* dispatch_thread(void *param) {
     goto done;
   }
 
-  // Create the waiting receptor and init our not stopped flag
+  // Create the waiting receptor and init our stop_processing_msgs flag
   params->waiting = AcReceptor_get();
   ac_assert(params->waiting != AC_NULL);
   __atomic_store_n(&params->stop_processing_msgs, AC_FALSE, __ATOMIC_RELEASE);
