@@ -337,6 +337,7 @@ AcCompMgr* AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_pe
       AcCompInfo* ci = &mgr->comp_infos[ci_idx];
       ac_debug_printf("AcCompMgr_init: i=%d j=%d ci_idx=%d ci=%p\n", i, j, ci_idx, ci);
       dtp->cis[j] = ci;
+      ci->mgr = mgr;
       ci->comp_idx = ci_idx;
       ci->dtp = dtp;
       ci->comp = AC_NULL;
