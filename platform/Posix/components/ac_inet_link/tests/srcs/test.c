@@ -15,6 +15,7 @@
  */
 
 #include <ac_inet_link.h>
+#include <ac_inet_link_internal.h>
 
 #include <ac_inttypes.h>
 #include <ac_printf.h>
@@ -41,6 +42,8 @@ int main(void) {
   if (!error) {
     error |= test_inet_link_impl();
   }
+
+  AcInetLink_deinit(cm);
 
   if (!error) {
     ac_printf("OK\n");

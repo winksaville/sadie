@@ -32,9 +32,9 @@ typedef struct {
 static void send_error_rsp(AcComp* comp, AcMsg* msg, AcStatus status) {
 }
 
-ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
+static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
   AcCompIpv4LinkLayer* this = (AcCompIpv4LinkLayer*)comp;
-  ac_debug_printf("%s: msg->arg1=%ls msg->arg2=%lx\n",
+  ac_debug_printf("%s:+msg->arg1=%ls msg->arg2=%lx\n",
       this->comp.name, msg->arg1, msg->arg2);
 
   AcOperation op = { .operation = msg->arg1 };
@@ -50,6 +50,8 @@ ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
 
   AcMsgPool_ret_msg(msg);
 
+  ac_debug_printf("%s:-msg->arg1=%ls msg->arg2=%lx\n",
+      this->comp.name, msg->arg1, msg->arg2);
   return AC_TRUE;
 }
 
@@ -61,11 +63,25 @@ static AcCompIpv4LinkLayer comp_ipv4_ll = {
 static AcCompInfo* ci;
 
 /**
- * Initialize this module
+ * see ac_inet_link_internal.h
+ */
+void AcInetLink_deinit(AcCompMgr* cm) {
+  ac_debug_printf("AcInetLink_deinit:+cm=%p\n", cm);
+
+  AcComp* c = AcCompMgr_rmv_comp(ci);
+  ac_assert(c == &comp_ipv4_ll.comp);
+
+  ac_debug_printf("AcInetLink_deinit:-cm=%p\n", cm);
+}
+
+/**
+ * see ac_inet_link.h
  */
 void AcInetLink_init(AcCompMgr* cm) {
-  ac_debug_printf("AcInetLink_init:xxx # cm=%p\n", cm);
+  ac_debug_printf("AcInetLink_init:+cm=%p\n", cm);
 
   ci = AcCompMgr_add_comp(cm, &comp_ipv4_ll.comp);
   ac_assert(ci != AC_NULL);
+
+  ac_debug_printf("AcInetLink_init:-cm=%p\n", cm);
 }

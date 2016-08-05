@@ -17,4 +17,9 @@
 #ifndef SADIE_PLATFORM_POSIX_COMPONENTS_AC_INET_LINK_INCS_AC_INET_LINK_INTERNAL_H
 #define SADIE_PLATFORM_POSIX_COMPONENTS_AC_INET_LINK_INCS_AC_INET_LINK_INTERNAL_H
 
+/**
+ * Deinitialize this module
+ */
+void AcInetLink_deinit(AcCompMgr* cm);
+
 #endif
