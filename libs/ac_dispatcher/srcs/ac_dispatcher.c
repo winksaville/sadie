@@ -22,17 +22,19 @@
 #include <ac_debug_printf.h>
 #include <ac_inttypes.h>
 #include <ac_mpsc_fifo.h>
+#include <ac_mpsc_fifo_dbg.h>
 #include <ac_msg.h>
 #include <ac_msg_pool.h>
 #include <ac_memmgr.h>
+#include <ac_string.h>
 
 /**
  * A Dispatchable Component
  */
 typedef struct AcDispatchableComp {
-    AcComp* comp;
-    AcMsgPool mp;
-    AcMpscFifo q;
+    AcComp* comp; // The component
+    AcMsgPool mp; // Msg pool to send AC_INIT/AC_DEINIT commands
+    AcMpscFifo q; // mpsc fifo to which message are sent
 } AcDispatchableComp;
 
 /**
@@ -52,11 +54,11 @@ typedef struct AcDispatcher {
 /**
  * Get a AcDispatchableComp aka dc
  */
-AcDispatchableComp* get_dc() {
+static AcDispatchableComp* get_dc() {
   AcDispatchableComp* dc = ac_malloc(sizeof(AcDispatchableComp));
   if (dc != AC_NULL) {
-    // Allocate the stub
-    if (AcMsgPool_init(&dc->mp, 1) != AC_STATUS_OK) {
+    // Allocate the msgs for stub, AC_INIT_CMD and AC_DEINIT_CMD
+    if (AcMsgPool_init(&dc->mp, 3) != AC_STATUS_OK) {
       ac_free(dc);
       dc = AC_NULL;
     } else {
@@ -77,13 +79,21 @@ AcDispatchableComp* get_dc() {
 /**
  * Return a AcDispatchableComp aka dc
  */
-void ret_dc(AcDispatchableComp* dc) {
-  // TODO: Pre allocate??
+static void ret_dc(AcDispatchableComp* dc, ac_bool aborting) {
+  ac_debug_printf("ret_dc:+ dc=%p\n", dc);
   if (dc != AC_NULL) {
+    if (!aborting) {
+      AcMsg* msg = AcMsgPool_get_msg(&dc->mp);
+      msg->arg1 = AC_DEINIT_CMD.operation;
+      dc->comp->process_msg(dc->comp, msg);
+      ac_debug_printf("ret_dc:  processed AC_DEINIT_CMD dc=%p\n", dc);
+    }
+
     AcMpscFifo_deinit(&dc->q);
     AcMsgPool_deinit(&dc->mp);
     ac_free(dc);
   }
+  ac_debug_printf("ret_dc:- dc=%p\n", dc);
 }
 
 /**
@@ -91,20 +101,20 @@ void ret_dc(AcDispatchableComp* dc) {
  * assume deinitialization has already be done.
  */
 static void ret_dispatcher(AcDispatcher* d) {
-  ac_debug_printf("free_dispatcher:+ d=%p\n", d);
+  ac_debug_printf("ret_dispatcher:+ d=%p\n", d);
 
   if (d != AC_NULL) {
     ac_free(d);
   }
 
-  ac_debug_printf("free_dispatcher:- d=%p\n", d);
+  ac_debug_printf("ret_dispatcher:- d=%p\n", d);
 }
 
 /**
  * Get a dispatcher to use.
  */
 static AcDispatcher* get_dispatcher(ac_u32 max_count) {
-  ac_debug_printf("alloc_dispatcher:+ max_count=%d\n", max_count);
+  ac_debug_printf("get_dispatcher:+ max_count=%d\n", max_count);
 
    AcDispatcher* d = ac_malloc(sizeof(AcDispatcher)
                           + (max_count * sizeof(AcDispatchableComp*)));
@@ -114,7 +124,7 @@ static AcDispatcher* get_dispatcher(ac_u32 max_count) {
     ret_dispatcher(d);
   }
 
-  ac_debug_printf("alloc_dispatcher:- d=%p\n", d);
+  ac_debug_printf("get_dispatcher:- d=%p\n", d);
   return d;
 }
 
@@ -125,10 +135,12 @@ static AcDispatcher* get_dispatcher(ac_u32 max_count) {
  */
 static ac_bool process_msgs(AcDispatchableComp* dc) {
   ac_debug_printf("process_msgs:+ dc=%p\n", dc);
+  AcMpscFifo_debug_print("process_msgs: q", &dc->q);
 
   ac_bool processed_a_msg = AC_FALSE;
   AcMsg* pmsg = AcMpscFifo_rmv_msg(&dc->q);
   while (pmsg != AC_NULL) {
+    ac_debug_printf("process_msgs:  dc=%p msg=%p msg->arg1=%lx\n", dc, pmsg, pmsg->arg1);
     dc->comp->process_msg(dc->comp, pmsg);
 
     // Get next message
@@ -161,7 +173,7 @@ static void rmv_dc(AcDispatcher* d, int dc_idx) {
     // isn't alreday process.
     process_msgs(dc);
 
-    ret_dc(dc);
+    ret_dc(dc, AC_FALSE);
 
     ac_debug_printf("rmv_dc:- REMOVED d=%p dc_idx=%d\n", d, dc_idx);
     return;
@@ -217,12 +229,12 @@ ac_bool AcDispatcher_dispatch(AcDispatcher* d) {
                           pq, &dc_processing, q,
                           AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
       if (!restored) {
-        // It wasn't restored so the only possibility is that while
-        // we were processing the messages rmv_dc was invoked and
-        // q is now DC_EMPTY so we need to finish the removal.
+        // It wasn't restored the only possibility is that while
+        // we were processing rmv_dc was invoked and the q is
+        // now DC_EMPTY so we need to finish the removal.
         ac_debug_printf("ac_dispatch: ret_acq as we won race with rmv_dc"
             " d=%p i=%d\n", d, i);
-        ret_dc(q);
+        ret_dc(q, AC_FALSE);
       }
     }
   }
@@ -283,6 +295,24 @@ AcDispatchableComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp) {
     return AC_NULL;
   }
 
+  if (comp == AC_NULL) {
+    ac_debug_printf("AcDispatcher_add_comp:- ERR no comp"
+        " d=%p comp=%p\n", d, comp);
+    return AC_NULL;
+  }
+
+  if (comp->process_msg == AC_NULL) {
+    ac_debug_printf("AcDispatcher_add_comp:- ERR no comp->process_msg"
+        " d=%p comp=%p\n", d, comp);
+    return AC_NULL;
+  }
+
+  if ((comp->name == AC_NULL) || (ac_strlen((const char*)comp->name) == 0)) {
+    ac_debug_printf("AcDispatcher_add_comp:- ERR no comp->name"
+        " d=%p comp=%p\n", d, comp);
+    return AC_NULL;
+  }
+
   // Get the AcDispatchableComp and initialize
   AcDispatchableComp* dc = get_dc();
   if (dc == AC_NULL) {
@@ -290,6 +320,7 @@ AcDispatchableComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp) {
         " d=%p comp=%p\n", d, comp);
     return AC_NULL;
   }
+  // BUG: This is coping a pointer to the name the name maybe removed!!!!
   dc->comp = comp;
 
   // Find a slot in the array to save the dc
@@ -301,15 +332,20 @@ AcDispatchableComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp) {
     if (__atomic_compare_exchange_n(
            pdc, &dc_empty, dc,
            AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
-      ac_debug_printf("AcDispatcher_add_comp:- OK d=%p comp=%p dc=%p\n",
-          d, comp, dc);
+      ac_debug_printf("AcDispatcher_add_comp:  get msg for AC_INIT_CMD\n");
+      AcMsg* msg = AcMsgPool_get_msg(&dc->mp);
+      ac_debug_printf("AcDispatcher_add_comp:  got msg for AC_INIT_CMD msg=%p\n", msg);
+      msg->arg1 = AC_INIT_CMD.operation;
+      AcDispatcher_send_msg(dc, msg);
+      ac_debug_printf("AcDispatcher_add_comp:- OK d=%p comp=%p dc=%p msg=%p msg->arg1=%lx\n",
+          d, comp, dc, msg, msg->arg1);
       return dc;
     }
   }
 
   // Couldn't find a slot so return the AcDispatchableComp and return AC_NULL
   ac_debug_printf("AcDispatcher_add_comp:- ERR d full\n");
-  ret_dc(dc);
+  ret_dc(dc, AC_TRUE);
   return AC_NULL;
 }
 

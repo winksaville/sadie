@@ -31,22 +31,38 @@
 typedef struct T1Comp {
   AcComp comp;
   AcCompInfo* ci;
+  ac_u32 init_count;
+  ac_u32 deinit_count;
   ac_bool error;
   AcReceptor* done;
   ac_u8 name_buf[10];
 } T1Comp;
 
 static ac_bool msg_proc(AcComp* ac, AcMsg* msg) {
+  ac_bool signal;
   T1Comp* this = (T1Comp*)ac;
 
   ac_debug_printf("msg_proc:+%s\n", this->comp.name);
 
-  this->error |= AC_TEST(msg->arg1 == 1);
-  this->error |= AC_TEST(msg->arg2 == 2);
+  if (msg->arg1 == AC_INIT_CMD.operation) {
+    this->init_count += 1;
+    this->error |= AC_TEST(this->init_count == 1);
+    signal = AC_FALSE;
+  } else if (msg->arg1 == AC_DEINIT_CMD.operation) {
+    this->deinit_count += 1;
+    this->error |= AC_TEST(this->deinit_count == 1);
+    signal = AC_FALSE;
+  } else {
+    this->error |= AC_TEST(msg->arg1 == 1);
+    this->error |= AC_TEST(msg->arg2 == 2);
+    signal = AC_TRUE;
+  }
 
   AcMsgPool_ret_msg(msg);
 
-  AcReceptor_signal(this->done);
+  if (signal) {
+    AcReceptor_signal(this->done);
+  }
 
   ac_debug_printf("msg_proc:-%s\n", this->comp.name);
   return AC_TRUE;
@@ -73,6 +89,8 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
     ac_sprintf(c->name_buf, sizeof(c->name_buf), "t%d", i);
     c->comp.name = c->name_buf;
     c->comp.process_msg = msg_proc;
+    c->init_count = 0;
+    c->deinit_count = 0;
     c->done = AcReceptor_get();
     ac_assert(c->done != AC_NULL);
     c->error = AC_FALSE;

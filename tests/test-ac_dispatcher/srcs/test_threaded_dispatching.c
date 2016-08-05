@@ -28,16 +28,29 @@
 #include <ac_thread.h>
 #include <ac_test.h>
 
+static ac_u32 ac_init_cmd_count = 0;
+static ac_u32 ac_deinit_cmd_count = 0;
+
 static ac_bool t1_process_msg(AcComp* this, AcMsg* pmsg) {
   ac_bool error = AC_FALSE;
 
-  ac_debug_printf("t1_process_msg:+ pmsg->arg1=%ld, pmsg->arg2=%ld\n",
-      pmsg->arg1, pmsg->arg2);
+  if (pmsg->arg1 == AC_INIT_CMD.operation) {
+    ac_debug_printf("t1_process_msg:+ pmsg->arg1=AC_INIT_CMD\n");
+    ac_init_cmd_count += 1;
+    error |= AC_TEST(ac_init_cmd_count == 1);
+  } else if (pmsg->arg1 == AC_DEINIT_CMD.operation) {
+    ac_debug_printf("t1_process_msg:+ pmsg->arg1=AC_DEINIT_CMD\n");
+    ac_deinit_cmd_count += 1;
+    error |= AC_TEST(ac_deinit_cmd_count == 1);
+  } else {
+    ac_debug_printf("t1_process_msg:+ pmsg->arg1=%lx, pmsg->arg2=%lx\n",
+        pmsg->arg1, pmsg->arg2);
+    error |= AC_TEST(pmsg->arg1 == 1);
+    error |= AC_TEST(pmsg->arg2 > 1);
+  }
 
-  error |= AC_TEST(pmsg->arg1 == 1);
-  error |= AC_TEST(pmsg->arg2 > 1);
-
-  ac_debug_printf("t1_process_msg:- error=%d\n", error);
+  ac_debug_printf("t1_process_msg:- pmsg->arg1=%lx, pmsg->arg2=%lx error=%d\n",
+      pmsg->arg1, pmsg->arg2, error);
 
   AcMsgPool_ret_msg(pmsg);
 
@@ -45,10 +58,12 @@ static ac_bool t1_process_msg(AcComp* this, AcMsg* pmsg) {
 }
 
 static AcComp t1_ac = {
+  .name = (ac_u8*)"t1_ac",
   .process_msg = &t1_process_msg,
 };
 
 static ac_bool t1_done;
+static AcStatus t1_error;
 static AcDispatchableComp* t1_dc;
 static AcReceptor* t1_receptor_ready;
 static AcReceptor* t1_receptor_done;
@@ -67,6 +82,8 @@ void* t1(void *param) {
   error |= AC_TEST(d != AC_NULL);
 
   // Add ac1 and its Q dispatcher
+  ac_init_cmd_count = 0;
+  ac_deinit_cmd_count = 0;
   t1_dc = AcDispatcher_add_comp(d, &t1_ac);
 
   // Not done
@@ -85,15 +102,17 @@ void* t1(void *param) {
     }
   }
 
-  if (error) {
-    ac_debug_printf("t1: error\n");
-  }
+  error |= AC_TEST(ac_init_cmd_count == 1);
+  error |= AC_TEST(ac_deinit_cmd_count == 0);
 
   AcDispatcher_rmv_comp(d, t1_dc);
+  error |= AC_TEST(ac_init_cmd_count == 1);
+  error |= AC_TEST(ac_deinit_cmd_count == 1);
 
   AcReceptor_ret(t1_receptor_waiting);
 
-  ac_debug_printf("t1: done\n");
+  t1_error = error;
+  ac_debug_printf("t1: done t1_error=%d\n", t1_error);
 
   AcReceptor_signal_yield_if_waiting(t1_receptor_done);
   return AC_NULL;
@@ -160,6 +179,7 @@ ac_bool test_threaded_dispatching() {
   AcReceptor_ret(t1_receptor_ready);
   AcReceptor_ret(t1_receptor_done);
 
+  error |= t1_error;
 #endif
   return error;
 }

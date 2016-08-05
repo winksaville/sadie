@@ -81,49 +81,6 @@ typedef struct {
   ac_size_t len;        // Length of the data
 } AcIoBuff;
 
-/**
- * AcProtocolOpcode FLAG values
- */
-#define AC_RSV 0x0
-#define AC_CMD 0x1
-#define AC_REQ 0x2
-#define AC_RSP 0x3
-
-typedef struct AC_ATTR_PACKED {
-  union {
-    ac_u64 operation;
-    struct {
-      ac_u64 opcode:16;     // Bits 0-15 is opcode
-      ac_u64 flags:2;       // Bits 16-17 AC_RSV 0x0 == reserved
-                            // Bits 16-17 AC_CMD 0x1 == cmd (no response expected)
-                            // Bits 16-17 AC_REQ 0x2 == req (response expected)
-                            // Bits 16-17 AC_RSP 0x3 == rsp A response to a previous command
-      ac_u64 reserved:2;    // Bits 18-19 reserved
-      ac_u64 protocol:44;   // Bits 20-63 protocol
-    };
-  };
-} AcOperation;
-ac_static_assert(sizeof(AcOperation) == sizeof(ac_u64),
-   L"AcOperation != 4");
-
-/**
- * Define an AcOperation
- */
-#define DEFINE_AC_OPERATION(name, p, f, o) \
-static const AcOperation name = { \
-  .protocol = p, \
-  .flags = f, \
-  .opcode = o, \
-}
-
-/**
- * Define the name_CMD, name_REQ and name_RSP operations for
- * the name_PROTOCOL, which must be defined.
- */
-#define DEFINE_AC_OPERATIONS(name, opcode) \
-  DEFINE_AC_OPERATION(name ## _CMD, name ## _PROTOCOL, AC_CMD, opcode); \
-  DEFINE_AC_OPERATION(name ## _REQ, name ## _PROTOCOL, AC_REQ, opcode); \
-  DEFINE_AC_OPERATION(name ## _RSP, name ## _PROTOCOL, AC_RSP, opcode)
 
 /**
  * For AC_INET_SEND_PACKET_PROTOCOL define:
@@ -132,7 +89,10 @@ static const AcOperation name = { \
  *   AC_INET_SEND_PACKET_RSP
  */
 #define AC_INET_SEND_PACKET_PROTOCOL   0x1234
-DEFINE_AC_OPERATIONS(AC_INET_SEND_PACKET, 0x1);
+
+DEFINE_AC_OPERATION(AC_INET_SEND_PACKET_CMD, AC_INET_SEND_PACKET_PROTOCOL, AC_CMD, 0x1);
+DEFINE_AC_OPERATION(AC_INET_SEND_PACKET_REQ, AC_INET_SEND_PACKET_PROTOCOL, AC_REQ, 0x1);
+DEFINE_AC_OPERATION(AC_INET_SEND_PACKET_RSP, AC_INET_SEND_PACKET_PROTOCOL, AC_RSP, 0x1);
 
 /**
  * AcInetSendPacetOpCr is either AC_INET_SEND_PACKET_CMD or _REQ.
@@ -157,7 +117,7 @@ typedef struct {
  */
 typedef struct {
   AcOperation op;       // Opeeration is AC_INET_SEND_PACKET_RSP
-  ac_u64    tag;        // tag an app defined tag
+  ac_u64    tag;        // tag an app defined opaque value
   AcStatus  status;     // 0 == successful, !0 == error
 } AcInetSendPacketOpRsp;
 

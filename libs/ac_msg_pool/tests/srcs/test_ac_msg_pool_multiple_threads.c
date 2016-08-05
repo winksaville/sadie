@@ -58,6 +58,7 @@ struct MsgTsc {
 
 typedef struct {
   AcComp comp;
+  ac_u8 name[16];
   AcCompMgr* cm;
   AcCompInfo* ci;
   ac_bool stop_processing_msgs;
@@ -66,25 +67,27 @@ typedef struct {
 } mptt_params;
 
 ac_bool mptt_process_msg(AcComp* this, AcMsg* msg) {
-  ac_u64 recv_tsc = ac_tscrd();
-  mptt_params* params = (mptt_params*)this;
+  if (msg->arg1 != AC_INIT_CMD.operation && msg->arg1 != AC_DEINIT_CMD.operation) {
+    ac_u64 recv_tsc = ac_tscrd();
+    mptt_params* params = (mptt_params*)this;
 
-  ac_uint idx = params->count++ % AC_ARRAY_COUNT(params->msg_tsc);
-  struct MsgTsc* mt = &params->msg_tsc[idx];
-  mt->waiting_count = msg->arg1;
-  mt->ready_length = ready_length();
-  mt->sent_tsc = msg->arg2;
-  mt->recv_tsc = recv_tsc;
+    ac_uint idx = params->count++ % AC_ARRAY_COUNT(params->msg_tsc);
+    struct MsgTsc* mt = &params->msg_tsc[idx];
+    mt->waiting_count = msg->arg1;
+    mt->ready_length = ready_length();
+    mt->sent_tsc = msg->arg2;
+    mt->recv_tsc = recv_tsc;
 
-  ac_debug_printf("mptt_process_msg:- msg->arg1=%ld msg->arg2=%ld count=%ld\n",
-      msg->arg1, msg->arg2, params->count);
+    ac_debug_printf("mptt_process_msg:- msg->arg1=%ld msg->arg2=%ld count=%ld\n",
+        msg->arg1, msg->arg2, params->count);
 
-  // Return message
-  AcMsgPool_ret_msg(msg);
+    // Return message
+    AcMsgPool_ret_msg(msg);
 
-  mt->done_tsc = ac_tscrd();
+    mt->done_tsc = ac_tscrd();
 
-  __atomic_thread_fence(__ATOMIC_RELEASE);
+    __atomic_thread_fence(__ATOMIC_RELEASE);
+  }
   return AC_TRUE;
 }
 
@@ -168,6 +171,8 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count, ac_u32 comps_per_thr
     }
 
     params[i]->cm = cm;
+    ac_sprintf(params[i]->name, sizeof(params[i]->name), "mptt%d_process_msg", i);
+    params[i]->comp.name = params[i]->name;
     params[i]->comp.process_msg = mptt_process_msg;
     params[i]->ci = AcCompMgr_add_comp(cm, &params[i]->comp);
     error |= AC_TEST(params[i]->ci != AC_NULL);

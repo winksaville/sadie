@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-//#define NDEBUG
+#define NDEBUG
 
 #include "test-ac_dispatcher/incs/tests.h"
 
@@ -25,13 +25,55 @@
 #include <ac_msg_pool.h>
 #include <ac_test.h>
 
+typedef struct {
+  AcComp comp;
+  ac_u32 msg_count;
+  ac_u32 ac_init_cmd_count;
+  ac_u32 ac_deinit_cmd_count;
+  ac_bool error;
+} Ac1Comp;
+
+static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
+  Ac1Comp* this = (Ac1Comp*)ac;
+
+  ac_debug_printf("ac1_process_msg:+ msg->arg1=%lx, msg->arg2=%lx\n",
+      msg->arg1, msg->arg2);
+
+  ac_debug_printf("ac1_process_msg:+\n");
+
+  if (msg->arg1 == AC_INIT_CMD.operation) {
+    ac_debug_printf("ac1_process_msg: AC_INIT_CMD\n");
+    this->ac_init_cmd_count += 1;
+    this->error |= AC_TEST(this->ac_init_cmd_count == 1);
+    this->error |= AC_TEST(this->ac_deinit_cmd_count == 0);
+  } else if (msg->arg1 == AC_DEINIT_CMD.operation) {
+    ac_debug_printf("ac1_process_msg: AC_DEINIT_CMD\n");
+    this->ac_deinit_cmd_count += 1;
+    this->error |= AC_TEST(this->ac_init_cmd_count == 1);
+    this->error |= AC_TEST(this->ac_deinit_cmd_count == 1);
+  } else {
+    ac_debug_printf("ac1_process_msg: OTHER msg->arg1=%lx, msg->arg2=%lx\n",
+        msg->arg1, msg->arg2);
+    this->msg_count += 1;
+    this->error |= AC_TEST(msg->arg1 == 1);
+    this->error |= AC_TEST(msg->arg2 == this->msg_count);
+  }
+
+  ac_debug_printf("ac1_process_msg: ret msg=%p\n", msg);
+  AcMsgPool_ret_msg(msg);
+
+  ac_debug_printf("ac1_process_msg:-error=%d\n", this->error);
+
+  return AC_TRUE;
+}
+
 
 /**
  * Test dispatcher get and return
  *
  * return AC_TRUE if an error.
  */
-static ac_bool test_dispatcher_get_ret() {
+/*static*/ ac_bool test_dispatcher_get_ret() {
   ac_bool error = AC_FALSE;
 
   AcDispatcher* d = AcDispatcher_get(10);
@@ -51,7 +93,7 @@ static ac_bool test_dispatcher_get_ret() {
  *
  * return AC_TRUE if an error.
  */
-static int test_dispatcher_add_rmv_acq() {
+/*static*/ int test_dispatcher_add_rmv_acq() {
   ac_bool error = AC_FALSE;
 
   // Get a dispatcher
@@ -59,26 +101,36 @@ static int test_dispatcher_add_rmv_acq() {
   error |= AC_TEST(pd != AC_NULL);
 
   // Add a acq
-  AcComp ac1;
+  Ac1Comp ac1 = {
+    .comp = { .name=(ac_u8*)"ac1", .process_msg = &ac1_process_msg },
+  };
   AcDispatchableComp* dc1;
 
-  dc1 = AcDispatcher_add_comp(pd, &ac1);
+  ac1.msg_count = 0;
+  ac1.ac_init_cmd_count = 0;
+  ac1.ac_deinit_cmd_count = 0;
+  ac1.error = 0;
+  dc1 = AcDispatcher_add_comp(pd, &ac1.comp);
   error |= AC_TEST(dc1 != AC_NULL);
 
   // Test that adding a second acq fails because we
   // only are allowing 1
-  AcDispatchableComp* dc2 = AcDispatcher_add_comp(pd, &ac1);
+  AcDispatchableComp* dc2 = AcDispatcher_add_comp(pd, &ac1.comp);
   error |= AC_TEST(dc2 == AC_NULL);
 
   // Test we can remove pac1 and then add it back
   AcComp* pac2 = AcDispatcher_rmv_comp(pd, dc1);
-  error |= AC_TEST(pac2 == &ac1);
-  dc1 = AcDispatcher_add_comp(pd, &ac1);
+  error |= AC_TEST(pac2 == &ac1.comp);
+  ac1.msg_count = 0;
+  ac1.ac_init_cmd_count = 0;
+  ac1.ac_deinit_cmd_count = 0;
+  ac1.error = 0;
+  dc1 = AcDispatcher_add_comp(pd, &ac1.comp);
   error |= AC_TEST(dc1 != AC_NULL);
 
   // And finally remove so we leave with the pd empty
   pac2 = AcDispatcher_rmv_comp(pd, dc1);
-  error |= AC_TEST(pac2 == &ac1);
+  error |= AC_TEST(pac2 == &ac1.comp);
 
   // Return the dispatcher
   AcDispatcher_ret(pd);
@@ -86,37 +138,12 @@ static int test_dispatcher_add_rmv_acq() {
   return error;
 }
 
-typedef struct {
-  AcComp comp;
-  ac_u32 msg_count;
-  ac_bool error;
-} Ac1Comp;
-
-static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
-  Ac1Comp* this = (Ac1Comp*)ac;
-
-  ac_debug_printf("ac1_process_msg:+ msg->arg1=%ld, msg->arg2=%ld\n",
-      msg->arg1, msg->arg2);
-
-  this->msg_count += 1;
-
-  this->error |= AC_TEST(msg->arg1 == 1);
-  this->error |= AC_TEST(msg->arg2 == this->msg_count);
-
-  AcMsgPool_ret_msg(msg);
-
-  ac_debug_printf("ac1_process_msg:- msg->arg1=%ld, msg->arg2=%ld error=%d\n",
-      msg->arg1, msg->arg2, this->error);
-
-  return AC_TRUE;
-}
-
 /**
  * Test dispatching a message
  *
  * return AC_TRUE if an error.
  */
-static ac_bool test_dispatching() {
+/*static*/ ac_bool test_dispatching() {
   ac_bool error = AC_FALSE;
   AcStatus status;
   ac_debug_printf("test_dispatching:+\n");
@@ -126,8 +153,10 @@ static ac_bool test_dispatching() {
   error |= AC_TEST(pd != AC_NULL);
 
   Ac1Comp ac1 = {
-    .comp = { .process_msg = &ac1_process_msg },
+    .comp = { .name=(ac_u8*)"ac1", .process_msg = &ac1_process_msg },
     .msg_count = 0,
+    .ac_init_cmd_count = 0,
+    .ac_deinit_cmd_count = 0,
     .error = 0
   };
 
@@ -179,6 +208,7 @@ int main(void) {
   error |= test_dispatcher_get_ret();
   error |= test_dispatcher_add_rmv_acq();
   error |= test_dispatching();
+
 #if AC_PLATFORM == VersatilePB
   ac_printf("py: threading not working on VersatilePB, skip test_threaded_dispatching()\n");
 #else
