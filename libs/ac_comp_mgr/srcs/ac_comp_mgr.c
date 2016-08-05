@@ -206,9 +206,7 @@ AcCompInfo* AcCompMgr_add_comp(AcCompMgr* mgr, AcComp* comp) {
 /**
  * see ac_comp_mgr.h
  */
-AcComp* AcCompMgr_rmv_comp(AcCompMgr* mgr, AcCompInfo* ci) {
-  AC_UNUSED(mgr);
-
+AcComp* AcCompMgr_rmv_comp(AcCompInfo* ci) {
   AcComp* comp = ci->comp;
   ac_debug_printf("AcCompMgr_rmv_comp:+ci=%p ci->dtp-d=%p comp=%p\n", ci, ci->dtp->d, comp);
   AcComp** pcomp = &ci->comp;
@@ -225,9 +223,7 @@ AcComp* AcCompMgr_rmv_comp(AcCompMgr* mgr, AcCompInfo* ci) {
 /**
  * see ac_comp_mgr.h
  */
-void AcCompMgr_send_msg(AcCompMgr* mgr, AcCompInfo* info, AcMsg* msg) {
-  AC_UNUSED(mgr);
-
+void AcCompMgr_send_msg(AcCompInfo* info, AcMsg* msg) {
   AcDispatcher_send_msg(info->dc, msg);
   AcReceptor_signal(info->dtp->waiting);
 }

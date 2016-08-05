@@ -120,7 +120,7 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
       msg->arg1 = 1;
       msg->arg2 = 2;
       ac_debug_printf("test_comps: send msg %s ci=%p\n", c->comp.name, c->ci);
-      AcCompMgr_send_msg(cm, c->ci, msg);
+      AcCompMgr_send_msg(c->ci, msg);
     }
 
     ac_debug_printf("test_comps: wait until all messages are received\n");
@@ -136,7 +136,7 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
       c = &comps[i];
       ac_debug_printf("test_comps: remove %s ci=%p\n", c->comp.name, c->ci);
       AcReceptor_ret(c->done);
-      AcComp* pt1 = AcCompMgr_rmv_comp(cm, c->ci);
+      AcComp* pt1 = AcCompMgr_rmv_comp(c->ci);
       error |= AC_TEST(pt1 == &c->comp);
       error |= AC_TEST((T1Comp*)pt1 == c);
     }

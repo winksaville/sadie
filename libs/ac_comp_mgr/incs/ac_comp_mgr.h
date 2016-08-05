@@ -59,8 +59,6 @@ typedef struct AcComp {
 
 /**
  * Find a component
- * BUG: Component could change or be removed probably
- * return a copy of the AcComp ????
  *
  * @param: mgr is a component manager
  * @param: name is the name of the component
@@ -70,7 +68,9 @@ typedef struct AcComp {
 AcComp* AcCompMgr_find_comp(AcCompMgr* mgr, ac_u8* name);
 
 /**
- * Add a component to be managed
+ * Add a component to be managed, it is the responsibility of the
+ * caller to guarantee that he AcComp data structure does not change
+ * or move.
  *
  * @param: mgr is a component manager
  * @param: comp is an initialized component type
@@ -87,12 +87,12 @@ AcCompInfo* AcCompMgr_add_comp(AcCompMgr* mgr, AcComp* comp);
  *
  * @return: AcComp passed to AcCompMgr_add_comp.
  */
-AcComp* AcCompMgr_rmv_comp(AcCompMgr* mgr, AcCompInfo* comp_info);
+AcComp* AcCompMgr_rmv_comp(AcCompInfo* comp_info);
 
 /**
  * Send a message to the comp
  */
-void AcCompMgr_send_msg(AcCompMgr* mgr, AcCompInfo* info, AcMsg* msg);
+void AcCompMgr_send_msg(AcCompInfo* info, AcMsg* msg);
 
 /**
  * Deiniti AcCompMsg
