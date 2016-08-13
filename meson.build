@@ -120,3 +120,6 @@ subdir('components/ac_inet_link/tests')
 
 subdir('platform/tests')
 subdir('tests')
+
+# Performance measurements
+subdir('libs/ac_mem_pool/perfs')
