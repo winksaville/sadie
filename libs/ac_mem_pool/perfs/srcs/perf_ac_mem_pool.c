@@ -28,94 +28,45 @@
 #include <ac_receptor.h>
 #include <ac_test.h>
 #include <ac_time.h>
+#include <ac_tsc.h>
 #include <ac_thread.h>
 
 extern AcMpscFifo* AcMemPool_get_fifo(AcMemPool* pool);
 
-ac_bool simple_mem_pool_perf() {
+ac_bool simple_mem_pool_perf(ac_u64 loops) {
   ac_bool error = AC_FALSE;
-  ac_debug_printf("simple_mem_pool_perf:+\n");
+  ac_debug_printf("simple_mem_pool_perf:+ loops=%lu\n", loops);
 
   AcMemPool* mp;
   AcMem* mem;
-  AcMem* mem2;
 
   AcMemPoolCountSize mpcs[1] = {
     { .count = 1, .data_size = 1 },
   };
 
-  // Test BAD_PARAMS
-  ac_debug_printf("simple_mem_pool_perf: create a pool with NO AcMem's\n");
-  error |= AC_TEST(AcMemPool_alloc(0, mpcs, &mp) == AC_STATUS_BAD_PARAM);
-  error |= AC_TEST(mp == AC_NULL);
-  error |= AC_TEST(AcMemPool_alloc(AC_ARRAY_COUNT(mpcs), AC_NULL, &mp) == AC_STATUS_BAD_PARAM);
-  error |= AC_TEST(mp == AC_NULL);
-  error |= AC_TEST(AcMemPool_alloc(AC_ARRAY_COUNT(mpcs), mpcs, AC_NULL) == AC_STATUS_BAD_PARAM);
-  ac_debug_printf("\n");
-
-  // Test requesting an AcMem from a AC_NULL pool returns AC_NULL
-  ac_debug_printf("simple_mem_pool_perf: bad params for AcMem_get_ac_mem\n");
-  error |= AC_TEST(AcMemPool_get_ac_mem(AC_NULL, 1) == AC_NULL);
-  error |= AC_TEST(AcMemPool_get_ac_mem(AC_NULL, 0) == AC_NULL);
-  ac_debug_printf("\n");
-
-  ac_debug_printf("simple_mem_pool_perf: bad params for AcMem_get_mem\n");
-  error |= AC_TEST(AcMemPool_get_mem(AC_NULL, 1) == AC_NULL);
-  error |= AC_TEST(AcMemPool_get_mem(AC_NULL, 0) == AC_NULL);
-  ac_debug_printf("\n");
-
-  ac_debug_printf("simple_mem_pool_perf: AC_NULL passed to AcMem_free, AcMem_ret_ac_mem and AcMem_ret_mem\n");
-  AcMemPool_free(AC_NULL);
-  AcMemPool_ret_ac_mem(AC_NULL);
-  AcMemPool_ret_mem(AC_NULL);
-  ac_debug_printf("\n");
-
-  // Testing creating a pool with single size
-  ac_debug_printf("simple_mem_pool_perf: pool with one size data_size=%d\n",
-      mpcs[0].data_size);
+  // Testing a pool one entry
+  ac_debug_printf("simple_mem_pool_perf: pool with data_size=%d count=%d\n",
+      mpcs[0].data_size, mpsc[0].count);
   error |= AC_TEST(AcMemPool_alloc(1, mpcs, &mp) == AC_STATUS_OK);
-  error |= AC_TEST(mp != AC_NULL);
-  AcMemPool_debug_print("simple_mem_pool_perf: pool after creation, should have one entry:", mp);
-  ac_debug_printf("\n");
 
-  // Test getting an AcMem
-  ac_debug_printf("simple_mem_pool_perf: first get ac_mem, expecting != AC_NULL\n");
-  mem = AcMemPool_get_ac_mem(mp, 1);
-  error |= AC_TEST(mem != AC_NULL);
-  error |= AC_TEST(mem->hdr.user_size == 1);
-  error |= AC_TEST(mem->data[0] == 0);
-  AcMemPool_debug_print("simple_mem_pool_perf: pool after first get, should be empty:", mp);
-  ac_debug_printf("\n");
+  ac_u64 start = ac_tscrd();
 
-  // Test a second get fails
-  ac_debug_printf("simple_mem_pool_perf: second get ac_mem, expecting == AC_NULL\n");
-  mem2 = AcMemPool_get_ac_mem(mp, 1);
-  error |= AC_TEST(mem2 == AC_NULL);
-  AcMemPool_debug_print("simple_mem_pool_perf: pool after second get:", mp);
-  ac_debug_printf("\n");
+  for (ac_u64 i = 0; i < loops; i++) {
+    mem = AcMemPool_get_ac_mem(mp, 1);
+    AcMemPool_ret_ac_mem(mem);
+  }
 
-  // Modify data and return the AcMem
-  ac_debug_printf("simple_mem_pool_perf: ret ac_mem, expecting == AC_NULL\n");
-  mem->data[0] = 1;
-  error |= AC_TEST(mem->data[0] == 1);
-  AcMemPool_ret_ac_mem(mem);
-  AcMemPool_debug_print("simple_mem_pool_perf: pool after return, should have one entry:", mp);
-  ac_debug_printf("\n");
+  ac_u64 stop = ac_tscrd();
 
-  // Request it back and verify that data[0] is 0 and its not the same as mem
-  ac_debug_printf("simple_mem_pool_perf: re-getting ac_mem, expecting != AC_NULL\n");
-  mem2 = AcMemPool_get_ac_mem(mp, 1);
-  error |= AC_TEST(mem2 != AC_NULL);
-  error |= AC_TEST(mem2 != mem);
-  error |= AC_TEST(mem2->hdr.user_size == 1);
-  error |= AC_TEST(mem2->data[0] == 0);
-  AcMemPool_debug_print("simple_mem_pool_perf: pool after re-getting, should be empty:", mp);
-  ac_debug_printf("\n");
+  ac_u64 duration = stop - start;
+  ac_u64 ns_per_op = (duration * AC_SEC_IN_NS) / loops;
+  ac_printf("simple_mem_pool_perf: time=%.9t ns_per_op=%.3Sns\n", duration, ns_per_op);
 
   ac_debug_printf("simple_mem_pool_perf:-\n");
   return error;
 }
 
+#if 0
 ac_bool multiple_mem_pool_perf() {
   ac_bool error = AC_FALSE;
   ac_debug_printf("multiple_mem_pool_perf:+\n");
@@ -196,6 +147,7 @@ ac_bool multiple_mem_pool_perf() {
   ac_debug_printf("multiple_mem_pool_perf:-\n");
   return error;
 }
+#endif
 
 /**
  * main
@@ -209,12 +161,14 @@ int main(void) {
 
   ac_debug_printf("sizeof(AcMem)=%d\n", sizeof(AcMem));
 
-  error |= simple_mem_pool_perf();
+  error |= simple_mem_pool_perf(400000000);
+#if 0
   error |= multiple_mem_pool_perf();
   error |= perf_mem_pool_multiple_threads(1);
   error |= perf_mem_pool_multiple_threads(2);
   error |= perf_mem_pool_multiple_threads(5);
   error |= perf_mem_pool_multiple_threads(10);
+#endif
 
   if (!error) {
     ac_printf("OK\n");
