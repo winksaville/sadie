@@ -186,6 +186,148 @@ ac_bool test_time(ac_u64 test_freq) {
   return error;
 }
 
+ac_bool test_seconds(ac_u64 test_freq) {
+  ac_u64 save_f = ac_tsc_freq();
+  ac_tsc_set_freq(test_freq);
+
+  ac_u64 f = ac_tsc_freq();
+  ac_bool error = AC_FALSE;
+  ac_u8 buff[64];
+  ac_u64 ticks;
+
+  ac_printf("test_seconds: f=%ld save_f=%ld\n", f, save_f);
+
+  ac_sprintf(buff, AC_ARRAY_COUNT(buff), "%Ss", f + (f / 10));
+  ac_printf("buff=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("1s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  ac_sprintf(buff, AC_ARRAY_COUNT(buff), "%.1Ss", f + (f / 10));
+  ac_printf("buff=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("1.1s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  ac_sprintf(buff, AC_ARRAY_COUNT(buff), "%.1Ss", (f / 10));
+  ac_printf("buff=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("0.1s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  ac_sprintf(buff, AC_ARRAY_COUNT(buff), "%0.1Ss", (f / 10));
+  ac_printf("buff=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("0.1s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+
+  ticks = 0;
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 0, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(0, 0)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("0s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 1, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(0, 1)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("0.0s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 2, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(0, 2)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("0.00s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 3, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(0, 3)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("0.000s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 8, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(0, 8)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("0.00000000s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 9, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(0, 9)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("0.000000000s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 10, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(0, 10)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("0.0000000000s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+
+  ticks = f / 10;
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 0, AC_NULL, buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f/10, 0)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("0", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 1, AC_NULL, buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f/10, 1)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("0.1", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 2, AC_NULL, buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f/10, 2)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("0.10", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 9, AC_NULL, buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f/10, 9)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("0.100000000", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+
+  ticks = (f / 2) - 1;
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 0, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str((f/2)-1, 0)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("0s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 1, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str((f/2)-1, 1)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("0.5s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+
+  ticks = f / 2;
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 0, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f/2, 0)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("1s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 1, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f/2, 1)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("0.5s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+
+  ticks = f;
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 0, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f, 0)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("1s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 1, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f, 1)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("1.0s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+
+  ticks = f + (f / 10);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 0, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f + (f/10), 0)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("1s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 1, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f + (f/10), 1)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("1.1s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 2, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f + (f/10), 2)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("1.10s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+
+  ticks = f + (f / 2) - 1;
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 0, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f + (f/2)-1, 0)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("1s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 1, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f + (f/2)-1, 1)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("1.5s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 2, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f + (f/2)-1, 2)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("1.50s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 9, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f + (f/2)-1, 9)=%s\n", buff);
+  error |= AC_TEST((ac_strncmp("1.500000000", (char*)buff, 11) == 0)
+               | (ac_strncmp("1.499999999", (char*)buff, 11) == 0));
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 10, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f + (f/2)-1, 10)=%s\n", buff);
+  error |= AC_TEST((ac_strncmp("1.500000000", (char*)buff, 11) == 0)
+               | (ac_strncmp("1.499999999", (char*)buff, 11) == 0));
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 11, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f + (f/2)-1, 11)=%s\n", buff);
+  error |= AC_TEST((ac_strncmp("1.500000000", (char*)buff, 11) == 0)
+               | (ac_strncmp("1.499999999", (char*)buff, 11) == 0));
+
+
+  ticks = f + (f / 2);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 0, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f + (f/2), 0)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("2s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 1, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f + (f/2), 1)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("1.5s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 2, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f + (f/2), 2)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("1.50s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 9, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f + (f/2), 9)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("1.500000000s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+  AcTime_ticks_to_seconds_str(ticks, LEADING_0, 10, "s", buff, AC_ARRAY_COUNT(buff));
+  ac_printf("AcTime_ticks_to_seconds_str(f + (f/2), 10)=%s\n", buff);
+  error |= AC_TEST(ac_strncmp("1.5000000000s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
+
+  // Restore freq
+  ac_tsc_set_freq(save_f);
+  return error;
+}
+
 
 int main(void) {
   ac_bool error = AC_FALSE;
@@ -217,6 +359,7 @@ int main(void) {
   error |= test_time(2000000000ll);
   error |= test_time(1000000000ll);
 
+  error |= test_seconds(freq);
 
   if (!error) {
     ac_printf("OK\n");

@@ -51,8 +51,9 @@ ac_u64 AcTime_nanos_to_ticks(ac_u64 nanos);
 ac_u64 AcTime_ticks_to_nanos(ac_u64 ticks);
 
 /**
- * Convert ticks to a duration string
- * y:day:min:sec.subsecs
+ * Convert ticks to a duration string of the form XyXdXhXmX.Ys
+ * So 3 years 5 days 1 hour 7 minutes 3.201 seconds is
+ * printed as 3y5d1h7m3.201s
  *
  * @param: ticks is value in ac_tsc_freq
  * @param: leading0 is true if leading zero values are to be printed
@@ -66,6 +67,23 @@ ac_u64 AcTime_ticks_to_nanos(ac_u64 ticks);
  */
 ac_uint AcTime_ticks_to_duration_str(ac_u64 ticks, ac_bool leading0, ac_uint precision,
     ac_u8* out_buff, ac_uint out_buff_len);
+
+/**
+ * Convert ticks to 'seconds' float string as whole.fraction
+ *
+ * @param: ticks is value in ac_tsc_freq
+ * @param: leading_0 is true if leading zero values are to be printed
+ * @param: precision is number of digits after seconds decimal place
+ * @param: units_str appended to end
+ * @param: out_buf is output buffer
+ * @param: out_buf_len is the length of the output buffer
+ *
+ * @return number of characters written to out_buf not including trailing 0
+ *         if out_buf_len == 0 nothing is written
+ *         if out_buf_len == 1 only a trailing zero is written
+ */
+ac_uint AcTime_ticks_to_seconds_str(ac_u64 ticks, ac_bool leading_0, ac_uint precision,
+    char* units_str, ac_u8* out_buff, ac_uint out_buff_len);
 
 /**
  * Initialize ac_time early.
