@@ -12,24 +12,11 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
+runtimeIncDirs += include_directories(
+  '@0@/incs'.format(meson.current_source_dir())
+)
 
-subdir('ac_acpi')
-subdir('ac_assert')
-subdir('ac_bits')
-subdir('ac_check_sum')
-subdir('ac_comp_mgr')
-subdir('ac_dispatcher')
-subdir('ac_mem')
-subdir('ac_memcmp')
-subdir('ac_memcpy')
-subdir('ac_memset')
-subdir('ac_mem_pool')
-subdir('ac_mpsc_fifo')
-subdir('ac_mpsc_ring_buff')
-subdir('ac_msg_pool')
-subdir('ac_pci')
-subdir('ac_printf')
-subdir('ac_sort')
-subdir('ac_string')
-subdir('ac_swap_bytes')
-subdir('ac_time')
+runtimeSrcs += [
+  '@0@/srcs/ac_mpsc_ring_buff.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_mpsc_ring_buff_dbg.c'.format(meson.current_source_dir()),
+]

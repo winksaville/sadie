@@ -43,6 +43,7 @@
 -I /home/wink/prgs/sadie/libs/ac_memcpy/incs
 -I /home/wink/prgs/sadie/libs/ac_memset/incs
 -I /home/wink/prgs/sadie/libs/ac_mpsc_fifo/incs
+-I /home/wink/prgs/sadie/libs/ac_mpsc_ring_buff/incs
 -I /home/wink/prgs/sadie/libs/ac_msg_pool/incs
 -I /home/wink/prgs/sadie/libs/ac_pci/incs
 -I /home/wink/prgs/sadie/libs/ac_printf/incs
