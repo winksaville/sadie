@@ -28,6 +28,7 @@ command:
   - cd build-${Platform}; ninja run-test-ac_mem_pool
   - cd build-${Platform}; ninja run-test-ac_memmgr
   - cd build-${Platform}; ninja run-test-ac_mpsc_fifo
+  - cd build-${Platform}; ninja run-test-ac_mpsc_ring_buff
   - cd build-${Platform}; ninja run-test-ac_msg_pool
   - cd build-${Platform}; ninja run-test-ac_printf
   - cd build-${Platform}; ninja run-test-ac_putchar
