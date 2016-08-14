@@ -359,7 +359,7 @@ int main(void) {
   error |= test_time(2000000000ll);
   error |= test_time(1000000000ll);
 
-  error |= test_seconds(freq);
+  error |= test_seconds(1000000000ll);
 
   if (!error) {
     ac_printf("OK\n");
