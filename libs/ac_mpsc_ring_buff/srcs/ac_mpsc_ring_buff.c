@@ -61,6 +61,9 @@ ac_bool AcMpscRingBuff_add_mem(AcMpscRingBuff* rb, void* mem) {
 
     cell->mem = mem;
     __atomic_store_n(&cell->seq, pos + 1, __ATOMIC_RELEASE);
+#ifndef NDEBUG
+    rb->count += 1;
+#endif
   }
 
   ac_debug_printf("AcMpscRingBuff_add_mem:-rb=%p mem=%p\n", rb, mem);
@@ -89,7 +92,10 @@ void* AcMpscRingBuff_rmv_mem(AcMpscRingBuff* rb) {
   __atomic_store_n(&cell->seq, pos + rb->mask + 1, __ATOMIC_RELEASE);
 
   rb->rmv_idx += 1;
+#ifndef NDEBUG
   rb->processed += 1;
+  rb->count -= 1;
+#endif
 
   ac_debug_printf("AcMpscRingBuff_rmv_mem:-rb=%p mem=%p\n", rb, mem);
   return mem;

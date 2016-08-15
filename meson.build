@@ -124,3 +124,4 @@ subdir('tests')
 
 # Performance measurements
 subdir('libs/ac_mem_pool/perfs')
+subdir('libs/ac_mpsc_ring_buff/perfs')
