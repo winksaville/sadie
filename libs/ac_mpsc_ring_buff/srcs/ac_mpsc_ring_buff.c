@@ -89,7 +89,7 @@ void* AcMpscRingBuff_rmv_mem(AcMpscRingBuff* rb) {
   }
   
   mem = cell->mem;
-  __atomic_store_n(&cell->seq, pos + rb->mask + 1, __ATOMIC_RELEASE);
+  __atomic_store_n(&cell->seq, pos + rb->size, __ATOMIC_RELEASE);
 
   rb->rmv_idx += 1;
 #ifndef NDEBUG
