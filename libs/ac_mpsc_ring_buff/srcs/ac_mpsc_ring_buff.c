@@ -52,7 +52,7 @@ ac_bool AcMpscRingBuff_add_mem(AcMpscRingBuff* rb, void* mem) {
           break;
         }
       } else if (dif < 0) {
-        ac_debug_printf("AcMpscRingBuff_add_mem:-rb=%p mem=%p\n", rb, mem);
+        ac_debug_printf("AcMpscRingBuff_add_mem:-rb=%p mem=%p FULL\n", rb, mem);
         return AC_FALSE;
       } else {
         pos = rb->add_idx;
@@ -84,7 +84,7 @@ void* AcMpscRingBuff_rmv_mem(AcMpscRingBuff* rb) {
   ac_s32 dif = seq - (pos + 1);
 
   if (dif < 0) {
-    ac_debug_printf("AcMpscRingBuff_rmv_mem:-rb=%p mem=AC_NULL\n", rb);
+    ac_debug_printf("AcMpscRingBuff_rmv_mem:-rb=%p mem=AC_NULL EMPTY\n", rb);
     return AC_NULL;
   }
   
