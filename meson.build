@@ -109,6 +109,7 @@ subdir('libs/ac_comp_mgr/tests')
 subdir('libs/ac_check_sum/tests')
 subdir('libs/ac_mem/tests')
 subdir('libs/ac_mpsc_fifo/tests')
+subdir('libs/ac_mpsc_fifo_in/tests')
 subdir('libs/ac_mpsc_ring_buff/tests')
 subdir('libs/ac_mem_pool/tests')
 subdir('libs/ac_msg_pool/tests')
@@ -124,4 +125,5 @@ subdir('tests')
 
 # Performance measurements
 subdir('libs/ac_mem_pool/perfs')
+subdir('libs/ac_mpsc_fifo_in/perfs')
 subdir('libs/ac_mpsc_ring_buff/perfs')
