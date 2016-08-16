@@ -39,26 +39,27 @@ void AcMpscFifo_print(const char* leader, AcMpscFifo* fifo) {
     AcMem_print("fifo->head: ", fifo->head);
     AcMem_print("fifo->tail: ", fifo->tail);
 #endif
-    AcMem* tail = fifo->tail->hdr.next;
-    if (tail == AC_NULL) {
+    AcMem* tail = fifo->tail;
+    AcMem* next = fifo->tail->hdr.next;
+    if (next == AC_NULL) {
       if (tail == fifo->head) {
         AcMem_print("empty h/t: ", fifo->head);
       } else {
-        AcMem_print("preempted tail==NULL head=: ", fifo->head);
+        AcMem_print("preempted: ", fifo->head);
       }
-    } else if (tail == fifo->head) {
+    } else if (next == fifo->head) {
       AcMem_print("one h/t:   ", fifo->head);
     } else {
       ac_bool first_time = AC_TRUE;
-      while (tail != AC_NULL) {
+      while (next != AC_NULL) {
         if (first_time) {
           first_time = AC_FALSE;
           ac_printf("n tail:    ");
         } else {
           ac_printf("           ");
         }
-        AcMem_print(AC_NULL, tail);
-        tail = tail->hdr.next;
+        AcMem_print(AC_NULL, next);
+        next = next->hdr.next;
       }
     }
   } else {
