@@ -44,12 +44,11 @@ ac_bool simple_mpsc_ring_buff_perf(ac_u64 loops) {
   // Testing a pool one entry
   error |= AC_TEST(AcMpscRingBuff_init(&rb, 2) == AC_STATUS_OK);
 
-  //AcMpscRingBuff_add_mem(&rb, &mems[0]);
-
+  // Test add remove with an empty ring buffer
   ac_u64 start = ac_tscrd();
 
   for (ac_u64 i = 0; i < loops; i++) {
-    AcMpscRingBuff_add_mem(&rb, &mems[1]);
+    AcMpscRingBuff_add_mem(&rb, &mems[0]);
     AcMpscRingBuff_rmv_mem(&rb);
   }
 
@@ -57,7 +56,23 @@ ac_bool simple_mpsc_ring_buff_perf(ac_u64 loops) {
 
   ac_u64 duration = stop - start;
   ac_u64 ns_per_op = (duration * AC_SEC_IN_NS) / loops;
-  ac_printf("simple_mpsc_ring_buff_perf: duration=%lu time=%.9t ns_per_op=%.4S\n",
+  ac_printf("simple_mpsc_ring_buff_perf: empty     duration=%lu time=%.9t ns_per_op=%.4S\n",
+      duration, duration, ns_per_op);
+
+  // Test add remove with an empty ring buffer
+  AcMpscRingBuff_add_mem(&rb, &mems[0]);
+  start = ac_tscrd();
+
+  for (ac_u64 i = 0; i < loops; i++) {
+    AcMpscRingBuff_add_mem(&rb, &mems[1]);
+    AcMpscRingBuff_rmv_mem(&rb);
+  }
+
+  stop = ac_tscrd();
+
+  duration = stop - start;
+  ns_per_op = (duration * AC_SEC_IN_NS) / loops;
+  ac_printf("simple_mpsc_ring_buff_perf: non-empty duration=%lu time=%.9t ns_per_op=%.4S\n",
       duration, duration, ns_per_op);
 
   AcMpscRingBuff_deinit(&rb);

@@ -12,7 +12,7 @@
 # see the license for the specific language governing permissions and
 # limitations under the license.
 
-lclSrcs = ['srcs/perf_ac_mpsc_ring_buff.c' ]
+lclSrcs = ['srcs/perf.c' ]
 lclIncDirs = [include_directories('../../')]
 
 if Platform == 'VersatilePB'
