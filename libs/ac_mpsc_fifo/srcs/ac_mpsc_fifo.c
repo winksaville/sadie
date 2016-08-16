@@ -116,8 +116,6 @@
  *    result->hdr.user_size = oldest->hdr.user_size;
  *    ac_memcpy(result->data, oldest->data, oldest->hdr.user_size);
  *
- *    // Step 6) Return result and set next to AC_NULL
- *    result->hdr.next = AC_NULL;
  *    return result;
  *
  * Raw remove an AcMem from the FIFO, invoked by one thread
@@ -139,8 +137,6 @@
  *    // made it so.
  *    fifo->tail = oldest;
  *
- *    // Step 5) Return result and we'll set next to AC_NULL
- *    result->hdr.next = AC_NULL;
  *    return result;
  */
 
@@ -259,9 +255,6 @@ AcMem* AcMpscFifo_rmv_ac_mem(AcMpscFifo* fifo) {
     // Step 5) Copy the contents of oldest AcMem to result
     result->hdr.user_size = oldest->hdr.user_size;
     ac_memcpy(result->data, oldest->data, oldest->hdr.user_size);
-
-    // Step 6) Return result and we'll set next to AC_NULL
-    result->hdr.next = AC_NULL;
   }
 
   ac_debug_printf("AcMpscFifo_rmv_ac_mem:-fifo=%p result=%p\n", fifo, result);
@@ -313,9 +306,6 @@ AcMem* AcMpscFifo_rmv_ac_mem_raw(AcMpscFifo* fifo) {
 #else
     __atomic_store_n(ptr_tail, oldest, __ATOMIC_RELEASE);
 #endif
-
-    // Step 6) Return result and we'll set next to AC_NULL
-    result->hdr.next = AC_NULL;
   }
   ac_debug_printf("AcMpscFifo_rmv_ac_mem_raw:-fifo=%p result=%p\n", fifo, result);
   return result;

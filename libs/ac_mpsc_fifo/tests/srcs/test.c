@@ -127,7 +127,6 @@ ac_bool test_add_rmv_ac_mem() {
   mem = AcMpscFifo_rmv_ac_mem(&fifo);
   AcMem_print("test_add_rmv_ac_mem: after rmv mems=", mem);
   error |= AC_TEST(mem != AC_NULL);
-  error |= AC_TEST(mem->hdr.next == AC_NULL);
   error |= AC_TEST(mem->data[0] == 1);
   error |= AC_TEST(mem->data[1] == 2);
   AcMpscFifo_print("test_add_rmv_ac_mem: after rmv mems[0] fifo:", &fifo);
@@ -136,7 +135,6 @@ ac_bool test_add_rmv_ac_mem() {
   mem = AcMpscFifo_rmv_ac_mem(&fifo);
   AcMem_print("test_add_rmv_ac_mem: after rmv mems=", mem);
   error |= AC_TEST(mem != AC_NULL);
-  error |= AC_TEST(mem->hdr.next == AC_NULL);
   error |= AC_TEST(mem->data[0] == 3);
   error |= AC_TEST(mem->data[1] == 4);
   AcMpscFifo_print("test_add_rmv_ac_mem: after rmv mems[1] fifo:", &fifo);
@@ -229,7 +227,6 @@ ac_bool test_add_rmv_ac_mem_raw() {
   mem = AcMpscFifo_rmv_ac_mem_raw(&fifo);
   AcMem_print("test_add_rmv_ac_mem_raw: first rmv mem=", mem);
   error |= AC_TEST(mem != AC_NULL);
-  error |= AC_TEST(mem->hdr.next == AC_NULL);
   error |= AC_TEST(mem->hdr.user_size == 0);
   error |= AC_TEST(mem->data[0] == 0);
   error |= AC_TEST(mem->data[1] == 0);
@@ -239,7 +236,6 @@ ac_bool test_add_rmv_ac_mem_raw() {
   mem = AcMpscFifo_rmv_ac_mem_raw(&fifo);
   AcMem_print("test_add_rmv_ac_mem_raw: second rmv mem=", mem);
   error |= AC_TEST(mem != AC_NULL);
-  error |= AC_TEST(mem->hdr.next == AC_NULL);
   error |= AC_TEST(mem->hdr.user_size == 2);
   error |= AC_TEST(mem->data[0] == 1);
   error |= AC_TEST(mem->data[1] == 2);
@@ -249,7 +245,6 @@ ac_bool test_add_rmv_ac_mem_raw() {
   mem = AcMpscFifo_rmv_ac_mem_raw(&fifo);
   AcMem_print("test_add_rmv_ac_mem_raw: third rmv mem=", mem);
   error |= AC_TEST(mem != AC_NULL);
-  error |= AC_TEST(mem->hdr.next == AC_NULL);
   error |= AC_TEST(mem->hdr.user_size == 2);
   error |= AC_TEST(mem->data[0] == 3);
   error |= AC_TEST(mem->data[1] == 4);
@@ -298,7 +293,6 @@ ac_bool test_init_and_alloc_multiple() {
     // Remove next AcMem and validate
     AcMem* mem = AcMpscFifo_rmv_ac_mem(&fifo);
     error |= AC_TEST(mem != AC_NULL);
-    error |= AC_TEST(mem->hdr.next == AC_NULL);
     error |= AC_TEST(mem->hdr.data_size == data_size);
     error |= AC_TEST(mem->hdr.user_size == 0);
     error |= AC_TEST(mem->data[0] == 0);
@@ -322,7 +316,6 @@ ac_bool test_init_and_alloc_multiple() {
 
     // Validate field
     error |= AC_TEST(mem != AC_NULL);
-    error |= AC_TEST(mem->hdr.next == AC_NULL);
     error |= AC_TEST(mem->hdr.data_size == data_size);
     error |= AC_TEST(mem->hdr.user_size == data_size);
     error |= AC_TEST(mem->data[0] == i);
