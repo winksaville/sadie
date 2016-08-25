@@ -15,17 +15,24 @@
  */
 
 /**
- * Defines uPtr for 64 bit address machines
+ * Defines various generic types for 32 bit address machines
  */
 #ifndef SADIE_GENERIC_AC_64BITS_H
 #define SADIE_GENERIC_AC_64BITS_H
 
-typedef ac_u64 ac_uptr;
-typedef ac_u64 ac_size_t;
+typedef AcU64 AcUptr;
+typedef AcU64 AcSize;
 
-typedef ac_u64 ac_uint;
-typedef ac_s64 ac_sint;
-typedef ac_s64 ac_int;
+typedef AcU64 AcUint;
+typedef AcS64 AcSint;
+typedef AcS64 AcInt;
+
+typedef AcU64 ac_uptr;
+typedef AcU64 ac_size_t;
+
+typedef AcU64 ac_uint;
+typedef AcS64 ac_sint;
+typedef AcS64 ac_int;
 
 #define AC_SIZEOF_INT 8
 

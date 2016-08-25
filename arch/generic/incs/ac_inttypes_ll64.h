@@ -20,6 +20,16 @@
 #ifndef SADIE_GENERIC_AC_INTTYPES_ll64_H
 #define SADIE_GENERIC_AC_INTTYPES_ll64_H
 
+typedef signed char AcS8;
+typedef signed short AcS16;
+typedef signed int AcS32;
+typedef signed long long AcS64;
+
+typedef unsigned char AcU8;
+typedef unsigned short AcU16;
+typedef unsigned int AcU32;
+typedef unsigned long long AcU64;
+
 typedef signed char ac_s8;
 typedef signed short ac_s16;
 typedef signed int ac_s32;

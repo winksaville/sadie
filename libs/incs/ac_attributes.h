@@ -17,6 +17,10 @@
 #ifndef SADIE_GENERIC_INCS_AC_ATTRIBUTES_H
 #define SADIE_GENERIC_INCS_AC_ATTRIBUTES_H
 
+#define AC_ATTR_ALIGNED(v) __attribute__ (( aligned(v) ))
+#define AC_ATTR_ALIGNED_AC_U64 AC_ATTR_ALIGNED(sizeof(AcU64))
+#define AC_ATTR_ALIGNED_AC_U32 AC_ATTR_ALIGNED(sizeof(AcU64))
+
 #define AC_ATTR_PACKED    __attribute__ ((__packed__))
 #define AC_ATTR_INTR_HDLR __attribute__ ((__interrupt__))
 #define AC_ATTR_INTR(which_one) __attribute__ ((__interrupt__(which_one)))
