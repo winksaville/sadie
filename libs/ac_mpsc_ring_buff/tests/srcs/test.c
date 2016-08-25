@@ -28,8 +28,8 @@
  * Test we can initialize and deinitialize AcMpscRingBuff *
  * return !0 if an error.
  */
-ac_bool test_init_and_deinit_mpsc_ring_buff() {
-  ac_bool error = AC_FALSE;
+AcBool test_init_and_deinit_mpsc_ring_buff() {
+  AcBool error = AC_FALSE;
   AcMpscRingBuff rb;
 
   ac_printf("test_init_and_deinit_mpsc_ring_buff:+rb=%p\n", &rb);
@@ -65,11 +65,11 @@ ac_bool test_init_and_deinit_mpsc_ring_buff() {
  *
  * return !0 if an error.
  */
-ac_bool test_add_rmv() {
-  ac_bool error = AC_FALSE;
+AcBool test_add_rmv() {
+  AcBool error = AC_FALSE;
   AcMpscRingBuff rb;
-  ac_u8* mem;
-  const ac_u32 data_size = 2;
+  AcU8* mem;
+  const AcU32 data_size = 2;
 
   ac_printf("test_add_rmv:+rb=%p\n", &rb);
 
@@ -78,14 +78,14 @@ ac_bool test_add_rmv() {
   AcMpscRingBuff_print("test_add_rmv_mem rb:", &rb);
 
   // Add mem1
-  ac_u8* mems = ac_malloc(3 * data_size);
+  AcU8* mems = ac_malloc(3 * data_size);
   error |= AC_TEST(mems != AC_NULL);
   mems[0] = 1;
   mems[1] = 2;
   mems[2] = 3;
 
   // Add first mem
-  ac_bool rslt = AcMpscRingBuff_add_mem(&rb, &mems[0]);
+  AcBool rslt = AcMpscRingBuff_add_mem(&rb, &mems[0]);
   error |= AC_TEST(rslt);
   AcMpscRingBuff_print("test_add_rmv: after add mems[0] rb:\n", &rb);
   error |= AC_TEST(rb.add_idx == 1);
@@ -158,7 +158,7 @@ ac_bool test_add_rmv() {
 }
 
 int main(void) {
-  ac_bool error = AC_FALSE;
+  AcBool error = AC_FALSE;
 
   error |= test_init_and_deinit_mpsc_ring_buff();
   ac_printf("\n");

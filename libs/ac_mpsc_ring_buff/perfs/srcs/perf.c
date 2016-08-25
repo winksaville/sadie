@@ -33,29 +33,29 @@
 
 extern AcMpscFifo* AcMpscRingBuff_get_fifo(AcMpscRingBuff* pool);
 
-ac_bool simple_mpsc_ring_buff_perf(ac_u64 loops) {
-  ac_bool error = AC_FALSE;
+AcBool simple_mpsc_ring_buff_perf(AcU64 loops) {
+  AcBool error = AC_FALSE;
   ac_debug_printf("simple_mpsc_ring_buff_perf:+ loops=%lu\n", loops);
 
   AcMpscRingBuff rb;
 
-  ac_u8* mems = ac_malloc(2 * sizeof(ac_u8));
+  AcU8* mems = ac_malloc(2 * sizeof(AcU8));
 
   // Testing a pool one entry
   error |= AC_TEST(AcMpscRingBuff_init(&rb, 2) == AC_STATUS_OK);
 
   // Test add remove with an empty ring buffer
-  ac_u64 start = ac_tscrd();
+  AcU64 start = ac_tscrd();
 
-  for (ac_u64 i = 0; i < loops; i++) {
+  for (AcU64 i = 0; i < loops; i++) {
     AcMpscRingBuff_add_mem(&rb, &mems[0]);
     AcMpscRingBuff_rmv_mem(&rb);
   }
 
-  ac_u64 stop = ac_tscrd();
+  AcU64 stop = ac_tscrd();
 
-  ac_u64 duration = stop - start;
-  ac_u64 ns_per_op = (duration * AC_SEC_IN_NS) / loops;
+  AcU64 duration = stop - start;
+  AcU64 ns_per_op = (duration * AC_SEC_IN_NS) / loops;
   ac_printf("simple_mpsc_ring_buff_perf: empty     duration=%lu time=%.9t ns_per_op=%.4S\n",
       duration, duration, ns_per_op);
 
@@ -63,7 +63,7 @@ ac_bool simple_mpsc_ring_buff_perf(ac_u64 loops) {
   AcMpscRingBuff_add_mem(&rb, &mems[0]);
   start = ac_tscrd();
 
-  for (ac_u64 i = 0; i < loops; i++) {
+  for (AcU64 i = 0; i < loops; i++) {
     AcMpscRingBuff_add_mem(&rb, &mems[1]);
     AcMpscRingBuff_rmv_mem(&rb);
   }
@@ -85,7 +85,7 @@ ac_bool simple_mpsc_ring_buff_perf(ac_u64 loops) {
  * main
  */
 int main(void) {
-  ac_bool error = AC_FALSE;
+  AcBool error = AC_FALSE;
 
   ac_thread_init(10);
   AcReceptor_init(50);

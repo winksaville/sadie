@@ -34,20 +34,20 @@
 /**
  * @see ac_mpsc_ring_buff.h
  */
-ac_bool AcMpscRingBuff_add_mem(AcMpscRingBuff* rb, void* mem) {
+AcBool AcMpscRingBuff_add_mem(AcMpscRingBuff* rb, void* mem) {
   ac_debug_printf("AcMpscRingBuff_add_mem:+rb=%p mem=%p\n", rb, mem);
 
   if (mem != AC_NULL) {
     RingBuffCell* cell;
-    ac_u32 pos = rb->add_idx;
+    AcU32 pos = rb->add_idx;
 
     while (AC_TRUE) {
       cell = &rb->ring_buffer[pos & rb->mask];
-      ac_u32 seq = __atomic_load_n(&cell->seq, __ATOMIC_ACQUIRE);
+      AcU32 seq = __atomic_load_n(&cell->seq, __ATOMIC_ACQUIRE);
       ac_s32 dif = seq - pos;
 
       if (dif == 0) {
-        if (__atomic_compare_exchange_n((ac_u32*)&rb->add_idx, &pos, pos + 1,
+        if (__atomic_compare_exchange_n((AcU32*)&rb->add_idx, &pos, pos + 1,
               AC_TRUE, __ATOMIC_ACQ_REL, __ATOMIC_ACQUIRE)) {
           break;
         }
@@ -77,10 +77,10 @@ void* AcMpscRingBuff_rmv_mem(AcMpscRingBuff* rb) {
   ac_debug_printf("AcMpscRingBuff_rmv_mem:+rb=%p\n", rb);
   void* mem;
   RingBuffCell* cell;
-  ac_u32 pos = rb->rmv_idx;
+  AcU32 pos = rb->rmv_idx;
 
   cell = &rb->ring_buffer[pos & rb->mask];
-  ac_u32 seq = __atomic_load_n(&cell->seq, __ATOMIC_ACQUIRE);
+  AcU32 seq = __atomic_load_n(&cell->seq, __ATOMIC_ACQUIRE);
   ac_s32 dif = seq - (pos + 1);
 
   if (dif < 0) {
@@ -104,10 +104,10 @@ void* AcMpscRingBuff_rmv_mem(AcMpscRingBuff* rb) {
 /**
  * @see ac_mpsc_ring_buff.h
  */
-ac_u64 AcMpscRingBuff_deinit(AcMpscRingBuff* rb) {
+AcU64 AcMpscRingBuff_deinit(AcMpscRingBuff* rb) {
   ac_debug_printf("AcMpscRingBuff_deinit:+rb=%p\n", rb);
 
-  ac_u64 processed = rb->processed;
+  AcU64 processed = rb->processed;
   ac_free(rb->ring_buffer);
   rb->ring_buffer = AC_NULL;
   rb->add_idx = 0;
@@ -124,7 +124,7 @@ ac_u64 AcMpscRingBuff_deinit(AcMpscRingBuff* rb) {
 /**
  * @see ac_mpsc_ring_buff.h
  */
-AcStatus AcMpscRingBuff_init(AcMpscRingBuff* rb, ac_u32 size) {
+AcStatus AcMpscRingBuff_init(AcMpscRingBuff* rb, AcU32 size) {
   AcStatus status = AC_STATUS_OK;
 
   ac_debug_printf("AcMpscRingBuff_init:+rb=%p size=%d\n", rb, size);
@@ -141,7 +141,7 @@ AcStatus AcMpscRingBuff_init(AcMpscRingBuff* rb, ac_u32 size) {
   }
   rb->count = 0;
   rb->ring_buffer = ac_malloc(size * sizeof(*rb->ring_buffer));
-  for (ac_u32 i = 0; i < rb->size; i++) {
+  for (AcU32 i = 0; i < rb->size; i++) {
     rb->ring_buffer[i].seq = i;
     rb->ring_buffer[i].mem = AC_NULL;
   }

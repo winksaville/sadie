@@ -24,6 +24,7 @@
 #ifndef SADIE_LIBS_AC_MPSC_RING_BUFF_INCS_AC_MPSC_RING_BUFF_INTERNAL_H
 #define SADIE_LIBS_AC_MPSC_RING_BUFF_INCS_AC_MPSC_RING_BUFF_INTERNAL_H
 
+#include <ac_attributes.h>
 #include <ac_cache_line.h>
 #include <ac_inttypes.h>
 #include <ac_mem.h>
@@ -31,20 +32,20 @@
 
 typedef struct RingBuffCell {
   void* mem;
-  ac_u32 seq;
+  AcU32 seq;
 } RingBuffCell;
 
 
 typedef struct AcMpscRingBuff {
-  ac_u32 add_idx __attribute__(( aligned (64) ));
-  ac_u32 rmv_idx __attribute__(( aligned (64) ));
-  ac_u32 size;
-  ac_u32 mask;
+  AcU32 add_idx AC_ATTR_ALIGNED(64);
+  AcU32 rmv_idx AC_ATTR_ALIGNED(64);
+  AcU32 size;
+  AcU32 mask;
   RingBuffCell* ring_buffer;
 
   // Used for debugging and not always valid
-  _Atomic(ac_u32) count;
-  _Atomic(ac_u64) processed;
+  _Atomic(AcU32) count;
+  _Atomic(AcU64) processed;
 } AcMpscRingBuff;
 
 #endif

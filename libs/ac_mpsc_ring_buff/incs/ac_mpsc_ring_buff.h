@@ -41,7 +41,7 @@ typedef struct AcMpscRingBuff AcMpscRingBuff;
  *
  * @return AC_TRUE if added AC_FALSE of full
  */
-ac_bool AcMpscRingBuff_add_mem(AcMpscRingBuff* rb, void* mem);
+AcBool AcMpscRingBuff_add_mem(AcMpscRingBuff* rb, void* mem);
 
 /**
  * Remove a memory from the ring buffer. This maybe used only by

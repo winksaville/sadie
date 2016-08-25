@@ -37,15 +37,15 @@ void AcMpscRingBuff_print(const char* leader, AcMpscRingBuff* rb) {
       ac_printf("%s\n", leader);
     }
 
-    ac_u32 add_idx = rb->add_idx;
-    ac_u32 rmv_idx = rb->rmv_idx;
+    AcU32 add_idx = rb->add_idx;
+    AcU32 rmv_idx = rb->rmv_idx;
 
     ac_printf("rb=%p add_idx=%d rmv_idx=%d count=%d processed=%lu ",
         rb, add_idx, rmv_idx, rb->count, rb->processed);
 
-    ac_u32 pos = rmv_idx;
+    AcU32 pos = rmv_idx;
     RingBuffCell* cell = &rb->ring_buffer[pos & rb->mask];
-    ac_u32 seq = cell->seq;
+    AcU32 seq = cell->seq;
     ac_s32 diff = seq - (pos + 1);
     if (diff < 0) {
         ac_printf("empty\n");
