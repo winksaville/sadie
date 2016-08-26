@@ -22,6 +22,7 @@
 
 #include <ac_assert.h>
 #include <ac_mem_dbg.h>
+#include <ac_intmath.h>
 #include <ac_inttypes.h>
 #include <ac_memmgr.h>
 #include <ac_memcpy.h>
@@ -137,13 +138,7 @@ AcStatus AcMpscRingBuff_init(AcMpscRingBuff* rb, AcU32 size) {
 
   rb->add_idx = 0;
   rb->rmv_idx = 0;
-  AcU32 one_bits = 0;
-  AcU32 test = size;
-  for (AcU32 i = 0; i < (sizeof(size) * 8); i++) {
-    one_bits += test & 1;
-    test >>= 1;
-  }
-  if (one_bits != 1) {
+  if (AC_COUNT_ONE_BITS(size) != 1) {
     ac_debug_printf("AcMpscRingBuff_init:-rb=%p size=%d not a power of 2 return BAD_PARAM\n",
         rb, size);
     return AC_STATUS_BAD_PARAM;

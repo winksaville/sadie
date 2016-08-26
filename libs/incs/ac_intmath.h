@@ -23,8 +23,8 @@
  * Divide x / y and round up the result
  */
 #define AC_U64_DIV_ROUND_UP(x, y) ({    \
-    ac_u64 rem = (x) % (y);             \
-    ac_u64 result = ((x) + rem) / (y);  \
+    AcU64 rem = (x) % (y);              \
+    AcU64 result = ((x) + rem) / (y);   \
     result;                             \
 })
 
@@ -32,9 +32,19 @@
  * Divide x / y and round up the result
  */
 #define AC_U32_DIV_ROUND_UP(x, y) ({    \
-    ac_u32 rem = (x) % (y);             \
-    ac_u32 result = ((x) + rem) / (y);  \
+    AcU32 rem = (x) % (y);              \
+    AcU32 result = ((x) + rem) / (y);   \
     result;                             \
+})
+
+#define AC_COUNT_ONE_BITS(value) ({     \
+  AcUint one_bits = 0;                  \
+  AcUptr v = value;                     \
+  for (AcUint i = 0; v != 0; i++) {     \
+    one_bits += v & 1;                  \
+    v >>= 1;                            \
+  }                                     \
+  one_bits;                             \
 })
 
 #endif
