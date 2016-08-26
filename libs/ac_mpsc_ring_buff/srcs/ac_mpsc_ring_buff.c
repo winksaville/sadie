@@ -129,16 +129,29 @@ AcStatus AcMpscRingBuff_init(AcMpscRingBuff* rb, AcU32 size) {
 
   ac_debug_printf("AcMpscRingBuff_init:+rb=%p size=%d\n", rb, size);
 
-  rb->add_idx = 0;
-  rb->rmv_idx = 0;
-  rb->size = size;
-  rb->mask = size - 1;
-  rb->processed = 0;
-  if ((size & rb->mask) != 0) {
-    ac_debug_printf("AcMpscRingBuff_init:-rb=%p size=%d not power of 2 return NULL\n",
+  if (rb == AC_NULL) {
+    ac_debug_printf("AcMpscRingBuff_init:-rb=%p size=%d rb is AC_NULL return BAD_PARAM\n",
         rb, size);
     return AC_STATUS_BAD_PARAM;
   }
+
+  rb->add_idx = 0;
+  rb->rmv_idx = 0;
+  AcU32 one_bits = 0;
+  AcU32 test = size;
+  for (AcU32 i = 0; i < (sizeof(size) * 8); i++) {
+    one_bits += test & 1;
+    test >>= 1;
+  }
+  if (one_bits != 1) {
+    ac_debug_printf("AcMpscRingBuff_init:-rb=%p size=%d not a power of 2 return BAD_PARAM\n",
+        rb, size);
+    return AC_STATUS_BAD_PARAM;
+  }
+
+  rb->size = size;
+  rb->mask = size - 1;
+  rb->processed = 0;
   rb->count = 0;
   rb->ring_buffer = ac_malloc(size * sizeof(*rb->ring_buffer));
   for (AcU32 i = 0; i < rb->size; i++) {
@@ -146,7 +159,7 @@ AcStatus AcMpscRingBuff_init(AcMpscRingBuff* rb, AcU32 size) {
     rb->ring_buffer[i].mem = AC_NULL;
   }
   if (rb->ring_buffer == AC_NULL) {
-    ac_debug_printf("initMpscRingBuff:-pRb=%p size=%d could not allocate ring_buffer return NULL\n",
+    ac_debug_printf("initMpscRingBuff:-pRb=%p size=%d could not allocate ring_buffer return OUT_OF_MEMORY\n",
         rb, size);
     return AC_STATUS_OUT_OF_MEMORY;
   }

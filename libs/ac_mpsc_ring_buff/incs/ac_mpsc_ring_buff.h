@@ -24,6 +24,7 @@
 #ifndef SADIE_LIBS_AC_MPSC_RING_BUFF_INCS_AC_MPSC_RING_BUFF_H
 #define SADIE_LIBS_AC_MPSC_RING_BUFF_INCS_AC_MPSC_RING_BUFF_H
 
+#include <ac_mpsc_ring_buff_internal.h>
 #include <ac_cache_line.h>
 #include <ac_inttypes.h>
 #include <ac_mem.h>
