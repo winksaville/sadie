@@ -72,7 +72,7 @@ ac_static_assert(sizeof(AcOp) == sizeof(ac_u64), L"sizeof(AcOperation) != 8");
 typedef struct AcNextPtr {
   AcNextPtr* next;
   AcMessage* msg;
-} AcNextPtr;
+} AcNextPtr AC_ATTR_ALIGNED_AC_U64;
 
 /**
  * Message Header
@@ -88,11 +88,11 @@ typedef struct AcMsgHdr {
  * Message
  */
 typedef struct AcMessage {
-  AcNextPtr      next;   ///< A 'pointer' the next message
-  AcMessagePool* mp;     ///< The message pool this message belongs to
-  AcMsgHdr       hdr;    ///< A message header
-  AcU8           data[]; ///< Variable sized extra data, maybe 0
-} AcMessage;
+  AcNextPtr*     next_ptr; ///< A 'pointer' the next message
+  AcMessagePool* mp;       ///< The message pool this message belongs to
+  AcMsgHdr       hdr;      ///< A message header
+  AcU8           data[];   ///< Variable sized extra data, maybe 0
+} AcMessage AC_ATTR_ALIGNED_AC_U64;
 
 /**
  * The PROTOCOL for any system operations

@@ -32,8 +32,10 @@
 typedef struct AcMessagePool {
   AcMpscRingBuff rb;      ///< Ring buffer to hold the messages
   AcU32 len_data;         ///< Length of the data array in each message
-  void* msgs_unaligned;   ///< If !AC_NULL these are pre allocated messages
+  void* msgs_raw;         ///< If !AC_NULL raw ponter to pass to ac_free
   AcMessage* msgs;        ///< msgs aligned to AC_MAC_CACHE_LINE_LEN
+  void* next_ptrs_raw;    ///< if !AC_NULL raw pointer to pass to ac_free
+  AcNextPtr* next_ptrs;   ///< next_ptrs for each message
 } AcMessagePool;
 
 /**
