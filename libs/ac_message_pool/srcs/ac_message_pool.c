@@ -48,8 +48,8 @@ AcStatus ac_calloc_align(AcU32 count, AcU32 size, AcU32 alignment,
   AcU32 elem_size = 0;
   AcUptr mask = 0;
 
-  if (count == 0 | size == 0 | AC_COUNT_ONE_BITS(alignment) != 1
-      | pRaw == AC_NULL | pAligned == AC_NULL | pElemSize == AC_NULL) {
+  if ((count == 0) | (size == 0) | (AC_COUNT_ONE_BITS(alignment) != 1)
+      | (pRaw == AC_NULL) | (pAligned == AC_NULL) | (pElemSize == AC_NULL)) {
     ac_debug_printf("ac_calloc_align: BAD_PARAM\n");
     status = AC_STATUS_BAD_PARAM;
     goto done;
