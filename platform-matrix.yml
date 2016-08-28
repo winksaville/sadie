@@ -10,7 +10,7 @@ command:
 
   # Posix: Create the build directory and the build.ninja file
   - if [[ "${Platform}" == 'Posix' ]]; then rm -rf build-${Platform}; mkdir -p build-${Platform}; fi
-  - if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; meson -D Platform=${Platform} --cross-file ../cross-file-Posix-clang --buildtype plain ..; fi
+  - if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; meson -D Platform=${Platform} --cross-file ../cross-file-Posix-gcc --buildtype plain ..; fi
 
   # Posix only tests
   - if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; ninja run-test-posix-ac_inet_link; fi
@@ -23,7 +23,7 @@ command:
   - cd build-${Platform}; ninja run-test-ac_mem
   - cd build-${Platform}; ninja run-test-ac_check_sum
   - cd build-${Platform}; ninja run-test-ac_comp_mgr
-  - cd build-${Platform}; ninja run-test-ac_dispatcher
+  #- cd build-${Platform}; ninja run-test-ac_dispatcher
   - cd build-${Platform}; ninja run-test-ac_inet_link
   - cd build-${Platform}; ninja run-test-ac_mem_pool
   - cd build-${Platform}; ninja run-test-ac_memmgr

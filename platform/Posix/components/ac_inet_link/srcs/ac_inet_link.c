@@ -21,7 +21,8 @@
 #include <ac_assert.h>
 #include <ac_comp_mgr.h>
 #include <ac_debug_printf.h>
-#include <ac_msg_pool.h>
+#include <ac_message.h>
+#include <ac_message_pool.h>
 #include <ac_status.h>
 
 typedef struct {
@@ -29,29 +30,36 @@ typedef struct {
   ac_u32 a_u32;
 } AcCompIpv4LinkLayer;
 
-static void send_error_rsp(AcComp* comp, AcMsg* msg, AcStatus status) {
+static void send_error_rsp(AcComp* comp, AcMessage* msg, AcStatus status) {
 }
 
-static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
+static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMessage* msg) {
   AcCompIpv4LinkLayer* this = (AcCompIpv4LinkLayer*)comp;
-  ac_debug_printf("%s:+msg->arg1=%ls msg->arg2=%lx\n",
-      this->comp.name, msg->arg1, msg->arg2);
+  ac_debug_printf("%s:+msg->hdr.op=%lx\n", this->comp.name, msg->hdr.op.operation);
 
-  AcOperation op = { .operation = msg->arg1 };
-  if (op.operation == AC_INIT_CMD.operation) {
-    ac_debug_printf("%s: AC_INIT_CMD\n", this->comp.name);
-  } else if (op.operation == AC_DEINIT_CMD.operation) {
-    ac_debug_printf("%s: AC_DEINIT_CMD\n", this->comp.name);
-  } else if (op.operation == AC_INET_SEND_PACKET_REQ.operation) {
-    ac_debug_printf("%s: ok\n", this->comp.name);
-  } else {
-    send_error_rsp(comp, msg, AC_STATUS_UNRECOGNIZED_PROTOCOL);
+  switch (msg->hdr.op.operation) {
+    case (AC_INIT_CMDx): {
+      ac_debug_printf("%s: AC_INIT_CMD\n", this->comp.name);
+      break;
+    }
+    case (AC_DEINIT_CMDx): {
+      ac_debug_printf("%s: AC_DEINIT_CMD\n", this->comp.name);
+      break;
+    }
+    case (AC_INET_SEND_PACKET_REQ): {
+      ac_debug_printf("%s: AC_INET_SEND_PACKET_REQ\n", this->comp.name);
+      break;
+    }
+    default: {
+      ac_debug_printf("%s: AC_STATUS_UNRECOGNIZED_PROTOCOL send error rsp\n", this->comp.name);
+      send_error_rsp(comp, msg, AC_STATUS_UNRECOGNIZED_PROTOCOL);
+      break;
+    }
   }
 
-  AcMsgPool_ret_msg(msg);
+  AcMessagePool_ret_msg(msg);
 
-  ac_debug_printf("%s:-msg->arg1=%ls msg->arg2=%lx\n",
-      this->comp.name, msg->arg1, msg->arg2);
+  ac_debug_printf("%s:-msg->op=%lx\n", this->comp.name, msg->hdr.op.operation);
   return AC_TRUE;
 }
 

@@ -128,6 +128,7 @@ ac_u32 count_msgs(AcMsgPool* mp, ac_u32 msg_count) {
 ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count, ac_u32 comps_per_thread) {
   ac_bool error = AC_FALSE;
 
+#if 0
   ac_printf("test_msg_pool_multiple_threads:+ thread_count=%d comps_per_thread=%d rl=%d\n",
       thread_count, comps_per_thread, ready_length());
 #if AC_PLATFORM == VersatilePB
@@ -259,5 +260,6 @@ ac_bool test_msg_pool_multiple_threads(ac_u32 thread_count, ac_u32 comps_per_thr
 #endif
 
   ac_printf("test_msg_pool_multiple_threads:- error=%d rl=%d\n", error, ready_length());
+#endif
   return error;
 }

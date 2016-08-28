@@ -46,12 +46,12 @@ typedef struct AC_ATTR_PACKED {
     AcU64 operation;       ///< The full 64 bit operation
     struct {
       AcU32 opcode:16;     ///< Bits  0-15 is opcode
-      AcU32 optype:2;      ///< Bits 16-17 AC_RSV 0x0 == reserved
-                           ///< Bits 16-17 AC_CMD 0x1 == cmd (no response expected)
-                           ///< Bits 16-17 AC_REQ 0x2 == req (response expected)
-                           ///< Bits 16-17 AC_RSP 0x3 == rsp A response to a previous command
-      AcU64 protocol:44;   ///< Bits 18-61 protocol
-      AcU64 ver:2;         ///< Bits 62-63 version must be 0
+      AcU32 optype:2;      ///< Bits 16-17 AC_OPTYPE_RSV 0x0 == reserved
+                           ///< Bits 16-16 AC_OPTYPE_CMD 0x1 == cmd (no response expected)
+                           ///< Bits 16-17 AC_OPTYPE_REQ 0x2 == req (response expected)
+                           ///< Bits 16-17 AC_OPTYPE_RSP 0x3 == rsp A response to a previous command
+      AcU64 ver:2;         ///< Bits 18-19 version must be 0
+      AcU64 protocol:44;   ///< Bits 20-63 protocol
     };
   };
 } AcOp;
@@ -60,11 +60,11 @@ ac_static_assert(sizeof(AcOp) == sizeof(ac_u64), L"sizeof(AcOperation) != 8");
 /**
  * Construct an operation
  */
-#define OPERATION (p, ot, oc) \
-    (AC_SET_BITS(AcU64, oc,  0, 16) \
-     AC_SET_BITS(AcU64, ot, 16,  2) \
-     AC_SET_BITS(AcU64,  p, 20, 44) \
-     AC_SET_BITS(AcU64,  0, 62,  2))
+#define OPERATION(p, ot, oc) \
+   (AC_SET_BITS(AcU64, ((AcU64)0), oc,   0, 16)   \
+   | AC_SET_BITS(AcU64, ((AcU64)0), ot,  16,  2)  \
+   | AC_SET_BITS(AcU64, ((AcU64)0), 0,   18,  2)  \
+   | AC_SET_BITS(AcU64, ((AcU64)0), p,   20, 44)) \
 
 /**
  * Next AcMessage
@@ -102,11 +102,11 @@ typedef struct AcMessage {
 /**
  * AC_INIT_CMD is the first command sent to a component
  */
-#define AC_INIT_CMD OPERATION(AC_SYSTEM_PROTOCOL, AC_OPTYPE_CMD, 1);
+#define AC_INIT_CMDx OPERATION(AC_SYSTEM_PROTOCOL, AC_OPTYPE_CMD, 1)
 
 /**
  * AC_DEINIT_CMD is the last command sent to a component
  */
-#define AC_DEINIT_CMD OPERATION(AC_SYSTEM_PROTOCOL, AC_OPTYPE_CMD, 2);
+#define AC_DEINIT_CMDx OPERATION(AC_SYSTEM_PROTOCOL, AC_OPTYPE_CMD, 2)
 
 #endif

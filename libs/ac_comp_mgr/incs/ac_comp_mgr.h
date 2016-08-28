@@ -23,7 +23,7 @@
 #define SADIE_LIBS_AC_COMP_MGR_INCS_AC_COMP_MGR_H
 
 #include <ac_inttypes.h>
-#include <ac_msg.h>
+#include <ac_message.h>
 
 /**
  * A component manager as returned by AcCompMgr_init
@@ -47,7 +47,7 @@ typedef struct AcCompInfo AcCompInfo;
  * case the parent component will be called, otherwise processing
  * is complete. TODO: Add support for Hierarchical Processing
  */
-typedef ac_bool (*AcCompMsgProcessor)(AcComp* this, AcMsg* pmsg);
+typedef AcBool (*AcCompMsgProcessor)(AcComp* this, AcMessage* msg);
 
 /**
  * An Asynchronouse Component
@@ -92,7 +92,7 @@ AcComp* AcCompMgr_rmv_comp(AcCompInfo* comp_info);
 /**
  * Send a message to the comp
  */
-void AcCompMgr_send_msg(AcCompInfo* info, AcMsg* msg);
+void AcCompMgr_send_msg(AcCompInfo* info, AcMessage* msg);
 
 /**
  * Deiniti AcCompMsg

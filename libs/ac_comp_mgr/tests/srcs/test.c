@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-#define NDEBUG
+//#define NDEBUG
 
 #include <ac_comp_mgr.h>
 #include <ac_comp_mgr/tests/incs/test.h>
 
-#include <ac_msg_pool.h>
+#include <ac_intmath.h>
+#include <ac_message.h>
+#include <ac_message_pool.h>
 #include <ac_debug_printf.h>
 #include <ac_printf.h>
 #include <ac_receptor.h>
@@ -37,10 +39,14 @@ ac_bool test_thread_comps(ac_u32 threads, ac_u32 comps_per_thread) {
   ac_bool error = AC_FALSE;
   AcStatus status;
   ac_debug_printf("test_%dx%d:+\n", threads, comps_per_thread);
-  AcMsgPool mp;
+  AcMessagePool mp;
+  ac_u32 msg_count = threads * comps_per_thread;
 
-  ac_debug_printf("test_%dx%d: create msg pool\n", threads, comps_per_thread);
-  status = AcMsgPool_init(&mp, threads * comps_per_thread);
+  ac_debug_printf("test_%dx%d: msg_count=%d is power of 2\n", threads, comps_per_thread, msg_count);
+  error |= AC_TEST(AC_COUNT_ONE_BITS(msg_count) == 1);
+
+  ac_debug_printf("test_%dx%d: create msg pool msg_count=%u\n", threads, comps_per_thread, msg_count);
+  status = AcMessagePool_init(&mp, msg_count, 0);
   error |= AC_TEST(status == AC_STATUS_OK);
 
   ac_debug_printf("test_%dx%d: init comp mgr\n", threads, comps_per_thread);
@@ -56,6 +62,8 @@ ac_bool test_thread_comps(ac_u32 threads, ac_u32 comps_per_thread) {
   ac_debug_printf("test_%dx%d: deinit comp mgr\n", threads, comps_per_thread);
   AcCompMgr_deinit(cm);
 
+  AcMessagePool_deinit(&mp);
+
   ac_debug_printf("test_%dx%d:-\n", threads, comps_per_thread);
   return error;
 }
@@ -63,8 +71,8 @@ ac_bool test_thread_comps(ac_u32 threads, ac_u32 comps_per_thread) {
 int main(void) {
   ac_bool error = AC_FALSE;
 
-  ac_thread_init(3);
-  AcReceptor_init(20);
+  ac_thread_init(4);
+  AcReceptor_init(40);
   AcTime_init();
 
 #if AC_PLATFORM == VersatilePB
@@ -72,13 +80,13 @@ int main(void) {
 #else
   error|= test_thread_comps(1, 1);
   error|= test_thread_comps(1, 2);
-  error|= test_thread_comps(1, 3);
+  error|= test_thread_comps(1, 4);
   error|= test_thread_comps(2, 1);
   error|= test_thread_comps(2, 2);
-  error|= test_thread_comps(2, 3);
-  error|= test_thread_comps(3, 1);
-  error|= test_thread_comps(3, 2);
-  error|= test_thread_comps(3, 3);
+  error|= test_thread_comps(2, 4);
+  error|= test_thread_comps(4, 1);
+  error|= test_thread_comps(4, 2);
+  error|= test_thread_comps(4, 4);
 #endif
 
   if (!error) {

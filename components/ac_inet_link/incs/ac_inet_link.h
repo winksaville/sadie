@@ -20,6 +20,7 @@
 #include <ac_assert.h>
 #include <ac_attributes.h>
 #include <ac_comp_mgr.h>
+#include <ac_message.h>
 #include <ac_inttypes.h>
 #include <ac_status.h>
 
@@ -90,9 +91,9 @@ typedef struct {
  */
 #define AC_INET_SEND_PACKET_PROTOCOL   0x1234
 
-DEFINE_AC_OPERATION(AC_INET_SEND_PACKET_CMD, AC_INET_SEND_PACKET_PROTOCOL, AC_CMD, 0x1);
-DEFINE_AC_OPERATION(AC_INET_SEND_PACKET_REQ, AC_INET_SEND_PACKET_PROTOCOL, AC_REQ, 0x1);
-DEFINE_AC_OPERATION(AC_INET_SEND_PACKET_RSP, AC_INET_SEND_PACKET_PROTOCOL, AC_RSP, 0x1);
+#define AC_INET_SEND_PACKET_CMD OPERATION(AC_INET_SEND_PACKET_PROTOCOL, AC_OPTYPE_CMD, 0x1)
+#define AC_INET_SEND_PACKET_REQ OPERATION(AC_INET_SEND_PACKET_PROTOCOL, AC_OPTYPE_REQ, 0x1)
+#define AC_INET_SEND_PACKET_RSP OPERATION(AC_INET_SEND_PACKET_PROTOCOL, AC_OPTYPE_RSP, 0x1)
 
 /**
  * AcInetSendPacetOpCr is either AC_INET_SEND_PACKET_CMD or _REQ.
@@ -101,7 +102,7 @@ DEFINE_AC_OPERATION(AC_INET_SEND_PACKET_RSP, AC_INET_SEND_PACKET_PROTOCOL, AC_RS
  * detected by before transmitting.
  */
 typedef struct {
-  AcOperation op;       // Op is the operation AC_INET_SEND_PACKET_CMD | _REQ
+  AcOp      op;         // Op is the operation AC_INET_SEND_PACKET_CMD | _REQ
   ac_u64    tag;        // tag an app defined tag
   ac_u64    app_vec_cnt;// Number of AcIoBuff's for application data
   AcIoBuff* link_buff;  // Pointer to the Link header buffer
@@ -116,7 +117,7 @@ typedef struct {
  * Generally will only be returned if an error unless po.flags = AC_REQ
  */
 typedef struct {
-  AcOperation op;       // Opeeration is AC_INET_SEND_PACKET_RSP
+  AcOp      op;         // Opeeration is AC_INET_SEND_PACKET_RSP
   ac_u64    tag;        // tag an app defined opaque value
   AcStatus  status;     // 0 == successful, !0 == error
 } AcInetSendPacketOpRsp;

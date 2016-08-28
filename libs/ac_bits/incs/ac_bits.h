@@ -19,28 +19,18 @@
 
 #include <ac_inttypes.h>
 
-#define AC_BIT(type, n) ({ \
-  type result = (type)1 << n; \
-  result; \
-})
+#define AC_BIT(type, n) ((type)1 << (n))
 
-#define AC_BIT_MASK(type, bit_count) ({ \
-  type ones = (type)~0; \
-  type result = ~((type)(ones << (bit_count))); \
-  result; \
-})
+#define AC_BIT_MASK(type, bit_count) (~((type)((~(type)0) << (bit_count))))
 
-#define AC_GET_BITS(type, val, bit_idx, bit_count) ({ \
-  type result = (type)((val) >> (bit_idx)) & AC_BIT_MASK(__typeof__(val), bit_count); \
-  result; \
-})
+#define AC_GET_BITS(type, val, bit_idx, bit_count) (\
+  (type)(((val) >> (bit_idx)) & AC_BIT_MASK(__typeof__(val), (bit_count))) \
+)
 
-#define AC_SET_BITS(type, val, new_bits, bit_idx, bit_count) ({ \
-  __typeof__(val) mask = AC_BIT_MASK(__typeof__(val), bit_count); \
-  __typeof__(val) bits = (val) & ~(mask << (bit_idx)); \
-  type result = (type)(bits | ((((__typeof__(val))(new_bits)) & mask) << (bit_idx))); \
-  result; \
-})
+#define AC_SET_BITS(type, val, new_bits, bit_idx, bit_count) ( \
+   (type)(((val) & (~(AC_BIT_MASK(__typeof__(val), (bit_count)) << (bit_idx)))) | \
+     ((((__typeof__(val))(new_bits)) & AC_BIT_MASK(__typeof__(val), (bit_count))) << (bit_idx))) \
+)
 
 #define AC_GET_LOWB(val) AC_GET_BITS(ac_u8, val, 0, 8)
 

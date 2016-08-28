@@ -14,7 +14,7 @@
 
 subdir('test-ac_arg')
 subdir('test-ac_assert')
-subdir('test-ac_dispatcher')
+#subdir('test-ac_dispatcher')
 subdir('test-ac_memmgr')
 subdir('test-ac_receptor')
 subdir('test-ac_string')

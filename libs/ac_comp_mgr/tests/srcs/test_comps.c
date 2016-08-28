@@ -19,8 +19,10 @@
 #include <ac_comp_mgr.h>
 
 #include <ac_assert.h>
+#include <ac_inttypes.h>
 #include <ac_memmgr.h>
-#include <ac_msg_pool.h>
+#include <ac_message.h>
+#include <ac_message_pool.h>
 #include <ac_debug_printf.h>
 #include <ac_printf.h>
 #include <ac_receptor.h>
@@ -38,27 +40,27 @@ typedef struct T1Comp {
   ac_u8 name_buf[10];
 } T1Comp;
 
-static ac_bool msg_proc(AcComp* ac, AcMsg* msg) {
+
+static ac_bool msg_proc(AcComp* ac, AcMessage* msg) {
   ac_bool signal;
   T1Comp* this = (T1Comp*)ac;
 
   ac_debug_printf("msg_proc:+%s\n", this->comp.name);
 
-  if (msg->arg1 == AC_INIT_CMD.operation) {
+  if (msg->hdr.op.operation == AC_INIT_CMDx) {
     this->init_count += 1;
     this->error |= AC_TEST(this->init_count == 1);
     signal = AC_FALSE;
-  } else if (msg->arg1 == AC_DEINIT_CMD.operation) {
+  } else if (msg->hdr.op.operation == AC_DEINIT_CMDx) {
     this->deinit_count += 1;
     this->error |= AC_TEST(this->deinit_count == 1);
     signal = AC_FALSE;
   } else {
-    this->error |= AC_TEST(msg->arg1 == 1);
-    this->error |= AC_TEST(msg->arg2 == 2);
+    this->error |= AC_TEST(msg->hdr.op.operation == 1);
     signal = AC_TRUE;
   }
 
-  AcMsgPool_ret_msg(msg);
+  AcMessagePool_ret_msg(msg);
 
   if (signal) {
     AcReceptor_signal(this->done);
@@ -72,12 +74,12 @@ static ac_bool msg_proc(AcComp* ac, AcMsg* msg) {
  * Test we can create, send a message and remove components.
  *
  * @param: cm is AcCompMgr to use
- * @param: mp is AcMsgPool to use
+ * @param: mp is AcMessagePool to use
  * @param: comp_count is number of components to create
  *
  * @return: AC_TRUE if an error
  */
-ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
+ac_bool test_comps(AcCompMgr* cm, AcMessagePool* mp, ac_u32 comp_count) {
   ac_debug_printf("test_comps:+cm=%p mp=%p comp_count=%d\n",
       cm, mp, comp_count);
   ac_bool error = AC_FALSE;
@@ -113,12 +115,11 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
     ac_debug_printf("test_comps: send msgs\n");
     for (ac_u32 i = 0; i < comp_count; i++) {
       c = &comps[i];
-      AcMsg* msg;
-      msg = AcMsgPool_get_msg(mp);
+      AcMessage* msg;
+      msg = AcMessagePool_get_msg(mp);
       error |= AC_TEST(msg != AC_NULL);
 
-      msg->arg1 = 1;
-      msg->arg2 = 2;
+      msg->hdr.op.operation = OPERATION(0, 0, 1);
       ac_debug_printf("test_comps: send msg %s ci=%p\n", c->comp.name, c->ci);
       AcCompMgr_send_msg(c->ci, msg);
     }

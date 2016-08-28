@@ -141,8 +141,9 @@ AcComp* AcCompMgr_find_comp(AcCompMgr* mgr, ac_u8* name) {
     ci = &mgr->comp_infos[i];
     comp = ci->comp;
     if (comp != AC_NULL) {
-      if (ac_strncmp((const char*)name, (const char*)comp->name, ac_strlen((const char*)comp->name)) == 0) {
-        ac_debug_printf("AcCompMgr_find_comp: dtp->d=%p, could not add comp=%p\n", dtp->d, comp);
+      if (ac_strncmp((const char*)name,
+            (const char*)comp->name, ac_strlen((const char*)comp->name)) == 0) {
+        ac_debug_printf("AcCompMgr_find_comp: name=%s, could not add comp=%p\n", name, comp);
         found = AC_TRUE;
         break;
       }
@@ -223,7 +224,7 @@ AcComp* AcCompMgr_rmv_comp(AcCompInfo* ci) {
 /**
  * see ac_comp_mgr.h
  */
-void AcCompMgr_send_msg(AcCompInfo* info, AcMsg* msg) {
+void AcCompMgr_send_msg(AcCompInfo* info, AcMessage* msg) {
   AcDispatcher_send_msg(info->dc, msg);
   AcReceptor_signal(info->dtp->waiting);
 }
