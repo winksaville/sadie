@@ -579,7 +579,7 @@ STATIC void init_timer() {
   // Section 10.5.4.1 "TSC-Deadline Mode"
 
   get_cpuid(1, &out_eax, &out_ebx, &out_ecx, &out_edx);
-  if (AC_GET_BITS(ac_u32, out_ecx, 24, 1) != 1) {
+  if (AC_GET_BITS(ac_u32, out_ecx, 1, 24) != 1) {
     ac_printf("CPU does not support TSC-Deadline mode\n");
     reset_x86();
   }

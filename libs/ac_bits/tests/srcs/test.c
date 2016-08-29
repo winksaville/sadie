@@ -50,21 +50,21 @@ ac_bool test_bits() {
   error |= AC_TEST(AC_BIT(ac_int, 0) == 0x1);
 
   ac_u32 u32 = 0x80000000;
-  error |= AC_TEST(AC_GET_BITS(ac_u32, u32, 30, 2) == 0b10);
-  ac_printf("AC_GET_BITS(ac_u32, u32=0x80000000, 30, 2)=0b%b\n",
-      AC_GET_BITS(ac_u32, u32, 30, 2));
+  error |= AC_TEST(AC_GET_BITS(ac_u32, u32, 2, 30) == 0b10);
+  ac_printf("AC_GET_BITS(ac_u32, u32=0x80000000, 2, 30)=0b%b\n",
+      AC_GET_BITS(ac_u32, u32, 2, 30));
 
-  ac_u32 u32_1 = AC_SET_BITS(ac_u32, (ac_u32)0, 0b10, 30, 2);
+  ac_u32 u32_1 = AC_SET_BITS(ac_u32, (ac_u32)0, 0b10, 2, 30);
   error |= AC_TEST(u32_1 == 0x80000000);
-  u32_1 = AC_SET_BITS(ac_u32, u32_1, 0b1, 30, 1);
+  u32_1 = AC_SET_BITS(ac_u32, u32_1, 0b1, 1, 30);
   error |= AC_TEST(u32_1 == 0xC0000000);
 
-  ac_u64 u64_1 = AC_SET_BITS(ac_u64, (ac_u64)0, 0b10, 62, 2);
-  ac_printf("AC_SET_BITS(ac_u64, 0lu, 0b10, 62, 2)=0x%lx\n", u64_1);
+  ac_u64 u64_1 = AC_SET_BITS(ac_u64, (ac_u64)0, 0b10, 2, 62);
+  ac_printf("AC_SET_BITS(ac_u64, 0lu, 0b10, 2, 62)=0x%lx\n", u64_1);
 
   error |= AC_TEST(u64_1 == 0x8000000000000000);
-  u64_1 = AC_SET_BITS(ac_u64, u64_1, 0b01, 62, 1);
-  ac_printf("AC_SET_BITS(ac_u64, 0lu, 0b01, 62, 1)=0x%lx\n", u64_1);
+  u64_1 = AC_SET_BITS(ac_u64, u64_1, 0b01, 1, 62);
+  ac_printf("AC_SET_BITS(ac_u64, 0lu, 0b01, 1, 62)=0x%lx\n", u64_1);
   error |= AC_TEST(u64_1 == 0xC000000000000000);
 
   return error;

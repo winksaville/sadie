@@ -33,7 +33,7 @@ void apci_u256_print(char* lstr, ac_u8* p) {
     if (i != 7) ac_printf(" ");
     ac_u32 u32 = *(ac_u32*)(p + (i * 16));
     for (ac_sint j = 3; j >= 0; j--) {
-      ac_u8 byte = AC_GET_BITS(ac_u8, u32, j * 8, 8);
+      ac_u8 byte = AC_GET_BITS(ac_u8, u32, 8, j * 8);
       if ((byte & 0xF0) == 0x00) {
         ac_printf("0"); // Need a leading zero
       }

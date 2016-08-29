@@ -23,16 +23,16 @@
 
 #define AC_BIT_MASK(type, bit_count) (~((type)((~(type)0) << (bit_count))))
 
-#define AC_GET_BITS(type, val, bit_idx, bit_count) (\
+#define AC_GET_BITS(type, val, bit_count, bit_idx) (\
   (type)(((val) >> (bit_idx)) & AC_BIT_MASK(__typeof__(val), (bit_count))) \
 )
 
-#define AC_SET_BITS(type, val, new_bits, bit_idx, bit_count) ( \
+#define AC_SET_BITS(type, val, new_bits, bit_count, bit_idx) ( \
    (type)(((val) & (~(AC_BIT_MASK(__typeof__(val), (bit_count)) << (bit_idx)))) | \
      ((((__typeof__(val))(new_bits)) & AC_BIT_MASK(__typeof__(val), (bit_count))) << (bit_idx))) \
 )
 
-#define AC_GET_LOWB(val) AC_GET_BITS(ac_u8, val, 0, 8)
+#define AC_GET_LOWB(val) AC_GET_BITS(ac_u8, val, 8, 0)
 
 #define AC_GET_HIB(val) AC_GET_BITS(ac_u8, val, 8, 8)
 

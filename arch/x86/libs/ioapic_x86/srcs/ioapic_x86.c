@@ -55,7 +55,7 @@ ioapic_regs* ioapic_get_addr(ac_uint idx) {
  */
 ac_u8 ioapic_get_id(ioapic_regs* regs) {
   ac_u32 tmp = ioapic_read_u32(regs, 0);
-  return AC_GET_BITS(ac_u8, tmp, 24, 4);
+  return AC_GET_BITS(ac_u8, tmp, 4, 24);
 }
 
 /**
@@ -66,7 +66,7 @@ ac_u8 ioapic_get_id(ioapic_regs* regs) {
  */
 void ioapic_set_id(ioapic_regs* regs, ac_u8 val) {
   ac_u32 tmp = ioapic_read_u32(regs, 0);
-  tmp = AC_SET_BITS(ac_u32, tmp, val, 24, 4);
+  tmp = AC_SET_BITS(ac_u32, tmp, val, 4, 24);
   ioapic_write_u32(regs, 0, tmp);
 }
 
@@ -79,7 +79,7 @@ void ioapic_set_id(ioapic_regs* regs, ac_u8 val) {
  */
 ac_uint ioapic_get_ver(ioapic_regs* regs) {
   ac_u32 tmp = ioapic_read_u32(regs, 1);
-  return AC_GET_BITS(ac_u32, tmp, 0, 8);
+  return AC_GET_BITS(ac_u32, tmp, 8, 0);
 }
 
 /**
@@ -102,7 +102,7 @@ ac_u32 ioapic_get_arb(ioapic_regs* regs) {
  */
 ac_uint ioapic_get_redir_max_entry(ioapic_regs* regs) {
   ac_u32 tmp = ioapic_read_u32(regs, 1);
-  return AC_GET_BITS(ac_u32, tmp, 16, 8);
+  return AC_GET_BITS(ac_u32, tmp, 8, 16);
 }
 
 /**

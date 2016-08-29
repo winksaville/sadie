@@ -103,7 +103,7 @@ static inline void ioapic_write_u32(ioapic_regs* regs, ac_uint idx, ac_u32 val) 
  * Write a u64 to two ioapic 32 bit regs
  */
 static inline void ioapic_write_u64(ioapic_regs* regs, ac_uint idx, ac_u64 val) {
-  ioapic_write_u32(regs, idx, AC_GET_BITS(ac_u32, val, 0, 32));
+  ioapic_write_u32(regs, idx, AC_GET_BITS(ac_u32, val, 32, 0));
   ioapic_write_u32(regs, idx+1, AC_GET_BITS(ac_u32, val, 32, 32));
 }
 

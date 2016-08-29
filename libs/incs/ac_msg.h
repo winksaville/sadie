@@ -61,10 +61,10 @@ ac_static_assert(sizeof(AcOp) == sizeof(ac_u64), L"sizeof(AcOperation) != 8");
  * Construct an operation
  */
 #define OPERATION(p, ot, oc) \
-   (AC_SET_BITS(AcU64, ((AcU64)0), oc,   0, 16)   \
-   | AC_SET_BITS(AcU64, ((AcU64)0), ot,  16,  2)  \
-   | AC_SET_BITS(AcU64, ((AcU64)0), 0,   18,  2)  \
-   | AC_SET_BITS(AcU64, ((AcU64)0), p,   20, 44)) \
+   (AC_SET_BITS(AcU64, ((AcU64)0), oc, 16, 0) \
+   | AC_SET_BITS(AcU64, ((AcU64)0), ot, 2, 16) \
+   | AC_SET_BITS(AcU64, ((AcU64)0), 0, 2, 18) \
+   | AC_SET_BITS(AcU64, ((AcU64)0), p, 44, 20)) \
 
 /**
  * Next AcMsg

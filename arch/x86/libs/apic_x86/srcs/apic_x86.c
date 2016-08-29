@@ -184,7 +184,7 @@ ac_bool apic_present(void) {
   ac_u32 out_eax, out_ebx, out_ecx, out_edx;
 
   get_cpuid(1, &out_eax, &out_ebx, &out_ecx, &out_edx);
-  return AC_GET_BITS(ac_uint, out_edx, 9, 1) == 1;
+  return AC_GET_BITS(ac_uint, out_edx, 1, 9) == 1;
 }
 
 /**
@@ -194,7 +194,7 @@ ac_u32 get_apic_id(void) {
   ac_u32 out_eax, out_ebx, out_ecx, out_edx;
 
   get_cpuid(1, &out_eax, &out_ebx, &out_ecx, &out_edx);
-  return AC_GET_BITS(ac_u32, out_ebx, 24, 8);
+  return AC_GET_BITS(ac_u32, out_ebx, 8, 24);
 }
 
 /**

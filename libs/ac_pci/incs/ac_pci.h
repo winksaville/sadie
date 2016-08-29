@@ -190,7 +190,7 @@ static inline ac_pci_cfg_addr ac_pci_cfg_addr_init(ac_u32 bus, ac_u32 dev,
  */
 static inline ac_u16 ac_pci_cfg_rd_u16(ac_pci_cfg_addr cfg_addr) {
   ac_u32 val_u32 = ac_pci_cfg_rd_u32(cfg_addr);
-  ac_u16 val_u16 = AC_GET_BITS(ac_u16, val_u32, 8 * (cfg_addr.reg & 0x2), 16);
+  ac_u16 val_u16 = AC_GET_BITS(ac_u16, val_u32, 16, 8 * (cfg_addr.reg & 0x2));
   return val_u16;
 }
 
@@ -199,7 +199,7 @@ static inline ac_u16 ac_pci_cfg_rd_u16(ac_pci_cfg_addr cfg_addr) {
  */
 static inline ac_u8 ac_pci_cfg_rd_u8(ac_pci_cfg_addr cfg_addr) {
   ac_u32 val_u32 = ac_pci_cfg_rd_u32(cfg_addr);
-  ac_u8 val_u8 = AC_GET_BITS(ac_u8, val_u32, 8 * (cfg_addr.reg & 0x3), 8);
+  ac_u8 val_u8 = AC_GET_BITS(ac_u8, val_u32, 8, 8 * (cfg_addr.reg & 0x3));
   return val_u8;
 }
 
@@ -208,7 +208,7 @@ static inline ac_u8 ac_pci_cfg_rd_u8(ac_pci_cfg_addr cfg_addr) {
  */
 static inline void ac_pci_cfg_wr_u16(ac_pci_cfg_addr cfg_addr, ac_u16 val) {
   ac_u32 val_u32 = ac_pci_cfg_rd_u32(cfg_addr);
-  val_u32 = AC_SET_BITS(ac_u32, val_u32, val, 16 * (cfg_addr.reg & 0x1), 16);
+  val_u32 = AC_SET_BITS(ac_u32, val_u32, val, 16, 16 * (cfg_addr.reg & 0x1));
   ac_pci_cfg_wr_u32(cfg_addr, val_u32);
 }
 
@@ -217,7 +217,7 @@ static inline void ac_pci_cfg_wr_u16(ac_pci_cfg_addr cfg_addr, ac_u16 val) {
  */
 static inline void ac_pci_cfg_wr_u8(ac_pci_cfg_addr cfg_addr, ac_u8 val) {
   ac_u32 val_u32 = ac_pci_cfg_rd_u32(cfg_addr);
-  val_u32 = AC_SET_BITS(ac_u32, val_u32, val, 8 * (cfg_addr.reg & 0x3), 8);
+  val_u32 = AC_SET_BITS(ac_u32, val_u32, val, 8, 8 * (cfg_addr.reg & 0x3));
   ac_pci_cfg_wr_u32(cfg_addr, val_u32);
 }
 
