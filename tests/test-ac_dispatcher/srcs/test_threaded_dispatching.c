@@ -22,13 +22,14 @@
 
 #include <ac_debug_printf.h>
 #include <ac_inttypes.h>
-#include <ac_msg_pool.h>
+#include <ac_message.h>
+#include <ac_message_pool.h>
 #include <ac_receptor.h>
 #include <ac_status.h>
 #include <ac_thread.h>
 #include <ac_test.h>
 
-static ac_bool t1_process_msg(AcComp* this, AcMsg* pmsg);
+static ac_bool t1_process_msg(AcComp* this, AcMessage* pmsg);
 
 typedef struct {
   AcComp comp;
@@ -44,29 +45,29 @@ static AcCompT1 t1_ac = {
   },
 };
 
-static ac_bool t1_process_msg(AcComp* comp, AcMsg* msg) {
+static ac_bool t1_process_msg(AcComp* comp, AcMessage* msg) {
   AcCompT1* this = (AcCompT1*)comp;
 
-  if (msg->arg1 == AC_INIT_CMD.operation) {
-    ac_debug_printf("t1_process_msg:+msg->arg1=AC_INIT_CMD\n");
+  if (msg->hdr.op.operation == AC_INIT_CMDx) {
+    ac_debug_printf("t1_process_msg:+msg->hdr.op.operation=AC_INIT_CMD\n");
     this->ac_init_cmd_count += 1;
     this->error |= AC_TEST(this->ac_init_cmd_count == 1);
     this->error |= AC_TEST(this->ac_deinit_cmd_count == 0);
-  } else if (msg->arg1 == AC_DEINIT_CMD.operation) {
-    ac_debug_printf("t1_process_msg:+msg->arg1=AC_DEINIT_CMD\n");
+  } else if (msg->hdr.op.operation == AC_DEINIT_CMDx) {
+    ac_debug_printf("t1_process_msg:+msg->hdr.op.operation=AC_DEINIT_CMD\n");
     this->ac_deinit_cmd_count += 1;
     this->error |= AC_TEST(this->ac_init_cmd_count == 1);
     this->error |= AC_TEST(this->ac_deinit_cmd_count == 1);
   } else {
-    ac_debug_printf("t1_process_msg:+msg->arg1=%lx, msg->arg2=%lx\n",
-        msg->arg1, msg->arg2);
+    ac_debug_printf("t1_process_msg:+msg->hdr.op.operation=%lx\n",
+        msg->hdr.op.operation);
     // Handle other messages
   }
 
-  ac_debug_printf("t1_process_msg:- msg->arg1=%lx, msg->arg2=%lx error=%d\n",
-      msg->arg1, msg->arg2, error);
+  ac_debug_printf("t1_process_msg:- msg->hdr.op.operation=%lx error=%d\n",
+      msg->hdr.op.operation, error);
 
-  AcMsgPool_ret_msg(msg);
+  AcMessagePool_ret_msg(msg);
 
   return AC_TRUE;
 }
@@ -130,7 +131,7 @@ void* t1(void *param) {
   return AC_NULL;
 }
 
-void t1_add_msg(AcMsg* msg) {
+void t1_add_msg(AcMessage* msg) {
   AcDispatcher_send_msg(t1_dc, msg);
   AcReceptor_signal(t1_receptor_waiting);
 }
@@ -154,11 +155,11 @@ ac_bool test_threaded_dispatching() {
 #else
   ac_thread_init(1);
   AcReceptor_init(256);
-  AcMsg* msg;
-  AcMsgPool mp;
+  AcMessage* msg;
+  AcMessagePool mp;
   AcStatus status;
 
-  status = AcMsgPool_init(&mp, 1);
+  status = AcMessagePool_init(&mp, 1, 0);
   error |= AC_TEST(status == AC_STATUS_OK);
 
   t1_receptor_ready = AcReceptor_get();
@@ -171,10 +172,9 @@ ac_bool test_threaded_dispatching() {
   AcReceptor_wait(t1_receptor_ready);
 
   ac_debug_printf("test_threaded_dispatching: send msg\n");
-  msg = AcMsgPool_get_msg(&mp);
+  msg = AcMessagePool_get_msg(&mp);
   error |= AC_TEST(msg != AC_NULL);
-  msg->arg1 = 1;
-  msg->arg2 = 2;
+  msg->hdr.op.operation = 1;
   t1_add_msg(msg);
 
   ac_debug_printf("test_threaded_dispatching: wait 100ms\n");

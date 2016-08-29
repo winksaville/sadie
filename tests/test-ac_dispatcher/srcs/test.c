@@ -22,7 +22,8 @@
 
 #include <ac_inttypes.h>
 #include <ac_debug_printf.h>
-#include <ac_msg_pool.h>
+#include <ac_message.h>
+#include <ac_message_pool.h>
 #include <ac_test.h>
 
 typedef struct {
@@ -33,7 +34,7 @@ typedef struct {
   ac_bool error;
 } Ac1Comp;
 
-static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
+static ac_bool ac1_process_msg(AcComp* ac, AcMessage* msg) {
   Ac1Comp* this = (Ac1Comp*)ac;
 
   ac_debug_printf("ac1_process_msg:+ msg->arg1=%lx, msg->arg2=%lx\n",
@@ -41,12 +42,12 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
 
   ac_debug_printf("ac1_process_msg:+\n");
 
-  if (msg->arg1 == AC_INIT_CMD.operation) {
+  if (msg->hdr.op.operation == AC_INIT_CMDx) {
     ac_debug_printf("ac1_process_msg: AC_INIT_CMD\n");
     this->ac_init_cmd_count += 1;
     this->error |= AC_TEST(this->ac_init_cmd_count == 1);
     this->error |= AC_TEST(this->ac_deinit_cmd_count == 0);
-  } else if (msg->arg1 == AC_DEINIT_CMD.operation) {
+  } else if (msg->hdr.op.operation == AC_DEINIT_CMDx) {
     ac_debug_printf("ac1_process_msg: AC_DEINIT_CMD\n");
     this->ac_deinit_cmd_count += 1;
     this->error |= AC_TEST(this->ac_init_cmd_count == 1);
@@ -55,12 +56,11 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
     ac_debug_printf("ac1_process_msg: OTHER msg->arg1=%lx, msg->arg2=%lx\n",
         msg->arg1, msg->arg2);
     this->msg_count += 1;
-    this->error |= AC_TEST(msg->arg1 == 1);
-    this->error |= AC_TEST(msg->arg2 == this->msg_count);
+    this->error |= AC_TEST(msg->hdr.op.operation == 1);
   }
 
   ac_debug_printf("ac1_process_msg: ret msg=%p\n", msg);
-  AcMsgPool_ret_msg(msg);
+  AcMessagePool_ret_msg(msg);
 
   ac_debug_printf("ac1_process_msg:-error=%d\n", this->error);
 
@@ -167,16 +167,15 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
   error |= AC_TEST(dc1 != AC_NULL);
 
   // Initialize a msg pool
-  AcMsgPool mp;
-  status = AcMsgPool_init(&mp, 2);
+  AcMessagePool mp;
+  status = AcMessagePool_init(&mp, 2, 0);
   error |= AC_TEST(status == AC_STATUS_OK);
 
   // Get a msg and dispatch it
-  AcMsg* msg1;
-  msg1 = AcMsgPool_get_msg(&mp);
+  AcMessage* msg1;
+  msg1 = AcMessagePool_get_msg(&mp);
   error |= AC_TEST(msg1 != AC_NULL);
-  msg1->arg1 = 1;
-  msg1->arg2 = 1;
+  msg1->hdr.op.operation = 1;
   AcDispatcher_send_msg(dc1, msg1);
 
 
@@ -186,11 +185,10 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
   error |= AC_TEST(processed_msgs == AC_TRUE);
 
   // Get a second message and dispatch it
-  AcMsg* msg2;
-  msg2 = AcMsgPool_get_msg(&mp);
+  AcMessage* msg2;
+  msg2 = AcMessagePool_get_msg(&mp);
   error |= AC_TEST(msg2 != AC_NULL);
-  msg2->arg1 = 1;
-  msg2->arg2 = 2;
+  msg2->hdr.op.operation = 1;
   AcDispatcher_send_msg(dc1, msg2);
 
   ac_debug_printf("test_dispatching: rmv_ac\n");
