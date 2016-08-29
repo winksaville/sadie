@@ -30,7 +30,6 @@
 #include <ac_inttypes.h>
 #include <ac_keyboard_impl.h> // TODO: Change to ac_keyboard.h
 #include <ac_memset.h>
-#include <ac_mpsc_fifo.h>
 #include <ac_printf.h>
 #include <ac_receptor.h>
 #include <ac_sort.h>
@@ -262,9 +261,6 @@ void ac_init(ac_uptr ptr, ac_uint word) {
 
   // Initialize ac_time
   AcTime_early_init();
-
-  // Initialize ac_mpscfifo
-  AcMpscFifo_early_init();
 
   // Enable interrupts
   sti();

@@ -21,7 +21,6 @@
 #include <ac_mpsc_ring_buff_internal.h>
 
 #include <ac_assert.h>
-#include <ac_mem_dbg.h>
 #include <ac_intmath.h>
 #include <ac_inttypes.h>
 #include <ac_memmgr.h>

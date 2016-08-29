@@ -27,8 +27,8 @@
 #include <ac_mpsc_ring_buff_internal.h>
 #include <ac_cache_line.h>
 #include <ac_inttypes.h>
-#include <ac_mem.h>
 #include <ac_putchar.h>
+#include <ac_status.h>
 
 typedef struct AcMpscRingBuff AcMpscRingBuff;
 
@@ -57,7 +57,7 @@ void* AcMpscRingBuff_rmv_mem(AcMpscRingBuff* rb);
 /**
  * Deinitialize the AcMpscRingBuff. Assumes the ring buffer is EMPTY.
  *
- * @params rb is an uniniitalized with AcMpscRingBuff_init_ac_mem_stub
+ * @params rb is an uniniitalized with AcMpscRingBuff_init
  * @returns number of items added/removed from ring buffer
  */
 ac_u64 AcMpscRingBuff_deinit(AcMpscRingBuff* rb);

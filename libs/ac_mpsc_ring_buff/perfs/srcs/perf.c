@@ -24,14 +24,11 @@
 #include <ac_debug_printf.h>
 #include <ac_memset.h>
 #include <ac_memmgr.h>
-#include <ac_mpsc_fifo_dbg.h>
 #include <ac_receptor.h>
 #include <ac_test.h>
 #include <ac_time.h>
 #include <ac_tsc.h>
 #include <ac_thread.h>
-
-extern AcMpscFifo* AcMpscRingBuff_get_fifo(AcMpscRingBuff* pool);
 
 AcBool simple_mpsc_ring_buff_perf(AcU64 loops) {
   AcBool error = AC_FALSE;

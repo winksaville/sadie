@@ -24,8 +24,6 @@
 #include <ac_mpsc_ring_buff_dbg.h>
 #include <ac_mpsc_ring_buff_internal.h>
 
-#include <ac_mem.h>
-#include <ac_mem_dbg.h>
 #include <ac_printf.h>
 
 /**

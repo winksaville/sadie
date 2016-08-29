@@ -21,7 +21,7 @@
 #ifndef SADIE_LIBS_AC_MPSC_RING_BUFF_INCS_AC_MPSC_RING_BUFF_DBG_H
 #define SADIE_LIBS_AC_MPSC_RING_BUFF_INCS_AC_MPSC_RING_BUFF_DBG_H
 
-#include <ac_mpsc_fifo.h>
+#include <ac_mpsc_ring_buff.h>
 
 /**
  * Print a AcMpscRingBuff

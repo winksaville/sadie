@@ -17,8 +17,6 @@
 #include <ac_mpsc_link_list.h>
 #include <ac_mpsc_link_list_dbg.h>
 
-#include <ac_mem.h>
-#include <ac_mem_dbg.h>
 #include <ac_message.h>
 #include <ac_message_pool.h>
 #include <ac_inttypes.h>

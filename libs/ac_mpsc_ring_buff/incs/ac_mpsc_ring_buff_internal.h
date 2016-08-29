@@ -27,7 +27,6 @@
 #include <ac_attributes.h>
 #include <ac_cache_line.h>
 #include <ac_inttypes.h>
-#include <ac_mem.h>
 #include <ac_putchar.h>
 
 typedef struct RingBuffCell {

@@ -19,7 +19,6 @@
 #include <ac_mpsc_ring_buff_internal.h>
 
 #include <ac_memmgr.h>
-#include <ac_msg.h>
 #include <ac_inttypes.h>
 #include <ac_test.h>
 
