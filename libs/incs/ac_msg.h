@@ -55,7 +55,7 @@ typedef struct AC_ATTR_PACKED {
     };
   };
 } AcOp;
-ac_static_assert(sizeof(AcOp) == sizeof(ac_u64), L"sizeof(AcOperation) != 8");
+ac_static_assert(sizeof(AcOp) == sizeof(ac_u64), L"sizeof(AcOp) != 8");
 
 /**
  * Construct an operation
@@ -89,9 +89,9 @@ typedef struct AcMsgHdr {
  */
 typedef struct AcMsg {
   AcNextPtr*     next_ptr; ///< A 'pointer' the next message
-  AcMsgPool* mp;       ///< The message pool this message belongs to
+  AcMsgPool*     mp;       ///< The message pool this message belongs to
   AcMsgHdr       hdr;      ///< A message header
-  AcU8           data[];   ///< Variable sized extra data, maybe 0
+  AcU8           data[];   ///< Variable sized extra data, hdr.len_data == 0 if no data
 } AcMsg AC_ATTR_ALIGNED_AC_U64;
 
 /**
