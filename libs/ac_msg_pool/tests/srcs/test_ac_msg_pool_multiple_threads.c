@@ -47,6 +47,11 @@ AcU32 ready_length(void) {
 #endif
 }
 
+struct MsgTscData {
+  AcU64 waiting_count;
+  AcU64 sent_tsc;
+};
+
 struct MsgTsc {
   AcU32 waiting_count;
   AcU32 ready_length;
@@ -66,15 +71,16 @@ typedef struct {
 } mptt_params;
 
 AcBool mptt_process_msg(AcComp* this, AcMsg* msg) {
-  if (msg->arg1 != AC_INIT_CMD.operation && msg->arg1 != AC_DEINIT_CMD.operation) {
+  if (msg->hdr.op.operation != AC_INIT_CMDx && msg->hdr.op.operation != AC_DEINIT_CMDx) {
     AcU64 recv_tsc = ac_tscrd();
     mptt_params* params = (mptt_params*)this;
 
     AcUint idx = params->count++ % AC_ARRAY_COUNT(params->msg_tsc);
+    struct MsgTscData* mtd = (struct MsgTscData*)msg->data;
     struct MsgTsc* mt = &params->msg_tsc[idx];
-    mt->waiting_count = msg->arg1;
+    mt->waiting_count = mtd->waiting_count;
     mt->ready_length = ready_length();
-    mt->sent_tsc = msg->arg2;
+    mt->sent_tsc = mtd->sent_tsc;
     mt->recv_tsc = recv_tsc;
 
     ac_debug_printf("mptt_process_msg:- msg->arg1=%ld msg->arg2=%ld count=%ld\n",
@@ -124,7 +130,7 @@ AcU32 count_msgs(AcMsgPool* mp, AcU32 msg_count) {
  *
  * return AC_TRUE if an error.
  */
-AcBool test_message_pool_multiple_threads(AcU32 thread_count, AcU32 comps_per_thread) {
+AcBool test_msg_pool_multiple_threads(AcU32 thread_count, AcU32 comps_per_thread) {
   AcBool error = AC_FALSE;
 
   ac_printf("test_msg_pool_multiple_threads:+ thread_count=%d comps_per_thread=%d rl=%d\n",
@@ -147,7 +153,7 @@ AcBool test_message_pool_multiple_threads(AcU32 thread_count, AcU32 comps_per_th
   // test we create a message pool with twice the
   // number threads as the msg_count
   AcU32 msg_count = total_comp_count * 2;
-  status = AcMsgPool_init(&mp, msg_count);
+  status = AcMsgPool_init(&mp, msg_count, sizeof(struct MsgTscData));
   error |= AC_TEST(status == AC_STATUS_OK);
   error |= AC_TEST(count_msgs(&mp, msg_count) == msg_count);
   ac_debug_printf("test_msg_pool_multiple_threads:+total_comp_count=%d msg_count=%d\n",
@@ -185,9 +191,9 @@ AcBool test_message_pool_multiple_threads(AcU32 thread_count, AcU32 comps_per_th
   ac_debug_printf("test_msg_pool_multiple_threads: sending msgs\n");
   const AcU32 max_waiting_count = 100000;
   AcU32 waiting_count = 0;
-  for (AcU32 message = 0; !error && (message < MSGS_PER_THREAD); message++) {
-    ac_debug_printf("test_msg_pool_multiple_threads: waiting_count=%ld message=%d\n",
-        waiting_count, message);
+  for (AcU32 msg = 0; !error && (msg < MSGS_PER_THREAD); msg++) {
+    ac_debug_printf("test_msg_pool_multiple_threads: waiting_count=%ld msg=%d\n",
+        waiting_count, msg);
     for (AcU32 i = 0; !error && (i < thread_count); i++) {
         ac_debug_printf("test_msg_pool_multiple_threads: %d waiting_count=%ld TOP Loop\n",
             i, waiting_count);
@@ -204,8 +210,9 @@ AcBool test_message_pool_multiple_threads(AcU32 thread_count, AcU32 comps_per_th
         msg = AcMsgPool_get_msg(&mp);
       }
       if (msg != AC_NULL) {
-        msg->arg1 = waiting_count;
-        msg->arg2 = ac_tscrd();
+        struct MsgTscData* mtd = (struct MsgTscData*)msg->data;
+        mtd->waiting_count = waiting_count;
+        mtd->sent_tsc = ac_tscrd();
         AcCompMgr_send_msg(params[i]->ci, msg);
       }
     }
