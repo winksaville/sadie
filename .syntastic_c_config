@@ -42,7 +42,7 @@
 -I /home/wink/prgs/sadie/libs/ac_memcmp/incs
 -I /home/wink/prgs/sadie/libs/ac_memcpy/incs
 -I /home/wink/prgs/sadie/libs/ac_memset/incs
--I /home/wink/prgs/sadie/libs/ac_message_pool/incs
+-I /home/wink/prgs/sadie/libs/ac_msg_pool/incs
 -I /home/wink/prgs/sadie/libs/ac_mpsc_fifo/incs
 -I /home/wink/prgs/sadie/libs/ac_mpsc_fifo_in/incs
 -I /home/wink/prgs/sadie/libs/ac_mpsc_link_list/incs

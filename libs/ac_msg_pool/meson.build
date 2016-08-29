@@ -17,5 +17,5 @@ runtimeIncDirs += include_directories(
 )
 
 runtimeSrcs += [
-  '@0@/srcs/ac_message_pool.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_msg_pool.c'.format(meson.current_source_dir()),
 ]

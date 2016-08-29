@@ -18,7 +18,7 @@
 #define LIBS_AC_MSG_POOL_TESTS_INCS_TEST_H
 
 #include <ac_inttypes.h>
-#include <ac_message_pool.h>
+#include <ac_msg_pool.h>
 
 /**
  * Test we can create, send a message and remove components.
@@ -29,6 +29,6 @@
  *
  * @return: AC_TRUE if an error
  */
-ac_bool test_comps(AcCompMgr* cm, AcMessagePool* mp, ac_u32 comp_count);
+ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count);
 
 #endif

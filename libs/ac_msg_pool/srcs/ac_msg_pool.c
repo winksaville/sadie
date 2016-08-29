@@ -16,7 +16,7 @@
 
 #define NDEBUG
 
-#include <ac_message_pool.h>
+#include <ac_msg_pool.h>
 
 #include <ac_assert.h>
 #include <ac_cache_line.h>
@@ -83,10 +83,10 @@ done:
 }
 
 /**
- * @see ac_message_pool.h
+ * @see ac_msg_pool.h
  */
-AcStatus AcMessagePool_init(AcMessagePool* mp, AcU32 msg_count, AcU32 len_data) {
-  ac_debug_printf("AcMessagePool_init:+mp=%p msg_count=%u len_data=%u\n",
+AcStatus AcMsgPool_init(AcMsgPool* mp, AcU32 msg_count, AcU32 len_data) {
+  ac_debug_printf("AcMsgPool_init:+mp=%p msg_count=%u len_data=%u\n",
       mp, msg_count, len_data);
   AcStatus status;
 
@@ -101,9 +101,9 @@ AcStatus AcMessagePool_init(AcMessagePool* mp, AcU32 msg_count, AcU32 len_data) 
   
   // Allocate and align the messages
   AcU32 size_entry;
-  status = ac_calloc_align(msg_count, sizeof(AcMessage) + len_data, AC_MAX_CACHE_LINE_LEN,
+  status = ac_calloc_align(msg_count, sizeof(AcMsg) + len_data, AC_MAX_CACHE_LINE_LEN,
       &mp->msgs_raw, (void**)&mp->msgs, &size_entry);
-  ac_debug_printf("AcMessagePool_init: mp=%p msgs_raw=%p msgs=%p size_entry=%u status=%u\n",
+  ac_debug_printf("AcMsgPool_init: mp=%p msgs_raw=%p msgs=%p size_entry=%u status=%u\n",
       mp, mp->msgs_raw, mp->msgs, size_entry, status);
   if (status != AC_STATUS_OK) {
     goto done;
@@ -114,7 +114,7 @@ AcStatus AcMessagePool_init(AcMessagePool* mp, AcU32 msg_count, AcU32 len_data) 
   AcU32 size_next_entry;
   status = ac_calloc_align(msg_count, sizeof(AcNextPtr), AC_MAX_CACHE_LINE_LEN,
       &mp->next_ptrs_raw, (void**)&mp->next_ptrs, &size_next_entry);
-  ac_debug_printf("AcMessagePool_init: mp=%p next_ptrs_raw=%p next_ptrs=%p size_next_entry=%u status=%u\n",
+  ac_debug_printf("AcMsgPool_init: mp=%p next_ptrs_raw=%p next_ptrs=%p size_next_entry=%u status=%u\n",
       mp, mp->next_ptrs_raw, mp->msgs, size_next_entry, status);
   if (status != AC_STATUS_OK) {
     goto done;
@@ -130,7 +130,7 @@ AcStatus AcMessagePool_init(AcMessagePool* mp, AcU32 msg_count, AcU32 len_data) 
   void* base = mp->msgs;
   void* base_np = mp->next_ptrs;
   for (AcU32 i = 0; i < msg_count; i++) {
-    AcMessage* msg = (AcMessage*)base;
+    AcMsg* msg = (AcMsg*)base;
     AcNextPtr* np = (AcNextPtr*)base_np;
 
     // Init next_ptr fields
@@ -143,7 +143,7 @@ AcStatus AcMessagePool_init(AcMessagePool* mp, AcU32 msg_count, AcU32 len_data) 
 
     // Add msg to ring buffer
     if (!AcMpscRingBuff_add_mem(&mp->rb, msg)) {
-      ac_fail("AcMessagePool_init: WTF should always be able to add msg");
+      ac_fail("AcMsgPool_init: WTF should always be able to add msg");
       status = AC_STATUS_ERR;
       goto done;
     }
@@ -158,15 +158,15 @@ done:
     ac_free(mp->msgs_raw);
     ac_free(mp->next_ptrs_raw);
   }
-  ac_debug_printf("AcMessagePool_init:-mp=%p msg_count=%u len_data=%u status=%d\n",
+  ac_debug_printf("AcMsgPool_init:-mp=%p msg_count=%u len_data=%u status=%d\n",
       mp, msg_count, len_data, status);
   return status;
 }
 
 /**
- * @see ac_message_pool.h
+ * @see ac_msg_pool.h
  */
-void AcMessagePool_deinit(AcMessagePool* mp) {
+void AcMsgPool_deinit(AcMsgPool* mp) {
   if (mp == AC_NULL) {
     return;
   }

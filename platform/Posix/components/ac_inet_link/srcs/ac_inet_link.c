@@ -21,8 +21,8 @@
 #include <ac_assert.h>
 #include <ac_comp_mgr.h>
 #include <ac_debug_printf.h>
-#include <ac_message.h>
-#include <ac_message_pool.h>
+#include <ac_msg.h>
+#include <ac_msg_pool.h>
 #include <ac_status.h>
 
 typedef struct {
@@ -30,10 +30,10 @@ typedef struct {
   ac_u32 a_u32;
 } AcCompIpv4LinkLayer;
 
-static void send_error_rsp(AcComp* comp, AcMessage* msg, AcStatus status) {
+static void send_error_rsp(AcComp* comp, AcMsg* msg, AcStatus status) {
 }
 
-static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMessage* msg) {
+static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
   AcCompIpv4LinkLayer* this = (AcCompIpv4LinkLayer*)comp;
   ac_debug_printf("%s:+msg->hdr.op=%lx\n", this->comp.name, msg->hdr.op.operation);
 
@@ -57,7 +57,7 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMessage* msg) {
     }
   }
 
-  AcMessagePool_ret_msg(msg);
+  AcMsgPool_ret_msg(msg);
 
   ac_debug_printf("%s:-msg->op=%lx\n", this->comp.name, msg->hdr.op.operation);
   return AC_TRUE;

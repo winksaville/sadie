@@ -21,8 +21,8 @@
 #include <ac_assert.h>
 #include <ac_inttypes.h>
 #include <ac_memmgr.h>
-#include <ac_message.h>
-#include <ac_message_pool.h>
+#include <ac_msg.h>
+#include <ac_msg_pool.h>
 #include <ac_debug_printf.h>
 #include <ac_printf.h>
 #include <ac_receptor.h>
@@ -41,7 +41,7 @@ typedef struct T1Comp {
 } T1Comp;
 
 
-static ac_bool msg_proc(AcComp* ac, AcMessage* msg) {
+static ac_bool msg_proc(AcComp* ac, AcMsg* msg) {
   ac_bool signal;
   T1Comp* this = (T1Comp*)ac;
 
@@ -60,7 +60,7 @@ static ac_bool msg_proc(AcComp* ac, AcMessage* msg) {
     signal = AC_TRUE;
   }
 
-  AcMessagePool_ret_msg(msg);
+  AcMsgPool_ret_msg(msg);
 
   if (signal) {
     AcReceptor_signal(this->done);
@@ -74,12 +74,12 @@ static ac_bool msg_proc(AcComp* ac, AcMessage* msg) {
  * Test we can create, send a message and remove components.
  *
  * @param: cm is AcCompMgr to use
- * @param: mp is AcMessagePool to use
+ * @param: mp is AcMsgPool to use
  * @param: comp_count is number of components to create
  *
  * @return: AC_TRUE if an error
  */
-ac_bool test_comps(AcCompMgr* cm, AcMessagePool* mp, ac_u32 comp_count) {
+ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
   ac_debug_printf("test_comps:+cm=%p mp=%p comp_count=%d\n",
       cm, mp, comp_count);
   ac_bool error = AC_FALSE;
@@ -115,8 +115,8 @@ ac_bool test_comps(AcCompMgr* cm, AcMessagePool* mp, ac_u32 comp_count) {
     ac_debug_printf("test_comps: send msgs\n");
     for (ac_u32 i = 0; i < comp_count; i++) {
       c = &comps[i];
-      AcMessage* msg;
-      msg = AcMessagePool_get_msg(mp);
+      AcMsg* msg;
+      msg = AcMsgPool_get_msg(mp);
       error |= AC_TEST(msg != AC_NULL);
 
       msg->hdr.op.operation = OPERATION(0, 0, 1);

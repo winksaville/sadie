@@ -10,7 +10,7 @@
 #ifndef SADIE_LIBS_AC_MPSC_LINK_LIST_INTERNAL_H
 #define SADIE_LIBS_AC_MPSC_LINK_LIST_INTERNAL_H
 
-#include <ac_message.h>
+#include <ac_msg.h>
 
 #include <ac_inttypes.h>
 

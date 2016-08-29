@@ -23,7 +23,7 @@
 #include <ac_mpsc_link_list.h>
 #include <ac_mpsc_link_list_dbg.h>
 
-#include <ac_message.h>
+#include <ac_msg.h>
 #include <ac_printf.h>
 
 void AcNextPtr_print(const char* leader, AcNextPtr* next) {

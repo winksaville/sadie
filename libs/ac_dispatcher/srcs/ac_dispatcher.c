@@ -23,8 +23,8 @@
 #include <ac_inttypes.h>
 #include <ac_mpsc_link_list.h>
 #include <ac_mpsc_link_list_dbg.h>
-#include <ac_message.h>
-#include <ac_message_pool.h>
+#include <ac_msg.h>
+#include <ac_msg_pool.h>
 #include <ac_memmgr.h>
 #include <ac_string.h>
 
@@ -33,7 +33,7 @@
  */
 typedef struct AcDispatchableComp {
     AcComp* comp;     ///< The component
-    AcMessagePool mp; ///< Msg pool to send AC_INIT/AC_DEINIT commands
+    AcMsgPool mp; ///< Msg pool to send AC_INIT/AC_DEINIT commands
     AcMpscLinkList q; ///< mpsc link list to which message are sent
 } AcDispatchableComp;
 
@@ -58,12 +58,12 @@ static AcDispatchableComp* get_dc() {
   AcDispatchableComp* dc = ac_malloc(sizeof(AcDispatchableComp));
   if (dc != AC_NULL) {
     // Allocate the msgs AC_INIT_CMD and AC_DEINIT_CMD
-    if (AcMessagePool_init(&dc->mp, 2, 0) != AC_STATUS_OK) {
+    if (AcMsgPool_init(&dc->mp, 2, 0) != AC_STATUS_OK) {
       ac_free(dc);
       dc = AC_NULL;
     } else {
       if (AcMpscLinkList_init(&dc->q) != AC_STATUS_OK) {
-        AcMessagePool_deinit(&dc->mp);
+        AcMsgPool_deinit(&dc->mp);
         ac_free(&dc);
         dc = AC_NULL;
       } else {
@@ -81,14 +81,14 @@ static void ret_dc(AcDispatchableComp* dc, ac_bool aborting) {
   ac_debug_printf("ret_dc:+ dc=%p\n", dc);
   if (dc != AC_NULL) {
     if (!aborting) {
-      AcMessage* msg = AcMessagePool_get_msg(&dc->mp);
+      AcMsg* msg = AcMsgPool_get_msg(&dc->mp);
       msg->hdr.op.operation = AC_DEINIT_CMDx;
       dc->comp->process_msg(dc->comp, msg);
       ac_debug_printf("ret_dc:  processed AC_DEINIT_CMD dc=%p\n", dc);
     }
 
     AcMpscLinkList_deinit(&dc->q);
-    AcMessagePool_deinit(&dc->mp);
+    AcMsgPool_deinit(&dc->mp);
     ac_free(dc);
   }
   ac_debug_printf("ret_dc:- dc=%p\n", dc);
@@ -136,7 +136,7 @@ static ac_bool process_msgs(AcDispatchableComp* dc) {
   AcMpscLinkList_debug_print("process_msgs: q", &dc->q);
 
   ac_bool processed_a_msg = AC_FALSE;
-  AcMessage* pmsg = AcMpscLinkList_rmv(&dc->q);
+  AcMsg* pmsg = AcMpscLinkList_rmv(&dc->q);
   while (pmsg != AC_NULL) {
     ac_debug_printf("process_msgs:  dc=%p msg=%p msg->arg1=%lx\n", dc, pmsg, pmsg->arg1);
     dc->comp->process_msg(dc->comp, pmsg);
@@ -331,7 +331,7 @@ AcDispatchableComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp) {
            pdc, &dc_empty, dc,
            AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
       ac_debug_printf("AcDispatcher_add_comp:  get msg for AC_INIT_CMD\n");
-      AcMessage* msg = AcMessagePool_get_msg(&dc->mp);
+      AcMsg* msg = AcMsgPool_get_msg(&dc->mp);
       ac_debug_printf("AcDispatcher_add_comp:  got msg for AC_INIT_CMD msg=%p\n", msg);
       msg->hdr.op.operation = AC_INIT_CMDx;
       AcDispatcher_send_msg(dc, msg);
@@ -401,6 +401,6 @@ AcComp* AcDispatcher_rmv_comp(AcDispatcher* d, AcDispatchableComp* dc) {
  * @param: dc1 is the dispatchable component previously added.
  * @param: msg is the message to send
  */
-void AcDispatcher_send_msg(AcDispatchableComp* dc, AcMessage* msg) {
+void AcDispatcher_send_msg(AcDispatchableComp* dc, AcMsg* msg) {
   AcMpscLinkList_add(&dc->q, msg);
 }

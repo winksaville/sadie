@@ -20,7 +20,7 @@
 #include <ac_assert.h>
 #include <ac_attributes.h>
 #include <ac_comp_mgr.h>
-#include <ac_message.h>
+#include <ac_msg.h>
 #include <ac_inttypes.h>
 #include <ac_status.h>
 

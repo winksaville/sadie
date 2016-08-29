@@ -21,8 +21,8 @@
 
 #include <ac_assert.h>
 #include <ac_debug_printf.h>
-#include <ac_message.h>
-#include <ac_message_pool.h>
+#include <ac_msg.h>
+#include <ac_msg_pool.h>
 #include <ac_receptor.h>
 #include <ac_status.h>
 #include <ac_test.h>
@@ -36,12 +36,12 @@ AcBool simple_mpsc_link_list_perf(AcU64 loops) {
   ac_debug_printf("simple_mpsc_link_list_perf:+loops=%lu\n", loops);
 
   AcMpscLinkList list;
-  AcMessagePool pool;
+  AcMsgPool pool;
 
   ac_u32 count = 2;
   ac_u32 data_size = 2;
 
-  status = AcMessagePool_init(&pool, count, data_size);
+  status = AcMsgPool_init(&pool, count, data_size);
   ac_printf("simple_mpsc_link_list_perf: allocate pool status=%d\n", status);
   if (status != AC_STATUS_OK) {
     error |= AC_TRUE;
@@ -55,7 +55,7 @@ AcBool simple_mpsc_link_list_perf(AcU64 loops) {
     goto done;
   }
 
-  AcMessage* msg = AcMessagePool_get_msg(&pool);
+  AcMsg* msg = AcMsgPool_get_msg(&pool);
   AcU64 start = ac_tscrd();
 
   for (AcU64 i = 0; i < loops; i++) {
@@ -65,7 +65,7 @@ AcBool simple_mpsc_link_list_perf(AcU64 loops) {
   }
 
   AcU64 stop = ac_tscrd();
-  AcMessagePool_ret_msg(msg);
+  AcMsgPool_ret_msg(msg);
 
   AcU64 duration = stop - start;
   AcU64 ns_per_op = (duration * AC_SEC_IN_NS) / loops;
@@ -74,11 +74,11 @@ AcBool simple_mpsc_link_list_perf(AcU64 loops) {
 
 
   // Add one message to the list is not empty
-  AcMessage* msg1 = AcMessagePool_get_msg(&pool);
+  AcMsg* msg1 = AcMsgPool_get_msg(&pool);
   AcMpscLinkList_add(&list, msg1);
 
   // Get another one to add to the non-empty list
-  msg = AcMessagePool_get_msg(&pool);
+  msg = AcMsgPool_get_msg(&pool);
   start = ac_tscrd();
 
   for (AcU64 i = 0; i < loops; i++) {
@@ -88,7 +88,7 @@ AcBool simple_mpsc_link_list_perf(AcU64 loops) {
   }
 
   stop = ac_tscrd();
-  AcMessagePool_ret_msg(msg);
+  AcMsgPool_ret_msg(msg);
 
   duration = stop - start;
   ns_per_op = (duration * AC_SEC_IN_NS) / loops;
@@ -97,10 +97,10 @@ AcBool simple_mpsc_link_list_perf(AcU64 loops) {
 
   // Return the that still on the list and return to the pool
   msg1 = AcMpscLinkList_rmv(&list);
-  AcMessagePool_ret_msg(msg1);
+  AcMsgPool_ret_msg(msg1);
 
   AcMpscLinkList_deinit(&list);
-  AcMessagePool_deinit(&pool);
+  AcMsgPool_deinit(&pool);
 
  done:
 

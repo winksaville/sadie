@@ -64,7 +64,7 @@ AcU64 AcMpscLinkList_deinit(AcMpscLinkList* list) {
 /**
  * @see ac_mpsc_link_list.h
  */
-void AcMpscLinkList_add(AcMpscLinkList* list, AcMessage* msg) {
+void AcMpscLinkList_add(AcMpscLinkList* list, AcMsg* msg) {
   ac_debug_printf("AcMpscLinkList_add:+list=%p msg=%p\n", list, msg);
 
   AcNextPtr* next_ptr = msg->next_ptr;
@@ -84,10 +84,10 @@ void AcMpscLinkList_add(AcMpscLinkList* list, AcMessage* msg) {
 /**
  * @see ac_mpsc_link_list.h
  */
-AcMessage* AcMpscLinkList_rmv(AcMpscLinkList* list) {
+AcMsg* AcMpscLinkList_rmv(AcMpscLinkList* list) {
   ac_debug_printf("AcMpscLinkList_rmv:+list=%p\n", list);
 
-  AcMessage* msg;
+  AcMsg* msg;
   AcNextPtr* tail = list->tail;
   AcNextPtr* next = tail->next;
   if ((next == AC_NULL) && (tail == __atomic_load_n(&list->head, __ATOMIC_ACQUIRE))) {

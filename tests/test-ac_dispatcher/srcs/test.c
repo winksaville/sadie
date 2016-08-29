@@ -22,8 +22,8 @@
 
 #include <ac_inttypes.h>
 #include <ac_debug_printf.h>
-#include <ac_message.h>
-#include <ac_message_pool.h>
+#include <ac_msg.h>
+#include <ac_msg_pool.h>
 #include <ac_test.h>
 
 typedef struct {
@@ -34,7 +34,7 @@ typedef struct {
   ac_bool error;
 } Ac1Comp;
 
-static ac_bool ac1_process_msg(AcComp* ac, AcMessage* msg) {
+static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
   Ac1Comp* this = (Ac1Comp*)ac;
 
   ac_debug_printf("ac1_process_msg:+ msg->arg1=%lx, msg->arg2=%lx\n",
@@ -60,7 +60,7 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMessage* msg) {
   }
 
   ac_debug_printf("ac1_process_msg: ret msg=%p\n", msg);
-  AcMessagePool_ret_msg(msg);
+  AcMsgPool_ret_msg(msg);
 
   ac_debug_printf("ac1_process_msg:-error=%d\n", this->error);
 
@@ -167,13 +167,13 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMessage* msg) {
   error |= AC_TEST(dc1 != AC_NULL);
 
   // Initialize a msg pool
-  AcMessagePool mp;
-  status = AcMessagePool_init(&mp, 2, 0);
+  AcMsgPool mp;
+  status = AcMsgPool_init(&mp, 2, 0);
   error |= AC_TEST(status == AC_STATUS_OK);
 
   // Get a msg and dispatch it
-  AcMessage* msg1;
-  msg1 = AcMessagePool_get_msg(&mp);
+  AcMsg* msg1;
+  msg1 = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg1 != AC_NULL);
   msg1->hdr.op.operation = 1;
   AcDispatcher_send_msg(dc1, msg1);
@@ -185,8 +185,8 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMessage* msg) {
   error |= AC_TEST(processed_msgs == AC_TRUE);
 
   // Get a second message and dispatch it
-  AcMessage* msg2;
-  msg2 = AcMessagePool_get_msg(&mp);
+  AcMsg* msg2;
+  msg2 = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg2 != AC_NULL);
   msg2->hdr.op.operation = 1;
   AcDispatcher_send_msg(dc1, msg2);

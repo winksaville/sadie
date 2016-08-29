@@ -21,7 +21,7 @@
 #include <ac_assert.h>
 #include <ac_dispatcher.h>
 #include <ac_memmgr.h>
-#include <ac_message.h>
+#include <ac_msg.h>
 #include <ac_printf.h>
 #include <ac_debug_printf.h>
 #include <ac_receptor.h>
@@ -224,7 +224,7 @@ AcComp* AcCompMgr_rmv_comp(AcCompInfo* ci) {
 /**
  * see ac_comp_mgr.h
  */
-void AcCompMgr_send_msg(AcCompInfo* info, AcMessage* msg) {
+void AcCompMgr_send_msg(AcCompInfo* info, AcMsg* msg) {
   AcDispatcher_send_msg(info->dc, msg);
   AcReceptor_signal(info->dtp->waiting);
 }

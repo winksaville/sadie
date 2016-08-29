@@ -17,8 +17,8 @@
 #include <ac_mpsc_link_list.h>
 #include <ac_mpsc_link_list_dbg.h>
 
-#include <ac_message.h>
-#include <ac_message_pool.h>
+#include <ac_msg.h>
+#include <ac_msg_pool.h>
 #include <ac_inttypes.h>
 #include <ac_test.h>
 
@@ -74,11 +74,11 @@ AcBool test_add_rmv(void) {
   error |= AC_TEST(status == AC_STATUS_OK);
 
   // Create a message pool
-  AcMessagePool pool;
-  status = AcMessagePool_init(&pool, 2, data_size);
+  AcMsgPool pool;
+  status = AcMsgPool_init(&pool, 2, data_size);
 
   // Add msg1
-  AcMessage* msg1 = AcMessagePool_get_msg(&pool);
+  AcMsg* msg1 = AcMsgPool_get_msg(&pool);
   error |= AC_TEST(msg1 != AC_NULL);
   msg1->data[0] = 1;
   msg1->data[1] = 2;
@@ -89,7 +89,7 @@ AcBool test_add_rmv(void) {
   error |= AC_TEST(list.tail->next->msg == msg1);
 
   // Add msg2
-  AcMessage* msg2 = AcMessagePool_get_msg(&pool);
+  AcMsg* msg2 = AcMsgPool_get_msg(&pool);
   error |= AC_TEST(msg2 != AC_NULL);
   msg2->data[0] = 3;
   msg2->data[1] = 4;
@@ -100,7 +100,7 @@ AcBool test_add_rmv(void) {
   error |= AC_TEST(list.tail->next->msg == msg1);
 
   // Remove msg1
-  AcMessage* msg = AcMpscLinkList_rmv(&list);
+  AcMsg* msg = AcMpscLinkList_rmv(&list);
   error |= AC_TEST(msg == msg1);
   error |= AC_TEST(msg1->data[0] == 1);
   error |= AC_TEST(msg1->data[1] == 2);
@@ -120,7 +120,7 @@ AcBool test_add_rmv(void) {
   // Deinitialize
   AcMpscLinkList_deinit(&list);
 
-  AcMessagePool_deinit(&pool);
+  AcMsgPool_deinit(&pool);
 
   ac_printf("test_add_rmv:-error=%d\n", error);
   return error;

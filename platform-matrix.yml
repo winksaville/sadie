@@ -25,7 +25,7 @@ command:
   - cd build-${Platform}; ninja run-test-ac_dispatcher
   - cd build-${Platform}; ninja run-test-ac_inet_link
   - cd build-${Platform}; ninja run-test-ac_memmgr
-  - cd build-${Platform}; ninja run-test-ac_message_pool
+  - cd build-${Platform}; ninja run-test-ac_msg_pool
   - cd build-${Platform}; ninja run-test-ac_mpsc_link_list
   - cd build-${Platform}; ninja run-test-ac_mpsc_ring_buff
   - cd build-${Platform}; ninja run-test-ac_printf

@@ -18,7 +18,7 @@
 #define SADIE_LIBS_AC_DISPATCHER_H
 
 #include <ac_comp_mgr.h>
-#include <ac_message.h>
+#include <ac_msg.h>
 
 typedef struct AcDispatchableComp AcDispatchableComp;
 
@@ -61,6 +61,6 @@ AcComp* AcDispatcher_rmv_comp(AcDispatcher* d, AcDispatchableComp* comp);
  * @param: dc is the dispatchable component previously added.
  * @param: msg is the message to send
  */
-void AcDispatcher_send_msg(AcDispatchableComp* dc, AcMessage* msg);
+void AcDispatcher_send_msg(AcDispatchableComp* dc, AcMsg* msg);
 
 #endif

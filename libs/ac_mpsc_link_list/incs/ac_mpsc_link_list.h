@@ -12,7 +12,7 @@
 
 #include <ac_mpsc_link_list_internal.h>
 
-#include <ac_message.h>
+#include <ac_msg.h>
 #include <ac_inttypes.h>
 #include <ac_status.h>
 
@@ -32,17 +32,17 @@ extern AcStatus AcMpscLinkList_init(AcMpscLinkList* list);
 extern AcU64 AcMpscLinkList_deinit(AcMpscLinkList* list);
 
 /**
- * Add a AcMessage to the head of the link list. This maybe used by multiple
+ * Add a AcMsg to the head of the link list. This maybe used by multiple
  * entities on the same or different thread. This will never
  * block as it is a wait free algorithm.
  */
-extern void AcMpscLinkList_add(AcMpscLinkList* list, AcMessage* msg);
+extern void AcMpscLinkList_add(AcMpscLinkList* list, AcMsg* msg);
 
 /**
- * Remove a AcMessage from the tail of the link list. This maybe used only by
+ * Remove a AcMsg from the tail of the link list. This maybe used only by
  * a single thread and returns NULL if empty. This may stall if a producer
  * calls add and was preempted before finishing.
  */
-extern AcMessage* AcMpscLinkList_rmv(AcMpscLinkList* list);
+extern AcMsg* AcMpscLinkList_rmv(AcMpscLinkList* list);
 
 #endif

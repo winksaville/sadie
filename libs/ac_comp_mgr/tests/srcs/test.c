@@ -20,8 +20,8 @@
 #include <ac_comp_mgr/tests/incs/test.h>
 
 #include <ac_intmath.h>
-#include <ac_message.h>
-#include <ac_message_pool.h>
+#include <ac_msg.h>
+#include <ac_msg_pool.h>
 #include <ac_debug_printf.h>
 #include <ac_printf.h>
 #include <ac_receptor.h>
@@ -39,14 +39,14 @@ ac_bool test_thread_comps(ac_u32 threads, ac_u32 comps_per_thread) {
   ac_bool error = AC_FALSE;
   AcStatus status;
   ac_debug_printf("test_%dx%d:+\n", threads, comps_per_thread);
-  AcMessagePool mp;
+  AcMsgPool mp;
   ac_u32 msg_count = threads * comps_per_thread;
 
   ac_debug_printf("test_%dx%d: msg_count=%d is power of 2\n", threads, comps_per_thread, msg_count);
   error |= AC_TEST(AC_COUNT_ONE_BITS(msg_count) == 1);
 
   ac_debug_printf("test_%dx%d: create msg pool msg_count=%u\n", threads, comps_per_thread, msg_count);
-  status = AcMessagePool_init(&mp, msg_count, 0);
+  status = AcMsgPool_init(&mp, msg_count, 0);
   error |= AC_TEST(status == AC_STATUS_OK);
 
   ac_debug_printf("test_%dx%d: init comp mgr\n", threads, comps_per_thread);
@@ -62,7 +62,7 @@ ac_bool test_thread_comps(ac_u32 threads, ac_u32 comps_per_thread) {
   ac_debug_printf("test_%dx%d: deinit comp mgr\n", threads, comps_per_thread);
   AcCompMgr_deinit(cm);
 
-  AcMessagePool_deinit(&mp);
+  AcMsgPool_deinit(&mp);
 
   ac_debug_printf("test_%dx%d:-\n", threads, comps_per_thread);
   return error;
