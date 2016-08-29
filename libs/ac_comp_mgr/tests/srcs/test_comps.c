@@ -47,11 +47,11 @@ static ac_bool msg_proc(AcComp* ac, AcMsg* msg) {
 
   ac_debug_printf("msg_proc:+%s\n", this->comp.name);
 
-  if (msg->hdr.op.operation == AC_INIT_CMDx) {
+  if (msg->hdr.op.operation == AC_INIT_CMD) {
     this->init_count += 1;
     this->error |= AC_TEST(this->init_count == 1);
     signal = AC_FALSE;
-  } else if (msg->hdr.op.operation == AC_DEINIT_CMDx) {
+  } else if (msg->hdr.op.operation == AC_DEINIT_CMD) {
     this->deinit_count += 1;
     this->error |= AC_TEST(this->deinit_count == 1);
     signal = AC_FALSE;

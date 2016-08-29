@@ -82,7 +82,7 @@ static void ret_dc(AcDispatchableComp* dc, ac_bool aborting) {
   if (dc != AC_NULL) {
     if (!aborting) {
       AcMsg* msg = AcMsgPool_get_msg(&dc->mp);
-      msg->hdr.op.operation = AC_DEINIT_CMDx;
+      msg->hdr.op.operation = AC_DEINIT_CMD;
       dc->comp->process_msg(dc->comp, msg);
       ac_debug_printf("ret_dc:  processed AC_DEINIT_CMD dc=%p\n", dc);
     }
@@ -333,7 +333,7 @@ AcDispatchableComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp) {
       ac_debug_printf("AcDispatcher_add_comp:  get msg for AC_INIT_CMD\n");
       AcMsg* msg = AcMsgPool_get_msg(&dc->mp);
       ac_debug_printf("AcDispatcher_add_comp:  got msg for AC_INIT_CMD msg=%p\n", msg);
-      msg->hdr.op.operation = AC_INIT_CMDx;
+      msg->hdr.op.operation = AC_INIT_CMD;
       AcDispatcher_send_msg(dc, msg);
       ac_debug_printf("AcDispatcher_add_comp:- OK d=%p comp=%p dc=%p msg=%p msg->arg1=%lx\n",
           d, comp, dc, msg, msg->arg1);

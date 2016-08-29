@@ -102,11 +102,11 @@ typedef struct AcMsg {
 /**
  * AC_INIT_CMD is the first command sent to a component
  */
-#define AC_INIT_CMDx OPERATION(AC_SYSTEM_PROTOCOL, AC_OPTYPE_CMD, 1)
+#define AC_INIT_CMD OPERATION(AC_SYSTEM_PROTOCOL, AC_OPTYPE_CMD, 1)
 
 /**
  * AC_DEINIT_CMD is the last command sent to a component
  */
-#define AC_DEINIT_CMDx OPERATION(AC_SYSTEM_PROTOCOL, AC_OPTYPE_CMD, 2)
+#define AC_DEINIT_CMD OPERATION(AC_SYSTEM_PROTOCOL, AC_OPTYPE_CMD, 2)
 
 #endif

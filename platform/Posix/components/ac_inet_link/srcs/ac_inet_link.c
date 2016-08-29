@@ -38,11 +38,11 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
   ac_debug_printf("%s:+msg->hdr.op=%lx\n", this->comp.name, msg->hdr.op.operation);
 
   switch (msg->hdr.op.operation) {
-    case (AC_INIT_CMDx): {
+    case (AC_INIT_CMD): {
       ac_debug_printf("%s: AC_INIT_CMD\n", this->comp.name);
       break;
     }
-    case (AC_DEINIT_CMDx): {
+    case (AC_DEINIT_CMD): {
       ac_debug_printf("%s: AC_DEINIT_CMD\n", this->comp.name);
       break;
     }

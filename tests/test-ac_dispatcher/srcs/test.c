@@ -42,12 +42,12 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
 
   ac_debug_printf("ac1_process_msg:+\n");
 
-  if (msg->hdr.op.operation == AC_INIT_CMDx) {
+  if (msg->hdr.op.operation == AC_INIT_CMD) {
     ac_debug_printf("ac1_process_msg: AC_INIT_CMD\n");
     this->ac_init_cmd_count += 1;
     this->error |= AC_TEST(this->ac_init_cmd_count == 1);
     this->error |= AC_TEST(this->ac_deinit_cmd_count == 0);
-  } else if (msg->hdr.op.operation == AC_DEINIT_CMDx) {
+  } else if (msg->hdr.op.operation == AC_DEINIT_CMD) {
     ac_debug_printf("ac1_process_msg: AC_DEINIT_CMD\n");
     this->ac_deinit_cmd_count += 1;
     this->error |= AC_TEST(this->ac_init_cmd_count == 1);
