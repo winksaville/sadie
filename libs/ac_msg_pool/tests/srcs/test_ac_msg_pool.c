@@ -76,7 +76,7 @@ AcBool simple_message_pool_test(void) {
   msg = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg != AC_NULL);
   if (msg != AC_NULL) {
-    error |= AC_TEST(msg->hdr.len_data == 1);
+    error |= AC_TEST(msg->len_data == 1);
   }
   msg->data[0] = 1;
   error |= AC_TEST(msg->data[0] == 1);
@@ -86,7 +86,7 @@ AcBool simple_message_pool_test(void) {
   msg2 = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg2 != AC_NULL);
   if (msg2 != AC_NULL) {
-    error |= AC_TEST(msg2->hdr.len_data == 1);
+    error |= AC_TEST(msg2->len_data == 1);
   }
   msg2->data[0] = 2;
   error |= AC_TEST(msg2->data[0] == 2);
@@ -107,7 +107,7 @@ AcBool simple_message_pool_test(void) {
   msg = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg != AC_NULL);
   if (msg != AC_NULL) {
-    error |= AC_TEST(msg->hdr.len_data == 1);
+    error |= AC_TEST(msg->len_data == 1);
   }
 
   // Return msg

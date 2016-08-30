@@ -101,7 +101,7 @@ AcStatus AcMsgPool_init(AcMsgPool* mp, AcU32 msg_count, AcU32 len_data) {
   
   // Allocate and align the messages
   AcU32 size_entry;
-  status = ac_calloc_align(msg_count, sizeof(AcMsg) + len_data, AC_MAX_CACHE_LINE_LEN,
+  status = ac_calloc_align(msg_count, sizeof(AcMsg) + len_data, sizeof(AcU64),
       &mp->msgs_raw, (void**)&mp->msgs, &size_entry);
   ac_debug_printf("AcMsgPool_init: mp=%p msgs_raw=%p msgs=%p size_entry=%u status=%u\n",
       mp, mp->msgs_raw, mp->msgs, size_entry, status);

@@ -75,24 +75,19 @@ typedef struct AcNextPtr {
 } AcNextPtr AC_ATTR_ALIGNED_AC_U64;
 
 /**
- * Message Header
+ * Message
  */
-typedef struct AcMsgHdr {
+typedef struct AcMsg {
+  AcNextPtr*    next_ptr;  ///< A 'pointer' the next message
+  AcMsgPool*    mp;        ///< The message pool this message belongs to
   AcOp          op;        ///< Operation
   AcStatus      status;    ///< Status 0 == success
   AcU32         len_data;  ///< Length of data following AcMsgHdr in bytes
   AcU64         tag;       ///< tag defined by sender preserved in responses
-} AcMsgHdr AC_ATTR_ALIGNED_AC_U64;
-
-/**
- * Message
- */
-typedef struct AcMsg {
-  AcNextPtr*     next_ptr; ///< A 'pointer' the next message
-  AcMsgPool*     mp;       ///< The message pool this message belongs to
-  AcMsgHdr       hdr;      ///< A message header
-  AcU8           data[];   ///< Variable sized extra data, hdr.len_data == 0 if no data
+  AcU8           data[];   ///< Variable sized extra data, len_data == 0 if no data
 } AcMsg AC_ATTR_ALIGNED_AC_U64;
+
+#define ac_op op.operation
 
 /**
  * The PROTOCOL for any system operations

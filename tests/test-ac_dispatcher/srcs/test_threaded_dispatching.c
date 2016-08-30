@@ -48,24 +48,24 @@ static AcCompT1 t1_ac = {
 static ac_bool t1_process_msg(AcComp* comp, AcMsg* msg) {
   AcCompT1* this = (AcCompT1*)comp;
 
-  if (msg->hdr.op.operation == AC_INIT_CMD) {
-    ac_debug_printf("t1_process_msg:+msg->hdr.op.operation=AC_INIT_CMD\n");
+  if (msg->op.operation == AC_INIT_CMD) {
+    ac_debug_printf("t1_process_msg:+msg->op.operation=AC_INIT_CMD\n");
     this->ac_init_cmd_count += 1;
     this->error |= AC_TEST(this->ac_init_cmd_count == 1);
     this->error |= AC_TEST(this->ac_deinit_cmd_count == 0);
-  } else if (msg->hdr.op.operation == AC_DEINIT_CMD) {
-    ac_debug_printf("t1_process_msg:+msg->hdr.op.operation=AC_DEINIT_CMD\n");
+  } else if (msg->op.operation == AC_DEINIT_CMD) {
+    ac_debug_printf("t1_process_msg:+msg->op.operation=AC_DEINIT_CMD\n");
     this->ac_deinit_cmd_count += 1;
     this->error |= AC_TEST(this->ac_init_cmd_count == 1);
     this->error |= AC_TEST(this->ac_deinit_cmd_count == 1);
   } else {
-    ac_debug_printf("t1_process_msg:+msg->hdr.op.operation=%lx\n",
-        msg->hdr.op.operation);
+    ac_debug_printf("t1_process_msg:+msg->op.operation=%lx\n",
+        msg->op.operation);
     // Handle other messages
   }
 
-  ac_debug_printf("t1_process_msg:- msg->hdr.op.operation=%lx error=%d\n",
-      msg->hdr.op.operation, error);
+  ac_debug_printf("t1_process_msg:- msg->op.operation=%lx error=%d\n",
+      msg->op.operation, error);
 
   AcMsgPool_ret_msg(msg);
 
@@ -174,7 +174,7 @@ ac_bool test_threaded_dispatching() {
   ac_debug_printf("test_threaded_dispatching: send msg\n");
   msg = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg != AC_NULL);
-  msg->hdr.op.operation = 1;
+  msg->op.operation = 1;
   t1_add_msg(msg);
 
   ac_debug_printf("test_threaded_dispatching: wait 100ms\n");

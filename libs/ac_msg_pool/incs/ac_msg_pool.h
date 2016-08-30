@@ -33,7 +33,7 @@ typedef struct AcMsgPool {
   AcMpscRingBuff rb;      ///< Ring buffer to hold the messages
   AcU32 len_data;         ///< Length of the data array in each message
   void* msgs_raw;         ///< If !AC_NULL raw ponter to pass to ac_free
-  AcMsg* msgs;        ///< msgs aligned to AC_MAC_CACHE_LINE_LEN
+  AcMsg* msgs;            ///< msgs aligned to AC_MAC_CACHE_LINE_LEN
   void* next_ptrs_raw;    ///< if !AC_NULL raw pointer to pass to ac_free
   AcNextPtr* next_ptrs;   ///< next_ptrs for each message
 } AcMsgPool;
@@ -53,7 +53,7 @@ static inline AcMsg* AcMsgPool_get_msg(AcMsgPool* mp) {
   }
   AcMsg* msg = AcMpscRingBuff_rmv_mem(&mp->rb);
   if (msg != AC_NULL) {
-    msg->hdr.len_data = mp->len_data;
+    msg->len_data = mp->len_data;
   }
   return msg;
 }

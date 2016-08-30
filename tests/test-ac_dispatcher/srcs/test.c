@@ -42,12 +42,12 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
 
   ac_debug_printf("ac1_process_msg:+\n");
 
-  if (msg->hdr.op.operation == AC_INIT_CMD) {
+  if (msg->op.operation == AC_INIT_CMD) {
     ac_debug_printf("ac1_process_msg: AC_INIT_CMD\n");
     this->ac_init_cmd_count += 1;
     this->error |= AC_TEST(this->ac_init_cmd_count == 1);
     this->error |= AC_TEST(this->ac_deinit_cmd_count == 0);
-  } else if (msg->hdr.op.operation == AC_DEINIT_CMD) {
+  } else if (msg->op.operation == AC_DEINIT_CMD) {
     ac_debug_printf("ac1_process_msg: AC_DEINIT_CMD\n");
     this->ac_deinit_cmd_count += 1;
     this->error |= AC_TEST(this->ac_init_cmd_count == 1);
@@ -56,7 +56,7 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
     ac_debug_printf("ac1_process_msg: OTHER msg->arg1=%lx, msg->arg2=%lx\n",
         msg->arg1, msg->arg2);
     this->msg_count += 1;
-    this->error |= AC_TEST(msg->hdr.op.operation == 1);
+    this->error |= AC_TEST(msg->op.operation == 1);
   }
 
   ac_debug_printf("ac1_process_msg: ret msg=%p\n", msg);
@@ -175,7 +175,7 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
   AcMsg* msg1;
   msg1 = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg1 != AC_NULL);
-  msg1->hdr.op.operation = 1;
+  msg1->op.operation = 1;
   AcDispatcher_send_msg(dc1, msg1);
 
 
@@ -188,7 +188,7 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
   AcMsg* msg2;
   msg2 = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg2 != AC_NULL);
-  msg2->hdr.op.operation = 1;
+  msg2->op.operation = 1;
   AcDispatcher_send_msg(dc1, msg2);
 
   ac_debug_printf("test_dispatching: rmv_ac\n");
