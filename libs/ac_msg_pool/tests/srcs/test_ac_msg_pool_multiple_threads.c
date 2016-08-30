@@ -163,8 +163,9 @@ AcBool test_msg_pool_multiple_threads(AcU32 thread_count, AcU32 comps_per_thread
 
   // Create the component manager with appropriate
   // number of theads and comps_per_thread
-  AcCompMgr* cm = AcCompMgr_init(thread_count, comps_per_thread, 0);
-  error |= AC_TEST(cm != AC_NULL);
+  AcCompMgr cm;
+  status = AcCompMgr_init(&cm, thread_count, comps_per_thread, 0);
+  error |= AC_TEST(status == AC_STATUS_OK);
 
   // Add the components to the component manager
   for (AcU32 i = 0; i < total_comp_count; i++) {
@@ -175,11 +176,11 @@ AcBool test_msg_pool_multiple_threads(AcU32 thread_count, AcU32 comps_per_thread
       return error;
     }
 
-    params[i]->cm = cm;
+    params[i]->cm = &cm;
     ac_sprintf(params[i]->name, sizeof(params[i]->name), "mptt%d_process_msg", i);
     params[i]->comp.name = params[i]->name;
     params[i]->comp.process_msg = mptt_process_msg;
-    params[i]->ci = AcCompMgr_add_comp(cm, &params[i]->comp);
+    params[i]->ci = AcCompMgr_add_comp(&cm, &params[i]->comp);
     error |= AC_TEST(params[i]->ci != AC_NULL);
   }
 
@@ -220,7 +221,7 @@ AcBool test_msg_pool_multiple_threads(AcU32 thread_count, AcU32 comps_per_thread
 
   // Deinit the component manager which will stop and wait until
   // they are done.
-  AcCompMgr_deinit(cm);
+  AcCompMgr_deinit(&cm);
 
   AcU64 stop = ac_tscrd();
   ac_printf("test_msg_pool_multiple_threads: done in %.9t\n", stop - start);

@@ -21,10 +21,12 @@
 #include <ac_assert.h>
 #include <ac_dispatcher.h>
 #include <ac_memmgr.h>
+#include <ac_memset.h>
 #include <ac_msg.h>
 #include <ac_printf.h>
 #include <ac_debug_printf.h>
 #include <ac_receptor.h>
+#include <ac_status.h>
 #include <ac_string.h>
 #include <ac_thread.h>
 
@@ -59,15 +61,6 @@ typedef struct DispatchThreadParams {
   AcReceptor* waiting;
   ac_bool stop_processing_msgs;
 } DispatchThreadParams;
-
-typedef struct AcCompMgr {
-  AcCompInfo* comp_infos;     // Array of AcCompInfo objects being managed
-                              // across all of the threads
-  ac_u32 comp_infos_max_count;// Number of elements in comp_infos array
-  DispatchThreadParams* dtps; // Array of DispathThreadParams, one for each thread
-  ac_u32 max_dtps;            // Number of threads in the dtps array
-  ac_u32 next_dtps;           // Next thread
-} AcCompMgr;
 
 /**
  * A thread which dispatches message to its components.
@@ -276,9 +269,6 @@ void AcCompMgr_deinit(AcCompMgr* mgr) {
       ac_free(mgr->dtps);
       mgr->dtps = AC_NULL;
     }
-
-    ac_debug_printf("AcCompMgr_deinit: free mgr=%p\n", mgr);
-    ac_free(mgr);
   }
   ac_debug_printf("AcCompMgr_deinit:-mgr=%p\n", mgr);
 }
@@ -286,10 +276,11 @@ void AcCompMgr_deinit(AcCompMgr* mgr) {
 /**
  * see ac_comp_mgr.h
  */
-AcCompMgr* AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_per_thread,
+AcStatus AcCompMgr_init(AcCompMgr* mgr, ac_u32 max_component_threads, ac_u32 max_components_per_thread,
     ac_u32 stack_size) {
-  ac_bool error = AC_FALSE;
-  AcCompMgr* mgr = ac_calloc(1, sizeof(AcCompMgr));
+  AcStatus status;
+
+  ac_memset(mgr, 0, sizeof(AcCompMgr));
   mgr->dtps = AC_NULL;
   mgr->comp_infos = AC_NULL;
   mgr->max_dtps = max_component_threads;
@@ -300,25 +291,25 @@ AcCompMgr* AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_pe
       
   if (max_component_threads == 0) {
     ac_printf("Counld not create the AcCompMgr max_component_threads is 0\n");
-    error = AC_TRUE;
+    status = AC_STATUS_BAD_PARAM;
     goto done;
   }
 
   if (max_components_per_thread == 0) {
     ac_printf("Counld not create the AcCompMgr max_components_per_thread is 0\n");
-    error = AC_TRUE;
+    status = AC_STATUS_BAD_PARAM;
     goto done;
   }
 
   mgr->dtps = ac_calloc(mgr->max_dtps, sizeof(DispatchThreadParams));
   if (mgr->dtps == AC_NULL) {
-    error = AC_TRUE;
+    status = AC_STATUS_OUT_OF_MEMORY;
     goto done;
   }
   mgr->comp_infos_max_count = mgr->max_dtps * max_components_per_thread;
   mgr->comp_infos = ac_calloc(mgr->comp_infos_max_count, sizeof(AcCompInfo));
   if (mgr->comp_infos == AC_NULL) {
-    error = AC_TRUE;
+    status = AC_STATUS_OUT_OF_MEMORY;
     goto done;
   }
 
@@ -330,7 +321,7 @@ AcCompMgr* AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_pe
     dtp->cis = ac_calloc(dtp->max_comps, sizeof(AcCompInfo*));
     if (dtp->cis == AC_NULL) {
       ac_debug_printf("AcCompMgr_init: i=%d\n dtp->cis == AC_NULL", i);
-      error = AC_TRUE;
+      status = AC_STATUS_ERR;
       goto done;
     }
     for (ac_u32 j = 0; j < dtp->max_comps; j++) {
@@ -354,7 +345,7 @@ AcCompMgr* AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_pe
     if (!dtp->thread_started) {
       ac_printf("AcCompMgr_init: Counld not create the dispatch_thread %d rslt.status=%d\n",
           i, rslt.status);
-      error = AC_TRUE;
+      status = AC_STATUS_ERR;
       goto done;
     }
 
@@ -365,10 +356,11 @@ AcCompMgr* AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_pe
   // Initialize the next dt to add a component too
   mgr->next_dtps = 0;
 
+  status = AC_STATUS_OK;
+
 done:
-  if (error) {
+  if (status != AC_STATUS_OK) {
     AcCompMgr_deinit(mgr);
-    mgr = AC_NULL;
   }
-  return mgr;
+  return status;
 }

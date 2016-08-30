@@ -33,7 +33,6 @@
 -I /home/wink/prgs/sadie/libs/ac_acpi/incs
 -I /home/wink/prgs/sadie/libs/ac_assert/incs
 -I /home/wink/prgs/sadie/libs/ac_bits/incs
--I /home/wink/prgs/sadie/libs/ac_inet_link/incs
 -I /home/wink/prgs/sadie/libs/ac_mem/incs
 -I /home/wink/prgs/sadie/libs/ac_mem_pool/incs
 -I /home/wink/prgs/sadie/libs/ac_check_sum/incs
@@ -56,9 +55,9 @@
 -I /home/wink/prgs/sadie/libs/ac_time/incs
 
 -I /home/wink/prgs/sadie/components/ac_inet_link/incs
--I /home/wink/prgs/sadie/platform/pc_generic/components/ac_inet_link/incs
+#-I /home/wink/prgs/sadie/platform/pc_generic/components/ac_inet_link/incs
 -I /home/wink/prgs/sadie/platform/Posix/components/ac_inet_link/incs
--I /home/wink/prgs/sadie/platform/Versatile/components/ac_inet_link/incs
+#-I /home/wink/prgs/sadie/platform/Versatile/components/ac_inet_link/incs
 
 -I /home/wink/prgs/sadie/tests
 

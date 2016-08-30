@@ -232,15 +232,19 @@ int main(void) {
 #else
   ac_thread_init(3);
   AcReceptor_init(256);
-  AcCompMgr* cm = AcCompMgr_init(3, 10, 0);
-  error |= AC_TEST(cm != AC_NULL);
 
-  AcInetLink_init(cm);
+  AcCompMgr cm;
+  AcStatus status = AcCompMgr_init(&cm, 3, 10, 0);
+  error |= AC_TEST(status == AC_STATUS_OK);
+
+  AcInetLink_init(&cm);
 
   error |= test_hton_ntoh_be();
   error |= test_hton_ntoh_le();
   error |= test_AcInetIpv4FragmentOffset();
   error |= test_AcInetSendPacket();
+
+  AcCompMgr_deinit(&cm);
 #endif
 
   if (!error) {

@@ -24,6 +24,9 @@
 
 #include <ac_inttypes.h>
 #include <ac_msg.h>
+#include <ac_status.h>
+
+#include <ac_comp_mgr_internal.h>
 
 /**
  * A component manager as returned by AcCompMgr_init
@@ -95,20 +98,20 @@ AcComp* AcCompMgr_rmv_comp(AcCompInfo* comp_info);
 void AcCompMgr_send_msg(AcCompInfo* info, AcMsg* msg);
 
 /**
- * Deiniti AcCompMsg
+ * Deinitialize a AcCompMsg
  */
 void AcCompMgr_deinit(AcCompMgr* mgr);
 
 /**
- * Initialize the component manager, may only be called once.
+ * Initialize a component manager
  *
  * @param: max_component_threads is the maximum number of threads to manage
  * @param: max_components_thread is the maximum number of components per thread
  * @param: stack_size is number of bytes for a threads stack, 0 will provide the default
  *
- * @return: AcCompMgr* or AC_NULL if an error
+ * @return: 0 (AC_STATUS_OK) if successsful
  */
-AcCompMgr* AcCompMgr_init(ac_u32 max_component_threads, ac_u32 max_components_per_thread,
+AcStatus AcCompMgr_init(AcCompMgr* mgr, ac_u32 max_component_threads, ac_u32 max_components_per_thread,
     ac_u32 stack_size);
 
 #endif

@@ -51,16 +51,20 @@ ac_bool test_thread_comps(ac_u32 threads, ac_u32 comps_per_thread) {
 
   ac_debug_printf("test_%dx%d: init comp mgr\n", threads, comps_per_thread);
   ac_u32 stack_size = 0;
-  AcCompMgr* cm = AcCompMgr_init(threads, comps_per_thread, stack_size);
+
+  AcCompMgr cm;
+
+  status = AcCompMgr_init(&cm, threads, comps_per_thread, stack_size);
+  error |= AC_TEST(status == AC_STATUS_OK);
 
   ac_debug_printf("test_%dx%d: first invocation of test_comps\n", threads, comps_per_thread);
-  error |= AC_TEST(test_comps(cm, &mp, threads * comps_per_thread) == AC_FALSE);
+  error |= AC_TEST(test_comps(&cm, &mp, threads * comps_per_thread) == AC_FALSE);
 
   ac_debug_printf("test_%dx%d: second invocation of test_comps\n", threads, comps_per_thread);
-  error |= AC_TEST(test_comps(cm, &mp, threads * comps_per_thread) == AC_FALSE);
+  error |= AC_TEST(test_comps(&cm, &mp, threads * comps_per_thread) == AC_FALSE);
 
   ac_debug_printf("test_%dx%d: deinit comp mgr\n", threads, comps_per_thread);
-  AcCompMgr_deinit(cm);
+  AcCompMgr_deinit(&cm);
 
   AcMsgPool_deinit(&mp);
 

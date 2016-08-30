@@ -23,27 +23,31 @@
 #include <ac_thread.h>
 #include <ac_test.h>
 
-ac_uint test_inet_link_impl(void) {
-  ac_uint error = AC_FALSE;
+AcUint test_inet_link_impl(void) {
+  AcUint error = AC_FALSE;
 
   return error;
 }
 
 int main(void) {
-  ac_uint error = AC_FALSE;
+  AcUint error = AC_FALSE;
 
   ac_thread_init(3);
   AcReceptor_init(256);
-  AcCompMgr* cm = AcCompMgr_init(3, 10, 0);
-  error |= AC_TEST(cm != AC_NULL);
 
-  AcInetLink_init(cm);
+  AcCompMgr cm;
+  AcStatus status = AcCompMgr_init(&cm, 3, 10, 0);
+  error |= AC_TEST(status == AC_STATUS_OK);
+
+  AcInetLink_init(&cm);
 
   if (!error) {
     error |= test_inet_link_impl();
   }
 
-  AcInetLink_deinit(cm);
+  AcInetLink_deinit(&cm);
+
+  AcCompMgr_deinit(&cm);
 
   if (!error) {
     ac_printf("OK\n");
