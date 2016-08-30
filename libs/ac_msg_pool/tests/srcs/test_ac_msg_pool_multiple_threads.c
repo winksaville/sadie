@@ -71,7 +71,7 @@ typedef struct {
 } mptt_params;
 
 AcBool mptt_process_msg(AcComp* this, AcMsg* msg) {
-  if (msg->op.operation != AC_INIT_CMD && msg->op.operation != AC_DEINIT_CMD) {
+  if (msg->op != AC_INIT_CMD && msg->op != AC_DEINIT_CMD) {
     AcU64 recv_tsc = ac_tscrd();
     mptt_params* params = (mptt_params*)this;
 

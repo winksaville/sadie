@@ -35,9 +35,9 @@ static void send_error_rsp(AcComp* comp, AcMsg* msg, AcStatus status) {
 
 static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
   AcCompIpv4LinkLayer* this = (AcCompIpv4LinkLayer*)comp;
-  ac_debug_printf("%s:+msg->op=%lx\n", this->comp.name, msg->op.operation);
+  ac_debug_printf("%s:+msg->op=%lx\n", this->comp.name, msg->op);
 
-  switch (msg->op.operation) {
+  switch (msg->op) {
     case (AC_INIT_CMD): {
       ac_debug_printf("%s: AC_INIT_CMD\n", this->comp.name);
       break;
@@ -59,7 +59,7 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
 
   AcMsgPool_ret_msg(msg);
 
-  ac_debug_printf("%s:-msg->op=%lx\n", this->comp.name, msg->op.operation);
+  ac_debug_printf("%s:-msg->op=%lx\n", this->comp.name, msg->op);
   return AC_TRUE;
 }
 

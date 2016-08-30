@@ -47,16 +47,16 @@ static ac_bool msg_proc(AcComp* ac, AcMsg* msg) {
 
   ac_debug_printf("msg_proc:+%s\n", this->comp.name);
 
-  if (msg->op.operation == AC_INIT_CMD) {
+  if (msg->op == AC_INIT_CMD) {
     this->init_count += 1;
     this->error |= AC_TEST(this->init_count == 1);
     signal = AC_FALSE;
-  } else if (msg->op.operation == AC_DEINIT_CMD) {
+  } else if (msg->op == AC_DEINIT_CMD) {
     this->deinit_count += 1;
     this->error |= AC_TEST(this->deinit_count == 1);
     signal = AC_FALSE;
   } else {
-    this->error |= AC_TEST(msg->op.operation == 1);
+    this->error |= AC_TEST(msg->op == 1);
     signal = AC_TRUE;
   }
 
@@ -119,7 +119,7 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
       msg = AcMsgPool_get_msg(mp);
       error |= AC_TEST(msg != AC_NULL);
 
-      msg->op.operation = OPERATION(0, 0, 1);
+      msg->op = AC_OP(0, 0, 1);
       ac_debug_printf("test_comps: send msg %s ci=%p\n", c->comp.name, c->ci);
       AcCompMgr_send_msg(c->ci, msg);
     }

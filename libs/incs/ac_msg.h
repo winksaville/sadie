@@ -56,11 +56,11 @@ ac_static_assert(sizeof(AcOp) == sizeof(ac_u64), L"sizeof(AcOp) != 8");
 /**
  * Construct an operation
  */
-#define OPERATION(p, ot, oc) \
-   (AC_SET_BITS(AcU64, ((AcU64)0), oc, 16, 0) \
-   | AC_SET_BITS(AcU64, ((AcU64)0), ot, 2, 16) \
-   | AC_SET_BITS(AcU64, ((AcU64)0), 0, 2, 18) \
-   | AC_SET_BITS(AcU64, ((AcU64)0), p, 44, 20)) \
+#define AC_OP(p, ot, oc) \
+   ( AC_SET_BITS(AcU64, ((AcU64)0), oc, 16,  0)   \
+   | AC_SET_BITS(AcU64, ((AcU64)0), ot,  2, 16)   \
+   | AC_SET_BITS(AcU64, ((AcU64)0),  0,  2, 18)   \
+   | AC_SET_BITS(AcU64, ((AcU64)0),  p, 44, 20) ) \
 
 /**
  * Next AcMsg
@@ -79,7 +79,7 @@ typedef struct AcMsg {
   AcNextPtr*    next_ptr;  ///< A 'pointer' the next message
   AcMsgPool*    mp;        ///< The message pool this message belongs to
 
-  AcOp          op;        ///< Operation
+  AcU64         op;        ///< An AcOp.operation defined as a AcU64 for ease of use
   AcU64         tag;       ///< tag defined by sender preserved in responses
   AcStatus      status;    ///< Status 0 == success
   AcU32         len_extra; ///< Length in bytes of extra data following AcMsg
@@ -120,11 +120,11 @@ ac_static_assert((AC_OFFSET_OF(AcMsg, extra) - AC_OFFSET_OF(AcMsg, len_extra)) =
 /**
  * AC_INIT_CMD is the first command sent to a component
  */
-#define AC_INIT_CMD OPERATION(AC_SYSTEM_PROTOCOL, AC_OPTYPE_CMD, 1)
+#define AC_INIT_CMD AC_OP(AC_SYSTEM_PROTOCOL, AC_OPTYPE_CMD, 1)
 
 /**
  * AC_DEINIT_CMD is the last command sent to a component
  */
-#define AC_DEINIT_CMD OPERATION(AC_SYSTEM_PROTOCOL, AC_OPTYPE_CMD, 2)
+#define AC_DEINIT_CMD AC_OP(AC_SYSTEM_PROTOCOL, AC_OPTYPE_CMD, 2)
 
 #endif
