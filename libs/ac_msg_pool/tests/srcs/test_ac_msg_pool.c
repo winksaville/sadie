@@ -76,20 +76,20 @@ AcBool simple_message_pool_test(void) {
   msg = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg != AC_NULL);
   if (msg != AC_NULL) {
-    error |= AC_TEST(msg->len_data == 1);
+    error |= AC_TEST(msg->len_extra == 1);
   }
-  msg->data[0] = 1;
-  error |= AC_TEST(msg->data[0] == 1);
+  msg->extra[0] = 1;
+  error |= AC_TEST(msg->extra[0] == 1);
 
   // Test requesting the first msg
   ac_debug_printf("test_message_pool: get msg2 expecting != AC_NULL\n");
   msg2 = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg2 != AC_NULL);
   if (msg2 != AC_NULL) {
-    error |= AC_TEST(msg2->len_data == 1);
+    error |= AC_TEST(msg2->len_extra == 1);
   }
-  msg2->data[0] = 2;
-  error |= AC_TEST(msg2->data[0] == 2);
+  msg2->extra[0] = 2;
+  error |= AC_TEST(msg2->extra[0] == 2);
 
   // Test requesting the msg which should be empty
   ac_debug_printf("test_message_pool: get msg expecting AC_NULL\n");
@@ -107,7 +107,7 @@ AcBool simple_message_pool_test(void) {
   msg = AcMsgPool_get_msg(&mp);
   error |= AC_TEST(msg != AC_NULL);
   if (msg != AC_NULL) {
-    error |= AC_TEST(msg->len_data == 1);
+    error |= AC_TEST(msg->len_extra == 1);
   }
 
   // Return msg

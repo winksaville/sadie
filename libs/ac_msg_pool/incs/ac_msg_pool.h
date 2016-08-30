@@ -31,7 +31,7 @@
 
 typedef struct AcMsgPool {
   AcMpscRingBuff rb;      ///< Ring buffer to hold the messages
-  AcU32 len_data;         ///< Length of the data array in each message
+  AcU32 len_extra;         ///< Length of the data array in each message
   void* msgs_raw;         ///< If !AC_NULL raw ponter to pass to ac_free
   AcMsg* msgs;            ///< msgs aligned to AC_MAC_CACHE_LINE_LEN
   void* next_ptrs_raw;    ///< if !AC_NULL raw pointer to pass to ac_free
@@ -44,7 +44,7 @@ typedef struct AcMsgPool {
  * @param pool is a previously created pool
  *
  * @return a message or AC_NULL if none available, if !AC_NULL
- * the msg->len_data will be initialized to len_data as defined
+ * the msg->len_extra will be initialized to len_extra as defined
  * in the call to AcMsgPool_init.
  */
 static inline AcMsg* AcMsgPool_get_msg(AcMsgPool* mp) {
@@ -53,7 +53,7 @@ static inline AcMsg* AcMsgPool_get_msg(AcMsgPool* mp) {
   }
   AcMsg* msg = AcMpscRingBuff_rmv_mem(&mp->rb);
   if (msg != AC_NULL) {
-    msg->len_data = mp->len_data;
+    msg->len_extra = mp->len_extra;
   }
   return msg;
 }
@@ -77,11 +77,11 @@ static inline void AcMsgPool_ret_msg(AcMsg* msg) {
  *
  * @params pool to initialize
  * @params msg_count is number of messages for this pool, must be power of 2 and > 0
- * @params len_data is number of bytes to allocate for the messages data array, 0 is OK
+ * @params len_extra is number of bytes to allocate for the messages data array, 0 is OK
  *
  * @return 0 (AC_STATUS_OK) if successful
  */
-AcStatus AcMsgPool_init(AcMsgPool* pool, AcU32 msg_count, AcU32 len_data);
+AcStatus AcMsgPool_init(AcMsgPool* pool, AcU32 msg_count, AcU32 len_extra);
 
 /**
  * Deinitialize the message pool

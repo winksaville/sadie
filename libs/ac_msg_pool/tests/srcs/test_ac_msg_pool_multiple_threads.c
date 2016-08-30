@@ -76,7 +76,7 @@ AcBool mptt_process_msg(AcComp* this, AcMsg* msg) {
     mptt_params* params = (mptt_params*)this;
 
     AcUint idx = params->count++ % AC_ARRAY_COUNT(params->msg_tsc);
-    struct MsgTscData* mtd = (struct MsgTscData*)msg->data;
+    struct MsgTscData* mtd = (struct MsgTscData*)msg->extra;
     struct MsgTsc* mt = &params->msg_tsc[idx];
     mt->waiting_count = mtd->waiting_count;
     mt->ready_length = ready_length();
@@ -211,7 +211,7 @@ AcBool test_msg_pool_multiple_threads(AcU32 thread_count, AcU32 comps_per_thread
         msg = AcMsgPool_get_msg(&mp);
       }
       if (msg != AC_NULL) {
-        struct MsgTscData* mtd = (struct MsgTscData*)msg->data;
+        struct MsgTscData* mtd = (struct MsgTscData*)msg->extra;
         mtd->waiting_count = waiting_count;
         mtd->sent_tsc = ac_tscrd();
         AcCompMgr_send_msg(params[i]->ci, msg);

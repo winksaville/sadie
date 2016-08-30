@@ -85,9 +85,9 @@ done:
 /**
  * @see ac_msg_pool.h
  */
-AcStatus AcMsgPool_init(AcMsgPool* mp, AcU32 msg_count, AcU32 len_data) {
-  ac_debug_printf("AcMsgPool_init:+mp=%p msg_count=%u len_data=%u\n",
-      mp, msg_count, len_data);
+AcStatus AcMsgPool_init(AcMsgPool* mp, AcU32 msg_count, AcU32 len_extra) {
+  ac_debug_printf("AcMsgPool_init:+mp=%p msg_count=%u len_extra=%u\n",
+      mp, msg_count, len_extra);
   AcStatus status;
 
   if (mp == AC_NULL) {
@@ -97,11 +97,11 @@ AcStatus AcMsgPool_init(AcMsgPool* mp, AcU32 msg_count, AcU32 len_data) {
   mp->msgs_raw = AC_NULL;
   mp->next_ptrs_raw = AC_NULL;
   mp->msgs = AC_NULL;
-  mp->len_data = len_data;
+  mp->len_extra = len_extra;
   
   // Allocate and align the messages
   AcU32 size_entry;
-  status = ac_calloc_align(msg_count, sizeof(AcMsg) + len_data, sizeof(AcU64),
+  status = ac_calloc_align(msg_count, sizeof(AcMsg) + len_extra, sizeof(AcU64),
       &mp->msgs_raw, (void**)&mp->msgs, &size_entry);
   ac_debug_printf("AcMsgPool_init: mp=%p msgs_raw=%p msgs=%p size_entry=%u status=%u\n",
       mp, mp->msgs_raw, mp->msgs, size_entry, status);
@@ -158,8 +158,8 @@ done:
     ac_free(mp->msgs_raw);
     ac_free(mp->next_ptrs_raw);
   }
-  ac_debug_printf("AcMsgPool_init:-mp=%p msg_count=%u len_data=%u status=%d\n",
-      mp, msg_count, len_data, status);
+  ac_debug_printf("AcMsgPool_init:-mp=%p msg_count=%u len_extra=%u status=%d\n",
+      mp, msg_count, len_extra, status);
   return status;
 }
 

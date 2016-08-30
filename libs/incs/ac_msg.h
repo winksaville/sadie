@@ -24,10 +24,6 @@
 #include <ac_msg.h>
 #include <ac_status.h>
 
-// Be sure AcStatus is 32 bits
-ac_static_assert(sizeof(AcStatus) == sizeof(AcU32), L"sizeof(AcStatus != 4");
-
-
 typedef struct AcMsgPool AcMsgPool;
 typedef struct AcMsg AcMsg;
 typedef struct AcNextPtr AcNextPtr;
@@ -75,19 +71,46 @@ typedef struct AcNextPtr {
 } AcNextPtr AC_ATTR_ALIGNED_AC_U64;
 
 /**
- * Message
+ * An Async Component Message. AcMsg's can be transported between
+ * systems and therefore the position of certain fields must be
+ * constant, see the static asserts below.
  */
 typedef struct AcMsg {
   AcNextPtr*    next_ptr;  ///< A 'pointer' the next message
   AcMsgPool*    mp;        ///< The message pool this message belongs to
+
   AcOp          op;        ///< Operation
-  AcStatus      status;    ///< Status 0 == success
-  AcU32         len_data;  ///< Length of data following AcMsgHdr in bytes
   AcU64         tag;       ///< tag defined by sender preserved in responses
-  AcU8           data[];   ///< Variable sized extra data, len_data == 0 if no data
+  AcStatus      status;    ///< Status 0 == success
+  AcU32         len_extra; ///< Length in bytes of extra data following AcMsg
+  AcU8          extra[];   ///< Variable sized extra data, len_extra == 0 if no extra data
 } AcMsg AC_ATTR_ALIGNED_AC_U64;
 
-#define ac_op op.operation
+// Be sure AcOp is 64 bits
+ac_static_assert(sizeof(AcOp) == sizeof(AcU64), L"sizeof(AcOp != 8");
+
+// Be sure AcStatus is 32 bits
+ac_static_assert(sizeof(AcStatus) == sizeof(AcU32), L"sizeof(AcStatus != 4");
+
+// Be sure offset of AcMsg.op is on a AcU64 boundary
+ac_static_assert((AC_OFFSET_OF(AcMsg, op) % sizeof(AcU64)) == 0,
+    L"offset of AcMsg.op is not on AcU64 boundary");
+
+// Check poision of tag
+ac_static_assert((AC_OFFSET_OF(AcMsg, tag) - AC_OFFSET_OF(AcMsg, op)) ==  8,
+    L"Expecting AcMsg.tag to follow AcMsg.op");
+
+// Check poision of status
+ac_static_assert((AC_OFFSET_OF(AcMsg, status) - AC_OFFSET_OF(AcMsg, tag)) ==  8,
+    L"Expecting AcMsg.status to follow AcMsg.tag");
+
+// Check poision of len_extra
+ac_static_assert((AC_OFFSET_OF(AcMsg, len_extra) - AC_OFFSET_OF(AcMsg, status)) ==  4,
+    L"Expecting AcMsg.len_extra to follow AcMsg.status");
+
+// Check poision of extra
+ac_static_assert((AC_OFFSET_OF(AcMsg, extra) - AC_OFFSET_OF(AcMsg, len_extra)) ==  4,
+    L"Expecting AcMsg.extra to follow AcMsg.len_extra");
 
 /**
  * The PROTOCOL for any system operations

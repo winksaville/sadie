@@ -49,6 +49,11 @@ typedef _Bool ac_bool;
 #define AC_ARRAY_COUNT(__array) (sizeof(__array)/sizeof(__typeof__(__array[0])))
 
 /**
+ * AC_OFFSET_OF return byte offset of a struct/typedef field
+ */
+#define AC_OFFSET_OF(type, member) __builtin_offsetof(type, member)
+
+/**
  * Cast x to AcUint
  */
 #define AC_UINT(x) ({ ((AcUint)(x)); })

@@ -80,8 +80,8 @@ AcBool test_add_rmv(void) {
   // Add msg1
   AcMsg* msg1 = AcMsgPool_get_msg(&pool);
   error |= AC_TEST(msg1 != AC_NULL);
-  msg1->data[0] = 1;
-  msg1->data[1] = 2;
+  msg1->extra[0] = 1;
+  msg1->extra[1] = 2;
   AcMpscLinkList_add(&list, msg1);
   AcMpscLinkList_print("test_add_rmv: after add msg1 list:", &list);
   error |= AC_TEST(list.head->msg == msg1);
@@ -91,8 +91,8 @@ AcBool test_add_rmv(void) {
   // Add msg2
   AcMsg* msg2 = AcMsgPool_get_msg(&pool);
   error |= AC_TEST(msg2 != AC_NULL);
-  msg2->data[0] = 3;
-  msg2->data[1] = 4;
+  msg2->extra[0] = 3;
+  msg2->extra[1] = 4;
   AcMpscLinkList_add(&list, msg2);
   AcMpscLinkList_print("test_add_rmv: after add msg2 list:", &list);
   error |= AC_TEST(list.head->msg == msg2);
@@ -102,15 +102,15 @@ AcBool test_add_rmv(void) {
   // Remove msg1
   AcMsg* msg = AcMpscLinkList_rmv(&list);
   error |= AC_TEST(msg == msg1);
-  error |= AC_TEST(msg1->data[0] == 1);
-  error |= AC_TEST(msg1->data[1] == 2);
+  error |= AC_TEST(msg1->extra[0] == 1);
+  error |= AC_TEST(msg1->extra[1] == 2);
   AcMpscLinkList_print("test_add_rmv: after rmv msg1 list:", &list);
 
   // Remove msg2
   msg = AcMpscLinkList_rmv(&list);
   error |= AC_TEST(msg == msg2);
-  error |= AC_TEST(msg2->data[0] == 3);
-  error |= AC_TEST(msg2->data[1] == 4);
+  error |= AC_TEST(msg2->extra[0] == 3);
+  error |= AC_TEST(msg2->extra[1] == 4);
   AcMpscLinkList_print("test_add_rmv: after rmv msg1 list:", &list);
 
   // Remove from empty which should be null
