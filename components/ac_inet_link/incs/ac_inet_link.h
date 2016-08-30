@@ -28,16 +28,16 @@
  * See (RFC-2460 Internet Protocol, V6)[https://tools.ietf.org/html/rfc2460]
  */
 typedef struct AC_ATTR_PACKED {
-  ac_u8 version:4;        // Version = 6
-  ac_u8 traffic_class:8;  // Traffic class see (section 7)[https://tools.ietf.org/html/rfc2460#section-7]
-  ac_u32 flow_label:20;   // Flow label set (section 6)[https://tools.ietf.org/html/rfc2460#section-6]
-  ac_u16 payload_length;  // Includes extension headers, if any, and payload that follow this header
-  ac_u8 next_header;      // 59 == no next_header, IP Protocol see (www.iana.org Protocol Numbers)
-                          //   [http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml]
-  ac_u8 hop_limit;        // If arrives as 0 discard. Before forwarding decrement
-                          // and if it becomes 0 discard and do not forward.
-  ac_u8 source[16];       // 16 byte source address
-  ac_u8 destination[16];  // 16 byte destination address
+  ac_u8 version:4;        ///< Version = 6
+  ac_u8 traffic_class:8;  ///< Traffic class see (section 7)[https://tools.ietf.org/html/rfc2460#section-7]
+  ac_u32 flow_label:20;   ///< Flow label set (section 6)[https://tools.ietf.org/html/rfc2460#section-6]
+  ac_u16 payload_length;  ///< Includes extension headers, if any, and payload that follow this header
+  ac_u8 next_header;      ///< 59 == no next_header, IP Protocol see (www.iana.org Protocol Numbers)
+                          ///<   [http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml]
+  ac_u8 hop_limit;        ///< If arrives as 0 discard. Before forwarding decrement
+                          ///< and if it becomes 0 discard and do not forward.
+  ac_u8 source[16];       ///< 16 byte source address
+  ac_u8 destination[16];  ///< 16 byte destination address
 } AcInetIpv6Hdr;
 
 /**
@@ -48,10 +48,10 @@ typedef struct AC_ATTR_PACKED {
     ac_u8 raw_u8[2];
     ac_u16 raw_u16;
     struct {
-      ac_u16 offset_in_u64s:13; // Bits 0-12 this fragments byte offset == offset_in_u64s * 8
-      ac_bool more_fragments:1; // 0 = last fragment, 1 = more fragments
-      ac_bool dont_fragment:1;  // 0 = May fragment,  1 = dont' fragment
-      ac_bool zero:1;           // always 0
+      ac_u16 offset_in_u64s:13; ///< Bits 0-12 this fragments byte offset == offset_in_u64s * 8
+      ac_bool more_fragments:1; ///< 0 = last fragment, 1 = more fragments
+      ac_bool dont_fragment:1;  ///< 0 = May fragment,  1 = dont' fragment
+      ac_bool zero:1;           ///< always 0
     };
   };
 } AcInetIpv4FragmentOffset;
@@ -60,26 +60,26 @@ typedef struct AC_ATTR_PACKED {
  * See (RFC-791 Internet Protocol)[https://tools.ietf.org/html/rfc791]
  */
 typedef struct AC_ATTR_PACKED {
-  ac_u8 version:4;         // Version = 4
-  ac_u8 ihl:4;             // Interent Header Lenth
-  ac_u8 tos;               // Type of service
-  ac_u16 total_length;     // Total length of the datagram
-  ac_u16 identification;   // sequence number
-  AcInetIpv4FragmentOffset fragment_offset; // bits 0-12 are offset
-                                            // bit 13 == 0 = Last Fragment, 1 = More Fragments
-                                            // bit 15 == 0 always
-                                            // bit 14 == 0 = May Fragment,  1 = Don't Fragment
-  ac_u8 time_to_live;      // 0 == time has expired and this packet is not forwarded
-  ac_u8 protocol;          // IP Protocol see (www.iana.org Protocol Numbers)
-                           //   [http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml]
-  ac_u16 header_checksum;  // Checksum for the header
-  ac_u8 source[4];         // 4 byte source address
-  ac_u8 destination[4];    // 4 byte destination address
+  ac_u8 version:4;         ///< Version = 4
+  ac_u8 ihl:4;             ///< Interent Header Lenth
+  ac_u8 tos;               ///< Type of service
+  ac_u16 total_length;     ///< Total length of the datagram
+  ac_u16 identification;   ///< sequence number
+  AcInetIpv4FragmentOffset fragment_offset; ///< bits 0-12 are offset
+                                            ///< bit 13 == 0 = Last Fragment, 1 = More Fragments
+                                            ///< bit 15 == 0 always
+                                            ///< bit 14 == 0 = May Fragment,  1 = Don't Fragment
+  ac_u8 time_to_live;      ///< 0 == time has expired and this packet is not forwarded
+  ac_u8 protocol;          ///< IP Protocol see (www.iana.org Protocol Numbers)
+                           ///<   [http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml]
+  ac_u16 header_checksum;  ///< Checksum for the header
+  ac_u8 source[4];         ///< 4 byte source address
+  ac_u8 destination[4];    ///< 4 byte destination address
 } AcInetIpv4Hdr;
 
 typedef struct {
-  void*     base;       // Base address of the data
-  ac_size_t len;        // Length of the data
+  void*     base;       ///< Base address of the data
+  ac_size_t len;        ///< Length of the data
 } AcIoBuff;
 
 
@@ -96,31 +96,18 @@ typedef struct {
 #define AC_INET_SEND_PACKET_RSP OPERATION(AC_INET_SEND_PACKET_PROTOCOL, AC_OPTYPE_RSP, 0x1)
 
 /**
- * AcInetSendPacetOpCr is either AC_INET_SEND_PACKET_CMD or _REQ.
- * If _REQ is sent then AcInetSendPacketOpRsp must be sent, for _CMD
- * the _RSP may be sent, typically when an error occurs, usually
+ * AcInetSendPacetData is either AC_INET_SEND_PACKET_CMD or _REQ.
+ * If _REQ is sent then _RSP must be sent, for _CMD the _RSP
+ * may be sent, for instance when an error occurs, usually
  * detected by before transmitting.
  */
 typedef struct {
-  AcOp      op;         // Op is the operation AC_INET_SEND_PACKET_CMD | _REQ
-  ac_u64    tag;        // tag an app defined tag
-  ac_u64    app_vec_cnt;// Number of AcIoBuff's for application data
-  AcIoBuff* link_buff;  // Pointer to the Link header buffer
-  AcIoBuff* ip_buff;    // Pointer to the IP header buffer
-  AcIoBuff* trans_buff; // Pointer to the Transport header buffer
-  AcIoBuff* app_buffs[];// Pointer to the app data buffer
-} AcInetSendPacketOpCr;
-
-/**
- * AcInetSendPacketRsp is optional and returns 0 if succesfully
- * queued for sending does not mean it was sent or recevied.
- * Generally will only be returned if an error unless po.flags = AC_REQ
- */
-typedef struct {
-  AcOp      op;         // Opeeration is AC_INET_SEND_PACKET_RSP
-  ac_u64    tag;        // tag an app defined opaque value
-  AcStatus  status;     // 0 == successful, !0 == error
-} AcInetSendPacketOpRsp;
+  ac_u64    app_vec_cnt;  ///< Number of AcIoBuff's for application data
+  AcIoBuff* link_buff;    ///< Pointer to the Link header buffer
+  AcIoBuff* ip_buff;      ///< Pointer to the IP header buffer
+  AcIoBuff* trans_buff;   ///< Pointer to the Transport header buffer
+  AcIoBuff* app_buffs[];  ///< Pointer to the app data buffer
+} AcInetSendPacketExtra;
 
 /**
  * Initialize this module
