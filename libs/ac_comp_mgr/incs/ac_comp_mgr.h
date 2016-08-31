@@ -53,11 +53,12 @@ typedef struct AcCompInfo AcCompInfo;
 typedef AcBool (*AcCompMsgProcessor)(AcComp* this, AcMsg* msg);
 
 /**
- * An Asynchronouse Component
+ * An Asynchronous Component
  */
 typedef struct AcComp {
-  ac_u8* name;                     // Name of component, must be unique
-  AcCompMsgProcessor process_msg;  // Process a message
+  ac_u8* name;                     ///< Name of component, must be unique
+  AcCompMsgProcessor process_msg;  ///< The components message processor
+  AcCompInfo ci;                   ///< CompInfo initialized by AcCompMgr_add_comp
 } AcComp;
 
 /**
@@ -76,11 +77,11 @@ AcComp* AcCompMgr_find_comp(AcCompMgr* mgr, ac_u8* name);
  * or move.
  *
  * @param: mgr is a component manager
- * @param: comp is an initialized component type
+ * @param: comp the component to add with name and process_msg fields initialized
  *
- * @return: AcCompInfo or AC_NULL if an error
+ * @return: returns AC_STATUS_OK if successful and AcComp.ci initialized
  */
-AcCompInfo* AcCompMgr_add_comp(AcCompMgr* mgr, AcComp* comp);
+AcStatus AcCompMgr_add_comp(AcCompMgr* mgr, AcComp* comp);
 
 /**
  * Remove a component being managed
@@ -88,14 +89,14 @@ AcCompInfo* AcCompMgr_add_comp(AcCompMgr* mgr, AcComp* comp);
  * @param: mgr is a component manager
  * @param: info an AcCompInfo returned by AcCompMgr_add_comp.
  *
- * @return: AcComp passed to AcCompMgr_add_comp.
+ * @return: returns AC_STATUS_OK if successful and AcComp.ci deinitialized
  */
-AcComp* AcCompMgr_rmv_comp(AcCompInfo* comp_info);
+AcStatus AcCompMgr_rmv_comp(AcComp* comp);
 
 /**
  * Send a message to the comp
  */
-void AcCompMgr_send_msg(AcCompInfo* info, AcMsg* msg);
+void AcCompMgr_send_msg(AcComp* comp, AcMsg* msg);
 
 /**
  * Deinitialize a AcCompMsg

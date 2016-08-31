@@ -64,16 +64,15 @@ typedef struct {
   AcComp comp;
   AcU8 name[16];
   AcCompMgr* cm;
-  AcCompInfo* ci;
   AcBool stop_processing_msgs;
   AcU64 count;
   struct MsgTsc msg_tsc[MSGS_TSC_COUNT];
-} mptt_params;
+} MpttParams;
 
 AcBool mptt_process_msg(AcComp* this, AcMsg* msg) {
   if (msg->op != AC_INIT_CMD && msg->op != AC_DEINIT_CMD) {
     AcU64 recv_tsc = ac_tscrd();
-    mptt_params* params = (mptt_params*)this;
+    MpttParams* params = (MpttParams*)this;
 
     AcUint idx = params->count++ % AC_ARRAY_COUNT(params->msg_tsc);
     struct MsgTscData* mtd = (struct MsgTscData*)msg->extra;
@@ -159,7 +158,7 @@ AcBool test_msg_pool_multiple_threads(AcU32 thread_count, AcU32 comps_per_thread
   ac_debug_printf("test_msg_pool_multiple_threads:+total_comp_count=%d msg_count=%d\n",
       total_comp_count, msg_count);
 
-  mptt_params** params = ac_malloc(sizeof(mptt_params) * thread_count);
+  MpttParams** params = ac_malloc(sizeof(MpttParams) * thread_count);
 
   // Create the component manager with appropriate
   // number of theads and comps_per_thread
@@ -170,7 +169,7 @@ AcBool test_msg_pool_multiple_threads(AcU32 thread_count, AcU32 comps_per_thread
   // Add the components to the component manager
   for (AcU32 i = 0; i < total_comp_count; i++) {
     ac_debug_printf("test_msg_pool_multiple_threads: init %d\n", i);
-    params[i] = ac_malloc(sizeof(mptt_params));
+    params[i] = ac_malloc(sizeof(MpttParams));
     error |= AC_TEST(params[i] != AC_NULL);
     if (error) {
       return error;
@@ -180,8 +179,7 @@ AcBool test_msg_pool_multiple_threads(AcU32 thread_count, AcU32 comps_per_thread
     ac_sprintf(params[i]->name, sizeof(params[i]->name), "mptt%d_process_msg", i);
     params[i]->comp.name = params[i]->name;
     params[i]->comp.process_msg = mptt_process_msg;
-    params[i]->ci = AcCompMgr_add_comp(&cm, &params[i]->comp);
-    error |= AC_TEST(params[i]->ci != AC_NULL);
+    error |= AC_TEST(AcCompMgr_add_comp(&cm, &params[i]->comp) == AC_STATUS_OK);
   }
 
   // Send the threads messages which they will return to our pool
@@ -214,7 +212,7 @@ AcBool test_msg_pool_multiple_threads(AcU32 thread_count, AcU32 comps_per_thread
         struct MsgTscData* mtd = (struct MsgTscData*)msg->extra;
         mtd->waiting_count = waiting_count;
         mtd->sent_tsc = ac_tscrd();
-        AcCompMgr_send_msg(params[i]->ci, msg);
+        AcCompMgr_send_msg(&params[i]->comp, msg);
       }
     }
   }
@@ -234,7 +232,7 @@ AcBool test_msg_pool_multiple_threads(AcU32 thread_count, AcU32 comps_per_thread
 
   // Display MsgTsc's.
   for (AcU32 thrd = 0; thrd < thread_count; thrd++) {
-    mptt_params* cur = params[thrd];
+    MpttParams* cur = params[thrd];
     AcUint max = AC_ARRAY_COUNT(cur->msg_tsc);
     AcUint idx;
     AcUint count;

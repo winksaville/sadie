@@ -20,6 +20,7 @@
 
 #include <ac_dispatcher.h>
 
+#include <ac_comp_mgr.h>
 #include <ac_debug_printf.h>
 #include <ac_inttypes.h>
 #include <ac_msg.h>
@@ -116,7 +117,7 @@ void* t1(void *param) {
   error |= AC_TEST(t1_ac.ac_init_cmd_count == 1);
   error |= AC_TEST(t1_ac.ac_deinit_cmd_count == 0);
 
-  AcDispatcher_rmv_comp(d, t1_dc);
+  error |= AC_TEST(AcDispatcher_rmv_comp(d, &t1_ac.comp) == AC_STATUS_OK);
   error |= AC_TEST(t1_ac.ac_init_cmd_count == 1);
   error |= AC_TEST(t1_ac.ac_deinit_cmd_count == 1);
 

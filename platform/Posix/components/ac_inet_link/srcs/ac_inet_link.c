@@ -68,16 +68,13 @@ static AcCompIpv4LinkLayer comp_ipv4_ll = {
   .comp.process_msg = comp_ipv4_ll_process_msg
 };
 
-static AcCompInfo* ci;
-
 /**
  * see ac_inet_link_internal.h
  */
 void AcInetLink_deinit(AcCompMgr* cm) {
   ac_debug_printf("AcInetLink_deinit:+cm=%p\n", cm);
 
-  AcComp* c = AcCompMgr_rmv_comp(ci);
-  ac_assert(c == &comp_ipv4_ll.comp);
+  ac_assert(AcCompMgr_rmv_comp(&comp_ipv4_ll.comp) == AC_STATUS_OK);
 
   ac_debug_printf("AcInetLink_deinit:-cm=%p\n", cm);
 }
@@ -88,8 +85,7 @@ void AcInetLink_deinit(AcCompMgr* cm) {
 void AcInetLink_init(AcCompMgr* cm) {
   ac_debug_printf("AcInetLink_init:+cm=%p\n", cm);
 
-  ci = AcCompMgr_add_comp(cm, &comp_ipv4_ll.comp);
-  ac_assert(ci != AC_NULL);
+  ac_assert(AcCompMgr_add_comp(cm, &comp_ipv4_ll.comp) == AC_STATUS_OK);
 
   ac_debug_printf("AcInetLink_init:-cm=%p\n", cm);
 }

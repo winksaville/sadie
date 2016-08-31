@@ -20,8 +20,9 @@
 
 #include <ac_dispatcher.h>
 
-#include <ac_inttypes.h>
+#include <ac_comp_mgr.h>
 #include <ac_debug_printf.h>
+#include <ac_inttypes.h>
 #include <ac_msg.h>
 #include <ac_msg_pool.h>
 #include <ac_test.h>
@@ -119,8 +120,7 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
   error |= AC_TEST(dc2 == AC_NULL);
 
   // Test we can remove pac1 and then add it back
-  AcComp* pac2 = AcDispatcher_rmv_comp(pd, dc1);
-  error |= AC_TEST(pac2 == &ac1.comp);
+  error |= AC_TEST(AcDispatcher_rmv_comp(pd, &ac1.comp) == AC_STATUS_OK);
   ac1.msg_count = 0;
   ac1.ac_init_cmd_count = 0;
   ac1.ac_deinit_cmd_count = 0;
@@ -129,8 +129,7 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
   error |= AC_TEST(dc1 != AC_NULL);
 
   // And finally remove so we leave with the pd empty
-  pac2 = AcDispatcher_rmv_comp(pd, dc1);
-  error |= AC_TEST(pac2 == &ac1.comp);
+  error |= AC_TEST(AcDispatcher_rmv_comp(pd, &ac1.comp) == AC_STATUS_OK);
 
   // Return the dispatcher
   AcDispatcher_ret(pd);
@@ -178,7 +177,6 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
   msg1->op = 1;
   AcDispatcher_send_msg(dc1, msg1);
 
-
   ac_debug_printf("test_dispatching: dispatch now\n");
   ac_bool processed_msgs = AcDispatcher_dispatch(pd);
   ac_debug_printf("test_dispatching: dispatch complete\n");
@@ -192,8 +190,7 @@ static ac_bool ac1_process_msg(AcComp* ac, AcMsg* msg) {
   AcDispatcher_send_msg(dc1, msg2);
 
   ac_debug_printf("test_dispatching: rmv_ac\n");
-  AcComp* ac2 = AcDispatcher_rmv_comp(pd, dc1);
-  error |= AC_TEST(ac2 == &ac1.comp);
+  error |= AC_TEST(AcDispatcher_rmv_comp(pd, &ac1.comp) == AC_STATUS_OK);
   error |= AC_TEST(ac1.error == 0);
 
   ac_debug_printf("test_dispatching:- error=%d\n", error);

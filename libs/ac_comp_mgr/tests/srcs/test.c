@@ -83,14 +83,14 @@ int main(void) {
   ac_printf("AC_PLATFORM == VersatilePB, skipping test ac_comp_mgr\n");
 #else
   error|= test_thread_comps(1, 1);
-  error|= test_thread_comps(1, 2);
-  error|= test_thread_comps(1, 4);
-  error|= test_thread_comps(2, 1);
-  error|= test_thread_comps(2, 2);
-  error|= test_thread_comps(2, 4);
-  error|= test_thread_comps(4, 1);
-  error|= test_thread_comps(4, 2);
-  error|= test_thread_comps(4, 4);
+  //error|= test_thread_comps(1, 2);
+  //error|= test_thread_comps(1, 4);
+  //error|= test_thread_comps(2, 1);
+  //error|= test_thread_comps(2, 2);
+  //error|= test_thread_comps(2, 4);
+  //error|= test_thread_comps(4, 1);
+  //error|= test_thread_comps(4, 2);
+  //error|= test_thread_comps(4, 4);
 #endif
 
   if (!error) {

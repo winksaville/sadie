@@ -34,34 +34,6 @@
 extern void remove_zombies(void);
 #endif
 
-typedef struct DispatchThreadParams DispatchThreadParams;
-
-/**
- * A opaque component info for an AcComp
- */
-typedef struct AcCompInfo {
-  AcCompMgr* mgr;
-  AcComp* comp;
-  AcDispatchableComp* dc;
-  ac_u32 comp_idx;
-  DispatchThreadParams* dtp;
-} AcCompInfo;
-
-/**
- * Parameters for each thread to manage its components
- */
-typedef struct DispatchThreadParams {
-  ac_bool thread_started;
-  ac_thread_hdl_t thread_hdl;
-  AcDispatcher* d;
-  ac_u32 max_comps;
-  AcCompInfo** cis;
-  AcReceptor* done;
-  AcReceptor* ready;
-  AcReceptor* waiting;
-  ac_bool stop_processing_msgs;
-} DispatchThreadParams;
-
 /**
  * A thread which dispatches message to its components.
  */
@@ -96,12 +68,12 @@ static void* dispatch_thread(void *param) {
 
   // Cleanup
   for (ac_u32 j = 0; j < params->max_comps; j++) {
-    AcCompInfo* ci = params->cis[j];
-    if (ci != AC_NULL) {
-      if (ci->dc != AC_NULL) {
-        AcDispatcher_rmv_comp(params->d, ci->dc);
-      }
-      params->cis[j] = AC_NULL;
+    AcComp** pcomp = params->comps[j];
+    AcComp* comp = __atomic_load_n(pcomp, __ATOMIC_ACQUIRE);
+    if ((comp != AC_NULL) &&
+        __atomic_compare_exchange_n(pcomp, &comp, AC_NULL, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
+      ac_debug_printf("disptach_thread: call AcDispatcher_rmv_comp(%s)\n", comp->name);
+      AcDispatcher_rmv_comp(comp->ci.dtp->d, comp);
     }
   }
   AcReceptor_ret(params->waiting);
@@ -125,18 +97,17 @@ done:
  * see ac_comp_mgr.h
  */
 AcComp* AcCompMgr_find_comp(AcCompMgr* mgr, ac_u8* name) {
-  AcCompInfo* ci = AC_NULL;
+  ac_debug_printf("AcCompMgr_find_comp:+name=%s\n", name);
   AcComp* comp = AC_NULL;
   ac_bool found = AC_FALSE;
 
   // Search the list CompInfos for the name
-  for (ac_u32 i = 0; i < mgr->comp_infos_max_count; i++) {
-    ci = &mgr->comp_infos[i];
-    comp = ci->comp;
+  for (ac_u32 i = 0; i < mgr->comps_max_count; i++) {
+    comp = mgr->comps[i];
     if (comp != AC_NULL) {
       if (ac_strncmp((const char*)name,
             (const char*)comp->name, ac_strlen((const char*)comp->name)) == 0) {
-        ac_debug_printf("AcCompMgr_find_comp: name=%s, could not add comp=%p\n", name, comp);
+        ac_debug_printf("AcCompMgr_find_comp: name=%s, found\n", name);
         found = AC_TRUE;
         break;
       }
@@ -146,15 +117,15 @@ AcComp* AcCompMgr_find_comp(AcCompMgr* mgr, ac_u8* name) {
   if (!found) {
     comp = AC_NULL;
   }
-  ac_debug_printf("AcCompMgr_find_comp:-comp=%p\n", comp);
+  ac_debug_printf("AcCompMgr_find_comp:-name=%s comp=%p\n", name, comp);
   return comp;
 }
 
 /**
  * see ac_comp_mgr.h
  */
-AcCompInfo* AcCompMgr_add_comp(AcCompMgr* mgr, AcComp* comp) {
-  AcCompInfo* ci = AC_NULL;
+AcStatus AcCompMgr_add_comp(AcCompMgr* mgr, AcComp* comp) {
+  AcStatus status = AC_STATUS_ERR;
   ac_bool found = AC_FALSE;
 
   for (ac_u32 thrd = 0; !found && (thrd < mgr->max_dtps); thrd++) {
@@ -166,60 +137,77 @@ AcCompInfo* AcCompMgr_add_comp(AcCompMgr* mgr, AcComp* comp) {
     ac_debug_printf("AcCompMgr_add_comp:+comp=%p idx=%d dtp=%p dtp->d=%p dtp->max_comps=%d\n",
         comp, idx, dtp, dtp->d, dtp->max_comps);
 
-    // Search the list CompInfos for an unused slot,
-    // i.e. ci->comp == AC_NULL
+    // Search the list Comps for an unused slot,
+    // i.e. mgr->comps[i] == AC_NULL
     for (ac_u32 i = 0; i < dtp->max_comps; i++) {
-      ci = dtp->cis[i];
-      AcComp** pcomp = &ci->comp;
+      AcComp** pcomp = dtp->comps[i];
       AcComp* null_comp = AC_NULL;
 
-      ac_debug_printf("AcCompMgr_add_comp: i=%d *pcomp=%p comp=%p\n", i, *pcomp, comp);
       if (__atomic_compare_exchange_n(pcomp, &null_comp, comp, AC_TRUE,
             __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
-        ac_debug_printf("AcCompMgr_add_comp: i=%d found empty *pcomp=%p comp=%p\n", i, *pcomp, comp);
+
         // Found an empty entry add the component to the dispatcher
+        AcCompInfo* ci = &comp->ci;
         ci->dc = AcDispatcher_add_comp(dtp->d, comp);
         if (ci->dc == AC_NULL) {
-          ac_debug_printf("AcCompMgr_add_comp: dtp->d=%p, could not add comp=%p\n", dtp->d, comp);
-          ci = AC_NULL;
+          ac_debug_printf("AcCompMgr_add_comp: %i dtp->d=%p, could not add comp=%p\n",
+              i, dtp->d, comp);
         } else {
+          ac_debug_printf("AcCompMgr_add_comp: i=%d added *pcomp=%p comp=%s\n",
+              i, *pcomp, comp->name);
+          ci->mgr = mgr;
+          ci->comp_idx = dtp->comp_idx;
+          ci->dtp = dtp;
+          status = AC_STATUS_OK;
           found = AC_TRUE;
           break;
         }
-      } else {
-        // Not empty
-        ci = AC_NULL;
       }
     }
   }
 
-  ac_debug_printf("AcCompMgr_add_comp:-comp=%p ci=%p\n", comp, ci);
-  return ci;
+  ac_debug_printf("AcCompMgr_add_comp:-comp=%p status=%u\n", comp, status);
+  return status;
 }
 
 /**
  * see ac_comp_mgr.h
  */
-AcComp* AcCompMgr_rmv_comp(AcCompInfo* ci) {
-  AcComp* comp = ci->comp;
-  ac_debug_printf("AcCompMgr_rmv_comp:+ci=%p ci->dtp-d=%p comp=%p\n", ci, ci->dtp->d, comp);
-  AcComp** pcomp = &ci->comp;
-  if (__atomic_compare_exchange_n(pcomp, pcomp, AC_NULL, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
-    ac_debug_printf("AcCompMgr_rmv_comp: removing comp=%p\n", comp);
-    AcDispatcher_rmv_comp(ci->dtp->d, ci->dc);
-    ci->dc = AC_NULL;
+AcStatus AcCompMgr_rmv_comp(AcComp* comp) {
+  ac_debug_printf("AcCompMgr_rmv_comp:+comp=%s\n", comp->name);
+  AcStatus status;
+  if (comp == AC_NULL) {
+    status = AC_STATUS_BAD_PARAM;
+    goto done;
   }
-  ac_debug_printf("AcCompMgr_rmv_comp:-ci=%p ret comp=%p\n", ci, comp);
-  return comp;
+
+  AcCompInfo* ci = &comp->ci;
+
+  AcComp** pcomp = &ci->mgr->comps[ci->comp_idx];
+  if (__atomic_compare_exchange_n(pcomp, &comp, AC_NULL, AC_TRUE, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
+    ac_debug_printf("AcCompMgr_rmv_comp: call AcDispatcher_rmv_comp(%s)\n", comp->name);
+    AcDispatcher_rmv_comp(comp->ci.dtp->d, comp);
+    ci->dc = AC_NULL;
+    ci->mgr = AC_NULL;
+    ci->comp_idx = 0;
+    ci->dtp = AC_NULL;
+  }
+
+  status = AC_STATUS_OK;
+
+done:
+  ac_debug_printf("AcCompMgr_rmv_comp:-comp=%s ret status=%u\n", comp->name, status);
+  return status;
 }
 
 
 /**
  * see ac_comp_mgr.h
  */
-void AcCompMgr_send_msg(AcCompInfo* info, AcMsg* msg) {
-  AcDispatcher_send_msg(info->dc, msg);
-  AcReceptor_signal(info->dtp->waiting);
+void AcCompMgr_send_msg(AcComp* comp, AcMsg* msg) {
+  // TODO: Race with AcCompMgr_rmv_comp!!!!!
+  AcDispatcher_send_msg(comp->ci.dc, msg);
+  AcReceptor_signal(comp->ci.dtp->waiting);
 }
 
 /**
@@ -242,10 +230,10 @@ void AcCompMgr_deinit(AcCompMgr* mgr) {
         dtp->thread_started = AC_FALSE;
       }
 
-      if (dtp->cis != AC_NULL) {
-        ac_debug_printf("AcCompMgr_deinit: mgr=%p free dtp->cis=%p\n", mgr, dtp->cis);
-        ac_free(dtp->cis);
-        dtp->cis = AC_NULL;
+      if (dtp->comps != AC_NULL) {
+        ac_debug_printf("AcCompMgr_deinit: mgr=%p free dtp->comps=%p\n", mgr, dtp->comps);
+        ac_free(dtp->comps);
+        dtp->comps = AC_NULL;
       }
 
       AcReceptor_ret(dtp->done);
@@ -258,10 +246,10 @@ void AcCompMgr_deinit(AcCompMgr* mgr) {
     remove_zombies();
 #endif
 
-    if (mgr->comp_infos != AC_NULL) {
-      ac_debug_printf("AcCompMgr_deinit: mgr=%p free mgr->comp_infos=%p\n", mgr, mgr->comp_infos);
-      ac_free(mgr->comp_infos);
-      mgr->comp_infos = AC_NULL;
+    if (mgr->comps != AC_NULL) {
+      ac_debug_printf("AcCompMgr_deinit: mgr=%p free mgr->comps=%p\n", mgr, mgr->comps);
+      ac_free(mgr->comps);
+      mgr->comps = AC_NULL;
     }
 
     if (mgr->dtps != AC_NULL) {
@@ -282,7 +270,7 @@ AcStatus AcCompMgr_init(AcCompMgr* mgr, ac_u32 max_component_threads, ac_u32 max
 
   ac_memset(mgr, 0, sizeof(AcCompMgr));
   mgr->dtps = AC_NULL;
-  mgr->comp_infos = AC_NULL;
+  mgr->comps = AC_NULL;
   mgr->max_dtps = max_component_threads;
   
 
@@ -306,9 +294,10 @@ AcStatus AcCompMgr_init(AcCompMgr* mgr, ac_u32 max_component_threads, ac_u32 max
     status = AC_STATUS_OUT_OF_MEMORY;
     goto done;
   }
-  mgr->comp_infos_max_count = mgr->max_dtps * max_components_per_thread;
-  mgr->comp_infos = ac_calloc(mgr->comp_infos_max_count, sizeof(AcCompInfo));
-  if (mgr->comp_infos == AC_NULL) {
+  mgr->comps_max_count = mgr->max_dtps * max_components_per_thread;
+  mgr->comps = ac_calloc(mgr->comps_max_count, sizeof(AcComp*));
+  if (mgr->comps == AC_NULL) {
+    ac_debug_printf("AcCompMgr_init: mgr->comps == AC_NULL");
     status = AC_STATUS_OUT_OF_MEMORY;
     goto done;
   }
@@ -318,22 +307,18 @@ AcStatus AcCompMgr_init(AcCompMgr* mgr, ac_u32 max_component_threads, ac_u32 max
     DispatchThreadParams* dtp = &mgr->dtps[i];
     ac_debug_printf("AcCompMgr_init: dtps[%d]=%p\n", i, dtp);
     dtp->max_comps = max_components_per_thread;
-    dtp->cis = ac_calloc(dtp->max_comps, sizeof(AcCompInfo*));
-    if (dtp->cis == AC_NULL) {
+    dtp->comps = ac_calloc(dtp->max_comps, sizeof(AcComp*));
+    if (dtp->comps == AC_NULL) {
       ac_debug_printf("AcCompMgr_init: i=%d\n dtp->cis == AC_NULL", i);
       status = AC_STATUS_ERR;
       goto done;
     }
     for (ac_u32 j = 0; j < dtp->max_comps; j++) {
-      ac_u32 ci_idx = (i * dtp->max_comps) + j;
-      AcCompInfo* ci = &mgr->comp_infos[ci_idx];
-      ac_debug_printf("AcCompMgr_init: i=%d j=%d ci_idx=%d ci=%p\n", i, j, ci_idx, ci);
-      dtp->cis[j] = ci;
-      ci->mgr = mgr;
-      ci->comp_idx = ci_idx;
-      ci->dtp = dtp;
-      ci->comp = AC_NULL;
-      ci->dc = AC_NULL;
+      ac_u32 comp_idx = (i * dtp->max_comps) + j;
+      AcComp** pcomp = &mgr->comps[comp_idx];
+      ac_debug_printf("AcCompMgr_init: i=%d j=%d comps_idx=%d pcomp=%p\n", i, j, comp_idx, pcomp);
+      dtp->comps[j] = pcomp;
+      dtp->comp_idx = comp_idx;
     }
     dtp->done = AcReceptor_get();
     ac_assert(dtp->done != AC_NULL);

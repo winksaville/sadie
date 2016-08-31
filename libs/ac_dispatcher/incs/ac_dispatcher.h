@@ -17,9 +17,10 @@
 #ifndef SADIE_LIBS_AC_DISPATCHER_H
 #define SADIE_LIBS_AC_DISPATCHER_H
 
-#include <ac_comp_mgr.h>
 #include <ac_msg.h>
+#include <ac_status.h>
 
+typedef struct AcComp AcComp;
 typedef struct AcDispatchableComp AcDispatchableComp;
 
 // The opaque ac_dipatcher
@@ -51,9 +52,9 @@ AcDispatchableComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp);
 /**
  * Remove all instances associated with the dispatchable component
  *
- * return the AcComp or AC_NULL if the associated AcComp was not found.
+ * @return 0 (AC_STATUS_OK) if successful
  */
-AcComp* AcDispatcher_rmv_comp(AcDispatcher* d, AcDispatchableComp* comp);
+AcStatus AcDispatcher_rmv_comp(AcDispatcher* d, AcComp* comp);
 
 /**
  * Send a message to dispatchable component

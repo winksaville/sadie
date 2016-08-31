@@ -19,6 +19,7 @@
 #include <ac_dispatcher.h>
 
 #include <ac_assert.h>
+#include <ac_comp_mgr.h>
 #include <ac_debug_printf.h>
 #include <ac_inttypes.h>
 #include <ac_mpsc_link_list.h>
@@ -33,7 +34,7 @@
  */
 typedef struct AcDispatchableComp {
     AcComp* comp;     ///< The component
-    AcMsgPool mp; ///< Msg pool to send AC_INIT/AC_DEINIT commands
+    AcMsgPool mp;     ///< Msg pool to send AC_INIT/AC_DEINIT commands
     AcMpscLinkList q; ///< mpsc link list to which message are sent
 } AcDispatchableComp;
 
@@ -352,20 +353,20 @@ AcDispatchableComp* AcDispatcher_add_comp(AcDispatcher* d, AcComp* comp) {
  *
  * return the AcComp or AC_NULL if this AcComp was not added.
  */
-AcComp* AcDispatcher_rmv_comp(AcDispatcher* d, AcDispatchableComp* dc) {
-  AcComp* ret_val = dc->comp;
-  ac_debug_printf("AcDispatcher_rmv_comp:+ d=%p dc=%p\n", d, dc);
-
-  ac_bool ok = AC_FALSE;
+AcStatus AcDispatcher_rmv_comp(AcDispatcher* d, AcComp* comp) {
+  ac_debug_printf("AcDispatcher_rmv_comp:+comp=%s%p\n", comp->name);
+  AcStatus status = AC_STATUS_ERR;
 
   if (d == AC_NULL) {
-    ac_debug_printf("AcDispatcher_rmv_comp:- ERR no d\n");
-    return AC_NULL;
+    ac_debug_printf("AcDispatcher_rmv_comp: d=AC_NULL ERR\n");
+    status = AC_STATUS_BAD_PARAM;
+    goto done;
   }
 
-  if (dc == AC_NULL) {
-    ac_debug_printf("AcDispatcher_rmv_comp:- ERR no dc\n");
-    return AC_NULL;
+  if (comp == AC_NULL) {
+    ac_debug_printf("AcDispatcher_rmv_comp: comp=AC_NULL ERR\n");
+    status = AC_STATUS_BAD_PARAM;
+    goto done;
   }
 
   for (int i = 0; i < d->max_count; i++) {
@@ -381,18 +382,17 @@ AcComp* AcDispatcher_rmv_comp(AcDispatcher* d, AcDispatchableComp* dc) {
     if (cur_dc == DC_EMPTY) {
       continue;
     }
-    if (ret_val == cur_dc->comp) {
+    if (comp == cur_dc->comp) {
       ac_debug_printf("AcDispatcher_rmv_comp: OK removing d=%p comp=%p\n", d, ret_val);
-      ok = AC_TRUE;
       rmv_dc(d, i);
+      status = AC_STATUS_OK;
+      break;
     }
   }
 
-  if (!ok) {
-    ret_val = AC_NULL;
-  }
-  ac_debug_printf("AcDispatcher_rmv_comp:- d=%p comp=%p\n", d, ret_val);
-  return ret_val;
+done:
+  ac_debug_printf("AcDispatcher_rmv_comp:-comp=%s status=%u\n", comp->name, status);
+  return status;
 }
 
 /**

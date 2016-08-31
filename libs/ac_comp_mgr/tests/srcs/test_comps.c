@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define NDEBUG
+//#define NDEBUG
 
 #include <ac_comp_mgr.h>
 
@@ -32,7 +32,6 @@
 
 typedef struct T1Comp {
   AcComp comp;
-  AcCompInfo* ci;
   ac_u32 init_count;
   ac_u32 deinit_count;
   ac_bool error;
@@ -98,9 +97,8 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
     c->error = AC_FALSE;
 
     ac_debug_printf("test_comps: adding %s\n", c->comp.name);
-    c->ci = AcCompMgr_add_comp(cm, &c->comp);
-    ac_debug_printf("test_comps: added %s ci=%p\n", c->comp.name, c->ci);
-    error |=AC_TEST(c->ci != AC_NULL);
+    error |= AC_TEST(AcCompMgr_add_comp(cm, &c->comp) == AC_STATUS_OK);
+    ac_debug_printf("test_comps: added  %s\n", c->comp.name);
   }
 
   if (!error) {
@@ -120,8 +118,8 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
       error |= AC_TEST(msg != AC_NULL);
 
       msg->op = AC_OP(0, 0, 1);
-      ac_debug_printf("test_comps: send msg %s ci=%p\n", c->comp.name, c->ci);
-      AcCompMgr_send_msg(c->ci, msg);
+      ac_debug_printf("test_comps: send msg %s\n", c->comp.name);
+      AcCompMgr_send_msg(&c->comp, msg);
     }
 
     ac_debug_printf("test_comps: wait until all messages are received\n");
@@ -135,11 +133,9 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
     ac_debug_printf("test_comps: remove comps\n");
     for (ac_u32 i = 0; i < comp_count; i++) {
       c = &comps[i];
-      ac_debug_printf("test_comps: remove %s ci=%p\n", c->comp.name, c->ci);
+      ac_debug_printf("test_comps: remove %s\n", c->comp.name);
       AcReceptor_ret(c->done);
-      AcComp* pt1 = AcCompMgr_rmv_comp(c->ci);
-      error |= AC_TEST(pt1 == &c->comp);
-      error |= AC_TEST((T1Comp*)pt1 == c);
+      error |= AC_TEST(AcCompMgr_rmv_comp(&c->comp) == AC_STATUS_OK);
     }
   }
 

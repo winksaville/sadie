@@ -22,22 +22,52 @@
 #ifndef SADIE_LIBS_AC_COMP_MGR_INCS_AC_COMP_MGR_INTERNAL_H
 #define SADIE_LIBS_AC_COMP_MGR_INCS_AC_COMP_MGR_INTERNAL_H
 
+#include <ac_dispatcher.h>
 #include <ac_inttypes.h>
+#include <ac_receptor.h>
+#include <ac_thread.h>
 
 typedef struct DispatchThreadParams DispatchThreadParams;
-typedef struct AcCompInfo AcCompInfo;
+typedef struct AcCompMgr AcCompMgr;
+typedef struct AcComp AcComp;
+
+/**
+ * A opaque component info for an AcComp
+ */
+typedef struct AcCompInfo {
+  AcCompMgr* mgr;
+  //AcComp* comp;
+  AcDispatchableComp* dc;
+  ac_u32 comp_idx;
+  DispatchThreadParams* dtp;
+} AcCompInfo;
+
+/**
+ * Parameters for each thread to manage its components
+ */
+typedef struct DispatchThreadParams {
+  ac_bool thread_started;
+  ac_thread_hdl_t thread_hdl;
+  AcDispatcher* d;
+  ac_u32 max_comps;
+  AcComp*** comps;
+  ac_u32 comp_idx;
+  AcReceptor* done;
+  AcReceptor* ready;
+  AcReceptor* waiting;
+  ac_bool stop_processing_msgs;
+} DispatchThreadParams;
 
 /**
  * A component manager as returned by AcCompMgr_init
  */
 typedef struct AcCompMgr {
-  AcCompInfo* comp_infos;     // Array of AcCompInfo objects being managed
+  AcComp** comps;            // Array of AcComp pointer objects being managed
                               // across all of the threads
-  AcU32 comp_infos_max_count; // Number of elements in comp_infos array
+  AcU32 comps_max_count;      // Number of elements in comps array
   DispatchThreadParams* dtps; // Array of DispathThreadParams, one for each thread
   AcU32 max_dtps;             // Number of threads in the dtps array
   AcU32 next_dtps;            // Next thread
 } AcCompMgr;
 
 #endif
-
