@@ -35,6 +35,8 @@ static void send_error_rsp(AcComp* comp, AcMsg* msg, AcStatus status) {
 
 static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
   AcCompIpv4LinkLayer* this = (AcCompIpv4LinkLayer*)comp;
+  AC_UNUSED(this);
+
   ac_debug_printf("%s:+msg->op=%lx\n", this->comp.name, msg->op);
 
   switch (msg->op) {
