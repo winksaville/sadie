@@ -17,12 +17,9 @@
 #ifndef SADIE_LIBS_AC_INET_LINK_INCS_AC_INET_LINK_H
 #define SADIE_LIBS_AC_INET_LINK_INCS_AC_INET_LINK_H
 
-#include <ac_assert.h>
 #include <ac_attributes.h>
 #include <ac_comp_mgr.h>
-#include <ac_msg.h>
 #include <ac_inttypes.h>
-#include <ac_status.h>
 
 /**
  * See (RFC-2460 Internet Protocol, V6)[https://tools.ietf.org/html/rfc2460]
