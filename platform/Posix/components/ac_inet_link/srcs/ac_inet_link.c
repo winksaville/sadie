@@ -17,6 +17,8 @@
 //#define NDEBUG
 
 #include <ac_inet_link.h>
+#include <ac_arp.h>
+#include <ac_ether.h>
 
 #include <ac_assert.h>
 #include <ac_comp_mgr.h>
