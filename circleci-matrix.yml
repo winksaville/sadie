@@ -16,13 +16,13 @@ command:
   - cd build-${Platform}; ninja
 
   # Change permissions of files that need to be root
-  #- if [[ "${Platform}" == 'Posix' ]]; then sudo chown root:root build-${Platform}/platform/Posix/components/ac_inet_link/tests/test_posix_ac_inet_link; fi
-  #- if [[ "${Platform}" == 'Posix' ]]; then sudo chmod u+s build-${Platform}/platform/Posix/components/ac_inet_link/tests/test_posix_ac_inet_link; fi
-  #- sudo chown root:root build-${Platform}/components/ac_inet_link/tests/test_ac_inet_link
-  #- sudo chmod u+s       build-${Platform}/components/ac_inet_link/tests/test_ac_inet_link
+  - if [[ "${Platform}" == 'Posix' ]]; then sudo chown root:root build-${Platform}/platform/Posix/components/ac_inet_link/tests/test_posix_ac_inet_link; fi
+  - if [[ "${Platform}" == 'Posix' ]]; then sudo chmod u+s build-${Platform}/platform/Posix/components/ac_inet_link/tests/test_posix_ac_inet_link; fi
+  - sudo chown root:root build-${Platform}/components/ac_inet_link/tests/test_ac_inet_link
+  - sudo chmod u+s       build-${Platform}/components/ac_inet_link/tests/test_ac_inet_link
 
   # Posix only tests
-  #- if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; ninja run-test-posix-ac_inet_link; fi
+  - if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; ninja run-test-posix-ac_inet_link; fi
 
   # Run the these test for all platforms
   - cd build-${Platform}; ninja run-test-ac_arg
@@ -31,7 +31,7 @@ command:
   - cd build-${Platform}; ninja run-test-ac_check_sum
   - cd build-${Platform}; ninja run-test-ac_comp_mgr
   - cd build-${Platform}; ninja run-test-ac_dispatcher
-  #- cd build-${Platform}; ninja run-test-ac_inet_link
+  - cd build-${Platform}; ninja run-test-ac_inet_link
   - cd build-${Platform}; ninja run-test-ac_memmgr
   - cd build-${Platform}; ninja run-test-ac_msg_pool
   - cd build-${Platform}; ninja run-test-ac_mpsc_link_list
