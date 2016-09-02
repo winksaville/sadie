@@ -12,11 +12,19 @@ command:
   - if [[ "${Platform}" == 'Posix' ]]; then rm -rf build-${Platform}; mkdir -p build-${Platform}; fi
   - if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; meson -D Platform=${Platform} --cross-file ../cross-file-Posix-gcc --buildtype plain ..; fi
 
+  # Build the world
+  - cd build-${Platform}; ninja
+
+  # Change permissions of files that need to be root
+  #- if [[ "${Platform}" == 'Posix' ]]; then sudo chown root:root build-${Platform}/platform/Posix/components/ac_inet_link/tests/test_posix_ac_inet_link; fi
+  #- if [[ "${Platform}" == 'Posix' ]]; then sudo chmod u+s build-${Platform}/platform/Posix/components/ac_inet_link/tests/test_posix_ac_inet_link; fi
+  #- sudo chown root:root build-${Platform}/components/ac_inet_link/tests/test_ac_inet_link
+  #- sudo chmod u+s       build-${Platform}/components/ac_inet_link/tests/test_ac_inet_link
+
   # Posix only tests
   #- if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; ninja run-test-posix-ac_inet_link; fi
 
   # Run the these test for all platforms
-  - cd build-${Platform}; ninja
   - cd build-${Platform}; ninja run-test-ac_arg
   - cd build-${Platform}; ninja run-test-ac_assert
   - cd build-${Platform}; ninja run-test-ac_bits
