@@ -14,8 +14,8 @@
  * limitations under the license.
  */
 
-#ifndef SADIE_LIBS_AC_INET_LINK_INCS_AC_ARP_H
-#define SADIE_LIBS_AC_INET_LINK_INCS_AC_ARP_H
+#ifndef SADIE_COMPONENTS_AC_INET_LINK_INCS_AC_ARP_H
+#define SADIE_COMPONENTS_AC_INET_LINK_INCS_AC_ARP_H
 
 #include <ac_inttypes.h>
 

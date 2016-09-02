@@ -17,25 +17,180 @@
 //#define NDEBUG
 
 #include <ac_inet_link.h>
+#include <ac_inet_hton.h>
+#include <ac_inet_ntoh.h>
 #include <ac_arp.h>
 #include <ac_ether.h>
 
 #include <ac_assert.h>
 #include <ac_comp_mgr.h>
 #include <ac_debug_printf.h>
+#include <ac_printf.h>
+#include <ac_memset.h>
+#include <ac_memcpy.h>
 #include <ac_msg.h>
 #include <ac_msg_pool.h>
+#include <ac_string.h>
 #include <ac_status.h>
+
+#if 1
+//#include <arpa/inet.h>
+
+//#include <net/ethernet.h>
+#include <errno.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+#include <netpacket/packet.h>
+
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <linux/if.h>
+#endif
 
 typedef struct {
   AcComp comp;
   ac_u32 a_u32;
+  AcInt fd;             ///< File descriptor for the interface
+  char* ifname;         ///< Name of the interface
+  AcUint ifindex;       ///< Index of the interface
 } AcCompIpv4LinkLayer;
+
+#if 1
+/**
+ * Display memory
+ */
+void ac_print_mem(char* leader, void *mem, int len, char* format, char sep, char* trailer) {
+  if (leader != AC_NULL) {
+    ac_printf(leader);
+  }
+  unsigned char* p = (unsigned char*)mem;
+
+  for (int i = 0; i < len; i++) {
+    if (i != 0) ac_printf("%c", sep);
+    ac_printf(format, p[i]);
+  }
+
+  if (trailer != AC_NULL) {
+    ac_printf(trailer);
+  }
+}
+
+/**
+ * Display hex memory
+ */
+void ac_println_hex(char* leader, void *mem, int len, char sep) {
+  ac_print_mem(leader, mem, len, "%02x", sep, "\n");
+}
+
+/**
+ * Display hex memory
+ */
+void ac_println_dec(char* leader, void *mem, int len, char sep) {
+  ac_print_mem(leader, mem, len, "%d", sep, "\n");
+}
+
+void  ac_println_sockaddr_ll(char* leader, struct sockaddr_ll* addr) {
+  if (leader != AC_NULL) {
+    ac_printf(leader);
+  }
+  ac_printf("family=%0d protocol=0x%0x ifindex=%d hatype=%d pkttype=%d halen=%d addr=",
+      addr->sll_family, AC_NTOH_U16(addr->sll_protocol), addr->sll_ifindex,
+      addr->sll_hatype, addr->sll_pkttype, addr->sll_halen);
+  ac_println_hex(AC_NULL, addr->sll_addr, addr->sll_halen, ':');
+}
+
+/**
+ * Set ifr_name
+ *
+ * @return 0 if OK
+ */
+AcStatus set_ifname(struct ifreq* ifr, const char* ifname) {
+  AcStatus status;
+
+  // Copy ifname to ifr.ifr_name if it fits
+  if (ac_strlen(ifname) >= (sizeof(ifr->ifr_name) - 1)) {
+    status = AC_STATUS_BAD_PARAM;
+    goto done;
+  }
+  ac_strcpy(ifr->ifr_name, ifname);
+
+  status = AC_STATUS_OK;
+
+done:
+  return status;
+}
+
+/**
+ * Get index for ifname
+ *
+ * @return 0 if OK
+ */
+AcStatus get_ifindex(AcInt fd, const char* ifname, AcUint* ifindex) {
+  AcStatus status;
+  struct ifreq ifr;
+
+  status = set_ifname(&ifr, ifname);
+  if (status != AC_STATUS_OK) {
+    goto done;
+  }
+
+  // Issue iotcl to get the index
+  if (ioctl(fd, SIOCGIFINDEX, &ifr) < 0) {
+    status = AC_STATUS_ERR;
+  }
+
+  *ifindex = ifr.ifr_ifindex;
+
+done:
+  return status;
+}
+
+/**
+ * init a struct ethhdr
+ *
+ * @param dst_addr
+ */
+void init_ethhdr(struct ethhdr* pEthHdr, const void *dst_addr, const void* src_addr, int ll_protocol) {
+  ac_memcpy(pEthHdr->h_dest, dst_addr, AC_ETHER_ADDR_LEN);
+  ac_memcpy(pEthHdr->h_source, src_addr, AC_ETHER_ADDR_LEN);
+  pEthHdr->h_proto = ll_protocol;
+}
+
+/**
+ * Init sockaddr_ll
+ */
+void init_sockaddr_ll(struct sockaddr_ll* pSockAddrLl,
+    const unsigned char ethernet_addr[AC_ETHER_ADDR_LEN],
+    const int ifindex,
+    const int protocol) {
+  ac_memset(pSockAddrLl, 0, sizeof(struct sockaddr_ll));
+
+  pSockAddrLl->sll_family = AF_PACKET;
+  pSockAddrLl->sll_protocol = AC_HTON_U16(protocol);
+  pSockAddrLl->sll_ifindex = ifindex;
+  pSockAddrLl->sll_halen = AC_ETHER_ADDR_LEN;
+  ac_memcpy(pSockAddrLl->sll_addr, ethernet_addr, AC_ETHER_ADDR_LEN);
+}
+
+/**
+ * Init sockaddr_ll
+ */
+void init_broadcast_sockaddr_ll(struct sockaddr_ll* pSockAddrLl,
+    const int ifindex,
+    const int protocol) {
+  unsigned char ethernet_broadcast_addr[AC_ETHER_ADDR_LEN] = {
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+  };
+
+  init_sockaddr_ll(pSockAddrLl, ethernet_broadcast_addr, ifindex, AC_ETHER_PROTO_ARP);
+}
+#endif
 
 static void send_error_rsp(AcComp* comp, AcMsg* msg, AcStatus status) {
 }
 
 static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
+  AcStatus status;
   AcCompIpv4LinkLayer* this = (AcCompIpv4LinkLayer*)comp;
   AC_UNUSED(this);
 
@@ -43,15 +198,37 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
 
   switch (msg->op) {
     case (AC_INIT_CMD): {
-      ac_debug_printf("%s: AC_INIT_CMD\n", this->comp.name);
+      ac_debug_printf("%s: AC_INIT_CMD ifname=%s\n", this->comp.name, this->ifname);
+#if 1
+      // Open an AF_PACKET socket
+      this->fd = socket(AF_PACKET, SOCK_RAW, AC_HTON_U16(ETH_P_ALL));
+      if (this->fd < 0) {
+        AcU8 str[256];
+        ac_snprintf(str, sizeof(str), "%s: Could not open SOCK_RAW errno=%u\n", this->comp.name, errno);
+        ac_fail((char*)str);
+      }
+
+      // Get the interface index
+      status = get_ifindex(this->fd, this->ifname, &this->ifindex);
+      if (status != AC_STATUS_OK) {
+        ac_printf("%s: Could not get interface index for ifname=%s\n", this->comp.name, this->ifname);
+        ac_fail("ac_inet_link: bad ifname");
+      }
+#endif
       break;
     }
     case (AC_DEINIT_CMD): {
       ac_debug_printf("%s: AC_DEINIT_CMD\n", this->comp.name);
       break;
     }
-    case (AC_INET_SEND_PACKET_REQ): {
-      ac_debug_printf("%s: AC_INET_SEND_PACKET_REQ\n", this->comp.name);
+    case (AC_INET_SEND_ARP_CMD): {
+      AcInetSendArpExtra* send_arp_extra = (AcInetSendArpExtra*)msg->extra;
+      ac_printf("%s: AC_INET_SEND_ARP_CMD proto=%x", this->comp.name, send_arp_extra->proto);
+      ac_println_dec(" proto_addr=", send_arp_extra->proto_addr, send_arp_extra->proto_addr_len, '.');
+      break;
+    }
+    case (AC_INET_SEND_PACKET_CMD): {
+      ac_debug_printf("%s: AC_INET_SEND_PACKET_CMD\n", this->comp.name);
       break;
     }
     default: {
@@ -68,8 +245,9 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
 }
 
 static AcCompIpv4LinkLayer comp_ipv4_ll = {
-  .comp.name=(ac_u8*)"comp_ipv4_ll",
-  .comp.process_msg = comp_ipv4_ll_process_msg
+  .comp.name=(ac_u8*)INET_LINK_COMP_IPV4_NAME,
+  .comp.process_msg = comp_ipv4_ll_process_msg,
+  .ifname = "eno1"
 };
 
 /**

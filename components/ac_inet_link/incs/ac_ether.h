@@ -14,13 +14,14 @@
  * limitations under the license.
  */
 
-#ifndef SADIE_LIBS_AC_INET_LINK_INCS_AC_ETHER_H
-#define SADIE_LIBS_AC_INET_LINK_INCS_AC_ETHER_H
+#ifndef SADIE_COMPONENTS_AC_INET_LINK_INCS_AC_ETHER_H
+#define SADIE_COMPONENTS_AC_INET_LINK_INCS_AC_ETHER_H
 
 #include <ac_assert.h>
 #include <ac_inttypes.h>
+#include <ac_inet.h>
 
-#define AC_ETHER_ADR_LEN        6       ///< Ethernet Address length
+#define AC_ETHER_ADDR_LEN        6      ///< Ethernet Address length
 #define AC_ETHER_MIN_LEN        60      ///< Minimum length of a Ethernet packet
 #define AC_ETHER_HDR_LEN        14      ///< sizeof AcEtherHdr
 
@@ -37,17 +38,33 @@
  * See (RFC-826 Internet Protocol, V6)[https://tools.ietf.org/html/rfc826]
  */
 typedef struct AC_ATTR_PACKED {
-  AcU8  dst[AC_ETHER_ADR_LEN];  ///< Destination address
-  AcU8  src[AC_ETHER_ADR_LEN];  ///< Source address
+  AcU8  dst[AC_ETHER_ADDR_LEN];  ///< Destination address
+  AcU8  src[AC_ETHER_ADDR_LEN];  ///< Source address
   AcU16 proto;                  ///< Protocol type see AC_ETHER_PROTO_xxx
 } AcEtherHdr;
 
 /**
  * Some static asserts so we catch any obvious errors
  */
-ac_static_assert(AC_ETHER_ADR_LEN == 6, L"AC_ETHER_ADR_LEN != 6");
+ac_static_assert(AC_ETHER_ADDR_LEN == 6, L"AC_ETHER_ADDR_LEN != 6");
 ac_static_assert(AC_ETHER_MIN_LEN == 60, L"AC_ETHER_MIN_LEN != 60");
 ac_static_assert(AC_ETHER_HDR_LEN == 14, L"AC_ETHER_HDR_LEN != 14");
 ac_static_assert(sizeof(AcEtherHdr) == AC_ETHER_HDR_LEN, L"sizeof(AcEtherHdr) != 14");
+
+/**
+ * Ethernet ARP packet
+ */
+typedef struct AC_ATTR_PACKED {
+  union {
+    AcU8 min_packet[AC_ETHER_MIN_LEN];
+    struct {
+      AcEtherHdr ether_hdr;
+      AcU8 src_hard_a[AC_ETHER_ADDR_LEN];
+      AcU8 src_proto_a[AC_IPV4_ADDR_LEN];
+      AcU8 dst_hard_a[AC_ETHER_ADDR_LEN];
+      AcU8 dst_proto_a[AC_IPV4_ADDR_LEN];
+    };
+  };
+} AcEtherArpIpv4;
 
 #endif

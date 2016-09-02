@@ -64,7 +64,7 @@ subdir('components')
 # Build the platform libraries for this platform
 subdir('platform/@0@/libs'.format(Platform))
 
-# Build the platform libraries for this platform
+# Build the platform components for this platform
 subdir('platform/@0@/components'.format(Platform))
 
 # tests

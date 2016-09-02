@@ -14,11 +14,13 @@
  * limitations under the license.
  */
 
-#ifndef SADIE_LIBS_AC_INET_LINK_INCS_AC_INET_LINK_H
-#define SADIE_LIBS_AC_INET_LINK_INCS_AC_INET_LINK_H
+#ifndef SADIE_COMPONENTS_AC_INET_LINK_INCS_AC_INET_LINK_H
+#define SADIE_COMPONENTS_AC_INET_LINK_INCS_AC_INET_LINK_H
 
+#include <ac_assert.h>
 #include <ac_attributes.h>
 #include <ac_comp_mgr.h>
+#include <ac_inet.h>
 #include <ac_inttypes.h>
 
 /**
@@ -75,9 +77,9 @@ typedef struct AC_ATTR_PACKED {
 } AcInetIpv4Hdr;
 
 typedef struct {
-  void*     base;       ///< Base address of the data
-  ac_size_t len;        ///< Length of the data
-} AcIoBuff;
+  void*     buff;       ///< Base address of the buffer
+  ac_size_t len;        ///< Length of the buffer
+} AcIoVec;
 
 
 /**
@@ -86,25 +88,55 @@ typedef struct {
  *   AC_INET_SEND_PACKET_REQ
  *   AC_INET_SEND_PACKET_RSP
  */
-#define AC_INET_SEND_PACKET_PROTOCOL   0x1234
+#define AC_INET_LINK_PROTOCOL                0x1234
+#define AC_INET_LINK_PROTOCOL_EXTRA_MAX_LEN  256
 
-#define AC_INET_SEND_PACKET_CMD AC_OP(AC_INET_SEND_PACKET_PROTOCOL, AC_OPTYPE_CMD, 0x1)
-#define AC_INET_SEND_PACKET_REQ AC_OP(AC_INET_SEND_PACKET_PROTOCOL, AC_OPTYPE_REQ, 0x1)
-#define AC_INET_SEND_PACKET_RSP AC_OP(AC_INET_SEND_PACKET_PROTOCOL, AC_OPTYPE_RSP, 0x1)
+#define AC_INET_SEND_PACKET_CMD AC_OP(AC_INET_LINK_PROTOCOL, AC_OPTYPE_CMD, 0x1)
+#define AC_INET_SEND_PACKET_REQ AC_OP(AC_INET_LINK_PROTOCOL, AC_OPTYPE_REQ, 0x1)
+#define AC_INET_SEND_PACKET_RSP AC_OP(AC_INET_LINK_PROTOCOL, AC_OPTYPE_RSP, 0x1)
 
 /**
- * AcInetSendPacetData is either AC_INET_SEND_PACKET_CMD or _REQ.
+ * AcInetSendPacketExtra is either AC_INET_SEND_PACKET_CMD or _REQ.
+ * If _REQ is sent then _RSP sent as the reply and for _CMD the _RSP
+ * may be sent, for instance when an error occurs, usually
+ * detected by before transmitting.
+ */
+typedef struct {
+  ac_u64    app_vecs_cnt;       ///< Number of AcIoVecs's for application data
+  AcIoVec   link_vec;           ///< Pointer to the Link header vector
+  AcIoVec   ip_vec;             ///< Pointer to the IP header vector
+  AcIoVec   trans_vec;          ///< Pointer to the Transport header vector
+  AcIoVec   app_vecs[];         ///< Pointer to the app data vector
+} AcInetSendPacketExtra;
+
+ac_static_assert(sizeof(AcInetSendPacketExtra) <= AC_INET_LINK_PROTOCOL_EXTRA_MAX_LEN,
+    L"sizeof(AcInetSendPacketExtra) > AC_INET_LINK_PROTOCOL_EXTRA_MAX_LEN");
+
+#define AC_INET_SEND_ARP_CMD AC_OP(AC_INET_LINK_PROTOCOL, AC_OPTYPE_CMD, 0x2)
+#define AC_INET_SEND_ARP_REQ AC_OP(AC_INET_LINK_PROTOCOL, AC_OPTYPE_REQ, 0x2)
+#define AC_INET_SEND_ARP_RSP AC_OP(AC_INET_LINK_PROTOCOL, AC_OPTYPE_RSP, 0x2)
+
+/**
+ * AcInetSendArpPacketData is either AC_INET_SEND_PACKET_CMD or _REQ.
  * If _REQ is sent then _RSP must be sent, for _CMD the _RSP
  * may be sent, for instance when an error occurs, usually
  * detected by before transmitting.
  */
 typedef struct {
-  ac_u64    app_vec_cnt;  ///< Number of AcIoBuff's for application data
-  AcIoBuff* link_buff;    ///< Pointer to the Link header buffer
-  AcIoBuff* ip_buff;      ///< Pointer to the IP header buffer
-  AcIoBuff* trans_buff;   ///< Pointer to the Transport header buffer
-  AcIoBuff* app_buffs[];  ///< Pointer to the app data buffer
-} AcInetSendPacketExtra;
+  AcU16     proto;              ///< Protocol such as AC_ETHER_PROTO_ARP
+  AcU16     proto_addr_len;     ///< Length of the protocol address
+  AcU8      proto_addr[AC_IPV6_ADDR_LEN * 2]; ///< Protocol address,
+                                // large enough for all known protocols
+                                ///< such as IPv6.
+} AcInetSendArpExtra;
+ac_static_assert(sizeof(AcInetSendArpExtra) <= AC_INET_LINK_PROTOCOL_EXTRA_MAX_LEN,
+    L"sizeof(AcInetSendArpExtra) > AC_INET_LINK_PROTOCOL_EXTRA_MAX_LEN");
+
+/**
+ * Name of the IPV4 link component
+ * TODO: Define a way to discover components by protocols they support or other features.
+ */
+#define INET_LINK_COMP_IPV4_NAME "comp_ipv4_link"
 
 /**
  * Initialize this module

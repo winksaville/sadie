@@ -13,7 +13,7 @@
 # limitations under the license.
 
 incDirs = runtimeIncDirs + componentIncDirs
-deps = [ libruntime_dep, component_dep ]
+deps = [ component_dep, libruntime_dep ]
 
 if Platform == 'Posix'
   srcFiles = firstSrcFiles + ['srcs/test.c']

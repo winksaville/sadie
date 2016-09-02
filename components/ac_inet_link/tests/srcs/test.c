@@ -174,7 +174,7 @@ ac_bool test_AcInetSendPacket(void) {
 
   AcOp sp_cmd = { .operation = AC_INET_SEND_PACKET_CMD };
 
-  error |= AC_TEST(sp_cmd.protocol == AC_INET_SEND_PACKET_PROTOCOL);
+  error |= AC_TEST(sp_cmd.protocol == AC_INET_LINK_PROTOCOL);
   error |= AC_TEST(sp_cmd.ver == 0);
   error |= AC_TEST(sp_cmd.optype == AC_OPTYPE_CMD);
   error |= AC_TEST(sp_cmd.opcode == 1);
@@ -188,7 +188,7 @@ ac_bool test_AcInetSendPacket(void) {
 
   AcOp sp_req = { .operation = AC_INET_SEND_PACKET_REQ };
 
-  error |= AC_TEST(sp_req.protocol == AC_INET_SEND_PACKET_PROTOCOL);
+  error |= AC_TEST(sp_req.protocol == AC_INET_LINK_PROTOCOL);
   error |= AC_TEST(sp_req.ver == 0);
   error |= AC_TEST(sp_req.optype == AC_OPTYPE_REQ);
   error |= AC_TEST(sp_req.opcode == 1);
@@ -202,7 +202,7 @@ ac_bool test_AcInetSendPacket(void) {
 
   AcOp sp_rsp = { .operation = AC_INET_SEND_PACKET_RSP };
 
-  error |= AC_TEST(sp_rsp.protocol == AC_INET_SEND_PACKET_PROTOCOL);
+  error |= AC_TEST(sp_rsp.protocol == AC_INET_LINK_PROTOCOL);
   error |= AC_TEST(sp_rsp.ver == 0);
   error |= AC_TEST(sp_rsp.optype == AC_OPTYPE_RSP);
   error |= AC_TEST(sp_rsp.opcode == 1);

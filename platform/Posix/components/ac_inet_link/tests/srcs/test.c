@@ -20,7 +20,9 @@
 #include <ac_inet_link_internal.h>
 
 #include <ac_comp_mgr.h>
+#include <ac_ether.h>
 #include <ac_inttypes.h>
+#include <ac_memcpy.h>
 #include <ac_msg.h>
 #include <ac_msg_pool.h>
 #include <ac_printf.h>
@@ -41,12 +43,18 @@ DEF_STATE(done_state);
 // The test component structure the first element must be an AcComp
 typedef struct {
   AcComp comp;
+  AcComp* target_comp;
+  AcU8* target_comp_name;
+  AcCompMgr* cm;
   AcReceptor* waiting;
+  AcMsgPool mp;
+  AcStatus status;
+  AcEtherArpIpv4 arp_packet;
 } TestComp;
 
 // The test component
 static TestComp test_comp = {
-  .comp.name=(ac_u8*)"test_comp_ipv4_ll",
+  .comp.name=(ac_u8*)"test_comp_ipv4_link",
   .comp.process_msg = initial_state
 };
 
@@ -54,7 +62,7 @@ static TestComp test_comp = {
 
 // LDR and ldr for print statements, allows you
 // to customize the leading part of the debug output
-#define LDR "%s.%s"
+#define LDR "%s.%s: "
 #define ldr this->comp.name, STATE_NAME
 
 /**
@@ -62,17 +70,39 @@ static TestComp test_comp = {
  */
 #define STATE_NAME "initial_state"
 ac_bool initial_state(AcComp* comp, AcMsg* msg) {
+  AcStatus status;
   TestComp* this = (TestComp*)comp;
   ac_debug_printf(LDR ":+msg->op=%lx\n", ldr, msg->op);
 
   switch (msg->op) {
     case (AC_INIT_CMD): {
-      ac_debug_printf(LDR ": AC_INIT_CMD\n", ldr);
+      ac_debug_printf(LDR "AC_INIT_CMD\n", ldr);
+
+      // Create a message pool
+      status = AcMsgPool_init(&this->mp, 8, AC_INET_LINK_PROTOCOL_EXTRA_MAX_LEN);
+      if (status != AC_STATUS_OK) {
+        ac_printf(LDR "AC_INIT_CMD could not allocates messages", ldr);
+        this->status = status;
+        TRANS_TO(this, done_state);
+      }
+      ac_debug_printf(LDR "AC_INIT_CMD mp initied\n", ldr);
+
+      // Find the component we're going to test
+      test_comp.target_comp = AcCompMgr_find_comp(this->cm, this->target_comp_name);
+      if (test_comp.target_comp == AC_NULL) {
+        ac_printf(LDR "AC_INIT_CMD could not find target_comp=%s", ldr, this->target_comp_name);
+        this->status = status;
+        TRANS_TO(this, done_state);
+      }
+      ac_debug_printf(LDR "AC_INIT_CMD found target comp\n", ldr);
+
+      this->status = AC_STATUS_OK;
+      AcReceptor_signal(this->waiting);
       TRANS_TO(this, work_state);
       break;
     }
     default: {
-      ac_printf(LDR ": unregonized AC_OP=%lx\n", ldr, msg->op);
+      ac_printf(LDR "unregonized AC_OP=%lx\n", ldr, msg->op);
       break;
     }
   }
@@ -95,18 +125,34 @@ ac_bool work_state(AcComp* comp, AcMsg* msg) {
 
   switch (msg->op) {
     case SEND_ARP_REQ: {
-      ac_printf(LDR ": SEND_ARP_REQ\n", ldr);
+      ac_printf(LDR "SEND_ARP_REQ\n", ldr);
+
+      AcMsg* msg = AcMsgPool_get_msg(&this->mp);
+      msg->op = AC_INET_SEND_ARP_CMD;
+      AcInetSendArpExtra* send_arp_extra = (AcInetSendArpExtra*)msg->extra;
+      send_arp_extra->proto = AC_ETHER_PROTO_ARP;
+      send_arp_extra->proto_addr_len = AC_ETHER_ADDR_LEN;
+      send_arp_extra->proto_addr[0] = 192;
+      send_arp_extra->proto_addr[1] = 168;
+      send_arp_extra->proto_addr[2] = 0;
+      send_arp_extra->proto_addr[3] = 2;
+
+      //  delay a second to let it complete for the moment
+      ac_printf(LDR "SEND_ARP_REQ; waiting\n", ldr);
+      ac_thread_wait_ns(1000000000);
+      ac_printf(LDR "SEND_ARP_REQ; done waiting\n", ldr);
+
       AcReceptor_signal(this->waiting);
       break;
     }
     case DONE: {
-      ac_printf(LDR ": DONE\n", ldr);
+      ac_printf(LDR "DONE\n", ldr);
       TRANS_TO(this, done_state);
       AcReceptor_signal(this->waiting);
       break;
     }
     default: {
-      ac_printf(LDR ": unregonized AC_OP=%lx\n", ldr, msg->op);
+      ac_printf(LDR "unregonized AC_OP=%lx\n", ldr, msg->op);
       TRANS_TO(this, done_state);
       break;
     }
@@ -130,11 +176,11 @@ ac_bool done_state(AcComp* comp, AcMsg* msg) {
 
   switch (msg->op) {
     case (AC_DEINIT_CMD): {
-      ac_debug_printf(LDR ": AC_DEINIT_CMD\n", ldr);
+      ac_debug_printf(LDR "AC_DEINIT_CMD\n", ldr);
       break;
     }
     default: {
-      ac_printf(LDR ": unregonized AC_OP=%lx\n", ldr, msg->op);
+      ac_printf(LDR "unregonized AC_OP=%lx\n", ldr, msg->op);
       break;
     }
   }
@@ -156,7 +202,8 @@ ac_bool done_state(AcComp* comp, AcMsg* msg) {
 void TestComp_deinit(AcCompMgr* cm) {
   ac_debug_printf(LDR ":+cm=%p comp=%s\n", ldr, cm, test_comp.comp.name);
 
-  ac_assert(AcCompMgr_rmv_comp((AcComp*)&test_comp) == AC_STATUS_OK);
+  AcReceptor_ret(test_comp.waiting);
+  AcCompMgr_rmv_comp((AcComp*)&test_comp);
 
   ac_debug_printf(LDR ":-cm=%p comp=%s\n", ldr, cm, test_comp.comp.name);
 }
@@ -168,13 +215,17 @@ void TestComp_deinit(AcCompMgr* cm) {
  */
 #define LDR "%s"
 #define ldr "TestComp_init"
-void TestComp_init(AcCompMgr* cm) {
+AcStatus TestComp_init(AcCompMgr* cm) {
+  AcStatus status;
   ac_debug_printf(LDR ":+cm=%p comp=%s\n", ldr, cm, test_comp.comp.name);
 
-  ac_assert(AcCompMgr_add_comp(cm, &test_comp.comp) == AC_STATUS_OK);
+  test_comp.cm = cm;
+  test_comp.target_comp_name = (AcU8*)INET_LINK_COMP_IPV4_NAME;
   test_comp.waiting = AcReceptor_get();
+  status = AcCompMgr_add_comp(cm, &test_comp.comp);
 
-  ac_debug_printf(LDR ":-cm=%p comp=%s\n", ldr, cm, test_comp.comp.name);
+  ac_debug_printf(LDR ":-cm=%p comp=%s status=%u\n", ldr, cm, test_comp.comp.name, status);
+  return status;
 }
 #undef LDR
 #undef ldr
@@ -183,7 +234,7 @@ void TestComp_init(AcCompMgr* cm) {
  * Test inet link implemenation
  */
 #define LDR "%s"
-#define ldr "test_ient_link_impl"
+#define ldr "test_inet_link_impl"
 AcUint test_inet_link_impl(AcCompMgr* cm) {
   AcUint error = AC_FALSE;
   AcMsgPool mp;
@@ -191,11 +242,18 @@ AcUint test_inet_link_impl(AcCompMgr* cm) {
 
   ac_debug_printf(LDR ":+\n", ldr);
 
-  // Initialize the test component
-  TestComp_init(cm);
-
   // Create a message pool
   AcMsgPool_init(&mp, 8, sizeof(AcInetSendPacketExtra));
+
+  // Initialize the test component
+  TestComp_init(cm);
+#if 0
+  AcReceptor_wait(test_comp.waiting);
+  if (test_comp.status != AC_STATUS_OK) {
+    ac_debug_printf(LDR "Could not initialize test_comp\n", ldr);
+    goto done;
+  }
+#endif
 
   // Send a ARP Request
   msg = AcMsgPool_get_msg(&mp);
@@ -209,8 +267,11 @@ AcUint test_inet_link_impl(AcCompMgr* cm) {
   AcCompMgr_send_msg(&test_comp.comp, msg);
   AcReceptor_wait(test_comp.waiting);
 
+//done:
   // Deinitialize the test component
   TestComp_deinit(cm);
+
+  AcMsgPool_deinit(&mp);
 
   ac_debug_printf(LDR ":-\n", ldr);
   return error;
