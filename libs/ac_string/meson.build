@@ -19,4 +19,6 @@ runtimeIncDirs += include_directories(
 runtimeSrcs += [
   '@0@/srcs/ac_strlen.c'.format(meson.current_source_dir()),
   '@0@/srcs/ac_strncmp.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_strncpy.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_strcpy.c'.format(meson.current_source_dir()),
 ]

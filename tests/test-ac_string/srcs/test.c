@@ -16,6 +16,7 @@
 
 #include <ac_string.h>
 #include <ac_putchar.h>
+#include <ac_memset.h>
 #include <ac_test.h>
 
 int main(void) {
@@ -42,6 +43,45 @@ int main(void) {
   char a2[4] = { '1', '2', '\0', '2' };
   error |= AC_TEST(ac_strncmp(a1, a2, 4) == 0);
 
+  // Test ac_strncpy
+  char dst[32];
+  ac_memset(dst, -1, sizeof(dst));
+  error |= AC_TEST(ac_strncpy(dst, fourchars, 0) == dst);
+  error |= AC_TEST(dst[0] == -1);
+  error |= AC_TEST(ac_strncpy(dst, fourchars, 1) == dst);
+  error |= AC_TEST(dst[0] == '1');
+  error |= AC_TEST(dst[1] == -1);
+  error |= AC_TEST(ac_strncpy(dst, fourchars, 4) == dst);
+  error |= AC_TEST(dst[0] == '1');
+  error |= AC_TEST(dst[1] == '2');
+  error |= AC_TEST(dst[2] == '3');
+  error |= AC_TEST(dst[3] == '4');
+  error |= AC_TEST(dst[4] == -1);
+  error |= AC_TEST(ac_strncpy(dst, fourchars, 6) == dst);
+  error |= AC_TEST(dst[0] == '1');
+  error |= AC_TEST(dst[1] == '2');
+  error |= AC_TEST(dst[2] == '3');
+  error |= AC_TEST(dst[3] == '4');
+  error |= AC_TEST(dst[4] ==   0);
+  error |= AC_TEST(dst[5] ==   0);
+  error |= AC_TEST(dst[6] == -1);
+
+  // Test ac_strcpy
+  ac_memset(dst, -1, sizeof(dst));
+  error |= AC_TEST(ac_strcpy(dst, empty) == dst);
+  error |= AC_TEST(dst[0] ==   0);
+  error |= AC_TEST(dst[1] ==   -1);
+  error |= AC_TEST(ac_strcpy(dst, onechar) == dst);
+  error |= AC_TEST(dst[0] ==   '1');
+  error |= AC_TEST(dst[1] ==   0);
+  error |= AC_TEST(dst[2] ==   -1);
+  error |= AC_TEST(ac_strcpy(dst, fourchars) == dst);
+  error |= AC_TEST(dst[0] == '1');
+  error |= AC_TEST(dst[1] == '2');
+  error |= AC_TEST(dst[2] == '3');
+  error |= AC_TEST(dst[3] == '4');
+  error |= AC_TEST(dst[4] ==   0);
+  
   if (!error) {
     ac_putchar('O');
     ac_putchar('K');

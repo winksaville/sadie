@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Wink Saville
+ * Copyright 2016 Wink Saville
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef SADIE_LIBS_AC_STRING_INCS_AC_STRING_H
-#define SADIE_LIBS_AC_STRING_INCS_AC_STRING_H
+#include <ac_string.h>
 
-#include <ac_inttypes.h>
-
-int ac_strncmp(const char *str1, const char *str2, ac_size_t num);
-
-char* ac_strncpy(char *str1, const char *str2, ac_size_t num);
-
-char* ac_strcpy(char *dst, const char *src);
-
-ac_size_t ac_strlen(const char *str);
-
-#endif
+/**
+ * Copy up src to dst up to and including the 0 terminator
+ *
+ * @return dst
+ */
+char* ac_strcpy(char *dst, const char *src) {
+  char* dest = dst;
+  while ((*dst++ = *src++) != 0) {
+  }
+  return dest;
+}
