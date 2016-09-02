@@ -51,5 +51,5 @@ dependencies:
 
 test:
   override:
-    - circleci-matrix/process-matrix platform-matrix.yml:
+    - circleci-matrix/process-matrix circleci-matrix.yml:
         parallel: true
