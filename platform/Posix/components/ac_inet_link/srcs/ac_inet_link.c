@@ -51,7 +51,7 @@ typedef struct {
   AcComp comp;
   ac_u32 a_u32;
   AcInt fd;             ///< File descriptor for the interface
-  char* ifname;         ///< Name of the interface
+  char* ifname[2];      ///< Name of interfaces to try
   AcUint ifindex;       ///< Index of the interface
 } AcCompIpv4LinkLayer;
 
@@ -198,7 +198,7 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
 
   switch (msg->op) {
     case (AC_INIT_CMD): {
-      ac_debug_printf("%s: AC_INIT_CMD ifname=%s\n", this->comp.name, this->ifname);
+      ac_debug_printf("%s: AC_INIT_CMD ifname=%s\n", this->comp.name, this->ifname[0]);
 #if 1
       // Open an AF_PACKET socket
       this->fd = socket(AF_PACKET, SOCK_RAW, AC_HTON_U16(ETH_P_ALL));
@@ -209,10 +209,16 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
       }
 
       // Get the interface index
-      status = get_ifindex(this->fd, this->ifname, &this->ifindex);
+      status = get_ifindex(this->fd, this->ifname[0], &this->ifindex);
       if (status != AC_STATUS_OK) {
-        ac_printf("%s: Could not get interface index for ifname=%s\n", this->comp.name, this->ifname);
-        ac_fail("ac_inet_link: bad ifname");
+        ac_printf("%s: Could not get interface index for ifname=%s errno=%d\n", this->comp.name, this->ifname[0], errno);
+        status = get_ifindex(this->fd, this->ifname[1], &this->ifindex);
+        if (status != AC_STATUS_OK) {
+          AcU8 str[256];
+          ac_snprintf(str, sizeof(str),
+                "%s: Could not get interface index for ifname=%s errno=%d\n", this->comp.name, this->ifname[1], errno);
+          ac_fail((char*)str);
+        }
       }
 #endif
       break;
@@ -247,7 +253,8 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
 static AcCompIpv4LinkLayer comp_ipv4_ll = {
   .comp.name=(ac_u8*)INET_LINK_COMP_IPV4_NAME,
   .comp.process_msg = comp_ipv4_ll_process_msg,
-  .ifname = "eno1"
+  .ifname[0] = "eno1",
+  .ifname[1] = "eth0"
 };
 
 /**

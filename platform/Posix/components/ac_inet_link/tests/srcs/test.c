@@ -107,9 +107,8 @@ ac_bool initial_state(AcComp* comp, AcMsg* msg) {
     }
   }
 
-  AcMsgPool_ret_msg(msg);
-
   ac_debug_printf(LDR ":-msg->op=%lx\n", ldr, msg->op);
+  AcMsgPool_ret_msg(msg);
   return AC_TRUE;
 }
 #undef STATE_NAME
@@ -158,9 +157,8 @@ ac_bool work_state(AcComp* comp, AcMsg* msg) {
     }
   }
 
-  AcMsgPool_ret_msg(msg);
-
   ac_debug_printf(LDR ":-msg->op=%lx\n", ldr, msg->op);
+  AcMsgPool_ret_msg(msg);
   return AC_TRUE;
 }
 #undef STATE_NAME
@@ -185,9 +183,8 @@ ac_bool done_state(AcComp* comp, AcMsg* msg) {
     }
   }
 
-  AcMsgPool_ret_msg(msg);
-
   ac_debug_printf(LDR ":-msg->op=%lx\n", ldr, msg->op);
+  AcMsgPool_ret_msg(msg);
   return AC_TRUE;
 }
 #undef STATE_NAME
