@@ -45,18 +45,18 @@ int main(void) {
 
   // Test ac_strncpy
   char dst[32];
-  ac_memset(dst, -1, sizeof(dst));
+  ac_memset(dst, 127, sizeof(dst));
   error |= AC_TEST(ac_strncpy(dst, fourchars, 0) == dst);
-  error |= AC_TEST(dst[0] == -1);
+  error |= AC_TEST(dst[0] == 127);
   error |= AC_TEST(ac_strncpy(dst, fourchars, 1) == dst);
   error |= AC_TEST(dst[0] == '1');
-  error |= AC_TEST(dst[1] == -1);
+  error |= AC_TEST(dst[1] == 127);
   error |= AC_TEST(ac_strncpy(dst, fourchars, 4) == dst);
   error |= AC_TEST(dst[0] == '1');
   error |= AC_TEST(dst[1] == '2');
   error |= AC_TEST(dst[2] == '3');
   error |= AC_TEST(dst[3] == '4');
-  error |= AC_TEST(dst[4] == -1);
+  error |= AC_TEST(dst[4] == 127);
   error |= AC_TEST(ac_strncpy(dst, fourchars, 6) == dst);
   error |= AC_TEST(dst[0] == '1');
   error |= AC_TEST(dst[1] == '2');
@@ -64,17 +64,17 @@ int main(void) {
   error |= AC_TEST(dst[3] == '4');
   error |= AC_TEST(dst[4] ==   0);
   error |= AC_TEST(dst[5] ==   0);
-  error |= AC_TEST(dst[6] == -1);
+  error |= AC_TEST(dst[6] == 127);
 
   // Test ac_strcpy
-  ac_memset(dst, -1, sizeof(dst));
+  ac_memset(dst, 127, sizeof(dst));
   error |= AC_TEST(ac_strcpy(dst, empty) == dst);
   error |= AC_TEST(dst[0] ==   0);
-  error |= AC_TEST(dst[1] ==   -1);
+  error |= AC_TEST(dst[1] ==   127);
   error |= AC_TEST(ac_strcpy(dst, onechar) == dst);
   error |= AC_TEST(dst[0] ==   '1');
   error |= AC_TEST(dst[1] ==   0);
-  error |= AC_TEST(dst[2] ==   -1);
+  error |= AC_TEST(dst[2] ==   127);
   error |= AC_TEST(ac_strcpy(dst, fourchars) == dst);
   error |= AC_TEST(dst[0] == '1');
   error |= AC_TEST(dst[1] == '2');
