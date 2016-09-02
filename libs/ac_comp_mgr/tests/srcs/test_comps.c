@@ -87,7 +87,7 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
   T1Comp* c;
   for (ac_u32 i = 0; i < comp_count; i++) {
     c = &comps[i];
-    ac_sprintf(c->name_buf, sizeof(c->name_buf), "t%d", i);
+    ac_snprintf(c->name_buf, sizeof(c->name_buf), "t%d", i);
     c->comp.name = c->name_buf;
     c->comp.process_msg = msg_proc;
     c->init_count = 0;
@@ -105,7 +105,7 @@ ac_bool test_comps(AcCompMgr* cm, AcMsgPool* mp, ac_u32 comp_count) {
     ac_debug_printf("test_comps: find\n");
     for (ac_u32 i = 0; i < comp_count; i++) {
       ac_u8 name[10];
-      ac_sprintf(name, sizeof(name), "t%d", i);
+      ac_snprintf(name, sizeof(name), "t%d", i);
       AcComp* comp = AcCompMgr_find_comp(cm, name);
       error |=  AC_TEST(comp != AC_NULL);
     }

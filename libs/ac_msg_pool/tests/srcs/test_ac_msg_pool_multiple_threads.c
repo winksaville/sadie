@@ -176,7 +176,7 @@ AcBool test_msg_pool_multiple_threads(AcU32 thread_count, AcU32 comps_per_thread
     }
 
     params[i]->cm = &cm;
-    ac_sprintf(params[i]->name, sizeof(params[i]->name), "mptt%d_process_msg", i);
+    ac_snprintf(params[i]->name, sizeof(params[i]->name), "mptt%d_process_msg", i);
     params[i]->comp.name = params[i]->name;
     params[i]->comp.process_msg = mptt_process_msg;
     error |= AC_TEST(AcCompMgr_add_comp(&cm, &params[i]->comp) == AC_STATUS_OK);

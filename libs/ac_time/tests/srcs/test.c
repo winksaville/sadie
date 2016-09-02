@@ -36,13 +36,13 @@ ac_bool test_time(ac_u64 test_freq) {
 
   ac_printf("test_time: f=%ld save_f=%ld\n", f, save_f);
 
-  ac_sprintf(buff, AC_ARRAY_COUNT(buff), "%t", f + (f / 10));
+  ac_snprintf(buff, AC_ARRAY_COUNT(buff), "%t", f + (f / 10));
   ac_printf("buff=%s\n", buff);
   error |= AC_TEST(ac_strncmp("1s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
-  ac_sprintf(buff, AC_ARRAY_COUNT(buff), "%.1t", f + (f / 10));
+  ac_snprintf(buff, AC_ARRAY_COUNT(buff), "%.1t", f + (f / 10));
   ac_printf("buff=%s\n", buff);
   error |= AC_TEST(ac_strncmp("1.1s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
-  ac_sprintf(buff, AC_ARRAY_COUNT(buff), "%0.1t", f + (f / 10));
+  ac_snprintf(buff, AC_ARRAY_COUNT(buff), "%0.1t", f + (f / 10));
   ac_printf("buff=%s\n", buff);
   error |= AC_TEST(ac_strncmp("0y0d0h0m1.1s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
 
@@ -197,16 +197,16 @@ ac_bool test_seconds(ac_u64 test_freq) {
 
   ac_printf("test_seconds: f=%ld save_f=%ld\n", f, save_f);
 
-  ac_sprintf(buff, AC_ARRAY_COUNT(buff), "%Ss", f + (f / 10));
+  ac_snprintf(buff, AC_ARRAY_COUNT(buff), "%Ss", f + (f / 10));
   ac_printf("buff=%s\n", buff);
   error |= AC_TEST(ac_strncmp("1s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
-  ac_sprintf(buff, AC_ARRAY_COUNT(buff), "%.1Ss", f + (f / 10));
+  ac_snprintf(buff, AC_ARRAY_COUNT(buff), "%.1Ss", f + (f / 10));
   ac_printf("buff=%s\n", buff);
   error |= AC_TEST(ac_strncmp("1.1s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
-  ac_sprintf(buff, AC_ARRAY_COUNT(buff), "%.1Ss", (f / 10));
+  ac_snprintf(buff, AC_ARRAY_COUNT(buff), "%.1Ss", (f / 10));
   ac_printf("buff=%s\n", buff);
   error |= AC_TEST(ac_strncmp("0.1s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
-  ac_sprintf(buff, AC_ARRAY_COUNT(buff), "%0.1Ss", (f / 10));
+  ac_snprintf(buff, AC_ARRAY_COUNT(buff), "%0.1Ss", (f / 10));
   ac_printf("buff=%s\n", buff);
   error |= AC_TEST(ac_strncmp("0.1s", (char*)buff, AC_ARRAY_COUNT(buff)) == 0);
 

@@ -281,6 +281,6 @@ ac_uint ac_printf(const char *format, ...);
  *
  * Returns writer->count which should be the number of characters printed
  */
-ac_uint ac_sprintf(ac_u8* out_buff, ac_uint out_buff_len, const char *format, ...);
+ac_uint ac_snprintf(ac_u8* out_buff, ac_uint out_buff_len, const char *format, ...);
 
 #endif

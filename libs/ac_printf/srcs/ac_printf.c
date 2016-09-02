@@ -471,7 +471,7 @@ ac_writer* ac_writer_buffer_init(ac_writer* writer, ac_u8* out_buff,
  *
  * Returns number of characters printed
  */
-ac_uint ac_sprintf(ac_u8* out_buff, ac_uint out_buff_len,
+ac_uint ac_snprintf(ac_u8* out_buff, ac_uint out_buff_len,
     const char *format, ...) {
   ac_va_list args;
 
