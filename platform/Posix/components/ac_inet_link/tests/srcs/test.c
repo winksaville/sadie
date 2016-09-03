@@ -126,15 +126,16 @@ ac_bool work_state(AcComp* comp, AcMsg* msg) {
     case SEND_ARP_REQ: {
       ac_printf(LDR "SEND_ARP_REQ\n", ldr);
 
-      AcMsg* msg = AcMsgPool_get_msg(&this->mp);
-      msg->op = AC_INET_SEND_ARP_CMD;
-      AcInetSendArpExtra* send_arp_extra = (AcInetSendArpExtra*)msg->extra;
+      AcMsg* m = AcMsgPool_get_msg(&this->mp);
+      m->op = AC_INET_SEND_ARP_CMD;
+      AcInetSendArpExtra* send_arp_extra = (AcInetSendArpExtra*)m->extra;
       send_arp_extra->proto = AC_ETHER_PROTO_ARP;
-      send_arp_extra->proto_addr_len = AC_ETHER_ADDR_LEN;
+      send_arp_extra->proto_addr_len = AC_IPV4_ADDR_LEN;
       send_arp_extra->proto_addr[0] = 192;
       send_arp_extra->proto_addr[1] = 168;
       send_arp_extra->proto_addr[2] = 0;
       send_arp_extra->proto_addr[3] = 2;
+      AcCompMgr_send_msg(this->target_comp, m);
 
       //  delay a second to let it complete for the moment
       ac_printf(LDR "SEND_ARP_REQ; waiting\n", ldr);
