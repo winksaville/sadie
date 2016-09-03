@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Do two things:
-#  1) Change the file to root for user and group
-#  2) Make the file an SUID's i.e. allow it to run with the
-#     permissions of the owner.
+#  1) Change user and group for the file to root
+#  2) SUID the file (i.e. have it run with the permissions of the owner.)
 
 # Parameters:
 #   $1 is the file to execute
