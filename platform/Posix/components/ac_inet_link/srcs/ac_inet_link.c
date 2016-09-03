@@ -33,6 +33,7 @@
 #include <ac_string.h>
 #include <ac_status.h>
 
+
 #include <errno.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -41,6 +42,9 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <linux/if.h>
+
+#define __USE_GNU // Be sure we get TEMP_FAILURE_RETRY defined
+#include <unistd.h>
 
 typedef struct {
   AcComp comp;
@@ -215,6 +219,7 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
       break;
     }
     case (AC_DEINIT_CMD): {
+      TEMP_FAILURE_RETRY (close(this->fd));
       ac_debug_printf("%s: AC_DEINIT_CMD\n", this->comp.name);
       break;
     }
