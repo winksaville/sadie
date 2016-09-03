@@ -36,6 +36,8 @@
 #define _DEFAULT_SOURCE // Needed for struct ether_arp
 
 #include <errno.h>
+#include <string.h>
+
 #include <arpa/inet.h>
 #include <net/ethernet.h>
 #include <netinet/in.h>
@@ -150,7 +152,8 @@ AcStatus get_ifindex(AcInt fd, const char* ifname, AcUint* ifindex) {
   status = AC_STATUS_OK;
 
 done:
-  ac_debug_printf("get_ethernet_ipv4_addr:-status=%d.%d\n", AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status));
+  ac_debug_printf("get_ethernet_ipv4_addr:-status=%d.%d %s\n",
+      AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status), strerror(AC_STATUS_MINOR(status)));
   return status;
 }
 
@@ -168,7 +171,7 @@ AcStatus get_ethernet_mac_addr(int fd, const char* ifname, AcU8 mac_addr[AC_ETHE
     goto done;
   }
 
-  // Issue iotcl to get the index
+  // Issue iotcl to get the hardware address
   if (ioctl(fd, SIOCGIFHWADDR, &ifr) < 0) {
     status = AC_STATUS_LINUX_ERR(errno);
     goto done;
@@ -183,7 +186,8 @@ AcStatus get_ethernet_mac_addr(int fd, const char* ifname, AcU8 mac_addr[AC_ETHE
   status = AC_STATUS_OK;
 
 done:
-  ac_debug_printf("get_ethernet_mac_addr:-status=%d.%d\n", AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status));
+  ac_debug_printf("get_ethernet_mac_addr:-status=%d.%d %s\n",
+      AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status), strerror(AC_STATUS_MINOR(status)));
   return status;
 }
 
@@ -217,7 +221,8 @@ AcStatus get_ethernet_ipv4_addr(int fd, const char* ifname, struct sockaddr_in* 
   status = AC_STATUS_OK;
 
 done:
-  ac_debug_printf("get_ethernet_ipv4_addr:-status=%d.%d\n", AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status));
+  ac_debug_printf("get_ethernet_ipv4_addr:-status=%d.%d %s\n",
+      AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status), strerror(AC_STATUS_MINOR(status)));
   return status;
 }
 
@@ -348,8 +353,8 @@ AcStatus send_arp(AcCompIpv4LinkLayer* this, AcU16 protocol, AcU32 proto_addr_le
   } else {
     status = AC_STATUS_OK;
   }
-  ac_printf("%s:-send_arp sent count=%d status=%d.%d\n", this->comp.name, count,
-      AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status));
+  ac_printf("%s:-send_arp sent count=%d status=%d.%d %s\n", this->comp.name, count,
+      AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status), strerror(AC_STATUS_MINOR(status)));
   return status;
 }
 
@@ -375,14 +380,18 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
       }
 
       // Get the interface index
-      status = get_ifindex(this->fd, this->ifname[0], &this->ifindex);
+      this->ifname_idx = 0;
+      status = get_ifindex(this->fd, this->ifname[this->ifname_idx], &this->ifindex);
       if (status != AC_STATUS_OK) {
-        ac_printf("%s: Could not get interface index for ifname=%s errno=%d\n", this->comp.name, this->ifname[0], errno);
-        status = get_ifindex(this->fd, this->ifname[1], &this->ifindex);
+        ac_printf("%s: Could not get interface index for ifname=%s errno=%d\n",
+            this->comp.name, this->ifname[this->ifname_idx], errno);
+
+        this->ifname_idx = 1;
+        status = get_ifindex(this->fd, this->ifname[this->ifname_idx], &this->ifindex);
         if (status != AC_STATUS_OK) {
           AcU8 str[256];
-          ac_snprintf(str, sizeof(str),
-                "%s: Could not get interface index for ifname=%s errno=%d\n", this->comp.name, this->ifname[1], errno);
+          ac_snprintf(str, sizeof(str), "%s: Could not get interface index for ifname=%s errno=%d\n",
+                this->comp.name, this->ifname[this->ifname_idx], errno);
           ac_fail((char*)str);
         }
       }
@@ -391,7 +400,8 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
       status = get_ethernet_mac_addr(this->fd, this->ifname[this->ifname_idx], this->ifmac_addr);
       if (status != AC_STATUS_OK) {
         AcU8 str[256];
-        ac_snprintf(str, sizeof(str), "%s: Could get interface mac address status=%u\n", this->comp.name, status);
+        ac_snprintf(str, sizeof(str), "%s: Could get interface mac address status=%d.%d %s\n", this->comp.name,
+            AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status), strerror(AC_STATUS_MINOR(status)));
         ac_fail((char*)str);
       }
       ac_printf("%s: ifmac_addr=", this->comp.name);
@@ -402,7 +412,8 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
       status = get_ethernet_ipv4_addr(this->fd, this->ifname[this->ifname_idx], &this->ifipv4_addr);
       if (status != AC_STATUS_OK) {
         AcU8 str[256];
-        ac_snprintf(str, sizeof(str), "%s: Could get interface ipv4 address status=%u\n", this->comp.name, status);
+        ac_snprintf(str, sizeof(str), "%s: Could get interface ipv4 address status=%d.%d %s\n", this->comp.name,
+            AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status), strerror(AC_STATUS_MINOR(status)));
         ac_fail((char*)str);
       }
       ac_printf("%s: ", this->comp.name);
@@ -448,8 +459,8 @@ static AcCompIpv4LinkLayer comp_ipv4_ll = {
   .comp.name=(ac_u8*)INET_LINK_COMP_IPV4_NAME,
   .comp.process_msg = comp_ipv4_ll_process_msg,
   .ifname_idx = 0,
-  .ifname[0] = "eno1",
-  .ifname[1] = "eth0"
+  .ifname[0] = "eth0",
+  .ifname[1] = "eno1",
 };
 
 /**
