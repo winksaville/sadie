@@ -141,7 +141,7 @@ AcStatus get_ifindex(AcInt fd, const char* ifname, AcUint* ifindex) {
 
   // Issue iotcl to get the index
   if (ioctl(fd, SIOCGIFINDEX, &ifr) < 0) {
-    status = AC_STATUS_ERR;
+    status = AC_STATUS_LINUX_ERR(errno);
     goto done;
   }
 
@@ -150,6 +150,7 @@ AcStatus get_ifindex(AcInt fd, const char* ifname, AcUint* ifindex) {
   status = AC_STATUS_OK;
 
 done:
+  ac_debug_printf("get_ethernet_ipv4_addr:-status=%d.%d\n", AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status));
   return status;
 }
 
@@ -169,7 +170,7 @@ AcStatus get_ethernet_mac_addr(int fd, const char* ifname, AcU8 mac_addr[AC_ETHE
 
   // Issue iotcl to get the index
   if (ioctl(fd, SIOCGIFHWADDR, &ifr) < 0) {
-    status = AC_STATUS_ERR;
+    status = AC_STATUS_LINUX_ERR(errno);
     goto done;
   }
 
@@ -182,6 +183,7 @@ AcStatus get_ethernet_mac_addr(int fd, const char* ifname, AcU8 mac_addr[AC_ETHE
   status = AC_STATUS_OK;
 
 done:
+  ac_debug_printf("get_ethernet_mac_addr:-status=%d.%d\n", AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status));
   return status;
 }
 
@@ -201,7 +203,7 @@ AcStatus get_ethernet_ipv4_addr(int fd, const char* ifname, struct sockaddr_in* 
 
   // Issue iotcl to get the index
   if (ioctl(fd, SIOCGIFADDR, &ifr) < 0) {
-    status = AC_STATUS_ERR;
+    status = AC_STATUS_LINUX_ERR(errno);
     goto done;
   }
 
@@ -215,6 +217,7 @@ AcStatus get_ethernet_ipv4_addr(int fd, const char* ifname, struct sockaddr_in* 
   status = AC_STATUS_OK;
 
 done:
+  ac_debug_printf("get_ethernet_ipv4_addr:-status=%d.%d\n", AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status));
   return status;
 }
 
@@ -341,11 +344,12 @@ AcStatus send_arp(AcCompIpv4LinkLayer* this, AcU16 protocol, AcU32 proto_addr_le
   //println_hex("send_ethernet_arp_ipv4: mh=", &packet, len, ' ');
   int count = sendmsg(this->fd, &mh, 0);
   if (count < 0) {
-    status = AC_STATUS_ERR;
+    status = AC_STATUS_LINUX_ERR(errno);
   } else {
     status = AC_STATUS_OK;
   }
-  ac_printf("%s:-send_arp sent count=%d status=%u\n", this->comp.name, count, status);
+  ac_printf("%s:-send_arp sent count=%d status=%d.%d\n", this->comp.name, count,
+      AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status));
   return status;
 }
 

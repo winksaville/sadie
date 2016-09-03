@@ -18,18 +18,27 @@
 #define SADIE_LIBS_INCS_AC_STATUS_H
 
 #include <ac_inttypes.h>
+#include <ac_bits.h>
 
 typedef ac_u32 AcStatus;
+
+#define AC_STATUS(major, minor) ( \
+  AC_SET_BITS(AcStatus, 0u, (major), 16, 16) \
+  | AC_SET_BITS(AcStatus, 0u, (minor), 16, 0) )
+
+#define AC_STATUS_MAJOR(status) AC_GET_BITS(AcStatus, (status), 16, 16)
+#define AC_STATUS_MINOR(status) AC_GET_BITS(AcStatus, (status), 16, 0)
 
 /**
  * AcStatus values
  */
-#define AC_STATUS_OK 0
-#define AC_STATUS_ERR 1
-#define AC_STATUS_BAD_PARAM 2
-#define AC_STATUS_OUT_OF_MEMORY 3
-#define AC_STATUS_NOT_AVAILABLE 4
-#define AC_STATUS_UNRECOGNIZED_PROTOCOL 5
-#define AC_STATUS_UNRECOGNIZED_OPERATION 6
+#define AC_STATUS_OK                            AC_STATUS(0, 0)
+#define AC_STATUS_ERR                           AC_STATUS(1, 0)
+#define AC_STATUS_BAD_PARAM                     AC_STATUS(2, 0)
+#define AC_STATUS_OUT_OF_MEMORY                 AC_STATUS(3, 0)
+#define AC_STATUS_NOT_AVAILABLE                 AC_STATUS(4, 0)
+#define AC_STATUS_UNRECOGNIZED_PROTOCOL         AC_STATUS(5, 0)
+#define AC_STATUS_UNRECOGNIZED_OPERATION        AC_STATUS(6, 0)
+#define AC_STATUS_LINUX_ERR(errno)              AC_STATUS(7, (errno))
 
 #endif
