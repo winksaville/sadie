@@ -33,10 +33,6 @@
 #include <ac_string.h>
 #include <ac_status.h>
 
-#if 1
-//#include <arpa/inet.h>
-
-//#include <net/ethernet.h>
 #include <errno.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -45,7 +41,6 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <linux/if.h>
-#endif
 
 typedef struct {
   AcComp comp;
@@ -55,7 +50,6 @@ typedef struct {
   AcUint ifindex;       ///< Index of the interface
 } AcCompIpv4LinkLayer;
 
-#if 1
 /**
  * Display memory
  */
@@ -184,7 +178,6 @@ void init_broadcast_sockaddr_ll(struct sockaddr_ll* pSockAddrLl,
 
   init_sockaddr_ll(pSockAddrLl, ethernet_broadcast_addr, ifindex, AC_ETHER_PROTO_ARP);
 }
-#endif
 
 static void send_error_rsp(AcComp* comp, AcMsg* msg, AcStatus status) {
 }
@@ -199,7 +192,6 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
   switch (msg->op) {
     case (AC_INIT_CMD): {
       ac_debug_printf("%s: AC_INIT_CMD ifname=%s\n", this->comp.name, this->ifname[0]);
-#if 1
       // Open an AF_PACKET socket
       this->fd = socket(AF_PACKET, SOCK_RAW, AC_HTON_U16(ETH_P_ALL));
       if (this->fd < 0) {
@@ -220,7 +212,6 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
           ac_fail((char*)str);
         }
       }
-#endif
       break;
     }
     case (AC_DEINIT_CMD): {
