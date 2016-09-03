@@ -26,5 +26,13 @@ if Platform == 'Posix'
     dependencies : deps,
   )
 
-  run_target('run-test-posix-ac_inet_link', test_posix_ac_inet_link)
+  a = 'f'
+  if a == 't'
+    #How to have this run command depend on test_posix_ac_inet_link and have it always run?
+    run_command('@0@/tools/make.root.suid.sh'.format(meson.source_root()), 'test_posix_ac_inet_link')
+    run_target('run-test-posix-ac_inet_link', test_posix_ac_inet_link)
+  else
+    run_target('run-test-posix-ac_inet_link', '@0@/tools/sudo.runner.sh'.format(meson.source_root()),
+      test_posix_ac_inet_link)
+  endif
 endif

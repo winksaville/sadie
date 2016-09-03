@@ -54,7 +54,8 @@ if Platform == 'Posix'
     dependencies : deps,
   )
 
-  run_target('run-test-ac_inet_link', test_ac_inet_link)
+  run_target('run-test-ac_inet_link', '@0@/tools/sudo.runner.sh'.format(meson.source_root()),
+    test_ac_inet_link)
 endif
 
 if Platform == 'pc_x86_32'
