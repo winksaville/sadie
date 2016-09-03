@@ -129,7 +129,7 @@ ac_bool work_state(AcComp* comp, AcMsg* msg) {
       AcMsg* m = AcMsgPool_get_msg(&this->mp);
       m->op = AC_INET_SEND_ARP_CMD;
       AcInetSendArpExtra* send_arp_extra = (AcInetSendArpExtra*)m->extra;
-      send_arp_extra->proto = AC_ETHER_PROTO_ARP;
+      send_arp_extra->proto = AC_ETHER_PROTO_IPV4;
       send_arp_extra->proto_addr_len = AC_IPV4_ADDR_LEN;
       send_arp_extra->proto_addr[0] = 192;
       send_arp_extra->proto_addr[1] = 168;

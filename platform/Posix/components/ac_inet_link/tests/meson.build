@@ -29,8 +29,14 @@ if Platform == 'Posix'
   a = 'f'
   if a == 't'
     #How to have this run command depend on test_posix_ac_inet_link and have it always run?
-    run_command('@0@/tools/make.root.suid.sh'.format(meson.source_root()), 'test_posix_ac_inet_link')
-    run_target('run-test-posix-ac_inet_link', test_posix_ac_inet_link)
+    # This doesn't work:
+    make_suid = find_program('@0@/tools/make.root.suid.sh'.format(meson.source_root()))
+    gen = generator(make_suid,
+      output : '@PLAINNAME@',
+      arguments : 'file_name',
+      dependencies : test_posix_ac_inet_link)
+    generated = gen.process('test_posix_ac_inet_link')
+    run_target('run-test-posix-ac_inet_link', generated)
   else
     run_target('run-test-posix-ac_inet_link', '@0@/tools/sudo.runner.sh'.format(meson.source_root()),
       test_posix_ac_inet_link)
