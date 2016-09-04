@@ -28,6 +28,8 @@
 typedef struct ac_printf_t {
   ac_printf_format_proc format_proc;
   ac_u8 ch;
+  ac_printf_format_proc_str format_proc_str;
+  const char* str;
 } ac_printf_t;
 
 #define AC_PRINTF_TS_MAX 16
@@ -164,6 +166,13 @@ static void write_sval(
 }
 
 /**
+ * Output a chacter
+ */
+static void write_ch(ac_writer* writer, ac_u8 ch) {
+  writer->write_param(writer, cast_to_write_param(ch));
+}
+
+/**
  * Write a signed value
  */
 void ac_printf_write_sval(
@@ -218,7 +227,7 @@ static void formatter(ac_writer* writer, char const* format, ac_va_list args) {
     while ((ch = *format++) != 0) {
         if (ch != '%') {
             // Not the format escape character
-            writer->write_param(writer, cast_to_write_param(ch));
+            write_ch(writer, ch);
         } else {
             // Is a '%' so get the next character
             ac_u8 next_ch = *format++;
@@ -287,15 +296,15 @@ static void formatter(ac_writer* writer, char const* format, ac_va_list args) {
                     goto done;
                 case '%': {
                     // was %% just echo a '%'
-                    writer->write_param(writer, cast_to_write_param(next_ch));
+                    write_ch(writer, next_ch);
                     break;
                 }
                 case 'c': {
-                    char c = (char)ac_va_arg(args, ac_uint);
-                    if ((c < 0x20) || (c > 0x7F)) {
-                      c = 0xff;
+                    char ch = (char)ac_va_arg(args, ac_uint);
+                    if ((ch < 0x20) || (ch > 0x7F)) {
+                      ch = 0xff;
                     }
-                    writer->write_param(writer, cast_to_write_param(c));
+                    write_ch(writer, ch);
                     break;
                 }
                 case 's': {
@@ -368,6 +377,70 @@ static void formatter(ac_writer* writer, char const* format, ac_va_list args) {
                     write_uval(writer, (ac_u64)(ac_uptr)ac_va_arg(args, void*), sizeof(void*), 16);
                     break;
                 }
+                case '{': {
+                    // Collect a type name
+                    char type_name[32];
+                    ac_uint idx = 0;
+                    ac_bool getting_type_name = AC_TRUE;
+                    while (getting_type_name) {
+                      next_ch = *format++;
+                      switch (next_ch) {
+                        case 0: {
+                          type_name[idx] = 0;
+                          write_ch(writer, '{');
+                          write_str(writer, type_name);
+                          write_str(writer, "<<'}' is missing>>");
+                          goto done;
+                        }
+                        case '}': {
+                          getting_type_name = AC_FALSE;
+                          break;
+                        }
+                        default: {
+                          if (idx >= (sizeof(type_name) - 1)) {
+                            type_name[idx] = 0;
+                            write_ch(writer, '{');
+                            write_str(writer, type_name);
+                            write_str(writer, "<<to long>>");
+                            goto done;
+                          } else {
+                            type_name[idx++] = next_ch;
+                          }
+                          break;
+                        }
+                      }
+                    }
+
+                    ac_bool processed_type = AC_FALSE;
+                    // Check the ac_printf_t's list
+                    for (ac_uint i = 0; i < ac_printf_ts_max; i++) {
+                      if ((ac_printf_ts[i].str != AC_NULL)
+                          && (ac_strncmp(ac_printf_ts[i].str, type_name, sizeof(type_name)) == 0)) {
+                          // Copy the args and pass the copy to format_proc
+                          ac_va_list args_copy;
+                          ac_va_copy(args_copy, args);
+
+                          // Invoke format_proc_str
+                          ac_u32 consumed = ac_printf_ts[i].format_proc_str(
+                              writer, type_name, args_copy);
+
+                          // Consume the args
+                          while (consumed-- != 0) {
+                            ac_va_arg(args, ac_uint);
+                          }
+
+                          processed_type = AC_TRUE;
+                          break;
+                      }
+                    }
+
+                    if (!processed_type) {
+                        write_ch(writer, '{');
+                        write_str(writer, type_name);
+                        write_ch(writer, '}');
+                    }
+                    break;
+                }
                 default: {
                     // Check the ac_printf_t's list
                     ac_bool processed_format_ch = AC_FALSE;
@@ -392,8 +465,8 @@ static void formatter(ac_writer* writer, char const* format, ac_va_list args) {
                     }
 
                     if (!processed_format_ch) {
-                        writer->write_param(writer, cast_to_write_param(ch));
-                        writer->write_param(writer, cast_to_write_param(next_ch));
+                        write_ch(writer, ch);
+                        write_ch(writer, next_ch);
                     }
                     break;
                 }
@@ -559,6 +632,33 @@ ac_uint ac_printf_register_format_proc(ac_printf_format_proc format_proc, ac_u8 
   if (idx < ac_printf_ts_max) {
     ac_printf_ts[idx].format_proc = format_proc;
     ac_printf_ts[idx].ch = ch;
+    ret_val = 0; // OK
+  } else {
+    __atomic_store_n(&ac_printf_ts_count, ac_printf_ts_max, __ATOMIC_RELEASE);
+    ret_val = 1; // Error
+  }
+
+  return ret_val;
+}
+
+/**
+ * Register a format processor for string
+ * TODO: Check for str already registered, but also keep
+ * it thread safe so it needs to be serialized.
+ *
+ * @param fmt_proc is the format processing function
+ * @param str is the format string which causes fn to be invoked.
+ *
+ * @return 0 if registered successfully
+ */
+ac_uint ac_printf_register_format_proc_str(ac_printf_format_proc_str format_proc_str,
+    const char* str) {
+  ac_bool ret_val;
+
+  ac_uint idx = __atomic_fetch_add(&ac_printf_ts_count, 1, __ATOMIC_ACQUIRE);
+  if (idx < ac_printf_ts_max) {
+    ac_printf_ts[idx].format_proc_str = format_proc_str;
+    ac_printf_ts[idx].str = str;
     ret_val = 0; // OK
   } else {
     __atomic_store_n(&ac_printf_ts_count, ac_printf_ts_max, __ATOMIC_RELEASE);

@@ -152,6 +152,14 @@ static ac_u32 printf_ff_format_proc(ac_writer* writer, ac_u8 ch, ac_va_list args
   return consumed;
 }
 
+static ac_u32 printf_format_proc_s64(ac_writer* writer, const char* str, ac_va_list args) {
+  ac_printf_write_sval(writer, ac_va_arg(args, ac_u64), sizeof(ac_u64), 10);
+  ac_u32 consumed = sizeof(ac_u64) / sizeof(ac_uint);
+  ac_debug_printf("printf_format_proc_s64 str=%s count=%d consumed=%d\n",
+      str, writer->count, consumed);
+  return consumed;
+}
+
 int main(void) {
   ac_bool failure = AC_FALSE;
   ac_uint count;
@@ -324,6 +332,15 @@ int main(void) {
   ac_u8 xx = 0xff;
   failure |= AC_TEST(ac_printf_register_format_proc(printf_ff_format_proc, xx) == 0);
   failure |= TEST_PRINTING_2_PARAMS("%\xff %s", 123ll, "me", "123 me");
+
+  // Test a ac_printf_format_proc
+  char* s64_str = "s64";
+  failure |= AC_TEST(ac_printf_register_format_proc_str(printf_format_proc_s64, s64_str) == 0);
+  failure |= TEST_PRINTING("%{abc} %s", "xx", "{abc} xx");
+  failure |= TEST_PRINTING_2_PARAMS("%{s64} %s", (AcS64)123, "xx", "123 xx");
+  failure |= TEST_PRINTING_2_PARAMS("%{s64 %s", (AcS64)123, "xx", "{s64 %s<<'}' is missing>>");
+  failure |= TEST_PRINTING("%{s64456789012345678901234567890123} %s", "xx",
+      "{s644567890123456789012345678901<<to long>>");
 
   // In printf statements constant negative numbers must be cast
   // so they work both 32 and 64 bit environments.

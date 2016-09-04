@@ -90,6 +90,8 @@ typedef struct _ac_writer {
  */
 typedef ac_u32 (*ac_printf_format_proc)(ac_writer* writer, ac_u8 ch, ac_va_list args);
 
+typedef ac_u32 (*ac_printf_format_proc_str)(ac_writer* writer, const char* str, ac_va_list args);
+
 /**
  *  Write a character
  */
@@ -121,6 +123,16 @@ void ac_printf_write_sval(
  * @return 0 if registered successfully
  */
 ac_uint ac_printf_register_format_proc(ac_printf_format_proc format_proc, ac_u8 ch);
+
+/**
+ * Register a format processor for string
+ *
+ * @param fn is the format processing function
+ * @param str is the format string which causes fn to be invoked.
+ *
+ * @return 0 if registered successfully
+ */
+ac_uint ac_printf_register_format_proc_str(ac_printf_format_proc_str format_proc_str, const char* str);
 
 /**
  * Print a formatted string to the writer. This supports a
