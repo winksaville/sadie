@@ -52,8 +52,7 @@
 #include <unistd.h>
 
 typedef struct {
-  AcComp comp;
-  ac_u32 a_u32;
+  AcComp comp;                        ///< The component
   AcInt fd;                           ///< File descriptor for the interface
   AcU32 ifname_idx;                   ///< Index to the current ifname[ifname_idx]
   char* ifname[2];                    ///< Name of interfaces to try
@@ -66,15 +65,28 @@ typedef struct {
 /**
  * Display memory
  */
-void ac_print_mem(char* leader, void *mem, int len, char* format, char sep, char* trailer) {
+void ac_print_mem(
+    char* leader,         ///< leader if AC_NULL no leader
+    void *mem,            ///< Address of first memory location
+    AcU32 len_in_elems,   ///< Number of elements to dump
+    AcU32 bytes_per_elem, ///< Bytes per element 1, 2, 4, 8
+    char* format,         ///< Format string such as %x %d ...
+    char* sep,            ///< Seperate between elements
+    char* trailer) {      ///< Trailer if AC_NULL no trailer
   if (leader != AC_NULL) {
     ac_printf(leader);
   }
   unsigned char* p = (unsigned char*)mem;
 
-  for (int i = 0; i < len; i++) {
-    if (i != 0) ac_printf("%c", sep);
-    ac_printf(format, p[i]);
+  for (int i = 0; i < len_in_elems; i++) {
+    if ((i != 0) && (sep != AC_NULL)) ac_printf("%s", sep);
+    switch(bytes_per_elem) {
+      case 8: ac_printf(format, ((AcU64*)p)[i]); break;
+      case 4: ac_printf(format, ((AcU32*)p)[i]); break;
+      case 2: ac_printf(format, ((AcU16*)p)[i]); break;
+      case 1:
+      default: ac_printf(format, ((AcU8*)p)[i]); break;
+    }
   }
 
   if (trailer != AC_NULL) {
@@ -85,15 +97,15 @@ void ac_print_mem(char* leader, void *mem, int len, char* format, char sep, char
 /**
  * Display hex memory
  */
-void ac_println_hex(char* leader, void *mem, int len, char sep) {
-  ac_print_mem(leader, mem, len, "%x", sep, "\n");
+void ac_println_hex(char* leader, void *mem, AcU32 len, char* sep) {
+  ac_print_mem(leader, mem, len, 1, "%02x", sep, "\n");
 }
 
 /**
  * Display hex memory
  */
-void ac_println_dec(char* leader, void *mem, int len, char sep) {
-  ac_print_mem(leader, mem, len, "%d", sep, "\n");
+void ac_println_dec(char* leader, void *mem, AcU32 len, char* sep) {
+  ac_print_mem(leader, mem, len, 1, "%d", sep, "\n");
 }
 
 void  ac_println_sockaddr_ll(char* leader, struct sockaddr_ll* addr) {
@@ -103,7 +115,7 @@ void  ac_println_sockaddr_ll(char* leader, struct sockaddr_ll* addr) {
   ac_printf("family=%d protocol=0x%x ifindex=%d hatype=%d pkttype=%d halen=%d addr=",
       addr->sll_family, AC_NTOH_U16(addr->sll_protocol), addr->sll_ifindex,
       addr->sll_hatype, addr->sll_pkttype, addr->sll_halen);
-  ac_println_hex(AC_NULL, addr->sll_addr, addr->sll_halen, ':');
+  ac_println_hex(AC_NULL, addr->sll_addr, addr->sll_halen, ":");
 }
 
 /**
@@ -302,7 +314,7 @@ void init_ether_broadcast_sockaddr_ll(struct sockaddr_ll* pSockAddrLl, const int
 
 AcStatus send_arp(AcCompIpv4LinkLayer* this, AcU16 protocol, AcU32 proto_addr_len, AcU8* proto_addr) {
   ac_printf("%s:+send_arp proto=%u proto_addr_len=%u", this->comp.name, protocol, proto_addr_len);
-  ac_println_dec(" proto_addr=", proto_addr, proto_addr_len, '.');
+  ac_println_dec(" proto_addr=", proto_addr, proto_addr_len, ".");
 
   AcStatus status;
   struct sockaddr_ll dst_addr;
@@ -371,6 +383,18 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
   switch (msg->op) {
     case (AC_INIT_CMD): {
       ac_debug_printf("%s: AC_INIT_CMD ifname=%s\n", this->comp.name, this->ifname[0]);
+      AcIpv6Addr ipv6_addr = {
+        .ary_u16[7] = 0x3210,
+        .ary_u16[6] = 0x7654,
+        .ary_u16[5] = 0xba98,
+        .ary_u16[4] = 0xfedc,
+        .ary_u16[3] = 0xcdef,
+        .ary_u16[2] = 0x89ab,
+        .ary_u16[1] = 0x4567,
+        .ary_u16[0] = 0x0123,
+      };
+      ac_print_mem("ipv6_addr=", &ipv6_addr, AC_ARRAY_COUNT(ipv6_addr.ary_u16), sizeof(ipv6_addr.ary_u16[0]),
+        "%04x", ":", "\n");
       // Open an AF_PACKET socket
       this->fd = socket(AF_PACKET, SOCK_RAW, AC_HTON_U16(ETH_P_ALL));
       if (this->fd < 0) {
@@ -406,7 +430,7 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
       }
       ac_printf("%s: ifmac_addr=", this->comp.name);
       ac_println_hex("send_ethernet_arp_ipv4: pArpReq->arp_sha=",
-          this->ifmac_addr, sizeof(this->ifmac_addr), ':');
+          this->ifmac_addr, sizeof(this->ifmac_addr), ":");
 
       // Get the ipv4 address for our interface
       status = get_ethernet_ipv4_addr(this->fd, this->ifname[this->ifname_idx], &this->ifipv4_addr);
@@ -417,7 +441,7 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
         ac_fail((char*)str);
       }
       ac_printf("%s: ", this->comp.name);
-      ac_println_dec("ifipv4_addr.sin_addr=", &this->ifipv4_addr.sin_addr, AC_IPV4_ADDR_LEN, '.');
+      ac_println_dec("ifipv4_addr.sin_addr=", &this->ifipv4_addr.sin_addr, AC_IPV4_ADDR_LEN, ".");
 
       // Initialize padding array
       ac_memset(this->padding, 0, sizeof(this->padding));
@@ -432,7 +456,7 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
     case (AC_INET_SEND_ARP_CMD): {
       AcInetSendArpExtra* send_arp_extra = (AcInetSendArpExtra*)msg->extra;
       ac_printf("%s: AC_INET_SEND_ARP_CMD proto=%x", this->comp.name, send_arp_extra->proto);
-      ac_println_dec(" proto_addr=", send_arp_extra->proto_addr, send_arp_extra->proto_addr_len, '.');
+      ac_println_dec(" proto_addr=", send_arp_extra->proto_addr, send_arp_extra->proto_addr_len, ".");
 
       send_arp(this, send_arp_extra->proto, send_arp_extra->proto_addr_len, send_arp_extra-> proto_addr);
 
