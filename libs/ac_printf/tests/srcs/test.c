@@ -155,12 +155,11 @@ static ac_u32 printf_ff_format_proc(ac_writer* writer, ac_u8 ch, ac_va_list args
 int main(void) {
   ac_bool failure = AC_FALSE;
   ac_uint count;
+  Buffer buffer;
 
   count = ac_printf("Hello, World\n");
   failure |= AC_TEST(count == 13);
   ac_debug_printf("Hello, World: via ac_debug_printf\n");
-
-  Buffer buffer;
 
   // A very simple writer, all uninitialized fields will be 0
   // and for this code specifically simple_writer.count is 0.
@@ -217,29 +216,114 @@ int main(void) {
   failure |= TEST_PRINTING("%d", 1, "1");
   failure |= TEST_PRINTING("%d", 2147483647, "2147483647");
 
-  // flags
-  failure |= TEST_PRINTING("%+d", 123, "123");
-  failure |= TEST_PRINTING("%-d", 123, "123");
-  failure |= TEST_PRINTING("%#d", 123, "123");
-  failure |= TEST_PRINTING("%0d", 123, "123");
+  // Always print sign
 
-  // Width precision specifications
-  failure |= TEST_PRINTING("%21d", 123, "123");
-  failure |= TEST_PRINTING("%21.d", 123, "123");
-  failure |= TEST_PRINTING("%21.3d", 123, "123");
+  failure |= TEST_PRINTING("%d", 123, "123");
+  failure |= TEST_PRINTING("%+d", 123, "+123");
+  failure |= TEST_PRINTING("%+d", -123, "-123");
+
+
+  // Alternate form does nothing
+  failure |= TEST_PRINTING("%#d", 123, "123");
+
+  // Width specifications
+  failure |= TEST_PRINTING("%2d", 123, "123");
+  failure |= TEST_PRINTING("%3d", 123, "123");
+  failure |= TEST_PRINTING("%4d", 123, " 123");
+  failure |= TEST_PRINTING("%5d", 123, "  123");
+
+  failure |= TEST_PRINTING("0x%1x", 0x1, "0x1");
+  failure |= TEST_PRINTING("0x%02x", 0x1, "0x01");
+  failure |= TEST_PRINTING("0x%04x", 0x1, "0x0001");
+  switch (sizeof(void*)) {
+    case 4: failure |= TEST_PRINTING("0x%p", 0x1, "0x00000001"); break;
+    case 8: failure |= TEST_PRINTING("0x%p", 0x1, "0x0000000000000001"); break;
+    default: failure = AC_TEST(sizeof(void*) != 4 || sizeof(void*) != 8); break;
+  }
+
+  // Width & Leading zeros
+  failure |= TEST_PRINTING("%02d", 123,  "123");
+  failure |= TEST_PRINTING("%03d", 123,  "123");
+  failure |= TEST_PRINTING("%04d", 123,  "0123");
+  failure |= TEST_PRINTING("%05d", 123,  "00123");
+  failure |= TEST_PRINTING("%05d", -123, "-0123");
+  failure |= TEST_PRINTING("%06d", -123, "-00123");
+
+  // Width & left justification
+  failure |= TEST_PRINTING("%-3d", 123,  "123");
+  failure |= TEST_PRINTING("%-3d", -123, "-123");
+  failure |= TEST_PRINTING("%-4d", 123,  "123 ");
+  failure |= TEST_PRINTING("%-4d", -123, "-123");
+  failure |= TEST_PRINTING("%-5d", 123,  "123  ");
+  failure |= TEST_PRINTING("%-5d", -123, "-123 ");
+
+  // Width & left justificaton & leading 0
+  failure |= TEST_PRINTING("%-03d", 123,  "123");
+  failure |= TEST_PRINTING("%-03d", -123, "-123");
+  failure |= TEST_PRINTING("%-04d", 123,  "0123");
+  failure |= TEST_PRINTING("%-04d", -123, "-123");
+  failure |= TEST_PRINTING("%-05d", 123,  "00123");
+  failure |= TEST_PRINTING("%-05d", -123, "-0123");
+
+  // Width with sign and left justification in both orders
+  failure |= TEST_PRINTING("%+-3d", 123,  "+123");
+  failure |= TEST_PRINTING("%+-3d", -123, "-123");
+  failure |= TEST_PRINTING("%+-4d", 123,  "+123");
+  failure |= TEST_PRINTING("%+-4d", -123, "-123");
+  failure |= TEST_PRINTING("%+-5d", 123,  "+123 ");
+  failure |= TEST_PRINTING("%+-5d", -123, "-123 ");
+  failure |= TEST_PRINTING("%-+3d", 123,  "+123");
+  failure |= TEST_PRINTING("%-+3d", -123, "-123");
+  failure |= TEST_PRINTING("%-+4d", 123,  "+123");
+  failure |= TEST_PRINTING("%-+4d", -123, "-123");
+  failure |= TEST_PRINTING("%-+5d", 123,  "+123 ");
+  failure |= TEST_PRINTING("%-+5d", -123, "-123 ");
+
+  // Precison is a nop with integers
   failure |= TEST_PRINTING("%.d", 123, "123");
   failure |= TEST_PRINTING("%.4d", 123, "123");
-  failure |= TEST_PRINTING_2_PARAMS("%*d", 3, 123, "123");
-  failure |= TEST_PRINTING_2_PARAMS("%*.d", 4, 123, "123");
+
+  // Constant parameter width
+  failure |= TEST_PRINTING_2_PARAMS("%*d", 3, 123,   "123");
+  failure |= TEST_PRINTING_2_PARAMS("%*d", 3, -123,  "-123");
+  failure |= TEST_PRINTING_2_PARAMS("%*d", 4, 123,   " 123");
+  failure |= TEST_PRINTING_2_PARAMS("%+*d", 4, 123,  "+123");
+  failure |= TEST_PRINTING_2_PARAMS("%+*d", 5, 123,  " +123");
+  failure |= TEST_PRINTING_2_PARAMS("%-*d", 5, 123,  "123  ");
+  failure |= TEST_PRINTING_2_PARAMS("%-*d", 5, -123, "-123 ");
+  failure |= TEST_PRINTING_2_PARAMS("%-+*d", 5, 123, "+123 ");
+  failure |= TEST_PRINTING_2_PARAMS("%-+*d", 5, -123,"-123 ");
+  failure |= TEST_PRINTING_2_PARAMS("%+-*d", 5, -123,"-123 ");
+
+  failure |= TEST_PRINTING_2_PARAMS("%0*d", 4, 123,  "0123");
+  failure |= TEST_PRINTING_2_PARAMS("%0*d", 4, -123, "-123");
+  failure |= TEST_PRINTING_2_PARAMS("%0*d", 5, -123, "-0123");
+  failure |= TEST_PRINTING_2_PARAMS("%+0*d", 5, 123, "+0123");
+  failure |= TEST_PRINTING_2_PARAMS("%0+*d", 5, -123,"-0123");
+
+ 
+  // Constant parameter precision are nop's
   failure |= TEST_PRINTING_2_PARAMS("%.*d", 2, 123, "123");
-  ac_uint min_width = 1;
+  failure |= TEST_PRINTING_2_PARAMS("%.*d", 3, 123, "123");
+  failure |= TEST_PRINTING_2_PARAMS("%.*d", 4, 123, "123");
+
+  // Computed parameter width and precision
+  ac_uint min_width = 6;
   ac_uint precision = 3;
-  failure |= TEST_PRINTING_3_PARAMS("%+-#0*.*d", min_width, precision, 123, "123");
+  failure |= TEST_PRINTING_3_PARAMS("%*.*d", min_width, precision, 123,     "   123");
+  failure |= TEST_PRINTING_3_PARAMS("%+*.*d", min_width, precision, 123,    "  +123");
+  failure |= TEST_PRINTING_3_PARAMS("%+*.*d", min_width, precision, -123,   "  -123");
+  failure |= TEST_PRINTING_3_PARAMS("%+-*.*d", min_width, precision, 123,   "+123  ");
+  failure |= TEST_PRINTING_3_PARAMS("%+-*.*d", min_width, precision, -123,  "-123  ");
+
+  failure |= TEST_PRINTING_3_PARAMS("%+0-*.*d", min_width, precision, 123,  "+00123");
+  failure |= TEST_PRINTING_3_PARAMS("%0+-*.*d", min_width, precision, -123, "-00123");
+  failure |= TEST_PRINTING_3_PARAMS("%+-0*.*d", min_width, precision, -123, "-00123");
 
   // Test a ac_printf_format_proc
   ac_u8 xx = 0xff;
   failure |= AC_TEST(ac_printf_register_format_proc(printf_ff_format_proc, xx) == 0);
-  failure |= TEST_PRINTING_2_PARAMS("%\xff %s", 123ll, "ff", "123 ff");
+  failure |= TEST_PRINTING_2_PARAMS("%\xff %s", 123ll, "me", "123 me");
 
   // In printf statements constant negative numbers must be cast
   // so they work both 32 and 64 bit environments.

@@ -48,7 +48,8 @@ typedef struct _ac_writer {
     ac_uint max_len;                // max_len to output, only used under some conditons, for
                                     // instance by a buffer writer.
     void* data;                     // Typically a buffer or the writers control data
-    ac_u8 sign;                     // Flag sign = '+' or '-' or the default = ' '
+    ac_u8 sign_to_print;            // 0 if no size otherwise '-', '+'
+    ac_bool left_justified;         // Flag left justifed = '-'
     ac_bool alt_form;               // Flag alt_form = AC_TRUE if '#' present, default AC_FALSE
     ac_bool leading_0;              // Flag leading_0 = AC_TRUE if '0' present, default AC_FALSE
     ac_uint min_width;              // Minimum width = numeric, default 0

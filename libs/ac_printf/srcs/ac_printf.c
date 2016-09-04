@@ -76,6 +76,12 @@ void ac_printf_write_str(ac_writer* writer, char* str) {
   write_str(writer, str);
 }
 
+static void write_spaces(ac_writer* writer, ac_uint count) {
+  while (count-- > 0) {
+      writer->write_param(writer, cast_to_write_param(' '));
+  }
+}
+
 /**
  * Output an unsigned int value
  */
@@ -89,24 +95,50 @@ static void write_uval(
         write_str(writer, "Bad Radix ");
         write_uval(writer, sz_val_in_bytes, radix, 10);
     } else {
-        ac_u32 count = 0;
-        ac_sint idx;
-        for (idx = 0; idx < sizeof(result); idx++) {
-            result[idx] = val_to_char[val % radix];
+        ac_sint idx = 0;
+        while (idx < sizeof(result)) {
+            result[idx++] = val_to_char[val % radix];
             val /= radix;
             if (val == 0) {
                 break;
             }
         }
-        count = idx + 1;
-        if ((radix == 16) && writer->leading_0) {
-            ac_sint pad0Count = (sz_val_in_bytes * 2) - count;
-            while (pad0Count-- > 0) {
-                writer->write_param(writer, cast_to_write_param('0'));
-            }
+
+        // Zero padding
+        ac_sint pad0count = 0;
+        if (writer->leading_0) {
+          // Fill upto width with 0
+          pad0count = writer->min_width - idx;
+          if (writer->sign_to_print != 0) {
+            // Save room to print sign
+            pad0count -= 1;
+          }
         }
-        for (; idx >= 0; idx--) {
-            writer->write_param(writer, cast_to_write_param(result[idx]));
+        while (pad0count-- > 0) {
+            result[idx++] = '0';
+        }
+
+        // Print sign
+        if (writer->sign_to_print != 0) {
+          result[idx++] = writer->sign_to_print;
+        }
+
+        // Compute number of spaces needed if any
+        ac_int padspaces = writer->min_width - idx;
+
+        // If right justified then write sapces first
+        if ((padspaces > 0) && (writer->left_justified == AC_FALSE)) {
+          write_spaces(writer, padspaces);
+        }
+
+        // print the result in reverse order
+        while (--idx >= 0) {
+          writer->write_param(writer, cast_to_write_param(result[idx]));
+        }
+
+        // If left justified then write sapces last
+        if ((padspaces > 0) && (writer->left_justified == AC_TRUE)) {
+          write_spaces(writer, padspaces);
         }
     }
 }
@@ -125,8 +157,8 @@ void ac_printf_write_uval(
 static void write_sval(
         ac_writer* writer, ac_s64 val, ac_uint sz_val_in_bytes, ac_uint radix) {
     if (val < 0) {
-        writer->write_param(writer, cast_to_write_param('-'));
-        val = -val;
+      writer->sign_to_print = '-';
+      val = -val;
     }
     write_uval(writer, val, sizeof(ac_uint), radix);
 }
@@ -192,7 +224,8 @@ static void formatter(ac_writer* writer, char const* format, ac_va_list args) {
             ac_u8 next_ch = *format++;
 
             // Get Flags
-            writer->sign = ' ';
+            writer->sign_to_print = 0;
+            writer->left_justified = AC_FALSE;
             writer->alt_form = AC_FALSE;
             writer->leading_0 = AC_FALSE;
             ac_bool flags = AC_TRUE;
@@ -201,10 +234,14 @@ static void formatter(ac_writer* writer, char const* format, ac_va_list args) {
                 case 0:
                   goto done;
                 case '+':
-                case '-':
-                  writer->sign = next_ch;
+                  writer->sign_to_print = '+'; // Assume plus if sval will be changed to '-' if needed
                   next_ch = *format++;
-                  ac_debug_printf("sign=%c\n", writer->sign);
+                  ac_debug_printf("sign_to_print=%c\n", writer->sign_to_print);
+                  break;
+                case '-':
+                  writer->left_justified = AC_TRUE;
+                  next_ch = *format++;
+                  ac_debug_printf("left_justified=%d\n", writer->left_justified);
                   break;
                 case '#':
                   writer->alt_form = AC_TRUE;
@@ -325,6 +362,9 @@ static void formatter(ac_writer* writer, char const* format, ac_va_list args) {
                 }
                 case 'p': {
                     writer->leading_0 = AC_TRUE;
+                    if (writer->min_width == 0) {
+                      writer->min_width = sizeof(void*) * 2;
+                    }
                     write_uval(writer, (ac_u64)(ac_uptr)ac_va_arg(args, void*), sizeof(void*), 16);
                     break;
                 }
