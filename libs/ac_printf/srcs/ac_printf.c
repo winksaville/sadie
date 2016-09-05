@@ -518,6 +518,33 @@ ac_uint ac_printfw(ac_writer* writer, const char *format, ...) {
 }
 
 /**
+ * Writer for ac_printf
+ */
+ac_writer ac_printf_writer;
+
+/**
+ * @return the default ac_printf writer
+ */
+ac_writer* AcPrintf_get_writer(void) {
+  return &ac_printf_writer;
+}
+
+/**
+ * @return the default ac_printf writer after initializing to defaults
+ */
+ac_writer* AcPrintf_get_writer_inited(void) {
+  ac_writer* w = AcPrintf_get_writer();
+  w->count = 0;
+  w->max_len = 0;
+  w->data = AC_NULL;
+  w->get_buff = ret_empty;
+  w->write_beg = AC_NULL;
+  w->write_param = write_char;
+  w->write_end = AC_NULL;
+  return w;
+}
+
+/**
  * Print a formatted string to seL4_PutChar.
  *
  * Returns number of characters printed
@@ -525,20 +552,10 @@ ac_uint ac_printfw(ac_writer* writer, const char *format, ...) {
 ac_uint ac_printf(const char *format, ...) {
     ac_va_list args;
 
-    ac_writer writer = {
-            .count = 0,
-            .max_len = 0,
-            .data = AC_NULL,
-            .get_buff = ret_empty,
-            .write_beg = AC_NULL,
-            .write_param = write_char,
-            .write_end = AC_NULL,
-    };
-
     ac_va_start(args, format);
-    formatter(&writer, format, args);
+    formatter(AcPrintf_get_writer_inited(), format, args);
     ac_va_end(args);
-    return writer.count;
+    return ac_printf_writer.count;
 }
 
 static const char* sprintf_get_buff(ac_writer *writer) {

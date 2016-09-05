@@ -257,6 +257,16 @@ ac_uint ac_printfw(ac_writer* writer, const char *format, ...);
 ac_uint ac_printf(const char *format, ...);
 
 /**
+ * @return the default ac_printf writer
+ */
+ac_writer* AcPrintf_get_writer(void);
+
+/**
+ * @return the default ac_printf writer after initializing to defaults
+ */
+ac_writer* AcPrintf_get_writer_inited(void);
+
+/**
  * Print a formatted string to the output buffer. This supports a
  * subset of the typical libc printf:
  *

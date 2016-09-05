@@ -165,9 +165,19 @@ int main(void) {
   ac_uint count;
   Buffer buffer;
 
+  // Test ac_printf
   count = ac_printf("Hello, World\n");
   failure |= AC_TEST(count == 13);
   ac_debug_printf("Hello, World: via ac_debug_printf\n");
+
+  // Test ac_printfw with the default writer not initialized
+  // So count should be 26
+  count = ac_printfw(AcPrintf_get_writer(), "Hello, World\n");
+  failure |= AC_TEST(count == 26);
+
+  // Test ac_printfw with the default writer initialized
+  count = ac_printfw(AcPrintf_get_writer_inited(), "Hello, World\n");
+  failure |= AC_TEST(count == 13);
 
   // A very simple writer, all uninitialized fields will be 0
   // and for this code specifically simple_writer.count is 0.
