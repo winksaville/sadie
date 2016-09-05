@@ -18,7 +18,7 @@ deps = [ component_dep, libruntime_dep ]
 if Platform == 'Posix'
   srcFiles = firstSrcFiles + ['srcs/test.c']
 
-  # Create test_ac_inet_link_impl executable
+  # Create test_posix_ac_inet_link executable
   test_posix_ac_inet_link = executable( 'test_posix_ac_inet_link', srcFiles,
     include_directories : incDirs,
     link_args : linkArgs,
@@ -26,17 +26,20 @@ if Platform == 'Posix'
     dependencies : deps,
   )
 
-  a = 'f'
-  if a == 't'
-    #How to have this run command depend on test_posix_ac_inet_link and have it always run?
-    # This doesn't work:
-    make_suid = find_program('@0@/tools/make.root.suid.sh'.format(meson.source_root()))
-    gen = generator(make_suid,
-      output : '@PLAINNAME@',
-      arguments : 'file_name',
-      dependencies : test_posix_ac_inet_link)
-    generated = gen.process('test_posix_ac_inet_link')
-    run_target('run-test-posix-ac_inet_link', generated)
+  if false
+    in_file = '@0@/test_posix_ac_inet_link'.format(meson.current_build_dir())
+    out_file = '@0@/test_posix_ac_inet_link_x'.format(meson.current_build_dir())
+    make_root_suid_file =  '@0@/tools/make_root_suid.sh'.format(meson.source_root())
+
+    make_root_suid = find_program(make_root_suid_file)
+
+    test_posix_ac_inet_link_x = custom_target('test_posix_ac_inet_link_x',
+      input : [in_file],
+      output : ['test_posix_ac_inet_link_x'],
+      command : [make_root_suid, '@INPUT@', '@OUTPUT@'],
+      depends : [test_posix_ac_inet_link])
+
+    run_target('run-test-posix-ac_inet_link_x', test_posix_ac_inet_link_x)
   else
     run_target('run-test-posix-ac_inet_link', '@0@/tools/sudo.runner.sh'.format(meson.source_root()),
       test_posix_ac_inet_link)
