@@ -80,7 +80,7 @@ ac_static_assert(sizeof(ioapic_redir) == 8, L"ioapic_redir is not 8 bytes");
  */
 static inline ac_u32 ioapic_read_u32(ioapic_regs* regs, ac_uint idx) {
   regs->index = idx;
-  return regs->extra;
+  return regs->data;
 }
 
 /**
@@ -96,7 +96,7 @@ static inline ac_u64 ioapic_read_u64(ioapic_regs* regs, ac_uint idx) {
  */
 static inline void ioapic_write_u32(ioapic_regs* regs, ac_uint idx, ac_u32 val) {
   regs->index = idx;
-  regs->extra = val;
+  regs->data = val;
 }
 
 /**
