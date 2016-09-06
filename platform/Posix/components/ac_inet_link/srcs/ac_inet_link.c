@@ -65,7 +65,8 @@ typedef struct {
 /**
  * Display memory
  */
-void ac_print_mem(
+void ac_printw_mem(
+    ac_writer* writer,    ///< writer
     char* leader,         ///< leader if AC_NULL no leader
     void *mem,            ///< Address of first memory location
     AcU32 len_in_elems,   ///< Number of elements to dump
@@ -74,24 +75,39 @@ void ac_print_mem(
     char* sep,            ///< Seperate between elements
     char* trailer) {      ///< Trailer if AC_NULL no trailer
   if (leader != AC_NULL) {
-    ac_printf(leader);
+    ac_printfw(writer, leader);
   }
   unsigned char* p = (unsigned char*)mem;
 
   for (int i = 0; i < len_in_elems; i++) {
     if ((i != 0) && (sep != AC_NULL)) ac_printf("%s", sep);
     switch(bytes_per_elem) {
-      case 8: ac_printf(format, ((AcU64*)p)[i]); break;
-      case 4: ac_printf(format, ((AcU32*)p)[i]); break;
-      case 2: ac_printf(format, ((AcU16*)p)[i]); break;
+      case 8: ac_printfw(writer, format, ((AcU64*)p)[i]); break;
+      case 4: ac_printfw(writer, format, ((AcU32*)p)[i]); break;
+      case 2: ac_printfw(writer, format, ((AcU16*)p)[i]); break;
       case 1:
-      default: ac_printf(format, ((AcU8*)p)[i]); break;
+      default: ac_printfw(writer, format, ((AcU8*)p)[i]); break;
     }
   }
 
   if (trailer != AC_NULL) {
-    ac_printf(trailer);
+    ac_printfw(writer, trailer);
   }
+}
+
+/**
+ * Display memory
+ */
+void ac_print_mem(
+    char* leader,         ///< leader if AC_NULL no leader
+    void *mem,            ///< Address of first memory location
+    AcU32 len_in_elems,   ///< Number of elements to dump
+    AcU32 bytes_per_elem, ///< Bytes per element 1, 2, 4, 8
+    char* format,         ///< Format string such as %x %d ...
+    char* sep,            ///< Seperate between elements
+    char* trailer) {      ///< Trailer if AC_NULL no trailer
+  ac_printw_mem(AcPrintf_get_writer(), leader, mem, len_in_elems, bytes_per_elem,
+      format, sep, trailer);
 }
 
 /**
@@ -116,6 +132,19 @@ void  ac_println_sockaddr_ll(char* leader, struct sockaddr_ll* addr) {
       addr->sll_family, AC_NTOH_U16(addr->sll_protocol), addr->sll_ifindex,
       addr->sll_hatype, addr->sll_pkttype, addr->sll_halen);
   ac_println_hex(AC_NULL, addr->sll_addr, addr->sll_halen, ":");
+}
+
+ac_u32 format_proc_sockaddr_ll(ac_writer* writer, const char* type_str, ac_va_list args) {
+  struct sockaddr_ll* addr = (struct sockaddr_ll*)ac_va_arg(args, void*);
+  ac_u32 consumed = sizeof(void*)/sizeof(ac_uint);
+
+  ac_printfw(writer, "{family=%d protocol=0x%x ifindex=%d hatype=%d pkttype=%d halen=%d addr=",
+      addr->sll_family, AC_NTOH_U16(addr->sll_protocol), addr->sll_ifindex,
+      addr->sll_hatype, addr->sll_pkttype, addr->sll_halen);
+  ac_printw_mem(writer, AC_NULL, addr->sll_addr, addr->sll_halen, 1, "%02x", ":", AC_NULL);
+  ac_printfw(writer, "}");
+
+  return consumed;
 }
 
 /**
@@ -321,7 +350,8 @@ AcStatus send_arp(AcCompIpv4LinkLayer* this, AcU16 protocol, AcU32 proto_addr_le
 
   // The destination is an ethenet broadcast address
   init_ether_broadcast_sockaddr_ll(&dst_addr, this->ifindex, AC_ETHER_PROTO_ARP);
-  ac_println_sockaddr_ll("send_ethernet_arp_ipv4: ", &dst_addr);
+  //ac_println_sockaddr_ll("send_ethernet_arp_ipv4: ", &dst_addr);
+  ac_printf("send_ethernet_arp_ipv4: dst_addr=%{sockaddr_ll} %s\n", &dst_addr);
 
   // Initialize ethernet arp request
   struct ether_arp arp_req;
@@ -504,6 +534,7 @@ void AcInetLink_deinit(AcCompMgr* cm) {
 void AcInetLink_init(AcCompMgr* cm) {
   ac_debug_printf("AcInetLink_init:+cm=%p\n", cm);
 
+  ac_assert(ac_printf_register_format_proc_str(format_proc_sockaddr_ll, "sockaddr_ll") == AC_STATUS_OK);
   ac_assert(AcCompMgr_add_comp(cm, &comp_ipv4_ll.comp) == AC_STATUS_OK);
 
   ac_debug_printf("AcInetLink_init:-cm=%p\n", cm);
