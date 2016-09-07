@@ -280,7 +280,7 @@ AcUint test_inet_link_impl(AcCompMgr* cm) {
 int main(void) {
   AcUint error = AC_FALSE;
 
-  ac_thread_init(3);
+  ac_thread_init(4);
   AcReceptor_init(256);
 
   AcCompMgr cm;

@@ -32,6 +32,7 @@
 #include <ac_msg_pool.h>
 #include <ac_string.h>
 #include <ac_status.h>
+#include <ac_thread.h>
 
 #define _DEFAULT_SOURCE // Needed for struct ether_arp
 
@@ -53,6 +54,7 @@
 
 typedef struct {
   AcComp comp;                        ///< The component
+  ac_thread_rslt_t reader_thread_rslt;///< Result of creating the reader thread
   AcInt fd;                           ///< File descriptor for the interface
   AcU32 ifname_idx;                   ///< Index to the current ifname[ifname_idx]
   char* ifname[2];                    ///< Name of interfaces to try
@@ -403,6 +405,14 @@ AcStatus send_arp(AcCompIpv4LinkLayer* this, AcU16 protocol, AcU32 proto_addr_le
 static void send_error_rsp(AcComp* comp, AcMsg* msg, AcStatus status) {
 }
 
+void* reader_thread(void* param) {
+  AcCompIpv4LinkLayer* this = param;
+  ac_debug_printf("%s: reader_thread:+\n", this->comp.name);
+
+  ac_debug_printf("%s: reader_thread:-\n", this->comp.name);
+  return AC_NULL;
+}
+
 static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
   AcStatus status;
   AcCompIpv4LinkLayer* this = (AcCompIpv4LinkLayer*)comp;
@@ -425,8 +435,10 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
       };
       ac_print_mem("ipv6_addr=", &ipv6_addr, AC_ARRAY_COUNT(ipv6_addr.ary_u16), sizeof(ipv6_addr.ary_u16[0]),
         "%04x", ":", "\n");
+
       // Open an AF_PACKET socket
       this->fd = socket(AF_PACKET, SOCK_RAW, AC_HTON_U16(ETH_P_ALL));
+      ac_printf("%s: fd=%d\n", this->comp.name, this->fd);
       if (this->fd < 0) {
         AcU8 str[256];
         ac_snprintf(str, sizeof(str), "%s: Could not open SOCK_RAW errno=%u\n", this->comp.name, errno);
@@ -437,7 +449,7 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
       this->ifname_idx = 0;
       status = get_ifindex(this->fd, this->ifname[this->ifname_idx], &this->ifindex);
       if (status != AC_STATUS_OK) {
-        ac_printf("%s: Could not get interface index for ifname=%s errno=%d\n",
+        ac_debug_printf("%s: Could not get interface index for ifname=%s errno=%d\n",
             this->comp.name, this->ifname[this->ifname_idx], errno);
 
         this->ifname_idx = 1;
@@ -449,6 +461,7 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
           ac_fail((char*)str);
         }
       }
+      ac_printf("%s: ifname_idx=%d ifname=%s\n", this->comp.name, this->ifname_idx, this->ifname[this->ifname_idx]);
 
       // Get the mac address for our interface
       status = get_ethernet_mac_addr(this->fd, this->ifname[this->ifname_idx], this->ifmac_addr);
@@ -475,6 +488,10 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
 
       // Initialize padding array
       ac_memset(this->padding, 0, sizeof(this->padding));
+
+      // Create a reader thread
+      this->reader_thread_rslt = ac_thread_create(0, &reader_thread, this);
+      ac_assert(this->reader_thread_rslt.status == AC_STATUS_OK);
 
       break;
     }
