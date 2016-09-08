@@ -136,6 +136,23 @@ void  ac_println_sockaddr_ll(char* leader, struct sockaddr_ll* addr) {
   ac_println_hex(AC_NULL, addr->sll_addr, addr->sll_halen, ":");
 }
 
+/**
+ * Print struct ethhdr
+ */
+ac_u32 format_proc_ethhdr(ac_writer* writer, const char* type_str, ac_va_list args) {
+  struct ethhdr* addr = (struct ethhdr*)ac_va_arg(args, void*);
+  ac_u32 consumed = sizeof(void*)/sizeof(ac_uint);
+
+  ac_printw_mem(writer, "{dest=", addr->h_dest, AC_ETHER_ADDR_LEN, 1, "%02x", ":", " ");
+  ac_printw_mem(writer, "source=", addr->h_source, AC_ETHER_ADDR_LEN, 1, "%02x", ":", " ");
+  ac_printfw(writer, "proto=%d}", addr->h_proto);
+
+  return consumed;
+}
+
+/**
+ * Print struct sockaddr_ll
+ */
 ac_u32 format_proc_sockaddr_ll(ac_writer* writer, const char* type_str, ac_va_list args) {
   struct sockaddr_ll* addr = (struct sockaddr_ll*)ac_va_arg(args, void*);
   ac_u32 consumed = sizeof(void*)/sizeof(ac_uint);
@@ -353,7 +370,7 @@ AcStatus send_arp(AcCompIpv4LinkLayer* this, AcU16 protocol, AcU32 proto_addr_le
   // The destination is an ethenet broadcast address
   init_ether_broadcast_sockaddr_ll(&dst_addr, this->ifindex, AC_ETHER_PROTO_ARP);
   //ac_println_sockaddr_ll("send_ethernet_arp_ipv4: ", &dst_addr);
-  ac_printf("send_ethernet_arp_ipv4: dst_addr=%{sockaddr_ll} %s\n", &dst_addr);
+  ac_printf("send_ethernet_arp_ipv4: dst_addr=%{sockaddr_ll}\n", &dst_addr);
 
   // Initialize ethernet arp request
   struct ether_arp arp_req;
@@ -409,7 +426,84 @@ void* reader_thread(void* param) {
   AcCompIpv4LinkLayer* this = param;
   ac_debug_printf("%s: reader_thread:+\n", this->comp.name);
 
-  ac_debug_printf("%s: reader_thread:-\n", this->comp.name);
+  AcStatus status;
+  struct sockaddr_ll src_addr;
+  struct ethhdr ether_hdr;
+  static AcU8 buffer[2048];
+
+  struct iovec iov[2];
+  int iovlen = 2;
+  iov[0].iov_base = &ether_hdr;
+  iov[0].iov_len = sizeof(ether_hdr);
+  iov[1].iov_base = &buffer;
+  iov[1].iov_len = sizeof(buffer);
+
+  // Initialize msghdr
+  struct msghdr mh;
+  mh.msg_name = &src_addr;
+  mh.msg_namelen = sizeof(src_addr);
+  mh.msg_iov = iov;
+  mh.msg_iovlen = iovlen;
+  mh.msg_control = NULL;
+  mh.msg_controllen = 0;
+  mh.msg_flags = 0;
+
+  while (AC_TRUE) {
+    //println_hex("send_ethernet_arp_ipv4: mh=", &packet, len, ' ');
+    int count = recvmsg(this->fd, &mh, 0);
+    if (count < 0) {
+      status = AC_STATUS_LINUX_ERR(errno);
+      switch (errno) {
+        case EINTR:
+          ac_debug_printf("%s: reader_thread: %s, continue\n", this->comp.name, strerror(errno));
+          continue;
+        case EAGAIN:
+        case EBADF:
+        case ECONNREFUSED:
+        case EFAULT:
+        case EINVAL:
+        case ENOMEM:
+        case ENOTCONN:
+        case ENOTSOCK:
+        default:
+          ac_debug_printf("%s: reader_thread: %s unexpected, goto done\n", this->comp.name, strerror(errno));
+          goto done;
+          break;
+      }
+    } else {
+      status = AC_STATUS_OK;
+      //ac_printf("%s: reader_thread count=%d src_addr=%{sockaddr_ll}\n", this->comp.name, count, &src_addr);
+      ac_printf("%s: reader_thread ethhdr=%{ethhdr}\n", this->comp.name, &ether_hdr); //iov[0].iov_base);
+      //ac_printf("%s: reader_thread buffer: len=%d\n", this->comp.name, iov[1].iov_len);
+
+      // Dump the buffer
+      AcU8 *p = iov[1].iov_base;
+      AcS32 len = count - iov[0].iov_len; //iov[1].iov_len;
+      ac_printf("\n\nlen=%d count=%d *******\n\n", len, count);
+      while (len > 0) {
+        ac_printf("%p: len=0x%04x   ", p, len);
+
+        if (len > 8) {
+          ac_print_mem(AC_NULL, p, 8, 1, "%02x", " ", "  ");
+          len -= 8;
+        }
+
+        AcU32 cnt;
+        if (len > 8) {
+          cnt = 8;
+        } else {
+          cnt = len;
+        }
+        ac_print_mem(AC_NULL, p, cnt, 1, "%02x", " ", "\n");
+        len -= cnt;
+        p += 16;
+      }
+    }
+  }
+
+done:
+  ac_debug_printf("%s: reader_thread:- status=%d.%d %s\n", this->comp.name,
+          AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status), strerror(AC_STATUS_MINOR(status)));
   return AC_NULL;
 }
 
@@ -435,6 +529,24 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
       };
       ac_print_mem("ipv6_addr=", &ipv6_addr, AC_ARRAY_COUNT(ipv6_addr.ary_u16), sizeof(ipv6_addr.ary_u16[0]),
         "%04x", ":", "\n");
+
+      struct sockaddr_ll sock_addr = {
+        .sll_family = 1,
+        .sll_protocol = AC_HTON_U16(2345),
+        .sll_ifindex = 6,
+        .sll_hatype = 7,
+        .sll_pkttype = 8,
+        .sll_halen = 6,
+        .sll_addr = { 0xa, 0xb, 0xc, 0xd, 0xe, 0xf }
+      };
+      ac_printf("%s %{sockaddr_ll}\n", this->comp.name, &sock_addr);
+
+      struct ethhdr ether_hdr = {
+        .h_dest = { 1, 2, 3, 4, 5, 6 },
+        .h_source = { 7, 8, 9, 0xa, 0xb, 0xc},
+        .h_proto = 12,
+      };
+      ac_printf("%s: %{ethhdr}\n", this->comp.name, &ether_hdr);
 
       // Open an AF_PACKET socket
       this->fd = socket(AF_PACKET, SOCK_RAW, AC_HTON_U16(ETH_P_ALL));
@@ -552,6 +664,7 @@ void AcInetLink_init(AcCompMgr* cm) {
   ac_debug_printf("AcInetLink_init:+cm=%p\n", cm);
 
   ac_assert(ac_printf_register_format_proc_str(format_proc_sockaddr_ll, "sockaddr_ll") == AC_STATUS_OK);
+  ac_assert(ac_printf_register_format_proc_str(format_proc_ethhdr, "ethhdr") == AC_STATUS_OK);
   ac_assert(AcCompMgr_add_comp(cm, &comp_ipv4_ll.comp) == AC_STATUS_OK);
 
   ac_debug_printf("AcInetLink_init:-cm=%p\n", cm);
