@@ -22,7 +22,7 @@ command:
   #- sudo chmod u+s       build-${Platform}/components/ac_inet_link/tests/test_ac_inet_link
 
   # Posix only tests
-  - if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; ninja run-test-posix-ac_inet_link; fi
+  - if [[ "${Platform}" == 'Posix' ]]; then cd build-${Platform}; ninja run-test-posix-ac_inet_link_regular; fi
 
   # Run the these test for all platforms
   - cd build-${Platform}; ninja run-test-ac_arg

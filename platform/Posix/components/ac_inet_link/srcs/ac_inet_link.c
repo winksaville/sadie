@@ -57,7 +57,7 @@ typedef struct {
   ac_thread_rslt_t reader_thread_rslt;///< Result of creating the reader thread
   AcInt fd;                           ///< File descriptor for the interface
   AcU32 ifname_idx;                   ///< Index to the current ifname[ifname_idx]
-  char* ifname[2];                    ///< Name of interfaces to try
+  char* ifname[3];                    ///< Name of interfaces to try
   AcUint ifindex;                     ///< Index of the interface
   AcU8 ifmac_addr[AC_ETHER_ADDR_LEN]; ///< Mac address for this interface
   struct sockaddr_in ifipv4_addr;     ///< IPV4 address for this interface
@@ -517,36 +517,6 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
   switch (msg->op) {
     case (AC_INIT_CMD): {
       ac_debug_printf("%s: AC_INIT_CMD ifname=%s\n", this->comp.name, this->ifname[0]);
-      AcIpv6Addr ipv6_addr = {
-        .ary_u16[7] = 0x3210,
-        .ary_u16[6] = 0x7654,
-        .ary_u16[5] = 0xba98,
-        .ary_u16[4] = 0xfedc,
-        .ary_u16[3] = 0xcdef,
-        .ary_u16[2] = 0x89ab,
-        .ary_u16[1] = 0x4567,
-        .ary_u16[0] = 0x0123,
-      };
-      ac_print_mem("ipv6_addr=", &ipv6_addr, AC_ARRAY_COUNT(ipv6_addr.ary_u16), sizeof(ipv6_addr.ary_u16[0]),
-        "%04x", ":", "\n");
-
-      struct sockaddr_ll sock_addr = {
-        .sll_family = 1,
-        .sll_protocol = AC_HTON_U16(2345),
-        .sll_ifindex = 6,
-        .sll_hatype = 7,
-        .sll_pkttype = 8,
-        .sll_halen = 6,
-        .sll_addr = { 0xa, 0xb, 0xc, 0xd, 0xe, 0xf }
-      };
-      ac_printf("%s %{sockaddr_ll}\n", this->comp.name, &sock_addr);
-
-      struct ethhdr ether_hdr = {
-        .h_dest = { 1, 2, 3, 4, 5, 6 },
-        .h_source = { 7, 8, 9, 0xa, 0xb, 0xc},
-        .h_proto = 12,
-      };
-      ac_printf("%s: %{ethhdr}\n", this->comp.name, &ether_hdr);
 
       // Open an AF_PACKET socket
       this->fd = socket(AF_PACKET, SOCK_RAW, AC_HTON_U16(ETH_P_ALL));
@@ -643,7 +613,8 @@ static AcCompIpv4LinkLayer comp_ipv4_ll = {
   .comp.process_msg = comp_ipv4_ll_process_msg,
   .ifname_idx = 0,
   .ifname[0] = "eth0",
-  .ifname[1] = "eno1",
+  .ifname[1] = "wlo1",
+  .ifname[2] = "eno1",
 };
 
 /**
@@ -665,6 +636,40 @@ void AcInetLink_init(AcCompMgr* cm) {
 
   ac_assert(ac_printf_register_format_proc_str(format_proc_sockaddr_ll, "sockaddr_ll") == AC_STATUS_OK);
   ac_assert(ac_printf_register_format_proc_str(format_proc_ethhdr, "ethhdr") == AC_STATUS_OK);
+
+  AcIpv6Addr ipv6_addr = {
+    .ary_u16[7] = 0x3210,
+    .ary_u16[6] = 0x7654,
+    .ary_u16[5] = 0xba98,
+    .ary_u16[4] = 0xfedc,
+    .ary_u16[3] = 0xcdef,
+    .ary_u16[2] = 0x89ab,
+    .ary_u16[1] = 0x4567,
+    .ary_u16[0] = 0x0123,
+  };
+  ac_print_mem("ipv6_addr=", &ipv6_addr, AC_ARRAY_COUNT(ipv6_addr.ary_u16), sizeof(ipv6_addr.ary_u16[0]),
+    "%04x", ":", "\n");
+
+  struct sockaddr_ll sock_addr = {
+    .sll_family = 1,
+    .sll_protocol = AC_HTON_U16(2345),
+    .sll_ifindex = 6,
+    .sll_hatype = 7,
+    .sll_pkttype = 8,
+    .sll_halen = 6,
+    .sll_addr = { 0xa, 0xb, 0xc, 0xd, 0xe, 0xf }
+  };
+  //ac_printf("%{sockaddr_ll}\n", &sock_addr);
+
+  struct ethhdr ether_hdr = {
+    .h_dest = { 1, 2, 3, 4, 5, 6 },
+    .h_source = { 7, 8, 9, 0xa, 0xb, 0xc},
+    .h_proto = 12,
+  };
+  //ac_printf("%{ethhdr}\n", &ether_hdr);
+  //ac_printf("%{ethhdr} %{sockaddr_ll}\n", &ether_hdr, &sock_addr);
+  ac_printf("%{socladdr_ll} %{ethhdr}\n", &sock_addr, &ether_hdr);
+
   ac_assert(AcCompMgr_add_comp(cm, &comp_ipv4_ll.comp) == AC_STATUS_OK);
 
   ac_debug_printf("AcInetLink_init:-cm=%p\n", cm);

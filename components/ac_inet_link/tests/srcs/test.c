@@ -230,7 +230,7 @@ int main(void) {
   error |= test_AcInetIpv4FragmentOffset();
   error |= test_AcInetSendPacket();
 #else
-  ac_thread_init(3);
+  ac_thread_init(4);
   AcReceptor_init(256);
 
   AcCompMgr cm;
