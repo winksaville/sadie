@@ -659,16 +659,13 @@ void AcInetLink_init(AcCompMgr* cm) {
     .sll_halen = 6,
     .sll_addr = { 0xa, 0xb, 0xc, 0xd, 0xe, 0xf }
   };
-  //ac_printf("%{sockaddr_ll}\n", &sock_addr);
 
   struct ethhdr ether_hdr = {
     .h_dest = { 1, 2, 3, 4, 5, 6 },
     .h_source = { 7, 8, 9, 0xa, 0xb, 0xc},
     .h_proto = 12,
   };
-  //ac_printf("%{ethhdr}\n", &ether_hdr);
-  //ac_printf("%{ethhdr} %{sockaddr_ll}\n", &ether_hdr, &sock_addr);
-  ac_printf("%{socladdr_ll} %{ethhdr}\n", &sock_addr, &ether_hdr);
+  ac_printf("sockaddr_ll=%{sockaddr_ll}\nethhdr=%{ethhdr}\n", &sock_addr, &ether_hdr);
 
   ac_assert(AcCompMgr_add_comp(cm, &comp_ipv4_ll.comp) == AC_STATUS_OK);
 

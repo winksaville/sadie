@@ -393,6 +393,7 @@ static void formatter(ac_writer* writer, char const* format, ac_va_list args) {
                           goto done;
                         }
                         case '}': {
+                          type_name[idx] = 0;
                           getting_type_name = AC_FALSE;
                           break;
                         }
