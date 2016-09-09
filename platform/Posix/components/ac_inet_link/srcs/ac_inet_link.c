@@ -528,20 +528,21 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
       }
 
       // Get the interface index
-      this->ifname_idx = 0;
-      status = get_ifindex(this->fd, this->ifname[this->ifname_idx], &this->ifindex);
-      if (status != AC_STATUS_OK) {
-        ac_debug_printf("%s: Could not get interface index for ifname=%s errno=%d\n",
-            this->comp.name, this->ifname[this->ifname_idx], errno);
-
-        this->ifname_idx = 1;
+      ac_printf("%s: ifname count=%d\n", this->comp.name, AC_ARRAY_COUNT(this->ifname));
+      for (this->ifname_idx = 0; this->ifname_idx < AC_ARRAY_COUNT(this->ifname); this->ifname_idx++) {
         status = get_ifindex(this->fd, this->ifname[this->ifname_idx], &this->ifindex);
-        if (status != AC_STATUS_OK) {
-          AcU8 str[256];
-          ac_snprintf(str, sizeof(str), "%s: Could not get interface index for ifname=%s errno=%d\n",
-                this->comp.name, this->ifname[this->ifname_idx], errno);
-          ac_fail((char*)str);
+        if (status == AC_STATUS_OK) {
+          break;
+        } else {
+          ac_debug_printf("%s: Could not get interface index for ifname=%s errno=%d\n",
+              this->comp.name, this->ifname[this->ifname_idx], errno, strerror(errno));
         }
+      }
+      if (status != AC_STATUS_OK) {
+        AcU8 str[256];
+        ac_snprintf(str, sizeof(str), "%s: Could get interface index address status=%d.%d %s\n", this->comp.name,
+            AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status), strerror(AC_STATUS_MINOR(status)));
+        ac_fail((char*)str);
       }
       ac_printf("%s: ifname_idx=%d ifname=%s\n", this->comp.name, this->ifname_idx, this->ifname[this->ifname_idx]);
 
