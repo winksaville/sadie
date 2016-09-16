@@ -1,6 +1,6 @@
 # A circleci matrix file for the platforms
 env:
-  - Platform=VersatilePB
+  #- Platform=VersatilePB
   - Platform=Posix
 
 command:
