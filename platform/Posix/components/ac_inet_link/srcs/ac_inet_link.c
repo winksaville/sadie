@@ -113,6 +113,31 @@ void ac_print_mem(
 }
 
 /**
+ * Display a buffer
+ */
+void ac_print_buff(AcU8 *p, AcS32 len) {
+  while (len > 0) {
+    ac_printf("%p: ", p);
+
+    if (len > 8) {
+      ac_print_mem(AC_NULL, p, 8, 1, "%02x", " ", "  ");
+      len -= 8;
+      p += 8;
+    }
+
+    AcU32 cnt;
+    if (len > 8) {
+      cnt = 8;
+    } else {
+      cnt = len;
+    }
+    ac_print_mem(AC_NULL, p, cnt, 1, "%02x", " ", "\n");
+    len -= cnt;
+    p += cnt;
+  }
+}
+
+/**
  * Display hex memory
  */
 void ac_println_hex(char* leader, void *mem, AcU32 len, char* sep) {
@@ -449,7 +474,6 @@ void* reader_thread(void* param) {
   mh.msg_flags = 0;
 
   while (AC_TRUE) {
-    //println_hex("send_ethernet_arp_ipv4: mh=", &packet, len, ' ');
     int count = recvmsg(this->fd, &mh, 0);
     if (count < 0) {
       status = AC_STATUS_LINUX_ERR(errno);
@@ -472,32 +496,12 @@ void* reader_thread(void* param) {
       }
     } else {
       status = AC_STATUS_OK;
-      //ac_printf("%s: reader_thread count=%d src_addr=%{sockaddr_ll}\n", this->comp.name, count, &src_addr);
-      ac_printf("%s: reader_thread ethhdr=%{ethhdr}\n", this->comp.name, &ether_hdr); //iov[0].iov_base);
-      //ac_printf("%s: reader_thread buffer: len=%d\n", this->comp.name, iov[1].iov_len);
-
-      // Dump the buffer
+      AcS32 len = count - iov[0].iov_len;
+      ac_printf("%s: reader_thread len=%d ethhdr=%{ethhdr}\n", this->comp.name, len, &ether_hdr);
+#if 0
       AcU8 *p = iov[1].iov_base;
-      AcS32 len = count - iov[0].iov_len; //iov[1].iov_len;
-      ac_printf("\n\nlen=%d count=%d *******\n\n", len, count);
-      while (len > 0) {
-        ac_printf("%p: len=0x%04x   ", p, len);
-
-        if (len > 8) {
-          ac_print_mem(AC_NULL, p, 8, 1, "%02x", " ", "  ");
-          len -= 8;
-        }
-
-        AcU32 cnt;
-        if (len > 8) {
-          cnt = 8;
-        } else {
-          cnt = len;
-        }
-        ac_print_mem(AC_NULL, p, cnt, 1, "%02x", " ", "\n");
-        len -= cnt;
-        p += 16;
-      }
+      ac_print_buff(p, len);
+#endif
     }
   }
 

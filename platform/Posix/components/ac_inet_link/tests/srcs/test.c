@@ -137,10 +137,10 @@ ac_bool work_state(AcComp* comp, AcMsg* msg) {
       send_arp_extra->proto_addr[3] = 2;
       AcCompMgr_send_msg(this->target_comp, m);
 
-      //  delay a second to let it complete for the moment
-      ac_printf(LDR "SEND_ARP_REQ; waiting\n", ldr);
-      ac_thread_wait_ns(1000000000);
-      ac_printf(LDR "SEND_ARP_REQ; done waiting\n", ldr);
+      // Delay a 1/4 second to let it complete
+      //ac_printf(LDR "SEND_ARP_REQ; waiting\n", ldr);
+      ac_thread_wait_ns(250000000);
+      //ac_printf(LDR "SEND_ARP_REQ; done waiting\n", ldr);
 
       AcReceptor_signal(this->waiting);
       break;
