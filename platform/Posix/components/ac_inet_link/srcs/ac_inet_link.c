@@ -57,7 +57,7 @@ typedef struct {
   ac_thread_rslt_t reader_thread_rslt;///< Result of creating the reader thread
   AcInt fd;                           ///< File descriptor for the interface
   AcU32 ifname_idx;                   ///< Index to the current ifname[ifname_idx]
-  char* ifname[5];                    ///< Name of interfaces to try
+  char* ifname[6];                    ///< Name of interfaces to try
   AcUint ifindex;                     ///< Index of the interface
   AcU8 ifmac_addr[AC_ETHER_ADDR_LEN]; ///< Mac address for this interface
   struct sockaddr_in ifipv4_addr;     ///< IPV4 address for this interface
@@ -540,7 +540,7 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
       }
       if (status != AC_STATUS_OK) {
         AcU8 str[256];
-        ac_snprintf(str, sizeof(str), "%s: Could get interface index address status=%d.%d %s\n", this->comp.name,
+        ac_snprintf(str, sizeof(str), "%s: Could NOT get interface index address status=%d.%d %s\n", this->comp.name,
             AC_STATUS_MAJOR(status), AC_STATUS_MINOR(status), strerror(AC_STATUS_MINOR(status)));
         ac_fail((char*)str);
       }
@@ -613,11 +613,12 @@ static AcCompIpv4LinkLayer comp_ipv4_ll = {
   .comp.name=(ac_u8*)INET_LINK_COMP_IPV4_NAME,
   .comp.process_msg = comp_ipv4_ll_process_msg,
   .ifname_idx = 0,
-  .ifname[0] = "eth0",   // envy laptop wired
-  .ifname[1] = "wlo1",   // envy laptop wireless
-  .ifname[2] = "eno1",   // wink-desktop
-  .ifname[3] = "enp0s26f7ulu3", // mpaw
-  .ifname[4] = "wlp2s0", // mpawl
+  .ifname[0] = "sadie1", // Our preferred interface, usually a macvlan interface
+  .ifname[1] = "eth0",   // envy laptop wired
+  .ifname[2] = "wlo1",   // envy laptop wireless
+  .ifname[3] = "eno1",   // wink-desktop
+  .ifname[4] = "enp0s26f7ulu3", // mpaw
+  .ifname[5] = "wlp2s0", // mpawl
 };
 
 /**
