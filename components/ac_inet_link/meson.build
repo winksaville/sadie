@@ -15,3 +15,7 @@
 componentIncDirs += include_directories(
   '@0@/incs'.format(meson.current_source_dir())
 )
+
+componentSrcs += [
+  '@0@/srcs/ac_arp.c'.format(meson.current_source_dir())
+]

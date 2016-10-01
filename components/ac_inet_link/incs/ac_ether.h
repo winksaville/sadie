@@ -40,7 +40,7 @@
 typedef struct AC_ATTR_PACKED {
   AcU8  dst[AC_ETHER_ADDR_LEN];  ///< Destination address
   AcU8  src[AC_ETHER_ADDR_LEN];  ///< Source address
-  AcU16 proto;                  ///< Protocol type see AC_ETHER_PROTO_xxx
+  AcU16 proto;                   ///< Protocol type see AC_ETHER_PROTO_xxx
 } AcEtherHdr;
 
 /**

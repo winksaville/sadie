@@ -229,34 +229,13 @@ done:
 /**
  * Initialize a struct ether_arp
  *
- * @param fd is the socket file descriptro
- * @param ifname is the name of the interface
- * @param ipv4_addr_str is a ipv4 dotted decimal address
- * @param pArpReq is the ether_arp to initialize
- *
- * @return 0 if OK
+ * @return size arp request
  */
-void init_ether_arp(AcCompIpv4LinkLayer* this, struct ether_arp* pArpReq,
+int init_ether_arp(AcCompIpv4LinkLayer* this, struct ether_arp* pArpReq,
     AcU16 protocol, AcU32 proto_addr_len, AcU8* proto_addr) {
-
-  // Initialize ethernet arp request
-  pArpReq->arp_hrd = AC_HTON_U16(ARPHRD_ETHER);
-  pArpReq->arp_pro = AC_HTON_U16(protocol);
-  pArpReq->arp_hln = AC_ETHER_ADDR_LEN;
-  pArpReq->arp_pln = proto_addr_len;
-  pArpReq->arp_op = AC_HTON_U16(ARPOP_REQUEST);
-
-  // Copy the proto_addr to target protocol address (tpa)
-  ac_memcpy(pArpReq->arp_tpa, proto_addr, proto_addr_len);
-
-  // Zero the target hardware address (arp_tha)
-  ac_memset(&pArpReq->arp_tha, 0, sizeof(pArpReq->arp_tha));
-
-  // Get Source hardware address to arp source hardware address (arp_sha)
-  ac_memcpy(pArpReq->arp_sha, this->ifmac_addr, pArpReq->arp_hln);
-
-  // Get source ipv4 address to arp source protocol address (arp_spa)
-  ac_memcpy(pArpReq->arp_spa, &this->ifipv4_addr.sin_addr, AC_IPV4_ADDR_LEN);
+  return ac_arp_init((AcArp*)&pArpReq->arp_hrd, AC_ARP_OP_REQ, AC_ARP_FRMT_HARD_A_ETHER, AC_ETHER_ADDR_LEN,
+   protocol, proto_addr_len, (AcU8*)&this->ifmac_addr, (AcU8*)&this->ifipv4_addr.sin_addr,
+   AC_NULL, proto_addr);
 }
 
 /**
@@ -312,7 +291,9 @@ AcStatus send_arp(AcCompIpv4LinkLayer* this, AcU16 protocol, AcU32 proto_addr_le
 
   // Initialize ethernet arp request
   struct ether_arp arp_req;
-  init_ether_arp(this, &arp_req, protocol, proto_addr_len, proto_addr);
+  int arp_req_len = init_ether_arp(this, &arp_req, protocol, proto_addr_len, proto_addr);
+  ac_printf("%s:+send_arp arp_req_len=%d sizeof(arp_req)=%d\n", this->comp.name, arp_req_len, sizeof(arp_req));
+  ac_assert(arp_req_len == sizeof(arp_req));
 
   // Initialize ethernet header
   struct ethhdr ether_hdr;
@@ -324,7 +305,7 @@ AcStatus send_arp(AcCompIpv4LinkLayer* this, AcU16 protocol, AcU32 proto_addr_le
   iov[0].iov_base = &ether_hdr;
   iov[0].iov_len = sizeof(ether_hdr);
   iov[1].iov_base = &arp_req;
-  iov[1].iov_len = sizeof(arp_req);
+  iov[1].iov_len = sizeof(arp_req); //arp_req_len;
 
   int len = sizeof(ether_hdr) + sizeof(arp_req);
   if (len < AC_ETHER_MIN_LEN) {

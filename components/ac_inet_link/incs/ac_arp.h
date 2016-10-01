@@ -59,7 +59,27 @@ typedef struct AC_ATTR_PACKED {
                           ///< such AC_ETHER_ALEN in ac_ether.h
   AcU8  len_proto_a;      ///< length of protocol address fields
   AcU16 op;               ///< operation see AC_ARP_OP_xxx
-
+  AcU8  addresses[];      ///< Variable length array with the source and destination addresses
 } AcArp;
+
+/**
+ * Initialize an AcArp
+ *
+ * See (RFC-826 Internet Protocol, V6)[https://tools.ietf.org/html/rfc826]
+ * for the definition of the packet
+ *
+ * @return Size of the ArpReq
+ */
+AcU32 ac_arp_init(
+    AcArp* pArpReq,                 ///< Arp Request to initialize
+    AcU16  op,                      ///< Operation
+    AcU16  hard_addr_frmt,          ///< Format of the hardware address
+    AcU8   hard_addr_len,           ///< Length hardware address
+    AcU16  proto_addr_frmt,         ///< Format of the protocol address
+    AcU8   proto_addr_len,          ///< Length of a protocol address to convert
+    AcU8*  src_hard_addr,           ///< Source hardware address, if AC_NULL zeroed
+    AcU8*  src_proto_addr,          ///< Source protocol address, if AC_NULL zeroed
+    AcU8*  dst_hard_addr,           ///< Destination hardware address, if AC_NULL zeroed
+    AcU8*  dst_proto_addr);         ///< Destination protocol address, if AC_NULL zeroed
 
 #endif
