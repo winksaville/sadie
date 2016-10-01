@@ -18,4 +18,7 @@ runtimeIncDirs += include_directories(
 
 runtimeSrcs += [
   '@0@/srcs/ac_printf.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_printw_mem.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_print_mem.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_print_buff.c'.format(meson.current_source_dir()),
 ]

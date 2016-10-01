@@ -306,4 +306,56 @@ ac_writer* AcPrintf_get_writer_inited(void);
  */
 ac_uint ac_snprintf(ac_u8* out_buff, ac_uint out_buff_len, const char *format, ...);
 
+/**
+ * Display memory using writer
+ */
+void ac_printw_mem(
+    ac_writer* writer,    ///< writer
+    char* leader,         ///< leader if AC_NULL no leader
+    void *mem,            ///< Address of first memory location
+    AcU32 len_in_elems,   ///< Number of elements to dump
+    AcU32 bytes_per_elem, ///< Bytes per element 1, 2, 4, 8
+    char* format,         ///< Format string such as %x %d ...
+    char* sep,            ///< Seperator between elements, if AC_NULL no seperator
+    char* trailer);       ///< Trailer, if AC_NULL no trailer
+
+/**
+ * Display memory
+ */
+void ac_print_mem(
+    char* leader,         ///< leader if AC_NULL no leader
+    void *mem,            ///< Address of first memory location
+    AcU32 len_in_elems,   ///< Number of elements to dump
+    AcU32 bytes_per_elem, ///< Bytes per element 1, 2, 4, 8
+    char* format,         ///< Format string such as %x %d ...
+    char* sep,            ///< Seperate between elements
+    char* trailer);       ///< Trailer if AC_NULL no trailer
+
+
+/**
+ * Display a buffer
+ *
+ * @param p = pointer to buffer
+ * @param len = length of buffe3r
+ */
+void ac_print_buff(AcU8 *p, AcS32 len);
+
+/**
+ * Display memory as hex bytes
+ */
+void ac_println_hex(
+    char* leader,         ///< leader if AC_NULL no leader
+    void *mem,            ///< Address of first memory location
+    AcU32 len,            ///< Number of bytes to print
+    char* sep);           ///< Separator between bytes
+
+/**
+ * Display memory as decimal bytes
+ */
+void ac_println_dec(
+    char* leader,         ///< leader if AC_NULL no leader
+    void *mem,            ///< Address of first memory location
+    AcU32 len,            ///< Number of bytes to print
+    char* sep);           ///< Separator between bytes
+
 #endif
