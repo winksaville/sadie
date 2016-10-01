@@ -55,5 +55,5 @@ void ac_println_dec(
     void *mem,            ///< Address of first memory location
     AcU32 len,            ///< Number of bytes to print
     char* sep) {          ///< Separator between bytes
-  ac_print_mem(leader, mem, len, 1, "%3d", sep, "\n");
+  ac_print_mem(leader, mem, len, 1, "%d", sep, "\n");
 }
