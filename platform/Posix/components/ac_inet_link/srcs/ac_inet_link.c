@@ -436,7 +436,16 @@ static ac_bool comp_ipv4_ll_process_msg(AcComp* comp, AcMsg* msg) {
       ac_printf("%s: fd=%d\n", this->comp.name, this->fd);
       if (this->fd < 0) {
         AcU8 str[256];
-        ac_snprintf(str, sizeof(str), "%s: Could not open SOCK_RAW errno=%u\n", this->comp.name, errno);
+        ac_snprintf(str, sizeof(str), "%s: Error socket(AF_PACKET, SOCK_RAW, ETH_P_ALL) errno=%d(%s)\n",
+            this->comp.name, errno, strerror(errno));
+        ac_fail((char*)str);
+      }
+      int broadcast_on = 1;
+      int rslt = setsockopt(this->fd, SOL_SOCKET, SO_BROADCAST, &broadcast_on, sizeof(broadcast_on));
+      if (rslt < 0) {
+        AcU8 str[256];
+        ac_snprintf(str, sizeof(str), "%s: setsockopt SO_BROADCAST errno=%d(%s)\n",
+            this->comp.name, errno, strerror(errno));
         ac_fail((char*)str);
       }
 
