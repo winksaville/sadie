@@ -62,6 +62,11 @@ typedef struct AC_ATTR_PACKED {
   AcU8  addresses[];      ///< Variable length array with the source and destination addresses
 } AcArp;
 
+#define AC_ARP_SRC_HARD_ADDR(ac_arp) (&ac_arp.addresses[0])
+#define AC_ARP_SRC_PROTO_ADDR(ac_arp) (AC_ARP_SRC_HARD_ADDR(ac_arp) + ac_req.len_hard_a)
+#define AC_ARP_DST_HARD_ADDR(ac_arp) (AC_ARP_SRC_PROTO_ADDR(ac_arp) + ac_req.len_proto_a)
+#define AC_ARP_DST_PROTO_ADDR(ac_arp) (AC_ARP_DST_HARD_ADR(ac_arp) + ac_req.len_hard_a)
+
 /**
  * Initialize an AcArp
  *

@@ -304,15 +304,17 @@ AcStatus send_arp(AcCompIpv4LinkLayer* this, AcU16 protocol, AcU32 proto_addr_le
   init_ether_broadcast_sockaddr_ll(&dst_addr, this->ifindex, AC_ETHER_PROTO_ARP);
   ac_printf("%s: send_arp dst_addr=%{sockaddr_ll}\n", this->comp.name, &dst_addr);
 
-  // Initialize ethernet arp request
-  struct ether_arp arp_req;
-  int arp_req_len = init_ether_arp(this, &arp_req, protocol, proto_addr_len, proto_addr);
+  // Initialize AcArp
+  AcArp arp_req;
+  int arp_req_len = ac_arp_init(&arp_req, AC_ARP_OP_REQ, AC_ARP_FRMT_HARD_A_ETHER, AC_ETHER_ADDR_LEN,
+      protocol, proto_addr_len, (AcU8*)&this->ifmac_addr, (AcU8*)&this->ifipv4_addr.sin_addr,
+      AC_NULL, proto_addr);
   ac_printf("%s: send_arp arp_req_len=%d sizeof(arp_req)=%d\n", this->comp.name, arp_req_len, sizeof(arp_req));
-  ac_assert(arp_req_len == sizeof(arp_req));
+  ac_assert(arp_req_len == sizeof(arp_req) + ((2 * AC_ETHER_ADDR_LEN) + (2 * AC_IPV4_ADDR_LEN)));
 
   // Initialize ethernet header
   AcEtherHdr ether_hdr;
-  ac_ether_init(&ether_hdr, &dst_addr, &arp_req.arp_sha, dst_addr.sll_protocol);
+  ac_ether_init(&ether_hdr, &dst_addr, AC_ARP_SRC_HARD_ADDR(arp_req), dst_addr.sll_protocol);
 
   // Initialize iovec for msghdr
   struct iovec iov[3];
