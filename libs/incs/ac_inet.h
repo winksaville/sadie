@@ -25,10 +25,17 @@
 
 typedef struct AC_ATTR_PACKED {
   union {
+    AcU8  ary_u8[AC_IPV4_ADDR_LEN];
+    AcU16 ary_u16[AC_IPV4_ADDR_LEN/sizeof(AcU16)];
+  };
+} AcIpv4Addr;
+
+ac_static_assert(sizeof(AcIpv4Addr) == AC_IPV4_ADDR_LEN, L"sizeof(AcIpv4Addr) != 4");
+
+typedef struct AC_ATTR_PACKED {
+  union {
     AcU8  ary_u8[AC_IPV6_ADDR_LEN];
     AcU16 ary_u16[AC_IPV6_ADDR_LEN/sizeof(AcU16)];
-    AcU32 ary_u32[AC_IPV6_ADDR_LEN/sizeof(AcU32)];
-    AcU64 ary_u64[AC_IPV6_ADDR_LEN/sizeof(AcU64)];
   };
 } AcIpv6Addr;
 
