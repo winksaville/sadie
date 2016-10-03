@@ -22,9 +22,7 @@
 #include <ac_inttypes.h>
 
 /**
- * init a struct ethhdr
- *
- * @param dst_addr
+ * Initialize AcEtherHdr
  */
 void ac_ether_init(
     AcEtherHdr* pEthHdr,            ///< Ether header to initialize
