@@ -131,8 +131,8 @@ ac_bool work_state(AcComp* comp, AcMsg* msg) {
       AcInetSendArpExtra* send_arp_extra = (AcInetSendArpExtra*)m->extra;
       send_arp_extra->proto = AC_ETHER_PROTO_IPV4;
       send_arp_extra->proto_addr_len = AC_IPV4_ADDR_LEN;
-      send_arp_extra->proto_addr[0] = 192;
-      send_arp_extra->proto_addr[1] = 168;
+      send_arp_extra->proto_addr[0] = 10;
+      send_arp_extra->proto_addr[1] = 0;
       send_arp_extra->proto_addr[2] = 0;
       send_arp_extra->proto_addr[3] = 2;
       AcCompMgr_send_msg(this->target_comp, m);
@@ -240,8 +240,9 @@ AcUint test_inet_link_impl(AcCompMgr* cm) {
 
   ac_debug_printf(LDR ":+\n", ldr);
 
-  // Create a message pool
-  AcMsgPool_init(&mp, 8, sizeof(AcInetSendPacketExtra));
+  // Create a message pool with extra space large enough
+  // for AC_INET_LINK_PROTOCOL messages
+  AcMsgPool_init(&mp, 8, AC_INET_LINK_PROTOCOL_EXTRA_MAX_LEN);
 
   // Initialize the test component
   TestComp_init(cm);
