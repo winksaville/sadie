@@ -96,17 +96,21 @@ typedef struct {
 #define AC_INET_SEND_PACKET_RSP AC_OP(AC_INET_LINK_PROTOCOL, AC_OPTYPE_RSP, 0x1)
 
 /**
- * AcInetSendPacketExtra is either AC_INET_SEND_PACKET_CMD or _REQ.
- * If _REQ is sent then _RSP sent as the reply and for _CMD the _RSP
- * may be sent, for instance when an error occurs, usually
- * detected by before transmitting.
+ * AcInetSendPacketExtra contains the destination protocol information
+ * and a set of io_vecs. To allow the io_vecs to be used in a generalized
+ * way the location of the first used io_vec is defined by io_vecs_first_idx
+ * and the number used is io_vecs_cnt.
  */
+#define DST_PROTO_ADDR_MAX_LEN     AC_IPV6_ADDR_LEN
 typedef struct {
-  ac_u64    app_vecs_cnt;       ///< Number of AcIoVecs's for application data
-  AcIoVec   link_vec;           ///< Pointer to the Link header vector
-  AcIoVec   ip_vec;             ///< Pointer to the IP header vector
-  AcIoVec   trans_vec;          ///< Pointer to the Transport header vector
-  AcIoVec   app_vecs[];         ///< Pointer to the app data vector
+  AcU16     dst_proto;          ///< Protocol such as AC_ETHER_PROTO_ARP in Host order
+  AcU16     dst_proto_addr_len; ///< Length of the protocol address in Host order
+  AcU8      dst_proto_addr[DST_PROTO_ADDR_MAX_LEN]; ///< Protocol address,
+                                                    ///< large enough for all known protocols
+                                ///< such as IPv6.
+  ac_u32    io_vecs_first_idx;  ///< io_vecs[io_vecs_first_idx] is first used io_vec
+  ac_u32    io_vecs_cnt;        ///< Number of io_vecs used
+  AcIoVec   io_vecs[8];         ///< Array of AcIoVecs
 } AcInetSendPacketExtra;
 
 ac_static_assert(sizeof(AcInetSendPacketExtra) <= AC_INET_LINK_PROTOCOL_EXTRA_MAX_LEN,
@@ -123,11 +127,10 @@ ac_static_assert(sizeof(AcInetSendPacketExtra) <= AC_INET_LINK_PROTOCOL_EXTRA_MA
  * detected a reply may be sent.
  */
 typedef struct {
-  AcU16     proto;              ///< Protocol such as AC_ETHER_PROTO_ARP
-  AcU16     proto_addr_len;     ///< Length of the protocol address
-  AcU8      proto_addr[AC_IPV6_ADDR_LEN * 2]; ///< Protocol address,
-                                // large enough for all known protocols
-                                ///< such as IPv6.
+  AcU16     proto;          ///< Protocol such as AC_ETHER_PROTO_ARP in Host order
+  AcU16     proto_addr_len; ///< Length of the protocol address in Host order
+  AcU8      proto_addr[DST_PROTO_ADDR_MAX_LEN]; ///< Protocol address,
+                                                ///< large enough for all known protocols
 } AcInetSendArpExtra;
 ac_static_assert(sizeof(AcInetSendArpExtra) <= AC_INET_LINK_PROTOCOL_EXTRA_MAX_LEN,
     L"sizeof(AcInetSendArpExtra) > AC_INET_LINK_PROTOCOL_EXTRA_MAX_LEN");
