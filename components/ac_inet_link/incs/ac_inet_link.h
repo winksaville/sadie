@@ -118,9 +118,9 @@ ac_static_assert(sizeof(AcInetSendPacketExtra) <= AC_INET_LINK_PROTOCOL_EXTRA_MA
 
 /**
  * AcInetSendArpPacketData is either AC_INET_SEND_PACKET_CMD or _REQ.
- * If _REQ is sent then _RSP must be sent, for _CMD the _RSP
- * may be sent, for instance when an error occurs, usually
- * detected by before transmitting.
+ * If _REQ is sent then _RSP must be sent as reply. For _CMD the _RSP
+ * may be sent as reply, for instance when an error occurs, usually
+ * detected a reply may be sent.
  */
 typedef struct {
   AcU16     proto;              ///< Protocol such as AC_ETHER_PROTO_ARP
