@@ -239,17 +239,6 @@ int init_ether_arp(AcCompIpv4LinkLayer* this, struct ether_arp* pArpReq,
 }
 
 /**
- * init a struct ethhdr
- *
- * @param dst_addr
- */
-void init_ethhdr(struct ethhdr* pEthHdr, const void *dst_addr, const void* src_addr, int ll_protocol) {
-  ac_memcpy(pEthHdr->h_dest, dst_addr, AC_ETHER_ADDR_LEN);
-  ac_memcpy(pEthHdr->h_source, src_addr, AC_ETHER_ADDR_LEN);
-  pEthHdr->h_proto = ll_protocol;
-}
-
-/**
  * Init sockaddr_ll
  */
 void init_sockaddr_ll(struct sockaddr_ll* pSockAddrLl,
@@ -322,8 +311,8 @@ AcStatus send_arp(AcCompIpv4LinkLayer* this, AcU16 protocol, AcU32 proto_addr_le
   ac_assert(arp_req_len == sizeof(arp_req));
 
   // Initialize ethernet header
-  struct ethhdr ether_hdr;
-  init_ethhdr(&ether_hdr, &dst_addr, &arp_req.arp_sha, dst_addr.sll_protocol);
+  AcEtherHdr ether_hdr;
+  ac_ether_init(&ether_hdr, &dst_addr, &arp_req.arp_sha, dst_addr.sll_protocol);
 
   // Initialize iovec for msghdr
   struct iovec iov[3];

@@ -19,6 +19,7 @@
 
 #include <ac_inttypes.h>
 #include <ac_assert.h>
+#include <ac_attributes.h>
 
 #define AC_IPV4_ADDR_LEN 4
 #define AC_IPV6_ADDR_LEN 16

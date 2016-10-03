@@ -17,5 +17,6 @@ componentIncDirs += include_directories(
 )
 
 componentSrcs += [
-  '@0@/srcs/ac_arp.c'.format(meson.current_source_dir())
+  '@0@/srcs/ac_arp.c'.format(meson.current_source_dir()),
+  '@0@/srcs/ac_ether.c'.format(meson.current_source_dir())
 ]

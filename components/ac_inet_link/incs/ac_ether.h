@@ -67,4 +67,13 @@ typedef struct AC_ATTR_PACKED {
   };
 } AcEtherArpIpv4;
 
+/**
+ * Initialize AcEtherHdr
+ */
+void ac_ether_init(
+    AcEtherHdr* pEthHdr,            ///< Ether header to initialize
+    const void *dst_addr,           ///< Destination address
+    const void* src_addr,           ///< Source address
+    AcU16 protocol);                ///< protocol of the contents
+
 #endif
