@@ -224,20 +224,6 @@ done:
   return status;
 }
 
-
-
-/**
- * Initialize a struct ether_arp
- *
- * @return size arp request
- */
-int init_ether_arp(AcCompIpv4LinkLayer* this, struct ether_arp* pArpReq,
-    AcU16 protocol, AcU32 proto_addr_len, AcU8* proto_addr) {
-  return ac_arp_init((AcArp*)&pArpReq->arp_hrd, AC_ARP_OP_REQ, AC_ARP_FRMT_HARD_A_ETHER, AC_ETHER_ADDR_LEN,
-   protocol, proto_addr_len, (AcU8*)&this->ifmac_addr, (AcU8*)&this->ifipv4_addr.sin_addr,
-   AC_NULL, proto_addr);
-}
-
 /**
  * Init sockaddr_ll
  */
